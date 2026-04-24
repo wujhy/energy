@@ -1,0 +1,131 @@
+# 数据源配置
+spring:
+    datasource:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driverClassName: org.sqlite.JDBC
+        url: jdbc:sqlite:D:/workplace/energy/03code/energy/sql/rysqlite3.db?date_string_format=yyyy-MM-dd HH:mm:ss
+        username:
+        password:
+        druid:
+            # 初始连接数
+            initialSize: 5
+            # 最小连接池数量
+            minIdle: 10
+            # 最大连接池数量
+            maxActive: 20
+            # 配置获取连接等待超时的时间
+            maxWait: 60000
+            # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+            timeBetweenEvictionRunsMillis: 60000
+            # 配置一个连接在池中最小生存的时间，单位是毫秒
+            minEvictableIdleTimeMillis: 300000
+            # 配置一个连接在池中最大生存的时间，单位是毫秒
+            maxEvictableIdleTimeMillis: 900000
+            # 配置检测连接是否有效 DUAL
+            validationQuery: SELECT 1 FROM sys_user
+            testWhileIdle: true
+            testOnBorrow: false
+            testOnReturn: false
+            # 用于采集web-jdbc关联监控的数据
+            webStatFilter:
+                enabled: true
+            # 配置Druid的监控页面功能
+            statViewServlet:
+                enabled: true
+                # 设置白名单，不填则允许所有访问
+                allow:
+                url-pattern: /druid/*
+                # 控制台管理用户名和密码
+                login-username: shanHe
+                login-password: 123456
+            # 监控拦截
+            filter:
+                # sql监控
+                stat:
+                    enabled: true
+                    # 慢SQL记录
+                    log-slow-sql: true
+                    slow-sql-millis: 1000
+                    merge-sql: false   #merge sql error, dbType sqlite, druid-1.2.5, sql
+                # 防火墙监控
+                wall:
+                    config:
+                        multi-statement-allow: true
+    # 服务模块
+    devtools:
+        restart:
+            # 热部署开关
+            enabled: false
+
+# 系统配置
+sys:
+    # 项目名称
+    name: 蓄电池监控系统
+    # 项目部署根路径
+    deployPath: D:/energy-single
+    # 项目部署日期yyyyMMdd
+    deployDay: 20250606
+
+#设备通讯配置
+device-comm:
+    # 通讯协议类型：tcp、port、mqtt、modbus
+    commType: port
+    # tcp 配置（是否使用、端口号、连接线程数、读写线程数、队列长度、心跳间隔秒）
+    tcpPost: 22188
+    tcpBossThread: 2
+    tcpWorkerThread: 4
+    tcpBackLog: 200
+    tcpIntervalTime: 120
+    # 串口配置（是否使用、串口名、波特率、数据位、停止位、校验位、超时时间）
+    portName: COM3
+    portBaudRate: 115200
+    portDataBits: 8
+    portStopBits: 1
+    portParity: 0
+    portTimeout: 1000
+
+#多线程配置
+thread:
+    #执行任务线程池配置
+    corePoolSize: 2
+    maxPoolSize: 10
+    queueCapacity: 500
+    keepAliveSeconds: 100
+
+#定时任务配置
+job:
+    #更新缓存（设备、告警、历史、电池）
+    configCache: "0 0 * * * ?"
+    alarmCache: "20 0 * * * ?"
+    historyCache: "30 0 * * * ?"
+    batteryCache: "40 0 * * * ?"
+    #定时同步电池告警配置（是否开启，调度时间）
+    isSynBattery: true
+    cmdSynBattery: "50 0 * * * ?"
+    #清理指定月份日志（历史记录天数，电池监控记录天数，系统操作日志月数，调度时间）
+    cleanHistoryLogDays: 3
+    cleanBatteryMonitorDays: 3
+    cleanSysLogMonth: 2
+    cleanLog: "0 30 0 * * ?"
+    #定时下发存储指令（52、57）
+    cmdSend: "50 5 * * * ?"
+    #定时同步设备在线状态（最大校验次数，调度时间）
+    offlineNum: 5
+    deviceOnline: "0 0/1 * * * ?"
+    #定时同步设备通用信息（服务器时间）
+    device: "0 0 0/12 * * ?"
+    #定时喂狗
+    watchDog: "0/5 * * * * ?"
+    #声光告警（是否开启，端口号，定时调度）
+    isOpenSoundWarn: true
+    portSoundWarn: 5
+    checkSoundWarnCron: "0/10 * * * * ?"
+    # 每天凌晨重启浏览器
+    restartAppCron: "0 0 0 * * ?"
+
+#同步上报平台
+report:
+    #定时数据监测上报（上报间隔基于主机设置）、心跳上报、注册上报
+    dataReport: "0/20 * * * * ?"
+    heartbeat: "0 0/1 * * * ?"
+    register: "0 0/10 * * * ?"

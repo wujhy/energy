@@ -1,0 +1,1 @@
+import{P as t}from"./index-B9KlqfFD.js";const s=t("Backstage",{state:()=>({openShow:!1,agreeShow:!1,attributeShow:!1,protocolShow:!1,informShow:!1}),actions:{setOpenShow(o){this.openShow=o},setAttributeShow(o){this.attributeShow=o},setProtocolShow(o){this.protocolShow=o},setAgreeShow(o){this.agreeShow=o},setInformShow(o){this.informShow=o}}});export{s as u};

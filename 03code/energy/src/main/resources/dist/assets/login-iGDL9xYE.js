@@ -1,0 +1,1 @@
+import{i as s}from"./request-CSQpg_qm.js";const r=t=>s({url:"/login",method:"post",data:t}),e=()=>s({url:"/logouts",method:"get"}),n=t=>s({url:"/system/user/resetPwd",method:"post",params:t});export{e as a,r as l,n as r};

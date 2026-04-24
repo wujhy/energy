@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shanhe.project.device.template.mapper.TemplateAttributeMapper">
+
+    <resultMap type="com.shanhe.project.device.template.domain.TemplateAttribute" id="TemplateAttributeResult">
+        <result property="tmplAttrId"    column="tmpl_attr_id"    />
+        <result property="tmplId"    column="tmpl_id"    />
+        <result property="model"    column="model"    />
+        <result property="code"    column="code"    />
+        <result property="name"    column="name"    />
+        <result property="unit"    column="unit"    />
+        <result property="point"    column="point"    />
+        <result property="type"    column="type"    />
+        <result property="sort"    column="sort"    />
+        <result property="track"    column="track"    />
+        <result property="listDisplay"    column="list_display"    />
+        <result property="screenDisplay"    column="screen_display"    />
+        <result property="pack"    column="pack"    />
+        <result property="status"    column="status"    />
+        <result property="alarmConfig"    column="alarm_config"    />
+        <result property="levelList" column="level_list"/>
+        <result property="protValue"    column="prot_value"    />
+        <result property="remark"    column="remark"    />
+        <result property="val0" column="val0"/>
+        <result property="val1" column="val1"/>
+        <result property="isLinear" column="is_linear"/>
+        <result property="minOrigRange" column="min_orig_range"/>
+        <result property="maxOrigRange" column="max_orig_range"/>
+        <result property="minTargetRange" column="min_target_range"/>
+        <result property="maxTargetRange" column="max_target_range"/>
+        <result property="spk" column="spk"/>
+        <result property="spb" column="spb"/>
+    </resultMap>
+
+    <sql id="selectTemplateAttributeVo">
+        select tmpl_attr_id, tmpl_id, model, code, name, unit, point, type, sort, track, list_display, screen_display, pack, status, alarm_config, remark,
+               prot_value, val0, val1, is_linear, min_orig_range, min_target_range, max_orig_range, max_target_range, spk, spb, level_list from dev_template_attribute
+    </sql>
+
+    <select id="selectTemplateAttributeList" parameterType="com.shanhe.project.device.template.domain.TemplateAttribute" resultMap="TemplateAttributeResult">
+        <include refid="selectTemplateAttributeVo"/>
+        <where>
+            <if test="tmplId != null "> and tmpl_id = #{tmplId}</if>
+            <if test="model != null "> and model = #{model}</if>
+            <if test="code != null  and code != ''"> and code = #{code}</if>
+            <if test="name != null  and name != ''"> and name like '%'||#{name}||'%'</if>
+            <if test="type != null "> and type = #{type}</if>
+            <if test="status != null "> and status = #{status}</if>
+            <if test="alarmConfig != null "> and alarm_config = #{alarmConfig}</if>
+            <if test="pack != null "> and pack = #{pack}</if>
+        </where>
+        order by sort
+    </select>
+
+    <select id="selectByTmplId" parameterType="com.shanhe.project.device.template.domain.TemplateAttribute" resultMap="TemplateAttributeResult">
+        <include refid="selectTemplateAttributeVo"/>
+        where tmpl_id = #{tmplId} order by sort
+    </select>
+
+    <select id="selectTemplateAttributeByTmplAttrId" parameterType="Long" resultMap="TemplateAttributeResult">
+        <include refid="selectTemplateAttributeVo"/>
+        where tmpl_attr_id = #{tmplAttrId}
+    </select>
+
+    <select id="hasName" parameterType="com.shanhe.project.device.template.domain.TemplateAttribute" resultType="Long">
+        SELECT count(0) FROM dev_template_attribute
+        WHERE (name = #{name} OR code = #{code}) AND tmpl_id = #{tmplId}
+        <if test="model != null "> and model = #{model}</if>
+        <if test="tmplAttrId != null "> and tmpl_attr_id != #{tmplAttrId}</if>
+    </select>
+
+    <insert id="insertTemplateAttribute" parameterType="com.shanhe.project.device.template.domain.TemplateAttribute">
+        insert into dev_template_attribute
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="tmplAttrId != null">tmpl_attr_id,</if>
+            <if test="tmplId != null">tmpl_id,</if>
+            <if test="model != null">model,</if>
+            <if test="code != null and code != ''">code,</if>
+            <if test="name != null and name != ''">name,</if>
+            <if test="unit != null">unit,</if>
+            <if test="point != null">point,</if>
+            <if test="type != null">type,</if>
+            <if test="sort != null">sort,</if>
+            <if test="track != null">track,</if>
+            <if test="listDisplay != null">list_display,</if>
+            <if test="screenDisplay != null">screen_display,</if>
+            <if test="pack != null">pack,</if>
+            <if test="status != null">status,</if>
+            <if test="alarmConfig != null">alarm_config,</if>
+            <if test="levelList != null">level_list,</if>
+            <if test="remark != null">remark,</if>
+            <if test="protValue != null">prot_value,</if>
+            <if test="val0 != null">val0,</if>
+            <if test="val1 != null">val1,</if>
+            <if test="isLinear != null">is_linear,</if>
+            <if test="minOrigRange != null">min_orig_range,</if>
+            <if test="minTargetRange != null">min_target_range,</if>
+            <if test="maxOrigRange != null">max_orig_range,</if>
+            <if test="maxTargetRange != null">max_target_range,</if>
+            <if test="spk != null">spk,</if>
+            <if test="spb != null">spb,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="tmplAttrId != null">#{tmplAttrId},</if>
+            <if test="tmplId != null">#{tmplId},</if>
+            <if test="model != null">#{model},</if>
+            <if test="code != null and code != ''">#{code},</if>
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="unit != null">#{unit},</if>
+            <if test="point != null">#{point},</if>
+            <if test="type != null">#{type},</if>
+            <if test="sort != null">#{sort},</if>
+            <if test="track != null">#{track},</if>
+            <if test="listDisplay != null">#{listDisplay},</if>
+            <if test="screenDisplay != null">#{screenDisplay},</if>
+            <if test="pack != null">#{pack},</if>
+            <if test="status != null">#{status},</if>
+            <if test="alarmConfig != null">#{alarmConfig},</if>
+            <if test="levelList != null">#{levelList},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="protValue != null">#{protValue},</if>
+            <if test="val0 != null">#{val0},</if>
+            <if test="val1 != null">#{val1},</if>
+            <if test="isLinear != null">#{isLinear},</if>
+            <if test="minOrigRange != null">#{minOrigRange},</if>
+            <if test="minTargetRange != null">#{minTargetRange},</if>
+            <if test="maxOrigRange != null">#{maxOrigRange},</if>
+            <if test="maxTargetRange != null">#{maxTargetRange},</if>
+            <if test="spk != null">#{spk},</if>
+            <if test="spb != null">#{spb},</if>
+        </trim>
+    </insert>
+
+    <insert id="insertList">
+        insert into dev_template_attribute
+        (tmpl_attr_id, tmpl_id, model, code, name, unit, point, type, sort, track, list_display, screen_display, pack, status, alarm_config, remark,
+        prot_value, val0, val1, is_linear, min_orig_range, min_target_range, max_orig_range, max_target_range, spk, spb, level_list)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.tmplAttrId},#{item.tmplId},#{item.model},#{item.code},#{item.name},#{item.unit},#{item.point},#{item.type},#{item.sort},
+            #{item.track},#{item.listDisplay},#{item.screenDisplay},#{item.pack},#{item.status},#{item.alarmConfig},#{item.remark},
+            #{item.protValue},#{item.val0},#{item.val1},#{item.isLinear},#{item.minOrigRange},#{item.minTargetRange},#{item.maxOrigRange},
+            #{item.maxTargetRange},#{item.spk},#{item.spb},#{item.levelList})
+        </foreach>
+    </insert>
+
+    <update id="updateTemplateAttribute" parameterType="com.shanhe.project.device.template.domain.TemplateAttribute">
+        update dev_template_attribute
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="tmplId != null">tmpl_id = #{tmplId},</if>
+            <if test="code != null and code != ''">code = #{code},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="unit != null">unit = #{unit},</if>
+            <if test="point != null">point = #{point},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="track != null">track = #{track},</if>
+            <if test="listDisplay != null">list_display = #{listDisplay},</if>
+            <if test="screenDisplay != null">screen_display = #{screenDisplay},</if>
+            <if test="pack != null">pack = #{pack},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="alarmConfig != null">alarm_config = #{alarmConfig},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="protValue != null">prot_value = #{protValue},</if>
+            <if test="val0 != null">val0 = #{val0},</if>
+            <if test="val1 != null">val1 = #{val1},</if>
+            <if test="isLinear != null">is_Linear = #{isLinear},</if>
+            <if test="minOrigRange != null">min_Orig_Range = #{minOrigRange},</if>
+            <if test="minTargetRange != null">min_Target_Range = #{minTargetRange},</if>
+            <if test="maxOrigRange != null">min_Target_Range = #{minTargetRange},</if>
+            <if test="maxTargetRange != null">min_Target_Range = #{minTargetRange},</if>
+            <if test="spk != null">spk = #{spk},</if>
+            <if test="spb != null">spb = #{spb},</if>
+            <if test="levelList != null">level_list = #{levelList},</if>
+        </trim>
+        where tmpl_attr_id = #{tmplAttrId}
+    </update>
+
+    <delete id="deleteTemplateAttributeByTmplAttrId" parameterType="Long">
+        delete from dev_template_attribute where tmpl_attr_id = #{tmplAttrId}
+    </delete>
+
+    <delete id="deleteTemplateAttributeByTmplAttrIds" parameterType="String">
+        delete from dev_template_attribute where tmpl_attr_id in
+        <foreach item="tmplAttrId" collection="array" open="(" separator="," close=")">
+            #{tmplAttrId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteTemplateAttributeByTmplId" parameterType="Long">
+        delete from dev_template_attribute where tmpl_id = #{tmplId}
+    </delete>
+
+    <delete id="deleteTemplateAttributeByTmplIds" parameterType="Long">
+        delete from dev_template_attribute where tmpl_id in
+        <foreach item="tmplIds" collection="array" open="(" separator="," close=")">
+            #{tmplAttrId}
+        </foreach>
+    </delete>
+</mapper>

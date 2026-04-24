@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shanhe.project.device.alarm.mapper.AlarmLevelMapper">
+
+    <sql id="selectAlarmLevelVo">
+        select id,
+            level_code            as levelCode,
+            level_name            as levelName,
+            sort                  as sort,
+            colour                as colour,
+            delay_time_minutes    as delayTimeMinutes,
+            send_sms_on_alert     as sendSmsOnAlert,
+            send_sms_on_clear     as sendSmsOnClear,
+            sms_resend_interval   as smsResendInterval,
+            sms_resend_times      as smsResendTimes,
+            send_email_on_alert   as sendEmailOnAlert,
+            send_email_on_clear   as sendEmailOnClear,
+            email_resend_interval as emailResendInterval,
+            email_resend_times    as emailResendTimes,
+            call_on_alert         as callOnAlert,
+            call_on_clear         as callOnClear,
+            call_resend_interval  as callResendInterval,
+            call_resend_times     as callResendTimes,
+            remark,
+            create_time           as createTime,
+            update_time           as updateTime
+        from dev_alarm_level
+    </sql>
+
+    <select id="selectAlarmLevelList" parameterType="com.shanhe.project.device.alarm.domain.AlarmLevel"
+            resultType="com.shanhe.project.device.alarm.domain.AlarmLevel">
+        <include refid="selectAlarmLevelVo"/>
+        <where>
+            <if test="levelCode != null  and levelCode != ''">
+                and level_code = #{levelCode}
+            </if>
+            <if test="levelName != null  and levelName != ''">
+                and level_name like '%'||#{levelName}||'%'
+            </if>
+        </where>
+        order by sort
+    </select>
+
+    <select id="selectAlarmLevelById" parameterType="Long"
+            resultType="com.shanhe.project.device.alarm.domain.AlarmLevel">
+        <include refid="selectAlarmLevelVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertAlarmLevel" parameterType="com.shanhe.project.device.alarm.domain.AlarmLevel">
+        insert into dev_alarm_level (id,
+                                 level_code,
+                                 level_name,
+                                 sort,colour,
+                                 delay_time_minutes,
+                                 send_sms_on_alert,
+                                 sms_resend_interval,
+                                 sms_resend_times,
+                                 send_sms_on_clear,
+                                 send_email_on_alert,
+                                 send_email_on_clear,
+                                 email_resend_interval,
+                                 email_resend_times,
+                                 call_on_alert,
+                                 call_on_clear,
+                                 call_resend_interval,
+                                 call_resend_times,
+                                 remark,
+                                 create_time)
+        values (#{id},
+                #{levelCode},
+                #{levelName},
+                #{sort},
+                #{colour},
+                #{delayTimeMinutes},
+                #{sendSmsOnAlert},
+                #{smsResendInterval},
+                #{smsResendTimes},
+                #{sendSmsOnClear},
+                #{sendEmailOnAlert},
+                #{sendEmailOnClear},
+                #{emailResendInterval},
+                #{emailResendTimes},
+                #{callOnAlert},
+                #{callOnClear},
+                #{callResendInterval},
+                #{callResendTimes},
+                #{remark},
+                datetime(CURRENT_TIMESTAMP,'localtime'))
+    </insert>
+
+    <update id="updateAlarmLevel" parameterType="com.shanhe.project.device.alarm.domain.AlarmLevel">
+        update dev_alarm_level
+        set
+        <if test="levelCode != null and levelCode != ''">
+            level_code = #{levelCode},
+        </if>
+        <if test="levelName != null and levelName != ''">
+            level_name = #{levelName},
+        </if>
+        <if test="sort != null">
+            sort = #{sort},
+        </if>
+        <if test="colour != null and colour != ''">
+            colour = #{colour},
+        </if>
+        <if test="delayTimeMinutes != null">
+            delay_time_minutes = #{delayTimeMinutes},
+        </if>
+        <if test="sendSmsOnAlert != null">
+            send_sms_on_alert = #{sendSmsOnAlert},
+        </if>
+        <if test="smsResendInterval != null">
+            sms_resend_interval = #{smsResendInterval},
+        </if>
+        <if test="smsResendTimes != null">
+            sms_resend_times = #{smsResendTimes},
+        </if>
+        <if test="sendSmsOnClear != null">
+            send_sms_on_clear = #{sendSmsOnClear},
+        </if>
+        <if test="sendEmailOnAlert != null">
+            send_email_on_alert = #{sendEmailOnAlert},
+        </if>
+        <if test="sendEmailOnClear != null">
+            send_email_on_clear = #{sendEmailOnClear},
+        </if>
+        <if test="emailResendInterval != null">
+            email_resend_interval = #{emailResendInterval},
+        </if>
+        <if test="emailResendTimes != null">
+            email_resend_times = #{emailResendTimes},
+        </if>
+        <if test="callOnAlert != null">
+            call_on_alert = #{callOnAlert},
+        </if>
+        <if test="callOnClear != null">
+            call_on_clear = #{callOnClear},
+        </if>
+        <if test="callResendInterval != null">
+            call_resend_interval = #{callResendInterval},
+        </if>
+        <if test="callResendTimes != null">
+            call_resend_times = #{callResendTimes},
+        </if>
+        <if test="remark != null">
+            remark = #{remark},
+        </if>
+        update_time = datetime(CURRENT_TIMESTAMP,'localtime')
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="Long">
+        delete from dev_alarm_level where id = #{id}
+    </delete>
+</mapper>

@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shanhe.project.device.config.mapper.ConfigMapper">
+
+    <resultMap type="com.shanhe.project.device.config.domain.Config" id="ConfigResult">
+        <result property="configId"    column="config_id"    />
+        <result property="deviceId"    column="device_id"    />
+        <result property="tmplId"    column="tmpl_id"    />
+        <result property="name"    column="name"    />
+        <result property="type"    column="type"    />
+        <result property="subType"    column="sub_type"    />
+        <result property="typeCode"    column="type_code"    />
+        <result property="sort"    column="sort"    />
+        <result property="sensorAddress"    column="sensor_address"    />
+        <result property="port"    column="port"    />
+        <result property="portType"    column="port_type"    />
+        <result property="channel"    column="channel"    />
+        <result property="baudRate"    column="baud_rate"    />
+        <result property="dataBits"    column="data_bits"    />
+        <result property="stopBits"    column="stop_bits"    />
+        <result property="intervalTime"    column="interval_time"    />
+        <result property="parityBits"    column="parity_bits"    />
+        <result property="protocolType"    column="protocol_type"    />
+        <result property="status"    column="status"    />
+        <result property="remark"    column="remark"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="online"    column="online"    />
+        <result property="onlineTime"    column="online_time"    />
+        <result property="extend3"    column="extend3"    />
+    </resultMap>
+
+    <sql id="selectConfigVo">
+        select config_id, device_id, tmpl_id, name, type, sub_type, type_code, sort, sensor_address, port, port_type, channel, baud_rate, data_bits, stop_bits, interval_time, parity_bits, status, protocol_type, remark, create_time, online, online_time, extend3 from dev_config
+    </sql>
+
+    <select id="selectConfigList" parameterType="com.shanhe.project.device.config.domain.Config" resultMap="ConfigResult">
+        <include refid="selectConfigVo"/>
+        <where>
+            <if test="tmplId != null "> and tmpl_id = #{tmplId}</if>
+            <if test="deviceId != null "> and device_id = #{deviceId}</if>
+            <if test="name != null  and name != ''"> and name like '%'||#{name}||'%'</if>
+            <if test="type != null "> and type = #{type}</if>
+            <if test="sensorAddress != null  and sensorAddress != ''"> and sensor_address = #{sensorAddress}</if>
+            <if test="portType != null "> and port_type = #{portType}</if>
+            <if test="port != null "> and port = #{port}</if>
+            <if test="channel != null "> and channel = #{channel}</if>
+            <if test="status != null "> and status = #{status}</if>
+        </where>
+        order by sort, port_type, port, channel
+    </select>
+
+    <select id="selectConfigByConfigId" parameterType="Long" resultMap="ConfigResult">
+        <include refid="selectConfigVo"/>
+        where config_id = #{configId}
+    </select>
+
+    <select id="selectConfigBy" resultMap="ConfigResult">
+        <include refid="selectConfigVo"/>
+        where port = #{port} and channel = #{channel} and type = #{type} limit 1
+    </select>
+
+    <select id="hasName" resultType="Long">
+        SELECT count(0) FROM dev_config WHERE port = #{port}
+        <if test="type == 1 "> and channel = #{channel} and port_type in (1, 2)</if>
+        <if test="type == 2 "> and port_type in (3, 4, 5, 6)</if>
+        <if test="configId != null "> and config_id != #{configId}</if>
+    </select>
+
+    <insert id="insertConfig" parameterType="com.shanhe.project.device.config.domain.Config">
+        insert into dev_config
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="configId != null">config_id,</if>
+            <if test="deviceId != null">device_id,</if>
+            <if test="tmplId != null">tmpl_id,</if>
+            <if test="name != null and name != ''">name,</if>
+            <if test="type != null">type,</if>
+            <if test="subType != null">sub_type,</if>
+            <if test="typeCode != null">type_code,</if>
+            <if test="sort != null">sort,</if>
+            <if test="sensorAddress != null">sensor_address,</if>
+            <if test="port != null">port,</if>
+            <if test="portType != null">port_type,</if>
+            <if test="channel != null">channel,</if>
+            <if test="baudRate != null">baud_rate,</if>
+            <if test="dataBits != null">data_bits,</if>
+            <if test="stopBits != null">stop_bits,</if>
+            <if test="intervalTime != null">interval_time,</if>
+            <if test="parityBits != null">parity_bits,</if>
+            <if test="protocolType != null">protocol_type,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null">remark,</if>
+            create_time,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="configId != null">#{configId},</if>
+            <if test="deviceId != null">#{deviceId},</if>
+            <if test="tmplId != null">#{tmplId},</if>
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="type != null">#{type},</if>
+            <if test="subType != null">#{subType},</if>
+            <if test="typeCode != null">#{typeCode},</if>
+            <if test="sort != null">#{sort},</if>
+            <if test="sensorAddress != null">#{sensorAddress},</if>
+            <if test="port != null">#{port},</if>
+            <if test="portType != null">#{portType},</if>
+            <if test="channel != null">#{channel},</if>
+            <if test="baudRate != null">#{baudRate},</if>
+            <if test="dataBits != null">#{dataBits},</if>
+            <if test="stopBits != null">#{stopBits},</if>
+            <if test="intervalTime != null">#{intervalTime},</if>
+            <if test="parityBits != null">#{parityBits},</if>
+            <if test="protocolType != null">#{protocolType},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null">#{remark},</if>
+            datetime(CURRENT_TIMESTAMP,'localtime')
+        </trim>
+    </insert>
+
+    <insert id="importList">
+        INSERT OR REPLACE INTO dev_config
+        (config_id, device_id, tmpl_id, name, type, sub_type, sensor_address, port, port_type, channel, baud_rate,
+        data_bits, stop_bits, interval_time, parity_bits, status, protocol_type, remark, create_time)
+        values
+        <foreach collection="list" item="bt" separator=",">
+            (#{bt.configId},#{bt.deviceId},#{bt.tmplId},#{bt.name},#{bt.type},#{bt.subType},#{bt.sensorAddress},#{bt.port},#{bt.portType},#{bt.channel},#{bt.baudRate},
+            #{bt.dataBits},#{bt.stopBits},#{bt.intervalTime},#{bt.parityBits},#{bt.status},#{bt.protocolType},#{bt.remark},datetime(CURRENT_TIMESTAMP,'localtime'))
+        </foreach>
+    </insert>
+
+    <update id="updateConfig" parameterType="com.shanhe.project.device.config.domain.Config">
+        update dev_config
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="tmplId != null">tmpl_id = #{tmplId},</if>
+            <if test="deviceId != null">device_id = #{deviceId},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="subType != null">sub_type = #{subType},</if>
+            <if test="typeCode != null">type_code = #{typeCode},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="sensorAddress != null">sensor_address = #{sensorAddress},</if>
+            <if test="port != null">port = #{port},</if>
+            <if test="portType != null">port_type = #{portType},</if>
+            <if test="channel != null">channel = #{channel},</if>
+            <if test="baudRate != null">baud_rate = #{baudRate},</if>
+            <if test="dataBits != null">data_bits = #{dataBits},</if>
+            <if test="stopBits != null">stop_bits = #{stopBits},</if>
+            <if test="intervalTime != null">interval_time = #{intervalTime},</if>
+            <if test="parityBits != null">parity_bits = #{parityBits},</if>
+            <if test="protocolType != null">protocol_type = #{protocolType},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="extend3 != null">extend3 = #{extend3},</if>
+        </trim>
+        where config_id = #{configId}
+    </update>
+
+    <update id="updatePost" parameterType="com.shanhe.project.device.config.domain.Config">
+        update dev_config
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="portType != null">port_type = #{portType},</if>
+            <if test="baudRate != null">baud_rate = #{baudRate},</if>
+            <if test="dataBits != null">data_bits = #{dataBits},</if>
+            <if test="stopBits != null">stop_bits = #{stopBits},</if>
+            <if test="intervalTime != null">interval_time = #{intervalTime},</if>
+            <if test="parityBits != null">parity_bits = #{parityBits},</if>
+        </trim>
+        where config_id = #{configId}
+    </update>
+
+    <delete id="deleteConfigByConfigId" parameterType="Long">
+        delete from dev_config where config_id = #{configId}
+    </delete>
+
+    <delete id="deleteConfigByConfigIds" parameterType="String">
+        delete from dev_config where config_id in
+        <foreach item="configId" collection="array" open="(" separator="," close=")">
+            #{configId}
+        </foreach>
+    </delete>
+
+    <update id="online">
+        update dev_config set online = 0, online_time = datetime(CURRENT_TIMESTAMP,'localtime') where online = 1 and config_id = #{configId}
+    </update>
+
+    <update id="offline">
+        update dev_config set online = 1 where online = 0 <if test="configId != null "> and config_id = #{configId}</if>
+    </update>
+
+</mapper>

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shanhe.project.device.config.mapper.BatteryMonitorMapper">
+    <resultMap type="com.shanhe.project.device.config.domain.BatteryMonitor" id="BatteryMonitorResult">
+        <result property="id" column="id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="configId" column="config_id"/>
+        <result property="packNum" column="pack_num"/>
+        <result property="batNum" column="bat_num"/>
+        <result property="hashCode" column="hash_code"/>
+        <result property="voltage" column="voltage"/>
+        <result property="resistance" column="resistance"/>
+        <result property="temperature" column="temperature"/>
+        <result property="bcapacity" column="bcapacity"/>
+        <result property="resistancerageslip" column="resistancerageslip"/>
+        <result property="gbvoltage" column="gbvoltage"/>
+    </resultMap>
+
+    <sql id="selectBatteryMonitorVo">
+         id,config_id,pack_num,bat_Num,hash_code,voltage,resistance,temperature,bcapacity,resistancerageslip,gbvoltage,create_time,update_time
+    </sql>
+
+    <insert id="insertBatchBatteryMonitor">
+        insert into dev_battery_monitor
+        (id,config_id,pack_num,bat_Num,hash_code,voltage,resistance,temperature,bcapacity,resistancerageslip,gbvoltage,create_time,update_time)
+        values
+        <foreach collection="listBattery" item="bt" separator=",">
+            (#{bt.id},#{bt.configId},#{bt.packNum},#{bt.batNum},#{bt.hashCode},#{bt.voltage},#{bt.resistance},#{bt.temperature},#{bt.bcapacity},#{bt.resistancerageslip},#{bt.gbvoltage},datetime(CURRENT_TIMESTAMP,'localtime'),datetime(CURRENT_TIMESTAMP,'localtime'))
+        </foreach>
+    </insert>
+
+    <update id="updateMonitor">
+        update dev_battery_monitor set update_time = datetime(CURRENT_TIMESTAMP,'localtime')
+        where id in
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <select id="selectBatteryMonitor" parameterType="com.shanhe.project.device.config.domain.BatteryMonitor" resultMap="BatteryMonitorResult">
+        select
+        <include refid="selectBatteryMonitorVo"/>
+        from dev_battery_monitor
+        <where>
+            <if test="configId != null "> and config_id = #{configId}</if>
+            <if test="packNum != null "> and pack_num = #{packNum}</if>
+            <if test="batNum != null "> and bat_Num = #{batNum}</if>
+            <if test="params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
+                and (
+                strftime('%Y-%m-%d %H:%M:%S', create_time) &gt;= strftime('%Y-%m-%d %H:%M:%S', #{params.beginTime}) or
+                strftime('%Y-%m-%d %H:%M:%S', update_time) &gt;= strftime('%Y-%m-%d %H:%M:%S', #{params.beginTime})
+                )
+            </if>
+            <if test="params.endTime != null and params.endTime != ''"><!-- 结束时间检索 -->
+                and (
+                strftime('%Y-%m-%d %H:%M:%S', create_time) &lt;= strftime('%Y-%m-%d %H:%M:%S', #{params.endTime}) or
+                strftime('%Y-%m-%d %H:%M:%S', update_time) &lt;= strftime('%Y-%m-%d %H:%M:%S', #{params.endTime})
+                )
+            </if>
+        </where>
+    </select>
+
+    <select id="selectLast" resultMap="BatteryMonitorResult">
+        select
+        <include refid="selectBatteryMonitorVo"/>
+        from dev_battery_monitor
+        where id in (
+            select max(id) from dev_battery_monitor
+            where config_id = #{configId}
+            <if test="packNum != null ">  and pack_num = #{packNum} </if>
+            <if test="batSinSize != null ">  and bat_num &lt;= #{batSinSize} </if>
+            group by pack_num, bat_num
+        )
+        order by pack_num, bat_num
+    </select>
+
+    <select id="lastMonitor" resultMap="BatteryMonitorResult">
+        select
+        <include refid="selectBatteryMonitorVo"/>
+        from dev_battery_monitor
+        where id in (
+            SELECT max(m.id) FROM dev_battery_monitor m, dev_config c WHERE m.config_id = c.config_id AND c.status = 0 group by pack_num, bat_num
+        )
+        order by pack_num, bat_num
+    </select>
+
+    <select id="listByIds" resultMap="BatteryMonitorResult">
+        select
+        <include refid="selectBatteryMonitorVo"/>
+        from dev_battery_monitor
+        where id in
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <delete id="deleteByIds">
+        delete from dev_battery_monitor where id in
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteBatteryDays" parameterType="Integer">
+        delete from dev_battery_monitor where update_time &lt;= DATE('now', '-${dayNum} day', 'localtime')
+    </delete>
+</mapper>

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shanhe.project.energy.stat.mapper.StatBatteryBatMapper">
+    <sql id="selectStatBatteryVo">
+        id as id ,
+                pack_id as packId ,
+                create_time as createTime,
+                config_id as configId ,
+                pack_num as packNum ,
+                bat_num as batNum ,
+                voltage as voltage ,
+                resistance as resistance ,
+                temperature as temperature ,
+                bcapacity as bcapacity
+    </sql>
+
+    <select id="selectListByPackIds" resultType="com.shanhe.project.energy.stat.domain.StatBatteryBat">
+        select
+        <include refid="selectStatBatteryVo"/>
+        from stat_battery_bat pack
+        <where>
+            <if test="startDateTime != null and startDateTime != ''">
+                <!-- 开始时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', pack.create_time) &gt;= strftime('%Y-%m-%d %H:%M:%S',
+                #{startDateTime})
+            </if>
+            <if test="endDateTime != null and endDateTime != ''">
+                <!-- 结束时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', pack.create_time) &lt;= strftime('%Y-%m-%d %H:%M:%S', #{endDateTime})
+            </if>
+
+            <if test=" packIds != null ">
+                and pack_id in
+                <foreach item="item" collection="packIds" separator="," open="(" close=")" index="">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertList" parameterType="com.shanhe.project.energy.stat.domain.StatBatteryBat">
+        insert into stat_battery_bat (
+        pack_id ,
+        create_time ,
+        config_id ,
+        pack_num ,
+        bat_num ,
+        voltage ,
+        resistance ,
+        temperature ,
+        bcapacity
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.packId} ,
+            datetime(CURRENT_TIMESTAMP, 'localtime'),
+            #{item.configId} ,
+            #{item.packNum} ,
+            #{item.batNum} ,
+            #{item.voltage} ,
+            #{item.resistance} ,
+            #{item.temperature} ,
+            #{item.bcapacity}
+            )
+        </foreach>
+    </insert>
+
+    <select id="selectList" resultType="com.shanhe.project.energy.stat.domain.StatBatteryBat">
+        select
+        <include refid="selectStatBatteryVo"/>
+        from stat_battery_bat pack
+        <where>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                <!-- 开始时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', pack.create_time) &gt;= strftime('%Y-%m-%d %H:%M:%S',
+                #{params.beginTime})
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                <!-- 结束时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', pack.create_time) &lt;= strftime('%Y-%m-%d %H:%M:%S',
+                #{params.endTime})
+            </if>
+            <if test=" configId != null ">
+                and config_id = #{configId}
+            </if>
+            <if test=" packNum != null ">
+                and pack_num = #{packNum}
+            </if>
+            <if test=" batNum != null ">
+                and bat_num = #{batNum}
+            </if>
+        </where>
+        order by create_time ${isAsc}
+    </select>
+
+    <select id="selectDataPointList" resultType="com.shanhe.project.energy.capacity.vo.DataPoint">
+        select
+        <include refid="selectStatBatteryVo"/>
+        from stat_battery_bat pack
+        <where>
+            <if test="startDateTime != null and startDateTime != ''">
+                <!-- 开始时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', pack.create_time) &gt;= strftime('%Y-%m-%d %H:%M:%S',
+                #{startDateTime})
+            </if>
+            <if test="endDateTime != null and endDateTime != ''">
+                <!-- 结束时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', pack.create_time) &lt;= strftime('%Y-%m-%d %H:%M:%S', #{endDateTime})
+            </if>
+            <if test=" configId != null ">
+                and config_id = #{configId}
+            </if>
+            <if test=" packNum != null ">
+                and pack_num = #{packNum}
+            </if>
+            <if test=" batNum != null ">
+                and bat_num = #{batNum}
+            </if>
+        </where>
+        order by create_time asc
+    </select>
+
+    <delete id="deleteByConfigId">
+        delete from stat_battery_bat where config_id = #{configId}
+        <if test="packNum != null">
+            and pack_num = #{packNum}
+        </if>
+    </delete>
+</mapper>

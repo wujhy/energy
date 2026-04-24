@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shanhe.project.device.config.mapper.ConfigAttributeMapper">
+    
+    <resultMap type="com.shanhe.project.device.config.domain.ConfigAttribute" id="ConfigAttributeResult">
+        <result property="configAttrId"    column="config_attr_id"    />
+        <result property="configId"    column="config_id"    />
+        <result property="packNum"    column="pack_num"    />
+        <result property="code"    column="code"    />
+        <result property="name"    column="name"    />
+        <result property="value"    column="value"    />
+        <result property="unit"    column="unit"    />
+        <result property="point"    column="point"    />
+        <result property="type"    column="type"    />
+        <result property="sort"    column="sort"    />
+        <result property="track"    column="track"    />
+        <result property="listDisplay"    column="list_display"    />
+        <result property="screenDisplay"    column="screen_display"    />
+        <result property="pack"    column="pack"    />
+        <result property="status"    column="status"    />
+        <result property="alarm"    column="alarm"    />
+        <result property="alarmConfig"    column="alarm_config"    />
+        <result property="remark"    column="remark"    />
+        <result property="protValue"    column="prot_value"    />
+        <result property="val0" column="val0"/>
+        <result property="val1" column="val1"/>
+        <result property="isLinear" column="is_linear"/>
+        <result property="minOrigRange" column="min_orig_range"/>
+        <result property="maxOrigRange" column="max_orig_range"/>
+        <result property="minTargetRange" column="min_target_range"/>
+        <result property="maxTargetRange" column="max_target_range"/>
+        <result property="spk" column="spk"/>
+        <result property="spb" column="spb"/>
+        <result property="levelList" column="level_list"/>
+    </resultMap>
+
+    <sql id="selectConfigAttributeVo">
+        select config_attr_id, config_id, pack_num, code, name, value, unit, point, type, sort, track, list_display, screen_display, pack, status, alarm, alarm_config, remark,
+               prot_value, val0, val1, is_linear, min_orig_range, min_target_range, max_orig_range, max_target_range, spk, spb, level_list from dev_config_attribute
+    </sql>
+
+    <select id="selectConfigAttributeList" parameterType="com.shanhe.project.device.config.domain.ConfigAttribute" resultMap="ConfigAttributeResult">
+        <include refid="selectConfigAttributeVo"/>
+        <where>  
+            <if test="code != null  and code != ''"> and code = #{code}</if>
+            <if test="name != null  and name != ''"> and name like '%'||#{name}||'%'</if>
+            <if test="configId != null "> and config_id = #{configId}</if>
+            <if test="packNum != null "> and pack_num = #{packNum}</if>
+            <if test="status != null "> and status = #{status}</if>
+            <if test="alarm != null "> and alarm = #{alarm}</if>
+            <if test="alarmConfig != null "> and alarm_config = #{alarmConfig}</if>
+            <if test="pack != null "> and pack = #{pack}</if>
+            <if test="screenDisplay != null "> and screen_display = #{screenDisplay}</if>
+            <if test=" excludeCodes != null and excludeCodes.size() > 0 ">
+                <foreach item="itemCode" collection="excludeCodes" separator="," open="and code not in (" close=")">
+                    #{itemCode}
+                </foreach>
+            </if>
+        </where>
+        order by status, sort
+    </select>
+
+    <select id="configAttributeList" resultMap="ConfigAttributeResult">
+        <include refid="selectConfigAttributeVo"/>
+        where config_id in (select config_id from dev_config where status = 0) and status = 0
+    </select>
+
+    <select id="selectByConfigId" parameterType="Long" resultMap="ConfigAttributeResult">
+        <include refid="selectConfigAttributeVo"/>
+        where config_id = #{configId}
+        order by sort
+    </select>
+
+    <select id="selectConfigAttributeByConfigAttrId" parameterType="Long" resultMap="ConfigAttributeResult">
+        <include refid="selectConfigAttributeVo"/>
+        where config_attr_id = #{configAttrId}
+    </select>
+
+    <select id="hasName" parameterType="com.shanhe.project.device.template.domain.TemplateAttribute" resultType="Long">
+        SELECT count(0) FROM dev_config_attribute
+        WHERE (name = #{name} OR code = #{code}) AND config_id = #{configId}
+        <if test="packNum != null "> and pack_num = #{packNum}</if>
+        <if test="configAttrId != null "> and config_attr_id != #{configAttrId}</if>
+    </select>
+
+    <insert id="insertConfigAttribute" parameterType="com.shanhe.project.device.config.domain.ConfigAttribute">
+        insert into dev_config_attribute
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="configAttrId != null">config_attr_id,</if>
+            <if test="configId != null">config_id,</if>
+            <if test="packNum != null">pack_num,</if>
+            <if test="code != null and code != ''">code,</if>
+            <if test="name != null and name != ''">name,</if>
+            <if test="value != null">value,</if>
+            <if test="unit != null">unit,</if>
+            <if test="point != null">point,</if>
+            <if test="type != null">type,</if>
+            <if test="sort != null">sort,</if>
+            <if test="track != null">track,</if>
+            <if test="listDisplay != null">list_display,</if>
+            <if test="screenDisplay != null">screen_display,</if>
+            <if test="pack != null">pack,</if>
+            <if test="status != null">status,</if>
+            <if test="alarm != null">alarm,</if>
+            <if test="alarmConfig != null">alarm_config,</if>
+            <if test="remark != null">remark,</if>
+            <if test="protValue != null">prot_value,</if>
+            <if test="val0 != null">val0,</if>
+            <if test="val1 != null">val1,</if>
+            <if test="isLinear != null">is_linear,</if>
+            <if test="minOrigRange != null">min_orig_range,</if>
+            <if test="minTargetRange != null">min_target_range,</if>
+            <if test="maxOrigRange != null">max_orig_range,</if>
+            <if test="maxTargetRange != null">max_target_range,</if>
+            <if test="spk != null">spk,</if>
+            <if test="spb != null">spb,</if>
+            <if test="levelList != null">level_list,</if>
+            create_time,
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="configAttrId != null">#{configAttrId},</if>
+            <if test="configId != null">#{configId},</if>
+            <if test="packNum != null">#{packNum},</if>
+            <if test="code != null and code != ''">#{code},</if>
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="value != null">#{value},</if>
+            <if test="unit != null">#{unit},</if>
+            <if test="point != null">#{point},</if>
+            <if test="type != null">#{type},</if>
+            <if test="sort != null">#{sort},</if>
+            <if test="track != null">#{track},</if>
+            <if test="listDisplay != null">#{listDisplay},</if>
+            <if test="screenDisplay != null">#{screenDisplay},</if>
+            <if test="pack != null">#{pack},</if>
+            <if test="status != null">#{status},</if>
+            <if test="alarm != null">#{alarm},</if>
+            <if test="alarmConfig != null">#{alarmConfig},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="protValue != null">#{protValue},</if>
+            <if test="val0 != null">#{val0},</if>
+            <if test="val1 != null">#{val1},</if>
+            <if test="isLinear != null">#{isLinear},</if>
+            <if test="minOrigRange != null">#{minOrigRange},</if>
+            <if test="minTargetRange != null">#{minTargetRange},</if>
+            <if test="maxOrigRange != null">#{maxOrigRange},</if>
+            <if test="maxTargetRange != null">#{maxTargetRange},</if>
+            <if test="spk != null">#{spk},</if>
+            <if test="spb != null">#{spb},</if>
+            <if test="levelList != null">#{levelList},</if>
+            datetime(CURRENT_TIMESTAMP,'localtime'),
+         </trim>
+    </insert>
+
+    <insert id="insertBatchConfigAttribute">
+        insert into dev_config_attribute
+        (config_attr_id, config_id, pack_num, code, name, value, unit, point, type, sort, track, list_display, screen_display, pack, status, alarm, alarm_config,
+         remark, prot_value, val0, val1, is_linear, min_orig_range, min_target_range, max_orig_range, max_target_range, spk, spb, level_list, create_time)
+        values
+        <foreach collection="configAttributeList" item="bt" separator=",">
+            (#{bt.configAttrId},#{bt.configId},#{bt.packNum},#{bt.code},#{bt.name},#{bt.value},#{bt.unit},#{bt.point},#{bt.type},#{bt.sort},#{bt.track},#{bt.listDisplay},#{bt.screenDisplay},#{bt.pack},#{bt.status},#{bt.alarm},#{bt.alarmConfig},
+             #{bt.remark}, #{bt.protValue}, #{bt.val0}, #{bt.val1}, #{bt.isLinear}, #{bt.minOrigRange}, #{bt.minTargetRange}, #{bt.maxOrigRange}, #{bt.maxTargetRange}, #{bt.spk}, #{bt.spb}, #{bt.levelList}, datetime(CURRENT_TIMESTAMP,'localtime'))
+        </foreach>
+    </insert>
+
+    <insert id="importAttribute">
+        INSERT OR REPLACE INTO dev_config_attribute
+        (config_attr_id, config_id, pack_num, code, name, value, unit, point, type, sort, track, list_display, screen_display, pack, status, alarm, alarm_config, remark, create_time)
+        values
+        <foreach collection="configAttributeList" item="bt" separator=",">
+            (#{bt.configAttrId},#{bt.configId},#{bt.packNum},#{bt.code},#{bt.name},#{bt.value},#{bt.unit},#{bt.point},#{bt.type},#{bt.sort},#{bt.track},#{bt.listDisplay},#{bt.screenDisplay},#{bt.pack},#{bt.status},#{bt.alarm},#{bt.alarmConfig},#{bt.remark}, datetime(CURRENT_TIMESTAMP,'localtime'))
+        </foreach>
+    </insert>
+
+    <update id="updateConfigAttribute" parameterType="com.shanhe.project.device.config.domain.ConfigAttribute">
+        update dev_config_attribute
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="configId != null">config_id = #{configId},</if>
+            <if test="packNum != null">pack_num = #{packNum},</if>
+            <if test="code != null and code != ''">code = #{code},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="value != null">value = #{value},</if>
+            <if test="unit != null">unit = #{unit},</if>
+            <if test="point != null">point = #{point},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="track != null">track = #{track},</if>
+            <if test="listDisplay != null">list_display = #{listDisplay},</if>
+            <if test="screenDisplay != null">screen_display = #{screenDisplay},</if>
+            <if test="pack != null">pack = #{pack},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="alarm != null">alarm = #{alarm},</if>
+            <if test="alarmConfig != null">alarm_config = #{alarmConfig},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="protValue != null">prot_value = #{protValue},</if>
+            <if test="val0 != null">val0 = #{val0},</if>
+            <if test="val1 != null">val1 = #{val1},</if>
+            <if test="isLinear != null">is_Linear = #{isLinear},</if>
+            <if test="minOrigRange != null">min_Orig_Range = #{minOrigRange},</if>
+            <if test="minTargetRange != null">min_Target_Range = #{minTargetRange},</if>
+            <if test="maxOrigRange != null">max_orig_range = #{maxOrigRange},</if>
+            <if test="maxTargetRange != null">max_target_range = #{maxTargetRange},</if>
+            <if test="spk != null">spk = #{spk},</if>
+            <if test="spb != null">spb = #{spb},</if>
+            <if test="levelList != null">level_list = #{levelList},</if>
+        </trim>
+        where config_attr_id = #{configAttrId}
+    </update>
+
+    <update id="updateBy" parameterType="String">
+        update dev_config_attribute
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="value != null">value = #{value},</if>
+            <if test="alarm != null">alarm = #{alarm},</if>
+        </trim>
+        where config_attr_id = #{configAttrId}
+    </update>
+
+    <delete id="deleteConfigAttributeByConfigAttrId" parameterType="Long">
+        delete from dev_config_attribute where config_attr_id = #{configAttrId}
+    </delete>
+
+    <delete id="deleteConfigAttributeByConfigAttrIds" parameterType="String">
+        delete from dev_config_attribute where config_attr_id in 
+        <foreach item="configAttrId" collection="array" open="(" separator="," close=")">
+            #{configAttrId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteConfigAttributeByConfigIds" parameterType="String">
+        delete from dev_config_attribute where config_id in
+        <foreach item="configId" collection="array" open="(" separator="," close=")">
+            #{configId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteConfigAttributeByPackNums" parameterType="String">
+        delete from dev_config_attribute where config_id = #{configId} and pack_num in
+        <foreach item="packNum" collection="packNums" open="(" separator="," close=")">
+            #{packNum}
+        </foreach>
+    </delete>
+
+    <select id="getBy" resultMap="ConfigAttributeResult">
+        <include refid="selectConfigAttributeVo"/>
+        WHERE code = #{code} AND config_id = #{configId}
+        <if test="packNum != null "> and pack_num = #{packNum}</if>
+         limit 1
+    </select>
+
+</mapper>

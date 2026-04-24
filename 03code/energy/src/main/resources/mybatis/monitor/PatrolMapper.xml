@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shanhe.project.monitor.patrol.mapper.PatrolMapper">
+
+    <resultMap type="com.shanhe.project.monitor.patrol.domain.Patrol" id="PatrolResult">
+        <result property="pId" column="p_id"/>
+        <result property="name" column="name"/>
+        <result property="userName" column="user_name"/>
+        <result property="pDate" column="p_date"/>
+        <result property="pResult" column="p_result"/>
+        <result property="pReport" column="p_report"/>
+        <result property="pReportDate" column="p_report_date"/>
+        <result property="remark" column="remark"/>
+        <result property="imei" column="imei"/>
+        <result property="configs" column="configs"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectPatrolVo">
+        patrol.p_id as pId,
+        patrol.name as name,
+        patrol.user_name as userName,
+        patrol.p_date as pDate,
+        patrol.p_result as pResult,
+        patrol.p_report as pReport,
+        patrol.p_report_date as pReportDate,
+        patrol.remark as remark,
+        patrol.imei as imei,
+        patrol.configs as configs,
+        patrol.create_time as createTime,
+        patrol.update_time as updateTime
+    </sql>
+
+    <select id="selectList" parameterType="com.shanhe.project.monitor.patrol.domain.Patrol"
+            resultType="com.shanhe.project.monitor.patrol.domain.Patrol">
+        select
+        <include refid="selectPatrolVo"/>
+        from dev_patrol patrol
+        <where>
+            <if test="name != null  and name != ''">
+                and patrol.name like '%'||#{name}||'%'
+            </if>
+            <if test="userName != null  and userName != ''">
+                and patrol.user_name like '%'||#{userName}||'%'
+            </if>
+            <if test="pResult != null ">
+                and patrol.p_result = #{pResult}
+            </if>
+            <if test="pReport != null ">
+                and patrol.p_report = #{pReport}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', patrol.create_time) &gt;= strftime('%Y-%m-%d %H:%M:%S', #{params.beginTime})
+            </if>
+            <if test="params.endTime != null and params.endTime != ''"><!-- 结束时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', patrol.create_time) &lt;= strftime('%Y-%m-%d %H:%M:%S', #{params.endTime})
+            </if>
+        </where>
+        order by patrol.p_id desc
+    </select>
+
+    <select id="selectByPid" parameterType="Long"
+            resultType="com.shanhe.project.monitor.patrol.domain.Patrol">
+        select
+        <include refid="selectPatrolVo"/>
+        from dev_patrol patrol
+        where p_id = #{pId}
+    </select>
+
+    <insert id="insert" parameterType="com.shanhe.project.monitor.patrol.domain.Patrol">
+        insert into dev_patrol
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">
+                name,
+            </if>
+            <if test="userName != null and userName != ''">
+                user_name,
+            </if>
+            <if test="pDate != null">
+                p_date,
+            </if>
+            <if test="pResult != null">
+                p_result,
+            </if>
+            <if test="remark != null">
+                remark,
+            </if>
+            <if test="imei != null">
+                imei,
+            </if>
+            <if test="configs != null">
+                configs,
+            </if>
+            p_id, p_report, create_time,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">
+                #{name},
+            </if>
+            <if test="userName != null and userName != ''">
+                #{userName},
+            </if>
+            <if test="pDate != null">
+                #{pDateStr},
+            </if>
+            <if test="pResult != null">
+                #{pResult},
+            </if>
+            <if test="remark != null">
+                #{remark},
+            </if>
+            <if test="imei != null">
+                #{imei},
+            </if>
+            <if test="configs != null">
+                #{configs},
+            </if>
+            #{pId}, 1, (datetime(CURRENT_TIMESTAMP,'localtime')),
+        </trim>
+    </insert>
+
+    <update id="update" parameterType="com.shanhe.project.monitor.patrol.domain.Patrol">
+        update dev_patrol
+        <trim prefix="SET">
+            <if test="userName != null">user_name = #{userName},</if>
+            <if test="pDate != null">p_date = #{pDateStr},</if>
+            <if test="pResult != null">p_result = #{pResult},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="imei != null">imei = #{imei},</if>
+            <if test="configs != null">configs = #{configs},</if>
+            update_time = datetime(CURRENT_TIMESTAMP,'localtime')
+        </trim>
+        where p_id = #{pId}
+    </update>
+
+    <update id="report" parameterType="com.shanhe.project.monitor.patrol.domain.Patrol">
+        update dev_patrol set p_report = 0, p_report_date = datetime(CURRENT_TIMESTAMP,'localtime') where p_id = #{pId}
+    </update>
+
+    <delete id="deleteByPid" parameterType="Long">
+        delete from dev_patrol where p_id = #{pId}
+    </delete>
+
+    <delete id="deleteByPids" parameterType="String">
+        delete from dev_patrol where p_id in
+        <foreach item="pId" collection="pIds" open="(" separator="," close=")">
+            #{pId}
+        </foreach>
+    </delete>
+
+    <select id="hasPatrol" resultType="Long">
+        SELECT count(0) FROM dev_patrol WHERE p_report = 0 and strftime('%Y-%m-%d', p_report_date) = strftime('%Y-%m-%d', datetime(CURRENT_TIMESTAMP,'localtime'))
+    </select>
+</mapper>

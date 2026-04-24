@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shanhe.project.energy.stat.mapper.StatBatteryResMapper">
+    <resultMap type="com.shanhe.project.energy.stat.domain.StatBatteryRes" id="StatBatteryResResult">
+        <result property="id" column="id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="configId" column="config_id"/>
+        <result property="packNum" column="pack_num"/>
+        <result property="batNum" column="bat_num"/>
+        <result property="resistance" column="resistance"/>
+    </resultMap>
+
+    <sql id="selectStatBatteryResVo">
+        id as id ,
+                create_time as createTime ,
+                config_id as configId ,
+                pack_num as packNum ,
+                bat_num as batNum ,
+                resistance as resistance
+    </sql>
+    <select id="selectList" parameterType="com.shanhe.project.energy.stat.domain.StatBatteryRes"
+            resultType="com.shanhe.project.energy.stat.domain.StatBatteryRes">
+        select
+        <include refid="selectStatBatteryResVo"/>
+        from stat_battery_res
+        <where>
+            <if test="configId != null ">
+                and config_id = #{configId}
+            </if>
+            <if test="packNum != null ">
+                and pack_num = #{packNum}
+            </if>
+            <if test="batNum != null ">
+                and bat_num = #{batNum}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <insert id="insertList">
+        insert into stat_battery_res (
+        create_time ,
+        config_id ,
+        pack_num ,
+        bat_num ,
+        resistance
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (
+            datetime(CURRENT_TIMESTAMP,'localtime') ,
+            #{item.configId} ,
+            #{item.packNum} ,
+            #{item.batNum} ,
+            #{item.resistance}
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteByConfigId">
+        delete from stat_battery_res where config_id = #{configId}
+        <if test="packNum != null">
+            and pack_num = #{packNum}
+        </if>
+    </delete>
+</mapper>

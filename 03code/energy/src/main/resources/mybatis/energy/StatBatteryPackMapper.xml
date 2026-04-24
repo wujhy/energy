@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shanhe.project.energy.stat.mapper.StatBatteryPackMapper">
+    <sql id="selectStatBatteryPackVo">
+        id as id ,
+                create_time as createTime ,
+                config_id as configId ,
+                pack_num as packNum ,
+                pack_voltage as packVoltage ,
+                pack_current as packCurrent ,
+                battery_pack_float_current as batteryPackFloatCurrent ,
+                environment_temperature1 as environmentTemperature1 ,
+                environment_temperature2 as environmentTemperature2 ,
+                bcapacity as bcapacity ,
+                hydrogen_concentration as hydrogenConcentration
+    </sql>
+
+    <select id="selectList" parameterType="com.shanhe.project.energy.stat.domain.StatBatteryPack"
+            resultType="com.shanhe.project.energy.stat.domain.StatBatteryPack">
+        select
+        <include refid="selectStatBatteryPackVo"/>
+        from stat_battery_pack pack
+        <where>
+            <if test="configId != null ">
+                and pack.config_id = #{configId}
+            </if>
+            <if test="packNum != null ">
+                and pack.pack_num = #{packNum}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                <!-- 开始时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', pack.create_time) &gt;= strftime('%Y-%m-%d %H:%M:%S',
+                #{params.beginTime})
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                <!-- 结束时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', pack.create_time) &lt;= strftime('%Y-%m-%d %H:%M:%S',
+                #{params.endTime})
+            </if>
+        </where>
+        order by create_time ${isAsc}
+    </select>
+
+    <insert id="insertOne">
+        insert into stat_battery_pack (create_time,
+                                       config_id,
+                                       pack_num,
+                                       pack_voltage,
+                                       pack_current,
+                                       battery_pack_float_current,
+                                       environment_temperature1,
+                                       environment_temperature2,
+                                       bcapacity,
+                                       hydrogen_concentration)
+        values (datetime(CURRENT_TIMESTAMP, 'localtime'),
+                #{configId},
+                #{packNum},
+                #{packVoltage},
+                #{packCurrent},
+                #{batteryPackFloatCurrent},
+                #{environmentTemperature1},
+                #{environmentTemperature2},
+                #{bcapacity},
+                #{hydrogenConcentration})
+    </insert>
+
+
+    <insert id="insertList" parameterType="com.shanhe.project.energy.stat.domain.StatBatteryPack">
+        insert into stat_battery_pack (
+        id,
+        create_time,
+        config_id,
+        pack_num ,
+        pack_voltage ,
+        pack_current ,
+        battery_pack_float_current ,
+        environment_temperature1 ,
+        environment_temperature2 ,
+        bcapacity ,
+        hydrogen_concentration
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.id} ,
+            datetime(CURRENT_TIMESTAMP,'localtime') ,
+            #{item.configId} ,
+            #{item.packNum} ,
+            #{item.packVoltage} ,
+            #{item.packCurrent} ,
+            #{item.batteryPackFloatCurrent} ,
+            #{item.environmentTemperature1} ,
+            #{item.environmentTemperature2} ,
+            #{item.bcapacity} ,
+            #{item.hydrogenConcentration}
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteByConfigId">
+        delete
+        from stat_battery_pack
+        where config_id = #{configId}
+        <if test="packNum != null ">
+            and pack_num = #{packNum}
+        </if>
+    </delete>
+
+    <select id="getAvgCurrent" resultType="java.lang.Double">
+        select
+        avg(t.pack_current) as current
+        from stat_battery_pack t
+        <where>
+            <if test="packNum != null  and packNum != ''">
+                and t.pack_num = #{packNum}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                <!-- 开始时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', t.create_time) &gt;= strftime('%Y-%m-%d %H:%M:%S',
+                #{params.beginTime})
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                <!-- 结束时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', t.create_time) &lt;= strftime('%Y-%m-%d %H:%M:%S',
+                #{params.endTime})
+            </if>
+            <if test=" configId != null ">
+                and config_id = #{configId}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectCount" parameterType="com.shanhe.project.energy.stat.domain.StatBatteryPack"
+            resultType="java.lang.Long">
+        select count()
+        from stat_battery_pack pack
+        <where>
+            <if test="configId != null ">
+                and pack.config_id = #{configId}
+            </if>
+            <if test="packNum != null ">
+                and pack.pack_num = #{packNum}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                <!-- 开始时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', pack.create_time) &gt;= strftime('%Y-%m-%d %H:%M:%S',
+                #{params.beginTime})
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                <!-- 结束时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', pack.create_time) &lt;= strftime('%Y-%m-%d %H:%M:%S',
+                #{params.endTime})
+            </if>
+        </where>
+    </select>
+</mapper>

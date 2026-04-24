@@ -1,0 +1,1 @@
+import{P as t}from"./index-B9KlqfFD.js";const o=t("index",{state:()=>({batteryShow:!1,upsShow:!1,airShow:!1,deteShow:!1,jmairShow:!1}),actions:{setbatteryShow(e){this.batteryShow=e},setupsShow(e){this.upsShow=e},setAirShow(e){this.airShow=e},setDeteShow(e){this.deteShow=e},setJmairShow(e){this.jmairShow=e}}});export{o as u};

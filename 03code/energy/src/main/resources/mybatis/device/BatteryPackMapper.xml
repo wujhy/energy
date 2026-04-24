@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shanhe.project.device.config.mapper.BatteryPackMapper">
+    <resultMap type="com.shanhe.project.device.config.domain.BatteryPack" id="BatteryPackResult">
+        <result property="packId" column="pack_id"/>
+        <result property="configId" column="config_id"/>
+        <result property="packNum" column="pack_num"/>
+        <result property="batSinSize" column="bat_sin_size"/>
+        <result property="batSinModel" column="bat_sin_model"/>
+        <result property="batBrand" column="bat_brand"/>
+        <result property="batModel" column="bat_model"/>
+        <result property="batCapacity" column="bat_capacity"/>
+        <result property="status" column="status"/>
+        <result property="isAllowPower" column="is_allow_power"/>
+        <result property="isEnabled" column="is_enabled"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="productionTime" column="production_time"/>
+        <result property="voltageRange" column="voltage_range"/>
+        <result property="isShowConnect" column="is_show_connect"/>
+    </resultMap>
+
+    <sql id="selectBatteryPackVo">
+        battery.pack_id,
+        battery.config_id,
+        battery.pack_num,
+        battery.bat_sin_size,
+        battery.bat_sin_model,
+        battery.bat_brand,
+        battery.bat_model,
+        battery.bat_capacity,
+        battery.status,
+        battery.is_enabled,
+        battery.is_allow_power,
+        battery.create_time,
+        battery.update_time,
+        battery.production_time,
+        battery.voltage_range,
+        battery.is_show_connect
+    </sql>
+
+    <select id="selectBatteryPackListConfigId" resultMap="BatteryPackResult">
+        select
+        <include refid="selectBatteryPackVo"/>
+        from dev_battery_pack battery
+        <where>
+            <if test="configId != null ">
+                and battery.config_id = #{configId}
+            </if>
+            <if test="isEnabled != null ">
+                and battery.is_enabled = #{isEnabled}
+            </if>
+        </where>
+        order by battery.pack_num
+    </select>
+
+    <select id="selectBatteryInfoByPackNum" resultMap="BatteryPackResult">
+        select
+        <include refid="selectBatteryPackVo"/>
+        from dev_battery_pack battery
+        where config_id = #{configId} and pack_num = #{packNum} order by create_time desc limit 1
+    </select>
+
+    <insert id="insertBatteryPack" parameterType="com.shanhe.project.device.config.domain.BatteryPack">
+        insert into dev_battery_pack
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="packId != null">
+                pack_id,
+            </if>
+            <if test="configId != null">
+                config_id,
+            </if>
+            <if test="packNum != null">
+                pack_num,
+            </if>
+            <if test="batSinSize != null">
+                bat_sin_size,
+            </if>
+            <if test="batSinModel != null">
+                bat_sin_model,
+            </if>
+            <if test="batBrand != null">
+                bat_brand,
+            </if>
+            <if test="batModel != null">
+                bat_model,
+            </if>
+            <if test="batCapacity != null">
+                bat_capacity,
+            </if>
+            <if test="status != null">
+                status,
+            </if>
+            <if test="isEnabled != null">
+                is_enabled,
+            </if>
+            <if test="isAllowPower != null">
+                is_allow_power,
+            </if>
+            create_time,
+            update_time,
+            <if test="productionTime != null">
+                production_time,
+            </if>
+            <if test="isShowConnect != null">
+                is_show_connect,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="packId != null">
+                #{packId},
+            </if>
+            <if test="configId != null">
+                #{configId},
+            </if>
+            <if test="packNum != null">
+                #{packNum},
+            </if>
+            <if test="batSinSize != null">
+                #{batSinSize},
+            </if>
+            <if test="batSinModel != null">
+                #{batSinModel},
+            </if>
+            <if test="batBrand != null">
+                #{batBrand},
+            </if>
+            <if test="batModel != null">
+                #{batModel},
+            </if>
+            <if test="batCapacity != null">
+                #{batCapacity},
+            </if>
+            <if test="status != null">
+                #{status},
+            </if>
+            <if test="isEnabled != null">
+                #{isEnabled},
+            </if>
+            <if test="isAllowPower != null">
+                #{isAllowPower},
+            </if>
+            datetime(CURRENT_TIMESTAMP,'localtime'),
+            datetime(CURRENT_TIMESTAMP,'localtime'),
+            <if test="productionTime != null">
+                #{productionTime},
+            </if>
+            <if test="isShowConnect != null">
+                #{isShowConnect},
+            </if>
+        </trim>
+    </insert>
+
+    <insert id="importBatteryPack" parameterType="com.shanhe.project.device.config.domain.BatteryPack">
+        INSERT OR REPLACE INTO dev_battery_pack (
+        pack_id,
+        config_id,
+        pack_num,
+        bat_sin_size,
+        bat_sin_model,
+        bat_brand,
+        bat_model,
+        bat_capacity,
+        status,
+        is_enabled,
+        is_allow_power,
+        create_time,
+        update_time,
+        production_time,
+        is_show_connect
+        ) values
+        <foreach collection="batteryPacks" item="item" separator=",">
+            (
+            #{item.packId},
+            #{item.configId},
+            #{item.packNum},
+            #{item.batSinSize},
+            #{item.batSinModel},
+            #{item.batBrand},
+            #{item.batModel},
+            #{item.batCapacity},
+            #{item.status},
+            #{item.isEnabled},
+            #{item.isAllowPower},
+            datetime(CURRENT_TIMESTAMP,'localtime'),
+            datetime(CURRENT_TIMESTAMP,'localtime'),
+            #{item.productionTime},
+            #{item.isShowConnect}
+            )
+        </foreach>
+    </insert>
+
+    <update id="update" parameterType="com.shanhe.project.device.config.domain.BatteryPack">
+        update dev_battery_pack SET
+        <if test="batBrand != null and batBrand != ''">
+            bat_brand = #{batBrand},
+        </if>
+        <if test="batModel != null and batModel != ''">
+            bat_model = #{batModel},
+        </if>
+        <if test="batSinSize != null">
+            bat_sin_size = #{batSinSize},
+        </if>
+        <if test="batSinModel != null">
+            bat_sin_model = #{batSinModel},
+        </if>
+        <if test="batCapacity != null">
+            bat_capacity = #{batCapacity},
+        </if>
+        <if test="status != null">
+            status = #{status},
+        </if>
+        <if test="isEnabled != null">
+            is_enabled = #{isEnabled},
+        </if>
+        <if test="isAllowPower != null">
+            is_allow_power = #{isAllowPower},
+        </if>
+        <if test="productionTime != null">
+            production_time = #{productionTime},
+        </if>
+        <if test=" voltageRange != null ">
+            voltage_range = #{voltageRange},
+        </if>
+        <if test="isShowConnect != null">
+            is_show_connect = #{isShowConnect},
+        </if>
+        update_time = datetime(CURRENT_TIMESTAMP,'localtime')
+        where pack_id = #{packId}
+    </update>
+
+    <select id="selectBatteryPackByPackId" parameterType="Long" resultMap="BatteryPackResult">
+        select
+        <include refid="selectBatteryPackVo"/>
+        from dev_battery_pack battery
+        where battery.pack_id = #{packId}
+    </select>
+
+    <select id="selectBatteryPackByConfigIds" resultMap="BatteryPackResult">
+        select
+        <include refid="selectBatteryPackVo"/>
+        from dev_battery_pack battery
+        where battery.config_id in
+        <foreach collection="configIds" item="configId" open="(" close=")" separator=",">
+            #{configId}
+        </foreach>
+    </select>
+
+    <select id="selectBatteryPackList" parameterType="com.shanhe.project.device.config.domain.BatteryPack"
+            resultMap="BatteryPackResult">
+        select
+        <include refid="selectBatteryPackVo"/>
+        from dev_battery_pack battery
+        left join dev_config base on base.config_id = battery.config_id
+        <where>
+            <if test="configId != null ">
+                and battery.config_id = #{configId}
+            </if>
+            <if test="packNum != null ">
+                and battery.pack_num = #{packNum}
+            </if>
+            <if test="batSinSize != null ">
+                and battery.bat_sin_size = #{batSinSize}
+            </if>
+            <if test="batSinModel != null ">
+                and battery.bat_sin_model = #{batSinModel}
+            </if>
+            <if test="batBrand != null  and batBrand != ''">
+                and battery.bat_brand = #{batBrand}
+            </if>
+            <if test="batModel != null  and batModel != ''">
+                and battery.bat_model = #{batModel}
+            </if>
+            <if test="batCapacity != null ">
+                and battery.bat_capacity = #{batCapacity}
+            </if>
+            <if test="status != null ">
+                and battery.status = #{status}
+            </if>
+            <if test="isEnabled != null ">
+                and battery.is_enabled = #{isEnabled}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectAllBattery" parameterType="com.shanhe.project.device.config.domain.BatteryPack"
+            resultMap="BatteryPackResult">
+        select
+        <include refid="selectBatteryPackVo"/>
+        from dev_battery_pack battery
+        left join dev_config base on base.config_id = battery.config_id
+    </select>
+
+    <delete id="deleteByConfigIds">
+        delete from dev_battery_pack where config_id in
+        <foreach item="configId" collection="configIds" open="(" separator="," close=")">
+            #{configId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteBatteryPackByBatPackIds">
+        delete from dev_battery_pack where pack_id in
+        <foreach item="packId" collection="packIds" open="(" separator="," close=")">
+            #{packId}
+        </foreach>
+    </delete>
+
+    <select id="selectBatteryPackByPackIds" resultMap="BatteryPackResult">
+        select
+        <include refid="selectBatteryPackVo"/>
+        from dev_battery_pack battery
+        where pack_id in
+        <foreach item="packId" collection="packIds" open="(" separator="," close=")">
+            #{packId}
+        </foreach>
+    </select>
+
+    <select id="getBatteryMaxNumber" resultType="java.lang.Integer">
+        select bat_sin_size
+        from dev_battery_pack battery
+        <where>
+            <if test=" configId != null ">
+                battery.config_id = #{configId}
+            </if>
+            <if test=" packNum != null ">
+                and battery.pack_num = #{packNum}
+            </if>
+        </where>
+        order by bat_sin_size desc
+        limit 1
+    </select>
+</mapper>

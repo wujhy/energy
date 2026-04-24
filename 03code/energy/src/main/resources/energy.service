@@ -1,0 +1,23 @@
+[Unit]
+Description=shanhe energy
+After=network.target
+
+[Service]
+Type=forking
+User=root
+StandardOutput=append:/opt/energy/logs/sys-script.log
+StandardError=append:/opt/energy/logs/sys-script.log
+ExecStart=/bin/bash /opt/energy/energy.sh startOrRevert
+ExecStop=/bin/bash /opt/energy/energy.sh stop
+ExecReload=/bin/bash /opt/energy/energy.sh deploy
+Restart=on-failure
+WorkingDirectory=/opt/energy
+# 服务停止时重启
+# Restart=1
+RestartSec=20s
+# 服务超时时间
+TimeoutStartSec=300
+TimeoutStopSec=300
+
+[Install]
+WantedBy=multi-user.target

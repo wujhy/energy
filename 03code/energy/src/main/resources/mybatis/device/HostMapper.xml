@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shanhe.project.device.host.mapper.HostMapper">
+
+    <resultMap type="com.shanhe.project.device.host.domain.Host" id="HostResult">
+        <result property="hostId"    column="host_id"    />
+        <result property="name"    column="name"    />
+        <result property="account"    column="account"    />
+        <result property="password"    column="password"    />
+        <result property="type"    column="type"    />
+        <result property="deviceType"    column="device_type"    />
+        <result property="status"    column="status"    />
+        <result property="picture"    column="picture"    />
+        <result property="address"    column="address"    />
+        <result property="lng"    column="lng"    />
+        <result property="lat"    column="lat"    />
+        <result property="contacts"    column="contacts"    />
+        <result property="phone"    column="phone"    />
+        <result property="ip"    column="ip"    />
+        <result property="ipAddr"    column="ip_addr"    />
+        <result property="subIp"    column="sub_ip"    />
+        <result property="netIp"    column="net_ip"    />
+        <result property="port"    column="port"    />
+        <result property="deviceIp"    column="device_ip"    />
+        <result property="devicePort"    column="device_port"    />
+        <result property="needReport"    column="need_report"    />
+        <result property="reportIp"    column="report_ip"    />
+        <result property="reportPort"    column="report_port"    />
+        <result property="spaceTime"    column="space_time"    />
+        <result property="deviceSpaceTime"    column="device_space_time"    />
+        <result property="storageTime"    column="storage_time"    />
+        <result property="cleanLogDays"    column="clean_log_days"    />
+        <result property="num"    column="num"    />
+        <result property="mac"    column="mac"    />
+        <result property="imei"    column="imei"    />
+        <result property="model"    column="model"    />
+        <result property="version"    column="version"    />
+        <result property="remark"    column="remark"    />
+        <result property="configData"    column="config_data"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <select id="getDetail" resultMap="HostResult">
+        select host_id, name, account, password, type, device_type, status, picture, address, lng, lat, contacts, phone,
+               ip, ip_addr, sub_ip, net_ip, port, device_ip, device_port, need_report, report_ip, report_port, space_time,
+               device_space_time, storage_time, num, mac, imei, model, version, remark, config_data, create_time, update_time,
+               clean_log_days
+        from dev_host limit 1
+    </select>
+
+    <update id="updateHost" parameterType="com.shanhe.project.device.host.domain.Host">
+        update dev_host
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null">name = #{name},</if>
+            <if test="account != null and account != ''">account = #{account},</if>
+            <if test="password != null and password != ''">password = #{password},</if>
+            <if test="type != null and type != ''">type = #{type},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="deviceType != null and deviceType != ''">device_type = #{deviceType},</if>
+            <if test="picture != null">picture = #{picture},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="lng != null">lng = #{lng},</if>
+            <if test="lat != null">lat = #{lat},</if>
+            <if test="contacts != null">contacts = #{contacts},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="ip != null">ip = #{ip},</if>
+            <if test="ipAddr != null">ip_addr = #{ipAddr},</if>
+            <if test="subIp != null">sub_ip = #{subIp},</if>
+            <if test="netIp != null">net_ip = #{netIp},</if>
+            <if test="port != null">port = #{port},</if>
+            <if test="deviceIp != null">device_ip = #{deviceIp},</if>
+            <if test="devicePort != null">device_port = #{devicePort},</if>
+            <if test="needReport != null">need_report = #{needReport},</if>
+            <if test="reportIp != null">report_ip = #{reportIp},</if>
+            <if test="reportPort == 0">report_port = null,</if>
+            <if test="reportPort != null">report_port = #{reportPort},</if>
+            <if test="spaceTime != null">space_time = #{spaceTime},</if>
+            <if test="deviceSpaceTime != null">device_space_time = #{deviceSpaceTime},</if>
+            <if test="storageTime != null">storage_time = #{storageTime},</if>
+            <if test="cleanLogDays != null">clean_log_days = #{cleanLogDays},</if>
+            <if test="num != null">num = #{num},</if>
+            <if test="mac != null">mac = #{mac},</if>
+            <if test="imei != null">imei = #{imei},</if>
+            <if test="model != null">model = #{model},</if>
+            <if test="version != null">version = #{version},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="configData != null">config_data = #{configData},</if>
+            <if test="createTimeStr != null">create_time = #{createTimeStr},</if>
+            update_time = (datetime(CURRENT_TIMESTAMP,'localtime'))
+        </trim>
+        where host_id = #{hostId}
+    </update>
+
+    <insert id="inset">
+        INSERT INTO dev_host
+        (host_id, name, account, password, status, picture, address, lng, lat, contacts, phone, ip, ip_addr, sub_ip,
+         net_ip,
+         port, device_ip, device_port, need_report, report_ip, report_port, space_time, device_space_time, num, "type",
+         device_type, mac, imei, model, version, remark, config_data, update_time,storage_time,clean_log_days, extend1, extend2, extend3, extend4)
+        VALUES (1, '', 'shanHe', 'shanHe168', 0, '100', '广东省广州市黄埔区', '321', '123', '', '', null,
+                'eth1',
+                null, null, null, null, null, 1, null, null, NULL, 30, null,
+                '2CM03N',
+                1, null, NULL, 0, 'V0.1', null, ' ', CURRENT_TIMESTAMP,60, 5,NULL, NULL, NULL, NULL);
+    </insert>
+
+    <delete id="delete">
+        delete
+        from dev_host;
+    </delete>
+</mapper>

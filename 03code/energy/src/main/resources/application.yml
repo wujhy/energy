@@ -1,0 +1,104 @@
+# 开发环境配置
+server:
+  # 服务器的HTTP端口，默认为80
+  port: 8081
+  servlet:
+    # 应用的访问路径
+    context-path: /
+  #  tomcat:
+  #    # tomcat的URI编码
+  #    uri-encoding: UTF-8
+  #    # 连接数满后的排队数，默认为100
+  #    accept-count: 50
+  #    threads:
+  #      # tomcat最大线程数，默认为200
+  #      max: 50
+  #      # Tomcat启动初始化的线程数，默认值10
+  #      min-spare: 5
+  undertow:
+    threads:
+      # 阻塞任务线程池, 当执行类似servlet请求阻塞IO操作, undertow会从这个线程池中取得线程
+      # 它的值设置取决于系统线程执行任务的阻塞系数，默认值是IO线程数*8
+      io: 4
+      worker: 32
+    # 以下的配置会影响buffer,这些buffer会用于服务器连接的IO操作,有点类似netty的池化内存管理
+    # 每块buffer的空间大小,越小的空间被利用越充分，不要设置太大，以免影响其他应用，合适即可
+    buffer-size: 1024
+    # 是否分配的直接内存(NIO直接分配的堆外内存)
+    direct-buffers: false
+
+# Spring配置
+spring:
+  flyway:
+    enabled: false
+  task:
+    scheduling:
+      thread-name-prefix: schedule-
+      pool:
+        size: 2
+  application:
+    name: shanhe-energy-single
+    version: 3.0
+  # 模板引擎
+  thymeleaf:
+    mode: HTML
+    encoding: utf-8
+    # 禁用缓存
+    cache: false
+    prefix: classpath:/dist/
+  # 资源信息
+  messages:
+    # 国际化资源文件路径
+    basename: static/i18n/messages
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+  profiles:
+    active: @spring.active@
+  # 文件上传
+  servlet:
+    multipart:
+      # 单个文件大小
+      max-file-size:  150MB
+      # 设置总上传的文件大小
+      max-request-size:  200MB
+  web:
+    resources:
+      static-locations: classpath:/dist/
+  cache:
+    type: ehcache
+    ehcache:
+      config: classpath:ehcache/ehcache.xml
+
+
+# MyBatis
+mybatis:
+  # 搜索指定包别名
+  typeAliasesPackage: com.shanhe.project.**.domain
+  # 配置mapper的扫描，找到所有的mapper.xml映射文件
+  mapperLocations: classpath:mybatis/**/*Mapper.xml
+  # 加载全局的配置文件
+  configLocation: classpath:mybatis/mybatis-config.xml
+  executor-type: batch
+
+# PageHelper分页插件
+pagehelper:
+  helperDialect: mysql
+  supportMethodsArguments: true
+  params: count=countSql
+
+# 防止XSS攻击
+xss:
+  # 过滤开关
+  enabled: false
+  # 排除链接（多个用逗号分隔）
+  excludes: /system/notice/*
+  # 匹配链接
+  urlPatterns: /system/*,/monitor/*,/tool/*
+
+# 日志配置
+logging:
+  level:
+    com.shanhe: debug
+    org.springframework: warn
+    org.apache.shiro.cache.ehcache: warn

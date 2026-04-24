@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shanhe.project.device.opt.mapper.OptLogMapper">
+
+    <resultMap id="BaseResultMap" type="com.shanhe.project.device.opt.domain.OptLog">
+            <id property="id" column="id" />
+            <result property="configId" column="config_id" />
+            <result property="packNum" column="pack_num" />
+            <result property="type" column="type" />
+            <result property="content" column="content" />
+            <result property="result" column="result" />
+            <result property="createTime" column="create_time" />
+            <result property="updateTime" column="update_time" />
+        <result property="bcapacity" column="bcapacity" />
+        <result property="current" column="current" />
+        <result property="dischargeCapacity" column="discharge_capacity" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,config_id,pack_num,type,content,result,create_time,update_time,bcapacity,current,discharge_capacity
+    </sql>
+
+    <insert id="insert">
+        insert into dev_opt_log (id,config_id,pack_num,type,content,result,create_time)
+        values (#{id},#{configId},#{packNum},#{type},#{content},#{result},#{createTimeStr})
+    </insert>
+
+    <update id="update">
+        update dev_opt_log
+        set result      = #{result},
+            update_time = #{updateTimeStr}
+        where id = #{id}
+    </update>
+
+    <select id="select" parameterType="com.shanhe.project.device.opt.domain.OptLog" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from dev_opt_log
+        <where>
+            <if test="result != null "> and result = #{result}</if>
+            <if test="type != null "> and type = #{type}</if>
+            <if test="configId != null "> and config_id = #{configId}</if>
+            <if test="packNum != null "> and pack_num = #{packNum}</if>
+            <if test="params != null and params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', create_time) &gt;= strftime('%Y-%m-%d %H:%M:%S', #{params.beginTime})
+            </if>
+            <if test="params != null and params.endTime != null and params.endTime != ''"><!-- 结束时间检索 -->
+                and strftime('%Y-%m-%d %H:%M:%S', create_time) &lt;= strftime('%Y-%m-%d %H:%M:%S', #{params.endTime})
+            </if>
+        </where>
+        order by id desc
+    </select>
+
+    <delete id="deleteByIds">
+        delete from dev_opt_log where id in
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteByConfigIds">
+        delete from dev_opt_log where config_id in
+        <foreach item="id" collection="configIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="findRunningList" parameterType="com.shanhe.project.device.opt.domain.OptLog" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from dev_opt_log where result is null order by create_time desc
+    </select>
+
+    <update id="updateBattery">
+        update dev_opt_log
+        set
+        <if test=" bcapacity != null and bcapacity != '' ">
+            bcapacity = #{bcapacity},
+        </if>
+        <if test=" dischargeCapacity != null ">
+            discharge_capacity = #{dischargeCapacity},
+        </if>
+        <if test=" current != null ">
+            current = #{current},
+        </if>
+        update_time = #{endTimeStr}
+        where id = #{id}
+    </update>
+
+
+    <select id="getRunningOptLog" parameterType="com.shanhe.project.device.opt.domain.OptLog" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from dev_opt_log
+        where type = #{type} and config_id = #{configId} and result is null
+        <if test="packNum != null">
+            and pack_num = #{packNum}
+        </if>
+        limit 1
+    </select>
+
+    <select id="count" resultType="java.lang.Integer">
+        select count(1) from dev_opt_log
+        <where>
+            <if test="configId != null ">
+                and config_id = #{configId}
+            </if>
+            <if test="packNum != null ">
+                and pack_num = #{packNum}
+            </if>
+            <if test="types != null and types.size() > 0 ">
+                and type in
+                <foreach item="item" collection="types" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="lastByType" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from dev_opt_log
+        where type = #{type}
+        and config_id = #{configId}
+        and pack_num = #{packNum}
+        order by id desc
+        limit 1
+    </select>
+
+    <delete id="deleteByConfigIdPackNum">
+        delete from dev_opt_log where config_id = #{configId} and pack_num = #{packNum}
+    </delete>
+</mapper>
