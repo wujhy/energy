@@ -1,7 +1,10 @@
 package com.shanhe.project.collector.battery.model;
 
 /**
- * Parsed 600-cell module frame data category.
+ * 600节模块端解析数据类型。
+ *
+ * @author wjh
+ * @since 2026-04-28
  */
 public enum BatteryModuleDataType {
 

@@ -11,14 +11,32 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Battery RS485 frame codec.
+ * 蓄电池 RS485 帧编解码器。
+ *
+ * @author wjh
+ * @since 2026-04-28
  */
 @Component
 public class BatteryCollectorFrameCodec {
 
+    /**
+     * 协议固定帧头。
+     */
     private static final byte[] START = "START".getBytes(StandardCharsets.US_ASCII);
+
+    /**
+     * 无载荷时的最小完整帧长度。
+     */
     private static final int FIXED_LENGTH = 10;
 
+    /**
+     * 构造 600 节模块端请求帧。
+     *
+     * @param address 模块地址
+     * @param command 请求命令码
+     * @param payload 信息域
+     * @return 请求帧
+     */
     public BatteryCollectorFrame buildRequest(int address, int command, byte[] payload) {
         byte[] value = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
         return BatteryCollectorFrame.builder()
@@ -32,6 +50,13 @@ public class BatteryCollectorFrameCodec {
                 .build();
     }
 
+    /**
+     * 从接收缓冲中解析完整帧，保留半包残留。
+     *
+     * @param source 接收字节
+     * @param length 有效长度
+     * @return 解码结果
+     */
     public DecodeResult decode(byte[] source, int length) {
         List<BatteryCollectorFrame> frames = new ArrayList<>();
         if (source == null || length <= 0) {
@@ -126,8 +151,14 @@ public class BatteryCollectorFrameCodec {
     @Builder
     public static class DecodeResult {
 
+        /**
+         * 已解析出的完整帧。
+         */
         private final List<BatteryCollectorFrame> frames;
 
+        /**
+         * 未形成完整帧的残留字节。
+         */
         private final byte[] remaining;
     }
 }

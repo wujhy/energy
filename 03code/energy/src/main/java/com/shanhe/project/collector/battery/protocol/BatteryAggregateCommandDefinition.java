@@ -5,8 +5,8 @@ import lombok.Getter;
 /**
  * 980节 PC/网络端聚合命令定义。
  *
- * <p>这些命令来自 `3_CM-02N 980节协议B0版_PC端` 和
- * `3_CM-02N 980节协议B0版_网络端`，不允许作为 600 节下行采集模块端自动轮询命令。
+ * @author wjh
+ * @since 2026-04-28
  */
 @Getter
 public enum BatteryAggregateCommandDefinition {
@@ -64,8 +64,19 @@ public enum BatteryAggregateCommandDefinition {
     READ_DEVICE_IP_ADDRESS(0x61, 0xB1, "读取设备IP地址"),
     READ_CLOUD_SERVER_IP_ADDRESS(0x62, 0xB2, "读取云服务器IP地址");
 
+    /**
+     * 980 聚合请求命令码。
+     */
     private final int requestCode;
+
+    /**
+     * 980 聚合响应命令码。
+     */
     private final int responseCode;
+
+    /**
+     * 命令说明。
+     */
     private final String description;
 
     BatteryAggregateCommandDefinition(int requestCode, int responseCode, String description) {

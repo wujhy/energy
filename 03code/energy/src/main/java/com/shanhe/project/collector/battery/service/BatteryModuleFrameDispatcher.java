@@ -13,18 +13,31 @@ import java.util.List;
 /**
  * 600节采集模块端帧分发器。
  *
- * <p>当前只分发 600 节模块端帧到显式注册的 consumer，不默认桥接旧 BatteryHandler。
+ * @author wjh
+ * @since 2026-04-28
  */
 @Slf4j
 @Component
 public class BatteryModuleFrameDispatcher {
 
+    /**
+     * 帧摘要服务。
+     */
     @Autowired
     private BatteryModuleFrameSummaryService summaryService;
 
+    /**
+     * 显式注册的帧消费者。
+     */
     @Autowired(required = false)
     private List<BatteryModuleFrameConsumer> consumers = new ArrayList<>();
 
+    /**
+     * 分发 600 节模块端帧。
+     *
+     * @param channelConfig 通道配置
+     * @param frame 协议帧
+     */
     public void dispatch(BatteryCollectorChannelConfig channelConfig, BatteryCollectorFrame frame) {
         BatteryModuleFrameSummary summary = summaryService.summarize(frame);
         if (summary != null) {
@@ -37,6 +50,7 @@ public class BatteryModuleFrameDispatcher {
                     summary.getPayloadLength());
         }
 
+        // 后续入库、计算、兼容输出都从 consumer 扩展，不在这里耦合旧业务。
         for (BatteryModuleFrameConsumer consumer : consumers) {
             consumer.consume(channelConfig, frame, summary);
         }

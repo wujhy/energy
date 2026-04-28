@@ -8,19 +8,34 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Per-thread polling context used to associate realtime rows with one 600-module scan round.
+ * 600节模块端轮询批次上下文。
+ *
+ * @author wjh
+ * @since 2026-04-28
  */
 @Data
 @Builder
 public class BatteryModulePollContext {
 
+    /**
+     * 轮询批次号。
+     */
     private String pollBatchNo;
 
+    /**
+     * 轮询开始时间。
+     */
     private Date pollStartedAt;
 
+    /**
+     * 当前批次内缓存的单体实时数据。
+     */
     @Builder.Default
     private List<BatteryModuleCellRealtime> cells = new ArrayList<>();
 
+    /**
+     * 当前批次内缓存的组实时数据。
+     */
     @Builder.Default
     private List<BatteryModuleGroupRealtime> groups = new ArrayList<>();
 }

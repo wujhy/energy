@@ -110,7 +110,6 @@ report:
     register: "0 0/10 * * * ?"
 
 # 蓄电池独立采集模块
-# 蓄电池独立采集模块
 battery-collector:
     collector:
         enabled: false

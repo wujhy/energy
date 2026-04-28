@@ -129,3 +129,142 @@ report:
     dataReport: "0/20 * * * * ?"
     heartbeat: "0 0/1 * * * ?"
     register: "0 0/10 * * * ?"
+
+# 蓄电池独立采集模块
+battery-collector:
+  collector:
+#    enabled: false
+#    autoPollEnabled: false
+#    debugEnabled: false
+#    debugChannels: []
+#    activeChannels: []
+    # 单通道联调示例：
+    enabled: true
+    autoPollEnabled: true
+    debugEnabled: true
+    debugChannels: [ battery-group-1 ]
+    activeChannels: [ battery-group-1 ]
+    loopDelayMs: 300
+    requestGapMs: 120
+    rawFrameLogEnabled: false
+    realtimeDataEnabled: false
+    groupCalculationEnabled: false
+    groupCalculationStaleThresholdMs: 180000
+    moduleAddressCacheEnabled: true
+    moduleAddressMissThreshold: 3
+    moduleAddressFullDiscoveryIntervalMs: 0
+    channels:
+      - name: battery-group-1
+        enabled: true
+        portName: COM4
+        baudRate: 9600
+        dataBits: 8
+        stopBits: 1
+        parity: 0
+        timeoutMs: 1000
+        pollIntervalMs: 3000
+        responseTimeoutMs: 1500
+        readBufferSize: 2048
+        receiveBufferLimit: 8192
+        maxRetryCount: 2
+        deviceAddress: 1
+        moduleAddressStart: 1
+        moduleAddressEnd: 246
+        batteryPort: 1
+        batteryChannel: 1
+        batteryGroup: 1
+      - name: battery-group-2
+        enabled: false
+        portName: ttyS10
+        baudRate: 9600
+        dataBits: 8
+        stopBits: 1
+        parity: 0
+        timeoutMs: 1000
+        pollIntervalMs: 3000
+        responseTimeoutMs: 1500
+        readBufferSize: 2048
+        receiveBufferLimit: 8192
+        maxRetryCount: 2
+        deviceAddress: 1
+        moduleAddressStart: 1
+        moduleAddressEnd: 246
+        batteryPort: 2
+        batteryChannel: 1
+        batteryGroup: 2
+      - name: battery-group-3
+        enabled: false
+        portName: ttyS11
+        baudRate: 9600
+        dataBits: 8
+        stopBits: 1
+        parity: 0
+        timeoutMs: 1000
+        pollIntervalMs: 3000
+        responseTimeoutMs: 1500
+        readBufferSize: 2048
+        receiveBufferLimit: 8192
+        maxRetryCount: 2
+        deviceAddress: 1
+        moduleAddressStart: 1
+        moduleAddressEnd: 246
+        batteryPort: 3
+        batteryChannel: 1
+        batteryGroup: 3
+      - name: battery-group-4
+        enabled: false
+        portName: ttyS12
+        baudRate: 9600
+        dataBits: 8
+        stopBits: 1
+        parity: 0
+        timeoutMs: 1000
+        pollIntervalMs: 3000
+        responseTimeoutMs: 1500
+        readBufferSize: 2048
+        receiveBufferLimit: 8192
+        maxRetryCount: 2
+        deviceAddress: 1
+        moduleAddressStart: 1
+        moduleAddressEnd: 246
+        batteryPort: 4
+        batteryChannel: 1
+        batteryGroup: 4
+      - name: battery-group-5
+        enabled: false
+        portName: ttyS13
+        baudRate: 9600
+        dataBits: 8
+        stopBits: 1
+        parity: 0
+        timeoutMs: 1000
+        pollIntervalMs: 3000
+        responseTimeoutMs: 1500
+        readBufferSize: 2048
+        receiveBufferLimit: 8192
+        maxRetryCount: 2
+        deviceAddress: 1
+        moduleAddressStart: 1
+        moduleAddressEnd: 246
+        batteryPort: 5
+        batteryChannel: 1
+        batteryGroup: 5
+      - name: battery-group-6
+        enabled: false
+        portName: ttyS14
+        baudRate: 9600
+        dataBits: 8
+        stopBits: 1
+        parity: 0
+        timeoutMs: 1000
+        pollIntervalMs: 3000
+        responseTimeoutMs: 1500
+        readBufferSize: 2048
+        receiveBufferLimit: 8192
+        maxRetryCount: 2
+        deviceAddress: 1
+        moduleAddressStart: 1
+        moduleAddressEnd: 246
+        batteryPort: 6
+        batteryChannel: 1
+        batteryGroup: 6

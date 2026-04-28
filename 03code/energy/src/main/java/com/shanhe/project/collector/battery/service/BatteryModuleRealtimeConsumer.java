@@ -16,18 +16,36 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 
 /**
- * Optional consumer that stores parsed 600-cell module data into standard realtime tables.
+ * 600节模块端实时数据入库消费器。
+ *
+ * @author wjh
+ * @since 2026-04-28
  */
 @Slf4j
 @Component
 public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer {
 
+    /**
+     * 采集模块配置。
+     */
     @Resource
     private BatteryCollectorProperties properties;
+
+    /**
+     * 600 节模块端帧解析服务。
+     */
     @Resource
     private BatteryModuleFrameDataParserService parserService;
+
+    /**
+     * 实时数据 Mapper。
+     */
     @Resource
     private BatteryModuleRealtimeMapper realtimeMapper;
+
+    /**
+     * 电池组指标计算服务。
+     */
     @Resource
     private BatteryModuleGroupCalculationService calculationService;
 
@@ -78,12 +96,18 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
         return dataType == BatteryModuleDataType.ARRAY_MODULE_INFO;
     }
 
+    /**
+     * 批量刷写当前轮询批次内缓存的实时数据。
+     *
+     * @param channelConfig 通道配置
+     */
     public void flushCurrentPollBatch(BatteryCollectorChannelConfig channelConfig) {
         BatteryModulePollContext context = BatteryModulePollContextHolder.get();
         if (context == null) {
             return;
         }
         try {
+            // 轮询线程内先聚合，再批量写库，避免 600 节单体逐条放大写入压力。
             if (!context.getCells().isEmpty()) {
                 realtimeMapper.upsertCells(context.getCells());
             }

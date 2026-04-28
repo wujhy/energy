@@ -11,20 +11,44 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Calculates group-level battery metrics from the standard realtime model.
+ * 电池组指标计算服务。
+ *
+ * @author wjh
+ * @since 2026-04-28
  */
 @Service
 public class BatteryModuleGroupCalculationService {
 
+    /**
+     * 默认单体实时数据新鲜度阈值。
+     */
     private static final long DEFAULT_STALE_THRESHOLD_MS = 180_000L;
 
+    /**
+     * 实时数据 Mapper。
+     */
     @Resource
     private BatteryModuleRealtimeMapper realtimeMapper;
 
+    /**
+     * 按默认新鲜度阈值计算并保存电池组指标。
+     *
+     * @param channelName 通道名称
+     * @param batteryGroup 电池组编号
+     * @return 计算结果
+     */
     public BatteryModuleGroupCalculation calculateAndSave(String channelName, Integer batteryGroup) {
         return calculateAndSave(channelName, batteryGroup, DEFAULT_STALE_THRESHOLD_MS);
     }
 
+    /**
+     * 计算并保存电池组指标。
+     *
+     * @param channelName 通道名称
+     * @param batteryGroup 电池组编号
+     * @param staleThresholdMs 单体数据新鲜度阈值
+     * @return 计算结果
+     */
     public BatteryModuleGroupCalculation calculateAndSave(String channelName, Integer batteryGroup, long staleThresholdMs) {
         List<BatteryModuleCellRealtime> cells = realtimeMapper.selectCells(channelName, batteryGroup);
         BatteryModuleGroupRealtime group = realtimeMapper.selectGroup(channelName, batteryGroup);
@@ -62,6 +86,7 @@ public class BatteryModuleGroupCalculationService {
                 Date updateTime = cell.getUpdateTime();
                 latestCellUpdateTime = latest(latestCellUpdateTime, updateTime);
                 boolean online = Boolean.TRUE.equals(cell.getSuccess());
+                // 超过新鲜度阈值的最新值不参与在线数量判断。
                 if (updateTime == null || nowMs - updateTime.getTime() > staleThresholdMs) {
                     staleCount++;
                     online = false;

@@ -11,20 +11,41 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 采集通道运行态。
+ *
+ * @author wjh
+ * @since 2026-04-28
  */
 @Data
 public class BatteryCollectorChannelState {
 
+    /**
+     * 通道静态配置。
+     */
     private final BatteryCollectorChannelConfig config;
 
+    /**
+     * 当前运行状态。
+     */
     private volatile BatteryCollectorRunState runState = BatteryCollectorRunState.READ;
 
+    /**
+     * 当前串口对象。
+     */
     private SerialPort serialPort;
 
+    /**
+     * 最后接收时间戳。
+     */
     private volatile long lastReceiveTime;
 
+    /**
+     * 最后发送时间戳。
+     */
     private volatile long lastSendTime;
 
+    /**
+     * 最后轮询时间戳。
+     */
     private volatile long lastPollTime;
 
     private volatile long lastTimeoutTime;
@@ -55,15 +76,33 @@ public class BatteryCollectorChannelState {
 
     private volatile boolean currentFullDiscovery;
 
+    /**
+     * 最近一次全量发现时间戳。
+     */
     private volatile long lastFullDiscoveryTime;
 
+    /**
+     * 当前缓存的有响应模块地址。
+     */
     private final Set<Integer> activeModuleAddresses = ConcurrentHashMap.newKeySet();
 
+    /**
+     * 有响应地址的连续无响应次数。
+     */
     private final ConcurrentMap<Integer, Integer> moduleAddressMissCounts = new ConcurrentHashMap<>();
 
+    /**
+     * 下轮是否强制执行全量发现。
+     */
     private final AtomicBoolean fullDiscoveryRequested = new AtomicBoolean(true);
 
+    /**
+     * 串口接收缓冲。
+     */
     private final ByteArrayOutputStream receiveBuffer = new ByteArrayOutputStream();
 
+    /**
+     * 串口打开状态。
+     */
     private final AtomicBoolean opened = new AtomicBoolean(false);
 }

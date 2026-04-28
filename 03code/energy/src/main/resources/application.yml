@@ -30,7 +30,7 @@ server:
 # Spring配置
 spring:
   flyway:
-    enabled: false
+    enabled: true
   task:
     scheduling:
       thread-name-prefix: schedule-

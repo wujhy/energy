@@ -19,9 +19,10 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * 980 聚合命令兼容入口。
+ * 蓄电池采集调试与兼容命令入口。
  *
- * <p>当前仅保留接口形态，避免旧调用方误以为这些命令仍会直发 600 节下行模块端通道。
+ * @author wjh
+ * @since 2026-04-28
  */
 @RestController
 @RequestMapping("/collector/battery")

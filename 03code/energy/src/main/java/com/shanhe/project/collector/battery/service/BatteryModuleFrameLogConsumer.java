@@ -13,16 +13,30 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 
 /**
- * Optional raw frame persistence consumer for serial debugging and traceability.
+ * 600节模块端原始帧日志消费器。
+ *
+ * @author wjh
+ * @since 2026-04-28
  */
 @Slf4j
 @Component
 public class BatteryModuleFrameLogConsumer implements BatteryModuleFrameConsumer {
 
+    /**
+     * 采集模块配置。
+     */
     @Resource
     private BatteryCollectorProperties properties;
+
+    /**
+     * 600 节模块端帧解析服务。
+     */
     @Resource
     private BatteryModuleFrameDataParserService parserService;
+
+    /**
+     * 原始帧日志 Mapper。
+     */
     @Resource
     private BatteryModuleFrameLogMapper frameLogMapper;
 

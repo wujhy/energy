@@ -7,13 +7,20 @@ import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import org.springframework.stereotype.Service;
 
 /**
- * 600节采集模块端帧识别与摘要。
+ * 600节采集模块端帧识别与摘要服务。
  *
- * <p>这里只做原始模块端帧的轻量识别，不做 980 节聚合语义转换，也不写业务表。
+ * @author wjh
+ * @since 2026-04-28
  */
 @Service
 public class BatteryModuleFrameSummaryService {
 
+    /**
+     * 生成 600 节模块端帧摘要。
+     *
+     * @param frame 协议帧
+     * @return 帧摘要
+     */
     public BatteryModuleFrameSummary summarize(BatteryCollectorFrame frame) {
         if (frame == null) {
             return null;

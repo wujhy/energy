@@ -30,24 +30,53 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * 独立蓄电池下行采集模块。
+ * 独立蓄电池下行采集服务。
+ *
+ * @author wjh
+ * @since 2026-04-28
  */
 @Slf4j
 @Order(4)
 @Component
 public class BatteryCollectorService implements ApplicationRunner, DisposableBean {
 
+    /**
+     * 采集模块配置。
+     */
     @Resource
     private BatteryCollectorProperties properties;
+
+    /**
+     * 600 节模块端帧编解码器。
+     */
     @Resource
     private BatteryCollectorFrameCodec frameCodec;
+
+    /**
+     * 600 节模块端帧分发器。
+     */
     @Resource
     private BatteryModuleFrameDispatcher moduleFrameDispatcher;
+
+    /**
+     * 实时数据消费器。
+     */
     @Resource
     private BatteryModuleRealtimeConsumer realtimeConsumer;
 
+    /**
+     * 当前运行的通道状态。
+     */
     private final List<BatteryCollectorChannelState> channelStates = new ArrayList<>();
+
+    /**
+     * 每个启用通道独立线程运行。
+     */
     private ExecutorService executorService;
+
+    /**
+     * 采集服务运行标志。
+     */
     private volatile boolean running;
 
     @Override
@@ -82,6 +111,11 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return activeChannels == null || activeChannels.isEmpty() || activeChannels.contains(channel.getName());
     }
 
+    /**
+     * 获取当前采集通道状态快照。
+     *
+     * @return 通道状态列表
+     */
     public List<BatteryCollectorChannelSnapshot> getChannelSnapshots() {
         List<BatteryCollectorChannelSnapshot> snapshots = new ArrayList<>();
         for (BatteryCollectorChannelState state : new ArrayList<>(channelStates)) {
@@ -223,11 +257,13 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         if (fullDiscovery) {
             state.setLastFullDiscoveryTime(startedAt);
         }
+        // 同一轮 01/81 采集共享批次号，用于关联单体行和 246 组信息行。
         BatteryModulePollContextHolder.set(BatteryModulePollContext.builder()
                 .pollBatchNo(batchNo)
                 .pollStartedAt(new Date(startedAt))
                 .build());
         try {
+            // 默认自动轮询只允许 600 节模块端 01/81，不引入 980 聚合命令。
             BatteryDeviceProtocolCode pollingCommand = BatteryDeviceProtocolCode.MODULE_INFO;
             for (Integer address : resolvePollingAddresses(state, fullDiscovery)) {
                 if (!running) {
@@ -370,6 +406,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
 
     private boolean isCurrentPendingResponse(BatteryCollectorChannelState state, BatteryCollectorFrame frame) {
         BatteryPendingRequest pendingRequest = state.getPendingCommand();
+        // 迟到帧可能仍是 81 响应，必须同时匹配模块地址才完成当前等待。
         return pendingRequest != null
                 && frame.getCommand() == state.getExpectedResponseCode()
                 && frame.getAddress() == pendingRequest.getRequestAddress();
@@ -644,6 +681,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         if (!Boolean.TRUE.equals(properties.getModuleAddressCacheEnabled())) {
             return true;
         }
+        // 启动、人工重置、缓存为空或周期到期时回到 1..246 全量发现。
         if (state.getFullDiscoveryRequested().getAndSet(false)) {
             return true;
         }
@@ -660,6 +698,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         if (!Boolean.TRUE.equals(properties.getModuleAddressCacheEnabled())) {
             return;
         }
+        // 只缓存有响应地址；稳定运行后避免每轮扫描不存在的模块。
         if (responded) {
             state.getActiveModuleAddresses().add(address);
             state.getModuleAddressMissCounts().remove(address);
@@ -679,6 +718,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         }
     }
 
+    /**
+     * 重置模块地址缓存，下轮轮询恢复全量发现。
+     *
+     * @param channelName 通道名称；为空时重置全部通道
+     * @return 是否匹配到通道
+     */
     public boolean resetModuleAddressCache(String channelName) {
         boolean matched = false;
         for (BatteryCollectorChannelState state : new ArrayList<>(channelStates)) {

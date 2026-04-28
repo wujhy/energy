@@ -7,13 +7,25 @@ import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import org.springframework.stereotype.Service;
 
 /**
- * Parses 600-cell module frames into the internal battery data model.
+ * 600节模块端帧标准数据解析服务。
+ *
+ * @author wjh
+ * @since 2026-04-28
  */
 @Service
 public class BatteryModuleFrameDataParserService {
 
+    /**
+     * 电流温度模块固定地址。
+     */
     private static final int ARRAY_MODULE_ADDRESS = 246;
 
+    /**
+     * 将 600 节模块端响应帧解析为标准数据对象。
+     *
+     * @param frame 响应帧
+     * @return 标准解析数据；无法解析时返回 null
+     */
     public BatteryModuleFrameData parse(BatteryCollectorFrame frame) {
         if (frame == null) {
             return null;
@@ -37,6 +49,7 @@ public class BatteryModuleFrameDataParserService {
     private BatteryModuleFrameData parseModuleInfo(BatteryCollectorFrame frame) {
         byte[] payload = frame.getPayloadSafe();
         int address = frame.getAddress();
+        // 01/81 中地址 246 是电流温度模块，1..245 才是单体模块。
         if (address == ARRAY_MODULE_ADDRESS) {
             if (payload.length < 11) {
                 return null;
@@ -132,6 +145,7 @@ public class BatteryModuleFrameDataParserService {
     }
 
     private long u32(byte[] payload, int offset) {
+        // 协议字段按高字节在前解析。
         return ((long) (payload[offset] & 0xFF) << 24)
                 | ((long) (payload[offset + 1] & 0xFF) << 16)
                 | ((long) (payload[offset + 2] & 0xFF) << 8)

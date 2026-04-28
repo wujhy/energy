@@ -9,7 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Battery collector config.
+ * 蓄电池独立采集模块配置。
+ *
+ * @author wjh
+ * @since 2026-04-28
  */
 @Data
 @Configuration
@@ -43,27 +46,27 @@ public class BatteryCollectorProperties {
     private Boolean realtimeDataEnabled = Boolean.FALSE;
 
     /**
-     * Whether to calculate group metrics after realtime data is saved.
+     * 是否在实时数据入库后计算电池组指标。
      */
     private Boolean groupCalculationEnabled = Boolean.FALSE;
 
     /**
-     * Realtime cell data freshness threshold for group calculation.
+     * 组计算时单体实时数据的新鲜度阈值。
      */
     private Long groupCalculationStaleThresholdMs = 180_000L;
 
     /**
-     * Whether to poll only cached responsive 600-module addresses after discovery.
+     * 全量发现后是否只轮询有响应的模块地址。
      */
     private Boolean moduleAddressCacheEnabled = Boolean.TRUE;
 
     /**
-     * Consecutive no-response count before removing a cached module address.
+     * 有响应地址连续无响应多少次后从缓存移除。
      */
     private Integer moduleAddressMissThreshold = 3;
 
     /**
-     * Optional periodic full discovery interval. 0 means only startup/manual reset.
+     * 周期性全量发现间隔；0 表示只在启动、手动重置或缓存为空时全量发现。
      */
     private Long moduleAddressFullDiscoveryIntervalMs = 0L;
 

@@ -6,23 +6,35 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * 980 PC/network aggregate command compatibility entry.
+ * 980聚合命令兼容服务。
  *
- * <p>After M460 is merged into energy, these aggregate commands are no longer
- * sent directly to the 600-cell downstream module bus. A future compatibility
- * layer must translate user intent to explicit 600-module controls first.
+ * @author wjh
+ * @since 2026-04-28
  */
 @Slf4j
 @Service
 public class BatteryCollectorCommandService {
 
+    /**
+     * 980 聚合命令不允许直发 600 节下行总线时的提示。
+     */
     private static final String AGGREGATE_COMMAND_UNSUPPORTED =
             "980 aggregate command cannot be sent directly to 600 module channel; implement an explicit module-control mapping first";
 
+    /**
+     * 执行 980 聚合兼容命令。
+     *
+     * @param commandDefinition 聚合命令定义
+     * @param channelName 通道名称
+     * @param timeoutMs 超时时间
+     * @param payloadBytes 请求参数
+     * @return 命令结果
+     */
     public BatteryCollectorCommandResult execute(BatteryAggregateCommandDefinition commandDefinition,
                                                  String channelName,
                                                  Long timeoutMs,
                                                  int... payloadBytes) {
+        // 兼容入口只保留旧 980 语义，不允许绕过映射直写 600 节下行总线。
         return unsupported(commandDefinition, channelName);
     }
 
