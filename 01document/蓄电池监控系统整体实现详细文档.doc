@@ -1,0 +1,1183 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns:dt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882" xmlns="http://www.w3.org/TR/REC-html40"><head><meta http-equiv=Content-Type  content="text/html; charset=gb2312" ><meta name=ProgId  content=Word.Document ><meta name=Generator  content="Microsoft Word 14" ><meta name=Originator  content="Microsoft Word 14" ><link rel=File-List  href="蓄电池监控系统整体实现详细文档.files/filelist.xml" ><title></title><!--[if gte mso 9]><xml><o:DocumentProperties><o:Author>Administrator</o:Author><o:LastAuthor>豪</o:LastAuthor><o:Revision>1</o:Revision><o:Pages>3</o:Pages><o:Characters>2468</o:Characters><o:Lines>1</o:Lines><o:Paragraphs>1</o:Paragraphs></o:DocumentProperties><o:CustomDocumentProperties><o:KSOTemplateDocerSaveRecord dt:dt="string" >eyJoZGlkIjoiZTlkZDNiOTRjY2ZhNGIwMzMzMGRiYmUyY2Y5NWMzOWQiLCJ1c2VySWQiOiIxMTUzNTg4MzI5In0=</o:KSOTemplateDocerSaveRecord><o:KSOProductBuildVer dt:dt="string" >2052-12.1.0.25865</o:KSOProductBuildVer><o:ICV dt:dt="string" >3BAC940753BD4B4C9E2524305A55AC83_12</o:ICV></o:CustomDocumentProperties></xml><![endif]--><!--[if gte mso 9]><xml><o:OfficeDocumentSettings></o:OfficeDocumentSettings></xml><![endif]--><!--[if gte mso 9]><xml><w:WordDocument><w:BrowserLevel>MicrosoftInternetExplorer4</w:BrowserLevel><w:DisplayHorizontalDrawingGridEvery>0</w:DisplayHorizontalDrawingGridEvery><w:DisplayVerticalDrawingGridEvery>2</w:DisplayVerticalDrawingGridEvery><w:DocumentKind>DocumentNotSpecified</w:DocumentKind><w:DrawingGridVerticalSpacing>7.8 磅</w:DrawingGridVerticalSpacing><w:View>Web</w:View><w:Compatibility><w:UseFELayout/></w:Compatibility><w:Zoom>0</w:Zoom></w:WordDocument></xml><![endif]--><!--[if gte mso 9]><xml><w:LatentStyles DefLockedState="false"  DefUnhideWhenUsed="true"  DefSemiHidden="true"  DefQFormat="false"  DefPriority="99"  LatentStyleCount="260" >
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  QFormat="true"  Name="Normal" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  QFormat="true"  Name="heading 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  QFormat="true"  Name="heading 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  QFormat="true"  Name="heading 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  QFormat="true"  Name="heading 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  QFormat="true"  Name="heading 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  QFormat="true"  Name="heading 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  QFormat="true"  Name="heading 7" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  QFormat="true"  Name="heading 8" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  QFormat="true"  Name="heading 9" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="index 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="index 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="index 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="index 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="index 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="index 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="index 7" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="index 8" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="index 9" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="toc 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="toc 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="toc 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="toc 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="toc 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="toc 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="toc 7" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="toc 8" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="toc 9" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Normal Indent" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="footnote text" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="annotation text" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="header" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="footer" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="index heading" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  QFormat="true"  Name="caption" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="table of figures" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="envelope address" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="envelope return" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="footnote reference" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="annotation reference" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="line number" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="page number" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="endnote reference" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="endnote text" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="table of authorities" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="macro" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="toa heading" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List Bullet" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List Number" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List Bullet 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List Bullet 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List Bullet 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List Bullet 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List Number 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List Number 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List Number 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List Number 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  QFormat="true"  Name="Title" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Closing" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Signature" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  UnhideWhenUsed="false"  QFormat="true"  Name="Default Paragraph Font" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Body Text" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Body Text Indent" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List Continue" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List Continue 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List Continue 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List Continue 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="List Continue 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Message Header" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  QFormat="true"  Name="Subtitle" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Salutation" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Date" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Body Text First Indent" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Body Text First Indent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Note Heading" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Body Text 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Body Text 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Body Text Indent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Body Text Indent 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Block Text" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Hyperlink" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="FollowedHyperlink" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  QFormat="true"  Name="Strong" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  QFormat="true"  Name="Emphasis" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Document Map" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Plain Text" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="E-mail Signature" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Normal (Web)" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="HTML Acronym" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="HTML Address" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="HTML Cite" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="HTML Code" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="HTML Definition" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="HTML Keyboard" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="HTML Preformatted" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="HTML Sample" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="HTML Typewriter" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="HTML Variable" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  UnhideWhenUsed="false"  QFormat="true"  Name="Normal Table" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="annotation subject" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="99"  SemiHidden="false"  Name="No List" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="99"  SemiHidden="false"  Name="1 / a / i" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="99"  SemiHidden="false"  Name="1 / 1.1 / 1.1.1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="99"  SemiHidden="false"  Name="Article / Section" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Simple 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Simple 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Simple 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Classic 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Classic 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Classic 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Classic 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Colorful 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Colorful 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Colorful 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Columns 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Columns 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Columns 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Columns 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Columns 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Grid 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Grid 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Grid 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Grid 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Grid 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Grid 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Grid 7" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Grid 8" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table List 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table List 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table List 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table List 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table List 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table List 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table List 7" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table List 8" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table 3D effects 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table 3D effects 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table 3D effects 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Contemporary" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Elegant" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Professional" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Subtle 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Subtle 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Web 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Web 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Web 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Balloon Text" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Grid" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="0"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Table Theme" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="99"  SemiHidden="false"  Name="Placeholder Text" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="99"  SemiHidden="false"  Name="No Spacing" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="60"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light Shading" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="61"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light List" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="62"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light Grid" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="63"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Shading 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="64"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Shading 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="65"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium List 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="66"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium List 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="67"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="68"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="69"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="70"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Dark List" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="71"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful Shading" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="72"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful List" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="73"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful Grid" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="60"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light Shading Accent 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="61"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light List Accent 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="62"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light Grid Accent 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="63"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Shading 1 Accent 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="64"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Shading 2 Accent 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="65"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium List 1 Accent 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="99"  SemiHidden="false"  Name="List Paragraph" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="99"  SemiHidden="false"  Name="Quote" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="99"  SemiHidden="false"  Name="Intense Quote" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="66"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium List 2 Accent 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="67"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 1 Accent 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="68"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 2 Accent 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="69"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 3 Accent 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="70"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Dark List Accent 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="71"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful Shading Accent 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="72"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful List Accent 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="73"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful Grid Accent 1" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="60"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light Shading Accent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="61"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light List Accent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="62"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light Grid Accent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="63"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Shading 1 Accent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="64"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Shading 2 Accent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="65"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium List 1 Accent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="66"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium List 2 Accent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="67"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 1 Accent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="68"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 2 Accent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="69"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 3 Accent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="70"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Dark List Accent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="71"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful Shading Accent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="72"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful List Accent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="73"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful Grid Accent 2" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="60"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light Shading Accent 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="61"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light List Accent 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="62"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light Grid Accent 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="63"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Shading 1 Accent 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="64"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Shading 2 Accent 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="65"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium List 1 Accent 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="66"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium List 2 Accent 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="67"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 1 Accent 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="68"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 2 Accent 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="69"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 3 Accent 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="70"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Dark List Accent 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="71"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful Shading Accent 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="72"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful List Accent 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="73"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful Grid Accent 3" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="60"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light Shading Accent 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="61"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light List Accent 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="62"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light Grid Accent 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="63"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Shading 1 Accent 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="64"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Shading 2 Accent 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="65"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium List 1 Accent 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="66"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium List 2 Accent 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="67"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 1 Accent 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="68"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 2 Accent 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="69"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 3 Accent 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="70"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Dark List Accent 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="71"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful Shading Accent 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="72"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful List Accent 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="73"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful Grid Accent 4" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="60"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light Shading Accent 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="61"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light List Accent 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="62"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light Grid Accent 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="63"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Shading 1 Accent 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="64"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Shading 2 Accent 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="65"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium List 1 Accent 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="66"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium List 2 Accent 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="67"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 1 Accent 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="68"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 2 Accent 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="69"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 3 Accent 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="70"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Dark List Accent 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="71"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful Shading Accent 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="72"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful List Accent 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="73"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful Grid Accent 5" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="60"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light Shading Accent 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="61"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light List Accent 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="62"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Light Grid Accent 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="63"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Shading 1 Accent 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="64"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Shading 2 Accent 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="65"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium List 1 Accent 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="66"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium List 2 Accent 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="67"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 1 Accent 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="68"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 2 Accent 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="69"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Medium Grid 3 Accent 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="70"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Dark List Accent 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="71"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful Shading Accent 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="72"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful List Accent 6" ></w:LsdException>
+<w:LsdException Locked="false"  Priority="73"  SemiHidden="false"  UnhideWhenUsed="false"  Name="Colorful Grid Accent 6" ></w:LsdException>
+</w:LatentStyles></xml><![endif]--><style>
+@font-face{
+font-family:"Times New Roman";
+}
+
+@font-face{
+font-family:"宋体";
+}
+
+@font-face{
+font-family:"Wingdings";
+}
+
+@font-face{
+font-family:"Consolas";
+}
+
+@font-face{
+font-family:"微软雅黑";
+}
+
+p.MsoNormal{
+mso-style-name:正文;
+mso-style-parent:"";
+margin:0pt;
+margin-bottom:.0001pt;
+text-align:left;
+font-family:宋体;
+font-size:12.0000pt;
+}
+
+h1{
+mso-style-name:"标题 1";
+mso-style-next:正文;
+margin-top:18.0000pt;
+margin-right:0.0000pt;
+margin-bottom:18.0000pt;
+margin-left:0.0000pt;
+text-align:center;
+font-family:宋体;
+font-weight:bold;
+font-size:22.0000pt;
+mso-font-kerning:22.0000pt;
+}
+
+h2{
+mso-style-name:"标题 2";
+mso-style-noshow:yes;
+mso-style-next:正文;
+margin-top:16.5000pt;
+margin-bottom:5.0000pt;
+mso-margin-bottom-alt:auto;
+border-bottom:1.0000pt solid rgb(136,136,136);
+mso-border-bottom-alt:0.7500pt solid rgb(136,136,136);
+padding:0pt 0pt 3pt 0pt ;
+text-align:left;
+font-family:宋体;
+font-weight:bold;
+font-size:16.0000pt;
+}
+
+h3{
+mso-style-name:"标题 3";
+mso-style-noshow:yes;
+mso-style-next:正文;
+margin-top:12.0000pt;
+margin-bottom:5.0000pt;
+mso-margin-bottom-alt:auto;
+text-align:left;
+font-family:宋体;
+font-weight:bold;
+font-size:13.5000pt;
+}
+
+h4{
+mso-style-name:"标题 4";
+mso-style-noshow:yes;
+mso-style-next:正文;
+margin-top:5.0000pt;
+margin-bottom:5.0000pt;
+mso-margin-top-alt:auto;
+mso-margin-bottom-alt:auto;
+text-align:left;
+font-family:宋体;
+font-weight:bold;
+font-size:12.0000pt;
+}
+
+h5{
+mso-style-name:"标题 5";
+mso-style-noshow:yes;
+mso-style-next:正文;
+margin-top:5.0000pt;
+margin-bottom:5.0000pt;
+mso-margin-top-alt:auto;
+mso-margin-bottom-alt:auto;
+text-align:left;
+font-family:宋体;
+font-weight:bold;
+font-size:10.0000pt;
+}
+
+h6{
+mso-style-name:"标题 6";
+mso-style-noshow:yes;
+mso-style-next:正文;
+margin-top:5.0000pt;
+margin-bottom:5.0000pt;
+mso-margin-top-alt:auto;
+mso-margin-bottom-alt:auto;
+text-align:left;
+font-family:宋体;
+font-weight:bold;
+font-size:7.5000pt;
+}
+
+span.10{
+font-family:'Times New Roman';
+}
+
+span.15{
+font-family:'Times New Roman';
+mso-ansi-font-weight:bold;
+}
+
+span.16{
+font-family:Consolas;
+font-size:10.0000pt;
+}
+
+p.17{
+mso-style-name:meta;
+margin-bottom:18.0000pt;
+text-align:center;
+font-family:宋体;
+color:rgb(85,85,85);
+font-size:12.0000pt;
+}
+
+p.pre{
+mso-style-name:"HTML 预设格式";
+margin:0pt;
+margin-bottom:.0001pt;
+tab-stops:left blank 45.8000pt left blank 91.6000pt left blank 137.4000pt left blank 183.2000pt left blank 229.0000pt left blank 274.8000pt left blank 320.6000pt left blank 366.4000pt left blank 412.2000pt left blank 458.0000pt left blank 503.8000pt left blank 549.6000pt left blank 595.4000pt left blank 641.2000pt left blank 687.0000pt left blank 732.8000pt ;
+text-align:left;
+font-family:宋体;
+font-size:12.0000pt;
+}
+
+p.p{
+mso-style-name:"普通\(网站\)";
+margin-top:5.0000pt;
+margin-right:0.0000pt;
+margin-bottom:5.0000pt;
+margin-left:0.0000pt;
+mso-margin-top-alt:auto;
+mso-margin-bottom-alt:auto;
+text-align:left;
+font-family:宋体;
+font-size:12.0000pt;
+}
+
+p.20{
+mso-style-name:small;
+margin:0pt;
+margin-bottom:.0001pt;
+text-align:left;
+font-family:宋体;
+color:rgb(68,68,68);
+font-size:10.5000pt;
+}
+
+p.21{
+mso-style-name:diagram;
+margin-top:10.5000pt;
+margin-right:0.0000pt;
+margin-bottom:15.0000pt;
+margin-left:0.0000pt;
+border-top:1.0000pt solid rgb(187,187,187);
+mso-border-top-alt:0.7500pt solid rgb(187,187,187);
+border-right:1.0000pt solid rgb(187,187,187);
+mso-border-right-alt:0.7500pt solid rgb(187,187,187);
+border-bottom:1.0000pt solid rgb(187,187,187);
+mso-border-bottom-alt:0.7500pt solid rgb(187,187,187);
+border-left:1.0000pt solid rgb(187,187,187);
+mso-border-left-alt:0.7500pt solid rgb(187,187,187);
+padding:7pt 7pt 7pt 7pt ;
+text-align:left;
+font-family:宋体;
+font-size:12.0000pt;
+}
+
+p.22{
+mso-style-name:caption;
+margin-top:4.5000pt;
+text-align:left;
+font-family:宋体;
+color:rgb(68,68,68);
+font-size:10.5000pt;
+}
+
+span.msoIns{
+mso-style-type:export-only;
+mso-style-name:"";
+text-decoration:underline;
+text-underline:single;
+color:blue;
+}
+
+span.msoDel{
+mso-style-type:export-only;
+mso-style-name:"";
+text-decoration:line-through;
+color:red;
+}
+
+table.MsoNormalTable{
+mso-style-name:普通表格;
+mso-style-parent:"";
+mso-style-noshow:yes;
+mso-tstyle-rowband-size:0;
+mso-tstyle-colband-size:0;
+mso-padding-alt:0.0000pt 5.4000pt 0.0000pt 5.4000pt;
+mso-para-margin:0pt;
+mso-para-margin-bottom:.0001pt;
+mso-pagination:widow-orphan;
+font-family:'Times New Roman';
+font-size:10.0000pt;
+mso-ansi-language:#0400;
+mso-fareast-language:#0400;
+mso-bidi-language:#0400;
+}
+@page{mso-page-border-surround-header:no;
+	mso-page-border-surround-footer:no;}@page Section0{
+size:595.3000pt 841.9500pt;
+mso-header-margin:42.5500pt;
+mso-footer-margin:49.6000pt;
+}
+div.Section0{page:Section0;}</style></head><body style="tab-interval:21pt;" ><!--StartFragment--><div class="Section0" ><h1 style="mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><b><span style="mso-spacerun:'yes';font-family:宋体;color:rgb(34,34,34);
+font-weight:bold;font-size:22.0000pt;mso-font-kerning:22.0000pt;" ><font face="宋体" >蓄电池监控系统整体实现详细文档</font></span></b><b><span style="mso-spacerun:'yes';font-family:宋体;font-weight:bold;
+font-size:22.0000pt;mso-font-kerning:22.0000pt;" ><o:p></o:p></span></b></h1><p class=MsoNormal  align=center  style="margin-bottom:18.0000pt;mso-pagination:widow-orphan;text-align:center;
+mso-line-height-alt:12pt;" ><span style="mso-spacerun:'yes';font-family:微软雅黑;color:rgb(85,85,85);
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >项目目录：</font><font face="微软雅黑" >D:\workplace\energy　　版本：整合版　　日期：2026-04-24</font></span><span style="mso-spacerun:'yes';font-family:微软雅黑;color:rgb(85,85,85);
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p><h2 style="mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><b><span style="mso-spacerun:'yes';font-family:宋体;color:rgb(34,34,34);
+font-weight:bold;font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><font face="宋体" >一、项目总体定位</font></span></b><b><span style="mso-spacerun:'yes';font-family:宋体;font-weight:bold;
+font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></h2><p class=p  style="mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><span style="mso-spacerun:'yes';font-family:微软雅黑;color:rgb(34,34,34);
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >本项目最终承载主体为</font> </span><b style="mso-bidi-font-weight:normal" ><span class="15"  style="mso-spacerun:'yes';font-family:微软雅黑;color:rgb(34,34,34);
+mso-ansi-font-weight:bold;font-size:12.0000pt;" ><font face="微软雅黑" >energy</font></span></b><span style="mso-spacerun:'yes';font-family:微软雅黑;color:rgb(34,34,34);
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >。整合目标不是简单取消</font> <font face="微软雅黑" >M460，而是把 M460 中成熟的底层采集、控制、协议适配和硬件交互能力迁移并固化为 energy 内部独立模块，使 energy 同时承担：</font></span><span style="mso-spacerun:'yes';font-family:宋体;font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p><table class=MsoNormalTable  border=0  cellspacing=0  style="border-collapse:collapse;width:100.0000%;margin-left:-0.6000pt;
+border:none;mso-padding-alt:0.7500pt 0.7500pt 0.7500pt 0.7500pt ;" ><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >建设职责</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >内容说明</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >下行采集与控制</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >通过</font> <font face="微软雅黑" >6 路下行 RS485 分别与 6 组蓄电池设备通讯，完成采集、控制、状态读取和异常恢复。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >本地业务闭环</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >完成实时监控、历史记录、告警、统计、容量分析、缓存、</font><font face="微软雅黑" >SQLite 存储和本地浏览器展示。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >上层平台通讯</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >保留网口</font> <font face="微软雅黑" >TCP JSON 上报；新增 2 路上行 RS485 的 Modbus RTU 通讯。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr></table><p class=p  style="mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><span style="mso-spacerun:'yes';font-family:微软雅黑;color:rgb(34,34,34);
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >M460 原有能力按 4 组蓄电池设计， energy 扩展为 6 组能力。原先 energy 与 M460 之间的旧中间协议，在整合后不再作为系统外部边界存在，而是收敛为 energy 内部模块接口。</font></span><span style="mso-spacerun:'yes';font-family:宋体;font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p><h2 style="mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><b><span style="mso-spacerun:'yes';font-family:宋体;color:rgb(34,34,34);
+font-weight:bold;font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><font face="宋体" >二、系统总览</font></span></b><b><span style="mso-spacerun:'yes';font-family:宋体;font-weight:bold;
+font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></h2><p class=MsoNormal  style="margin-top:10.5000pt;margin-right:0.0000pt;margin-bottom:15.0000pt;
+margin-left:0.0000pt;border-top:1.0000pt solid rgb(187,187,187);mso-border-top-alt:0.7500pt solid rgb(187,187,187);
+border-right:1.0000pt solid rgb(187,187,187);mso-border-right-alt:0.7500pt solid rgb(187,187,187);border-bottom:1.0000pt solid rgb(187,187,187);
+mso-border-bottom-alt:0.7500pt solid rgb(187,187,187);border-left:1.0000pt solid rgb(187,187,187);mso-border-left-alt:0.7500pt solid rgb(187,187,187);
+padding:7pt 7pt 7pt 7pt ;mso-pagination:widow-orphan;text-align:left;
+mso-line-height-alt:12pt;" ><span><img width="673"  height="447"  src="蓄电池监控系统整体实现详细文档.files/蓄电池监控系统整体实现详细文档559.png" ></span><span style="mso-spacerun:'yes';font-family:微软雅黑;color:rgb(34,34,34);
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p><p class=MsoNormal  style="margin-top:4.5000pt;margin-right:0.0000pt;margin-bottom:15.0000pt;
+margin-left:0.0000pt;border-top:1.0000pt solid rgb(187,187,187);mso-border-top-alt:0.7500pt solid rgb(187,187,187);
+border-right:1.0000pt solid rgb(187,187,187);mso-border-right-alt:0.7500pt solid rgb(187,187,187);border-bottom:1.0000pt solid rgb(187,187,187);
+mso-border-bottom-alt:0.7500pt solid rgb(187,187,187);border-left:1.0000pt solid rgb(187,187,187);mso-border-left-alt:0.7500pt solid rgb(187,187,187);
+padding:7pt 7pt 7pt 7pt ;mso-pagination:widow-orphan;text-align:left;
+mso-line-height-alt:12pt;" ><span style="mso-spacerun:'yes';font-family:微软雅黑;color:rgb(68,68,68);
+font-size:10.5000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >图</font><font face="微软雅黑" >1 系统总览：展示下行采集、上行通讯与本地业务关系。</font></span><span style="mso-spacerun:'yes';font-family:微软雅黑;color:rgb(68,68,68);
+font-size:10.5000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p><h2 style="mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><b><span style="mso-spacerun:'yes';font-family:宋体;color:rgb(34,34,34);
+font-weight:bold;font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><font face="宋体" >三、总体整合思路</font></span></b><b><span style="mso-spacerun:'yes';font-family:宋体;font-weight:bold;
+font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></h2><table class=MsoNormalTable  border=0  cellspacing=0  style="border-collapse:collapse;width:100.0000%;margin-left:-0.6000pt;
+border:none;mso-padding-alt:0.7500pt 0.7500pt 0.7500pt 0.7500pt ;" ><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >整合方向</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >实施说明</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >M460 能力迁移</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >保留其已验证的轮询、超时、重试、控制、协议适配思想，但迁移为</font> <font face="微软雅黑" >energy 内部独立模块，不再保留外部中间程序边界。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >组数扩展</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >从</font> <font face="微软雅黑" >M460 原 4 组能力扩展为 energy 6 组能力，采用“通道 + 电池组 + 任务”模型，不把组数写死在业务代码中。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >上下行解耦</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >6 路下行 RS485 专注采集；2 路上行 RS485 专注 Modbus RTU；网口保留 JSON/TCP，避免角色混淆。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >数据统一出口</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >JSON 上报、Modbus 上行、本地页面都从同一份实时缓存与业务模型取数，避免多套数据口径。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >配置驱动</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >通道、串口参数、采集组绑定、上行从站参数、协议版本都通过配置文件或配置表管理。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr></table><h2 style="mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><b><span style="mso-spacerun:'yes';font-family:宋体;color:rgb(34,34,34);
+font-weight:bold;font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><font face="宋体" >四、现有基础条件</font></span></b><b><span style="mso-spacerun:'yes';font-family:宋体;font-weight:bold;
+font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></h2><table class=MsoNormalTable  border=0  cellspacing=0  style="border-collapse:collapse;width:100.0000%;margin-left:-0.6000pt;
+border:none;mso-padding-alt:0.7500pt 0.7500pt 0.7500pt 0.7500pt ;" ><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >基础项</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >现状</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >适配判断</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >串口通讯</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >已有</font> <font face="微软雅黑" >`SerialPortConfig`、`SerialPortHandler`，使用 jSerialComm。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >可扩展为多串口多角色通道。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >网络通讯</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >已有</font> <font face="微软雅黑" >Netty TCP 服务端/客户端。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >可承接网口</font> <font face="微软雅黑" >TCP JSON、Modbus TCP。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >协议与校验</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >已有</font> <font face="微软雅黑" >`CommServerDecoder`、`Crc16m`、`CodingUtil`。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >可复用校验与转换能力，补齐标准</font> <font face="微软雅黑" >Modbus 协议栈。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >蓄电池业务</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >已有</font> <font face="微软雅黑" >BatteryHandler、BatteryPackHandler、BatteryAlarmHandler、统计与容量分析。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >业务模型可复用，重点替换数据来源。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >存储与缓存</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >SQLite + Ehcache 已稳定存在。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >适合本地工控单机部署。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >页面与上报</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >本地页面、</font><font face="微软雅黑" >JSON 上报、心跳、注册、平台同步已存在。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >不需要重做，直接复用。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr></table><h2 style="mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><b><span style="mso-spacerun:'yes';font-family:宋体;color:rgb(34,34,34);
+font-weight:bold;font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><font face="宋体" >五、通道规划与配置建议</font></span></b><b><span style="mso-spacerun:'yes';font-family:宋体;font-weight:bold;
+font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></h2><p class=p  style="mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><span style="mso-spacerun:'yes';font-family:微软雅黑;color:rgb(34,34,34);
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >建议将现有单串口配置扩展为多通道配置，最少包含：</font></span><span style="mso-spacerun:'yes';font-family:宋体;font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p><table class=MsoNormalTable  border=0  cellspacing=0  style="border-collapse:collapse;width:100.0000%;margin-left:-0.6000pt;
+border:none;mso-padding-alt:0.7500pt 0.7500pt 0.7500pt 0.7500pt ;" ><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >通道类型</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >数量</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >应用用途</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >建议配置项</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >下行</font> <font face="微软雅黑" >RS485</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >6</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >分别采集</font> <font face="微软雅黑" >6 组蓄电池</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >channelId、portName、baudRate、parity、deviceGroup、protocolVersion、pollInterval</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >上行</font> <font face="微软雅黑" >RS485</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >2</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >Modbus RTU 上层应用通讯</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >channelId、portName、baudRate、parity、slaveId、registerProfile</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >网口</font> <font face="微软雅黑" >TCP</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >2</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >JSON 上报、按需扩展 Modbus TCP</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >host、port、client/server、heartbeat、retry</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr></table><p class=20  style="margin-top:5.0000pt;margin-right:0.0000pt;margin-bottom:5.0000pt;
+margin-left:0.0000pt;mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><span style="mso-spacerun:'yes';font-family:微软雅黑;color:rgb(68,68,68);
+font-size:10.5000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >建议通过配置文件指定通道参数和绑定关系，而不是把</font><font face="微软雅黑" >“第几组电池接第几个串口”硬编码在 Java 逻辑里。</font></span><span style="mso-spacerun:'yes';font-family:宋体;color:rgb(68,68,68);
+font-size:10.5000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p><h2 style="mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><b><span style="mso-spacerun:'yes';font-family:宋体;color:rgb(34,34,34);
+font-weight:bold;font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><font face="宋体" >六、业务数据流程</font></span></b><b><span style="mso-spacerun:'yes';font-family:宋体;font-weight:bold;
+font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></h2><table class=MsoNormalTable  border=0  cellspacing=0  style="border-collapse:collapse;width:100.0000%;margin-left:-0.6000pt;
+border:none;mso-padding-alt:0.7500pt 0.7500pt 0.7500pt 0.7500pt ;" ><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >流程阶段</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >处理说明</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >启动</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >加载配置、初始化缓存和数据库、启动</font> <font face="微软雅黑" >6 路下行 RS485、2 路上行 RS485、网口 TCP、浏览器守护和定时任务。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >采集</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >采集调度器按配置驱动</font> <font face="微软雅黑" >6 路下行 RS485 轮询 6 组电池，执行超时重试和离线判断。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >解析</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >对响应报文做</font> <font face="微软雅黑" >CRC/长度/功能码校验，再根据协议版本做字段映射与字节序转换。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >业务处理</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >写入实时缓存、历史记录、统计队列，触发告警判断、内阻分析、容量预估。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >输出</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >本地页面从缓存读取；</font><font face="微软雅黑" >JSON 上报经网口 TCP 发送；Modbus 上行从寄存器映射读取同一份数据。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr></table><h2 style="mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><b><span style="mso-spacerun:'yes';font-family:宋体;color:rgb(34,34,34);
+font-weight:bold;font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><font face="宋体" >七、关键实现技术方案</font></span></b><b><span style="mso-spacerun:'yes';font-family:宋体;font-weight:bold;
+font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></h2><table class=MsoNormalTable  border=0  cellspacing=0  style="border-collapse:collapse;width:100.0000%;margin-left:-0.6000pt;
+border:none;mso-padding-alt:0.7500pt 0.7500pt 0.7500pt 0.7500pt ;" ><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >技术项</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >实施建议</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >后端框架</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >Spring Boot 2.5.6 / Java 8 / Undertow。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >下行串口</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >jSerialComm，多通道封装为 `SerialChannel`。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >上行</font> <font face="微软雅黑" >RTU</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >新增</font> <font face="微软雅黑" >Modbus RTU 从站服务，挂接 2 路上行 RS485。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >网口</font> <font face="微软雅黑" >JSON</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >延续</font> <font face="微软雅黑" >Netty/TCP 客户端通道和现有 ClientReportService。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >协议层</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >建立标准</font> <font face="微软雅黑" >Modbus RTU/TCP 编解码器，配置化寄存器映射。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >数据层</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >Ehcache 承载实时，SQLite 承载历史与统计。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >线程模型</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >每个下行串口独立队列；上行通道与下行通道隔离；入库异步批处理。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr></table><h2 style="mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><b><span style="mso-spacerun:'yes';font-family:宋体;color:rgb(34,34,34);
+font-weight:bold;font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><font face="宋体" >八、主要风险与应对</font></span></b><b><span style="mso-spacerun:'yes';font-family:宋体;font-weight:bold;
+font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></h2><table class=MsoNormalTable  border=0  cellspacing=0  style="border-collapse:collapse;width:100.0000%;margin-left:-0.6000pt;
+border:none;mso-padding-alt:0.7500pt 0.7500pt 0.7500pt 0.7500pt ;" ><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >风险事项</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >影响</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >应对措施</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >多路串口权限与映射不稳定</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >采集失败、上行失败</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >现场确认</font> <font face="微软雅黑" >`/dev` 设备节点、udev 规则、波特率、校验位和端口映射。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >4 组扩到 6 组后的调度复杂度增加</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >超时、排队、数据延迟</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >采用通道隔离、调度限流、失败重试和按组独立任务。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >JSON 与 Modbus 数据口径不一致</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >平台显示不一致</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >统一从实时缓存与标准业务模型取数。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >旧中间协议边界未完全收敛</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >代码复杂、维护成本高</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >明确模块接口，逐步下沉为内部</font> <font face="微软雅黑" >Java 服务层，不再保留外部协议依赖。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >SQLite 并发写入</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >锁等待、积压</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >WAL、批量写入、异步队列、历史降频。</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr></table><h2 style="mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><b><span style="mso-spacerun:'yes';font-family:宋体;color:rgb(34,34,34);
+font-weight:bold;font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><font face="宋体" >九、实施计划</font></span></b><b><span style="mso-spacerun:'yes';font-family:宋体;font-weight:bold;
+font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></h2><table class=MsoNormalTable  border=0  cellspacing=0  style="border-collapse:collapse;width:100.0000%;margin-left:-0.6000pt;
+border:none;mso-padding-alt:0.7500pt 0.7500pt 0.7500pt 0.7500pt ;" ><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >阶段</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >阶段目标</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:1.0000pt solid rgb(102,102,102);
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);
+background:rgb(240,240,240);" ><p class=MsoNormal  align=center  style="mso-pagination:widow-orphan;text-align:center;vertical-align:top;
+mso-line-height-alt:12pt;" ><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >交付输出</font></span></b><b><span style="font-family:微软雅黑;color:rgb(34,34,34);font-weight:bold;
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >1</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >梳理</font> <font face="微软雅黑" >M460 4 组逻辑与 6 组扩展边界</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >能力迁移表、组数扩展表</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >2</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >打通</font> <font face="微软雅黑" >1 组电池下行采集 + JSON 上报</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >单组闭环验证记录</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >3</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >扩展到</font> <font face="微软雅黑" >6 路下行 RS485 和配置驱动</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >多通道配置与调度模块</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >4</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >接入</font> <font face="微软雅黑" >2 路上行 RS485 Modbus RTU</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >寄存器映射、</font><font face="微软雅黑" >RTU 联调报告</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr><tr><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:1.0000pt solid rgb(102,102,102);mso-border-left-alt:0.7500pt solid rgb(102,102,102);
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >5</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >长稳测试与交付</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td><td valign=top  style="padding:4.5000pt 6.0000pt 4.5000pt 6.0000pt ;border-left:none;mso-border-left-alt:none;
+border-right:1.0000pt solid rgb(102,102,102);mso-border-right-alt:0.7500pt solid rgb(102,102,102);border-top:none;
+mso-border-top-alt:0.7500pt solid rgb(102,102,102);border-bottom:1.0000pt solid rgb(102,102,102);mso-border-bottom-alt:0.7500pt solid rgb(102,102,102);" ><p class=MsoNormal  style="mso-pagination:widow-orphan;text-align:left;vertical-align:top;
+mso-line-height-alt:12pt;" ><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >72 小时稳定性报告、部署手册</font></span><span style="font-family:微软雅黑;color:rgb(34,34,34);font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></td></tr></table><h2 style="mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><b><span style="mso-spacerun:'yes';font-family:宋体;color:rgb(34,34,34);
+font-weight:bold;font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><font face="宋体" >十、结论</font></span></b><b><span style="mso-spacerun:'yes';font-family:宋体;font-weight:bold;
+font-size:16.0000pt;mso-font-kerning:0.0000pt;" ><o:p></o:p></span></b></h2><p class=p  style="mso-pagination:widow-orphan;mso-line-height-alt:12pt;" ><span style="mso-spacerun:'yes';font-family:微软雅黑;color:rgb(34,34,34);
+font-size:12.0000pt;mso-font-kerning:0.0000pt;" ><font face="微软雅黑" >整合完成后，</font><font face="微软雅黑" >energy 作为唯一主程序，下接 6 组蓄电池设备，上接 JSON 与 Modbus 平台，外部不再保留独立的 M460 通讯边界。实施重点是多路下行采集、统一数据模型、双协议上行和配置驱动扩展。</font></span><span style="mso-spacerun:'yes';font-family:宋体;font-size:12.0000pt;
+mso-font-kerning:0.0000pt;" ><o:p></o:p></span></p></div><!--EndFragment--></body></html>
