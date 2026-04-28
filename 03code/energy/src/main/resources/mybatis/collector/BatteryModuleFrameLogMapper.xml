@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shanhe.project.collector.battery.mapper.BatteryModuleFrameLogMapper">
+
+    <insert id="insertOne" parameterType="com.shanhe.project.collector.battery.model.BatteryModuleFrameLog">
+        insert into battery_module_frame_log (
+            create_time,
+            channel_name,
+            port_name,
+            battery_group,
+            module_address,
+            command_code,
+            known,
+            success,
+            response_flag,
+            payload_length,
+            payload_hex,
+            frame_hex,
+            parsed_type,
+            cell_voltage,
+            internal_resistance,
+            cell_temperature,
+            leakage_status,
+            swollen_voltage,
+            charge_discharge_current,
+            float_current,
+            external_voltage,
+            environment_temperature1,
+            environment_temperature2,
+            connect_battery_voltage,
+            connect_test_voltage
+        ) values (
+            datetime(CURRENT_TIMESTAMP, 'localtime'),
+            #{channelName},
+            #{portName},
+            #{batteryGroup},
+            #{moduleAddress},
+            #{commandCode},
+            #{known},
+            #{success},
+            #{responseFlag},
+            #{payloadLength},
+            #{payloadHex},
+            #{frameHex},
+            #{parsedType},
+            #{cellVoltage},
+            #{internalResistance},
+            #{cellTemperature},
+            #{leakageStatus},
+            #{swollenVoltage},
+            #{chargeDischargeCurrent},
+            #{floatCurrent},
+            #{externalVoltage},
+            #{environmentTemperature1},
+            #{environmentTemperature2},
+            #{connectBatteryVoltage},
+            #{connectTestVoltage}
+        )
+    </insert>
+</mapper>

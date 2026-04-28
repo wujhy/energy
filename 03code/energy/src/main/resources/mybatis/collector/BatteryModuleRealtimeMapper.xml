@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper">
+
+    <insert id="upsertCell" parameterType="com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime">
+        insert into battery_module_cell_realtime (
+            create_time,
+            update_time,
+            channel_name,
+            port_name,
+            battery_group,
+            module_address,
+            cell_voltage,
+            internal_resistance,
+            cell_temperature,
+            leakage_status,
+            swollen_voltage,
+            success,
+            response_flag,
+            poll_batch_no,
+            poll_started_at
+        ) values (
+            datetime(CURRENT_TIMESTAMP, 'localtime'),
+            datetime(CURRENT_TIMESTAMP, 'localtime'),
+            #{channelName},
+            #{portName},
+            #{batteryGroup},
+            #{moduleAddress},
+            #{cellVoltage},
+            #{internalResistance},
+            #{cellTemperature},
+            #{leakageStatus},
+            #{swollenVoltage},
+            #{success},
+            #{responseFlag},
+            #{pollBatchNo},
+            #{pollStartedAt}
+        )
+        on conflict(channel_name, battery_group, module_address) do update set
+            update_time = datetime(CURRENT_TIMESTAMP, 'localtime'),
+            port_name = excluded.port_name,
+            cell_voltage = excluded.cell_voltage,
+            internal_resistance = excluded.internal_resistance,
+            cell_temperature = excluded.cell_temperature,
+            leakage_status = excluded.leakage_status,
+            swollen_voltage = excluded.swollen_voltage,
+            success = excluded.success,
+            response_flag = excluded.response_flag,
+            poll_batch_no = excluded.poll_batch_no,
+            poll_started_at = excluded.poll_started_at
+    </insert>
+
+    <insert id="upsertCells">
+        insert into battery_module_cell_realtime (
+            create_time,
+            update_time,
+            channel_name,
+            port_name,
+            battery_group,
+            module_address,
+            cell_voltage,
+            internal_resistance,
+            cell_temperature,
+            leakage_status,
+            swollen_voltage,
+            success,
+            response_flag,
+            poll_batch_no,
+            poll_started_at
+        ) values
+        <foreach collection="cells" item="cell" separator=",">
+            (
+                datetime(CURRENT_TIMESTAMP, 'localtime'),
+                datetime(CURRENT_TIMESTAMP, 'localtime'),
+                #{cell.channelName},
+                #{cell.portName},
+                #{cell.batteryGroup},
+                #{cell.moduleAddress},
+                #{cell.cellVoltage},
+                #{cell.internalResistance},
+                #{cell.cellTemperature},
+                #{cell.leakageStatus},
+                #{cell.swollenVoltage},
+                #{cell.success},
+                #{cell.responseFlag},
+                #{cell.pollBatchNo},
+                #{cell.pollStartedAt}
+            )
+        </foreach>
+        on conflict(channel_name, battery_group, module_address) do update set
+            update_time = datetime(CURRENT_TIMESTAMP, 'localtime'),
+            port_name = excluded.port_name,
+            cell_voltage = excluded.cell_voltage,
+            internal_resistance = excluded.internal_resistance,
+            cell_temperature = excluded.cell_temperature,
+            leakage_status = excluded.leakage_status,
+            swollen_voltage = excluded.swollen_voltage,
+            success = excluded.success,
+            response_flag = excluded.response_flag,
+            poll_batch_no = excluded.poll_batch_no,
+            poll_started_at = excluded.poll_started_at
+    </insert>
+
+    <insert id="upsertGroup" parameterType="com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime">
+        insert into battery_module_group_realtime (
+            create_time,
+            update_time,
+            channel_name,
+            port_name,
+            battery_group,
+            module_address,
+            charge_discharge_current,
+            float_current,
+            external_voltage,
+            environment_temperature1,
+            environment_temperature2,
+            success,
+            response_flag,
+            poll_batch_no,
+            poll_started_at
+        ) values (
+            datetime(CURRENT_TIMESTAMP, 'localtime'),
+            datetime(CURRENT_TIMESTAMP, 'localtime'),
+            #{channelName},
+            #{portName},
+            #{batteryGroup},
+            #{moduleAddress},
+            #{chargeDischargeCurrent},
+            #{floatCurrent},
+            #{externalVoltage},
+            #{environmentTemperature1},
+            #{environmentTemperature2},
+            #{success},
+            #{responseFlag},
+            #{pollBatchNo},
+            #{pollStartedAt}
+        )
+        on conflict(channel_name, battery_group, module_address) do update set
+            update_time = datetime(CURRENT_TIMESTAMP, 'localtime'),
+            port_name = excluded.port_name,
+            charge_discharge_current = excluded.charge_discharge_current,
+            float_current = excluded.float_current,
+            external_voltage = excluded.external_voltage,
+            environment_temperature1 = excluded.environment_temperature1,
+            environment_temperature2 = excluded.environment_temperature2,
+            success = excluded.success,
+            response_flag = excluded.response_flag,
+            poll_batch_no = excluded.poll_batch_no,
+            poll_started_at = excluded.poll_started_at
+    </insert>
+
+    <insert id="upsertGroups">
+        insert into battery_module_group_realtime (
+            create_time,
+            update_time,
+            channel_name,
+            port_name,
+            battery_group,
+            module_address,
+            charge_discharge_current,
+            float_current,
+            external_voltage,
+            environment_temperature1,
+            environment_temperature2,
+            success,
+            response_flag,
+            poll_batch_no,
+            poll_started_at
+        ) values
+        <foreach collection="groups" item="group" separator=",">
+            (
+                datetime(CURRENT_TIMESTAMP, 'localtime'),
+                datetime(CURRENT_TIMESTAMP, 'localtime'),
+                #{group.channelName},
+                #{group.portName},
+                #{group.batteryGroup},
+                #{group.moduleAddress},
+                #{group.chargeDischargeCurrent},
+                #{group.floatCurrent},
+                #{group.externalVoltage},
+                #{group.environmentTemperature1},
+                #{group.environmentTemperature2},
+                #{group.success},
+                #{group.responseFlag},
+                #{group.pollBatchNo},
+                #{group.pollStartedAt}
+            )
+        </foreach>
+        on conflict(channel_name, battery_group, module_address) do update set
+            update_time = datetime(CURRENT_TIMESTAMP, 'localtime'),
+            port_name = excluded.port_name,
+            charge_discharge_current = excluded.charge_discharge_current,
+            float_current = excluded.float_current,
+            external_voltage = excluded.external_voltage,
+            environment_temperature1 = excluded.environment_temperature1,
+            environment_temperature2 = excluded.environment_temperature2,
+            success = excluded.success,
+            response_flag = excluded.response_flag,
+            poll_batch_no = excluded.poll_batch_no,
+            poll_started_at = excluded.poll_started_at
+    </insert>
+
+    <select id="selectCells" resultType="com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime">
+        select
+            id,
+            create_time as createTime,
+            update_time as updateTime,
+            channel_name as channelName,
+            port_name as portName,
+            battery_group as batteryGroup,
+            module_address as moduleAddress,
+            cell_voltage as cellVoltage,
+            internal_resistance as internalResistance,
+            cell_temperature as cellTemperature,
+            leakage_status as leakageStatus,
+            swollen_voltage as swollenVoltage,
+            success,
+            response_flag as responseFlag,
+            poll_batch_no as pollBatchNo,
+            poll_started_at as pollStartedAt
+        from battery_module_cell_realtime
+        where channel_name = #{channelName}
+          and battery_group = #{batteryGroup}
+        order by module_address
+    </select>
+
+    <select id="selectGroup" resultType="com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime">
+        select
+            id,
+            create_time as createTime,
+            update_time as updateTime,
+            channel_name as channelName,
+            port_name as portName,
+            battery_group as batteryGroup,
+            module_address as moduleAddress,
+            charge_discharge_current as chargeDischargeCurrent,
+            float_current as floatCurrent,
+            external_voltage as externalVoltage,
+            environment_temperature1 as environmentTemperature1,
+            environment_temperature2 as environmentTemperature2,
+            success,
+            response_flag as responseFlag,
+            poll_batch_no as pollBatchNo,
+            poll_started_at as pollStartedAt
+        from battery_module_group_realtime
+        where channel_name = #{channelName}
+          and battery_group = #{batteryGroup}
+        order by update_time desc
+        limit 1
+    </select>
+
+    <insert id="upsertCalculation" parameterType="com.shanhe.project.collector.battery.model.BatteryModuleGroupCalculation">
+        insert into battery_module_group_calculation (
+            create_time,
+            update_time,
+            channel_name,
+            battery_group,
+            cell_count,
+            online_cell_count,
+            stale_cell_count,
+            data_fresh,
+            max_voltage_module_address,
+            max_cell_voltage,
+            min_voltage_module_address,
+            min_cell_voltage,
+            avg_cell_voltage,
+            voltage_range,
+            max_temperature_module_address,
+            max_cell_temperature,
+            min_temperature_module_address,
+            min_cell_temperature,
+            avg_cell_temperature,
+            temperature_range,
+            max_resistance_module_address,
+            max_internal_resistance,
+            min_resistance_module_address,
+            min_internal_resistance,
+            avg_internal_resistance,
+            resistance_range,
+            external_voltage,
+            charge_discharge_current,
+            float_current,
+            environment_temperature1,
+            environment_temperature2,
+            latest_cell_update_time,
+            latest_group_update_time
+        ) values (
+            datetime(CURRENT_TIMESTAMP, 'localtime'),
+            datetime(CURRENT_TIMESTAMP, 'localtime'),
+            #{channelName},
+            #{batteryGroup},
+            #{cellCount},
+            #{onlineCellCount},
+            #{staleCellCount},
+            #{dataFresh},
+            #{maxVoltageModuleAddress},
+            #{maxCellVoltage},
+            #{minVoltageModuleAddress},
+            #{minCellVoltage},
+            #{avgCellVoltage},
+            #{voltageRange},
+            #{maxTemperatureModuleAddress},
+            #{maxCellTemperature},
+            #{minTemperatureModuleAddress},
+            #{minCellTemperature},
+            #{avgCellTemperature},
+            #{temperatureRange},
+            #{maxResistanceModuleAddress},
+            #{maxInternalResistance},
+            #{minResistanceModuleAddress},
+            #{minInternalResistance},
+            #{avgInternalResistance},
+            #{resistanceRange},
+            #{externalVoltage},
+            #{chargeDischargeCurrent},
+            #{floatCurrent},
+            #{environmentTemperature1},
+            #{environmentTemperature2},
+            #{latestCellUpdateTime},
+            #{latestGroupUpdateTime}
+        )
+        on conflict(channel_name, battery_group) do update set
+            update_time = datetime(CURRENT_TIMESTAMP, 'localtime'),
+            cell_count = excluded.cell_count,
+            online_cell_count = excluded.online_cell_count,
+            stale_cell_count = excluded.stale_cell_count,
+            data_fresh = excluded.data_fresh,
+            max_voltage_module_address = excluded.max_voltage_module_address,
+            max_cell_voltage = excluded.max_cell_voltage,
+            min_voltage_module_address = excluded.min_voltage_module_address,
+            min_cell_voltage = excluded.min_cell_voltage,
+            avg_cell_voltage = excluded.avg_cell_voltage,
+            voltage_range = excluded.voltage_range,
+            max_temperature_module_address = excluded.max_temperature_module_address,
+            max_cell_temperature = excluded.max_cell_temperature,
+            min_temperature_module_address = excluded.min_temperature_module_address,
+            min_cell_temperature = excluded.min_cell_temperature,
+            avg_cell_temperature = excluded.avg_cell_temperature,
+            temperature_range = excluded.temperature_range,
+            max_resistance_module_address = excluded.max_resistance_module_address,
+            max_internal_resistance = excluded.max_internal_resistance,
+            min_resistance_module_address = excluded.min_resistance_module_address,
+            min_internal_resistance = excluded.min_internal_resistance,
+            avg_internal_resistance = excluded.avg_internal_resistance,
+            resistance_range = excluded.resistance_range,
+            external_voltage = excluded.external_voltage,
+            charge_discharge_current = excluded.charge_discharge_current,
+            float_current = excluded.float_current,
+            environment_temperature1 = excluded.environment_temperature1,
+            environment_temperature2 = excluded.environment_temperature2,
+            latest_cell_update_time = excluded.latest_cell_update_time,
+            latest_group_update_time = excluded.latest_group_update_time
+    </insert>
+</mapper>

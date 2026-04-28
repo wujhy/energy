@@ -1,10 +1,12 @@
 package com.shanhe.project.collector.battery.model;
 
 import com.fazecast.jSerialComm.SerialPort;
-import com.shanhe.project.collector.battery.protocol.BatteryPollingCommand;
 import lombok.Data;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -14,6 +16,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class BatteryCollectorChannelState {
 
     private final BatteryCollectorChannelConfig config;
+
+    private volatile BatteryCollectorRunState runState = BatteryCollectorRunState.READ;
 
     private SerialPort serialPort;
 
@@ -29,11 +33,35 @@ public class BatteryCollectorChannelState {
 
     private volatile int currentRetryCount;
 
-    private volatile BatteryPollingCommand pendingCommand;
+    private volatile BatteryPendingRequest pendingCommand;
 
     private volatile int lastRequestCode;
 
     private volatile int expectedResponseCode;
+
+    private volatile int lastResponseCode;
+
+    private volatile long lastPendingCompletedAt;
+
+    private volatile boolean lastPendingTimedOut;
+
+    private volatile String currentPollBatchNo;
+
+    private volatile long currentPollStartedAt;
+
+    private volatile int currentPollAddress;
+
+    private volatile long pollRoundCount;
+
+    private volatile boolean currentFullDiscovery;
+
+    private volatile long lastFullDiscoveryTime;
+
+    private final Set<Integer> activeModuleAddresses = ConcurrentHashMap.newKeySet();
+
+    private final ConcurrentMap<Integer, Integer> moduleAddressMissCounts = new ConcurrentHashMap<>();
+
+    private final AtomicBoolean fullDiscoveryRequested = new AtomicBoolean(true);
 
     private final ByteArrayOutputStream receiveBuffer = new ByteArrayOutputStream();
 

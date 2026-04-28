@@ -49,6 +49,16 @@ public class BatteryCollectorChannelConfig {
 
     private Integer deviceAddress = 1;
 
+    /**
+     * 600节模块端轮询起始地址，默认单体1。
+     */
+    private Integer moduleAddressStart = 1;
+
+    /**
+     * 600节模块端轮询结束地址，默认包含电流温度模块246。
+     */
+    private Integer moduleAddressEnd = 246;
+
     private Integer batteryPort;
 
     private Integer batteryChannel;
