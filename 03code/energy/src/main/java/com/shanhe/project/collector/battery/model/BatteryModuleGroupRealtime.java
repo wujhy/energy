@@ -150,6 +150,111 @@ public class BatteryModuleGroupRealtime {
     private Double batteryPackSoh;
 
     /**
+     * 兼容旧 pack_data 的电池组状态。
+     */
+    private Integer batteryPackStatus;
+
+    /**
+     * 兼容旧 pack_data 的电池组核容值。
+     */
+    private Double bcapacity;
+
+    /**
+     * 兼容旧 pack_data 的电池组容量。
+     */
+    private Double capacity;
+
+    /**
+     * 兼容旧 pack_data 的备电时长。
+     */
+    private Integer backupDuration;
+
+    /**
+     * 兼容旧 pack_data 的放电容量。
+     */
+    private Double disChargeCapacity;
+
+    /**
+     * 兼容旧 pack_data 的放电时长。
+     */
+    private Integer disChargeDuration;
+
+    /**
+     * 兼容旧 pack_data 的电池平均温度。
+     */
+    private Double batteryAvgTemperature;
+
+    /**
+     * 兼容旧 pack_data 的电压均差值。
+     */
+    private Double batteryVoltageDeviation;
+
+    /**
+     * 兼容旧 pack_data 的电压极差值。
+     */
+    private Double batteryVoltageRange;
+
+    /**
+     * 兼容旧 pack_data 的剩余放电时长。
+     */
+    private Integer residualDischargeDuration;
+
+    /**
+     * 兼容旧 pack_data 的纹波电压。
+     */
+    private Double rippleVoltage;
+
+    /**
+     * 兼容旧 pack_data 的氢气浓度。
+     */
+    private Double hydrogenConcentration;
+
+    /**
+     * 兼容旧 pack_data 的绝缘正电阻。
+     */
+    private Double positiveInsulationResistance;
+
+    /**
+     * 兼容旧 pack_data 的绝缘负电阻。
+     */
+    private Double negativeInsulationResistance;
+
+    /**
+     * 兼容旧 pack_data 的接地电池号上限。
+     */
+    private Integer groundingBatteryUpperLimit;
+
+    /**
+     * 兼容旧 pack_data 的接地电池号下限。
+     */
+    private Integer groundingBatteryLowerLimit;
+
+    /**
+     * 兼容旧 pack_data 的最大内阻变化率单体编号。
+     */
+    private Integer maxResistanceRateChangeBatNum;
+
+    /**
+     * 兼容旧 pack_data 的最大内阻变化率。
+     */
+    private Double maxResistanceRateChange;
+
+    /**
+     * 兼容旧 pack_data 的内阻测试状态。
+     */
+    private Integer resistanceTestStatus;
+
+    /**
+     * 兼容旧 pack_data 的设备工作状态。
+     */
+    private Integer deviceWorkStatus;
+
+    /**
+     * 兼容旧 pack_data 的设备工作IO状态。
+     */
+    private Integer deviceWorkIoStatus;
+
+    /**
      * 最新单体更新时间。
      */
     private Date latestCellUpdateTime;

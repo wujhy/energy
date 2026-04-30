@@ -144,10 +144,14 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
         }
         try {
             if (context == null) {
-                calculationService.calculateAndSave(channelConfig.getBatteryGroup(),
+                calculationService.calculateAndSave(channelConfig,
+                        channelConfig.getBatteryGroup(),
+                        null,
+                        null,
                         resolveCalculationStaleThresholdMs());
             } else {
-                calculationService.calculateAndSave(channelConfig.getBatteryGroup(),
+                calculationService.calculateAndSave(channelConfig,
+                        channelConfig.getBatteryGroup(),
                         context.getPollBatchNo(),
                         context.getPollStartedAt(),
                         resolveCalculationStaleThresholdMs());

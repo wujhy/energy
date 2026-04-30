@@ -1,6 +1,7 @@
 package com.shanhe.project.collector.battery.service;
 
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
+import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,12 @@ public class BatteryModuleGroupCalculationService {
      */
     @Resource
     private BatteryModuleRealtimeMapper realtimeMapper;
+
+    /**
+     * 电池组旧协议兼容字段填充服务。
+     */
+    @Resource
+    private BatteryModuleGroupCompatibilityFillService compatibilityFillService;
 
     /**
      * 按默认新鲜度阈值计算并保存电池组指标。
@@ -63,14 +70,41 @@ public class BatteryModuleGroupCalculationService {
                                                        String pollBatchNo,
                                                        Date pollStartedAt,
                                                        long staleThresholdMs) {
+        return calculateAndSave(null, batteryGroup, pollBatchNo, pollStartedAt, staleThresholdMs);
+    }
+
+    /**
+     * 按指定轮询批次计算并保存电池组指标，同时预留旧 pack_data 兼容字段填充入口。
+     *
+     * @param channelConfig 采集通道配置
+     * @param batteryGroup 电池组编号
+     * @param pollBatchNo 轮询批次号
+     * @param pollStartedAt 轮询开始时间
+     * @param staleThresholdMs 单体数据新鲜度阈值
+     * @return 计算后的组实时数据
+     */
+    public BatteryModuleGroupRealtime calculateAndSave(BatteryCollectorChannelConfig channelConfig,
+                                                       Integer batteryGroup,
+                                                       String pollBatchNo,
+                                                       Date pollStartedAt,
+                                                       long staleThresholdMs) {
         List<BatteryModuleCellRealtime> cells = pollBatchNo == null
                 ? realtimeMapper.selectCells(batteryGroup)
                 : realtimeMapper.selectCellsByBatch(batteryGroup, pollBatchNo);
         BatteryModuleGroupRealtime group = realtimeMapper.selectGroup(batteryGroup);
         BatteryModuleGroupRealtime calculation = buildCalculation(batteryGroup, cells, group,
                 new Date(), pollBatchNo, pollStartedAt, staleThresholdMs);
+        fillCompatibilityFields(channelConfig, calculation);
         realtimeMapper.updateGroupCalculation(calculation);
         return calculation;
+    }
+
+    private void fillCompatibilityFields(BatteryCollectorChannelConfig channelConfig,
+                                         BatteryModuleGroupRealtime calculation) {
+        if (compatibilityFillService == null) {
+            return;
+        }
+        compatibilityFillService.fillAfterCalculation(channelConfig, calculation);
     }
 
     BatteryModuleGroupRealtime buildCalculation(Integer batteryGroup,
@@ -140,10 +174,38 @@ public class BatteryModuleGroupCalculationService {
             calculation.setGroupModuleFresh(pollBatchNo != null
                     && pollBatchNo.equals(group.getPollBatchNo())
                     && Boolean.TRUE.equals(group.getGroupModuleFresh()));
+            copyCompatibilityFields(group, calculation);
         } else {
             calculation.setGroupModuleFresh(Boolean.FALSE);
         }
         return calculation;
+    }
+
+    private void copyCompatibilityFields(BatteryModuleGroupRealtime source,
+                                         BatteryModuleGroupRealtime target) {
+        target.setBatteryPackSoc(source.getBatteryPackSoc());
+        target.setBatteryPackSoh(source.getBatteryPackSoh());
+        target.setBatteryPackStatus(source.getBatteryPackStatus());
+        target.setBcapacity(source.getBcapacity());
+        target.setCapacity(source.getCapacity());
+        target.setBackupDuration(source.getBackupDuration());
+        target.setDisChargeCapacity(source.getDisChargeCapacity());
+        target.setDisChargeDuration(source.getDisChargeDuration());
+        target.setBatteryAvgTemperature(source.getBatteryAvgTemperature());
+        target.setBatteryVoltageDeviation(source.getBatteryVoltageDeviation());
+        target.setBatteryVoltageRange(source.getBatteryVoltageRange());
+        target.setResidualDischargeDuration(source.getResidualDischargeDuration());
+        target.setRippleVoltage(source.getRippleVoltage());
+        target.setHydrogenConcentration(source.getHydrogenConcentration());
+        target.setPositiveInsulationResistance(source.getPositiveInsulationResistance());
+        target.setNegativeInsulationResistance(source.getNegativeInsulationResistance());
+        target.setGroundingBatteryUpperLimit(source.getGroundingBatteryUpperLimit());
+        target.setGroundingBatteryLowerLimit(source.getGroundingBatteryLowerLimit());
+        target.setMaxResistanceRateChangeBatNum(source.getMaxResistanceRateChangeBatNum());
+        target.setMaxResistanceRateChange(source.getMaxResistanceRateChange());
+        target.setResistanceTestStatus(source.getResistanceTestStatus());
+        target.setDeviceWorkStatus(source.getDeviceWorkStatus());
+        target.setDeviceWorkIoStatus(source.getDeviceWorkIoStatus());
     }
 
     private Date latest(Date current, Date candidate) {
