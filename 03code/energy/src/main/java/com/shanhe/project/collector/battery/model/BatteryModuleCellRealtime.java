@@ -24,64 +24,54 @@ public class BatteryModuleCellRealtime {
     private Date createTime;
 
     /**
-     * 更新时间。
-     */
-    private Date updateTime;
-
-    /**
-     * 通道名称。
-     */
-    private String channelName;
-
-    /**
-     * 串口名称。
-     */
-    private String portName;
-
-    /**
      * 电池组编号。
      */
-    private Integer batteryGroup;
+    private Integer packNum;
 
     /**
-     * 单体模块地址。
+     * 单体编号，对应600节模块端单体地址。
      */
-    private Integer moduleAddress;
+    private Integer batNum;
 
     /**
-     * 单体电压。
+     * 兼容旧 monitor_data 的单体电压。
      */
-    private Double cellVoltage;
+    private Double voltage;
 
     /**
-     * 单体内阻。
+     * 兼容旧 monitor_data 的单体内阻。
      */
-    private Integer internalResistance;
+    private Integer resistance;
 
     /**
-     * 单体温度。
+     * 兼容旧 monitor_data 的单体温度。
      */
-    private Double cellTemperature;
+    private Double temperature;
+
+    /**
+     * 容量字段，600节协议暂不直接提供。
+     */
+    private Double capacity;
+
+    /**
+     * 连接条电阻字段，600节协议默认轮询暂不直接提供。
+     */
+    private Double resistanceRageSlip;
+
+    /**
+     * 兼容旧 monitor_data 的内阻变化率字段，600节协议暂不直接提供。
+     */
+    private Double resistanceRateChange;
+
+    /**
+     * 鼓包电压字段。
+     */
+    private Double swollenVoltage;
 
     /**
      * 漏液状态。
      */
     private Integer leakageStatus;
-
-    /**
-     * 鼓包电压。
-     */
-    private Double swollenVoltage;
-
-    /**
-     * 响应是否成功。
-     */
-    private Boolean success;
-
-    /**
-     * 原始应答标志。
-     */
-    private Integer responseFlag;
 
     /**
      * 轮询批次号。

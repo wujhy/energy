@@ -1,7 +1,6 @@
 package com.shanhe.project.collector.battery.mapper;
 
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
-import com.shanhe.project.collector.battery.model.BatteryModuleGroupCalculation;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -48,27 +47,33 @@ public interface BatteryModuleRealtimeMapper {
     /**
      * 查询指定通道和组的单体实时数据。
      *
-     * @param channelName 通道名称
-     * @param batteryGroup 电池组编号
+     * @param packNum 电池组编号
      * @return 单体实时数据列表
      */
-    List<BatteryModuleCellRealtime> selectCells(@Param("channelName") String channelName,
-                                                @Param("batteryGroup") Integer batteryGroup);
+    List<BatteryModuleCellRealtime> selectCells(@Param("packNum") Integer packNum);
+
+    /**
+     * 查询指定批次的单体实时数据。
+     *
+     * @param packNum 电池组编号
+     * @param pollBatchNo 轮询批次号
+     * @return 单体实时数据列表
+     */
+    List<BatteryModuleCellRealtime> selectCellsByBatch(@Param("packNum") Integer packNum,
+                                                       @Param("pollBatchNo") String pollBatchNo);
 
     /**
      * 查询指定通道和组的组实时数据。
      *
-     * @param channelName 通道名称
      * @param batteryGroup 电池组编号
      * @return 组实时数据
      */
-    BatteryModuleGroupRealtime selectGroup(@Param("channelName") String channelName,
-                                           @Param("batteryGroup") Integer batteryGroup);
+    BatteryModuleGroupRealtime selectGroup(@Param("batteryGroup") Integer batteryGroup);
 
     /**
-     * 写入或更新电池组计算结果。
+     * 将电池组计算结果写回组实时表。
      *
-     * @param calculation 电池组计算结果
+     * @param realtime 组实时数据
      */
-    void upsertCalculation(BatteryModuleGroupCalculation calculation);
+    void updateGroupCalculation(BatteryModuleGroupRealtime realtime);
 }

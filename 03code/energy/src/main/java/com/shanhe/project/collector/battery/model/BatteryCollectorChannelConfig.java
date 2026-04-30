@@ -67,6 +67,11 @@ public class BatteryCollectorChannelConfig {
     private Integer batteryChannel;
 
     /**
+     * 关联旧业务设备ID，用于从旧缓存补充兼容字段；为空时不影响600节采集主流程。
+     */
+    private Long configId;
+
+    /**
      * 对应电池组编号。
      */
     private Integer batteryGroup;

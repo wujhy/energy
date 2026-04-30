@@ -24,29 +24,29 @@ public class BatteryModuleGroupRealtime {
     private Date createTime;
 
     /**
-     * 更新时间。
-     */
-    private Date updateTime;
-
-    /**
-     * 通道名称。
-     */
-    private String channelName;
-
-    /**
-     * 串口名称。
-     */
-    private String portName;
-
-    /**
      * 电池组编号。
      */
-    private Integer batteryGroup;
+    private Integer packNum;
 
     /**
-     * 电流温度模块地址。
+     * 兼容旧 pack_data 的组总电压。
      */
-    private Integer moduleAddress;
+    private Double packVoltage;
+
+    /**
+     * 兼容旧 pack_data 的组充放电电流。
+     */
+    private Double packCurrent;
+
+    /**
+     * 兼容旧 pack_data 的电池组浮充电流。
+     */
+    private Double batteryPackFloatCurrent;
+
+    /**
+     * 兼容旧 pack_data 的电池组外组压。
+     */
+    private Double batteryPackOuterVoltage;
 
     /**
      * 充放电电流。
@@ -74,16 +74,6 @@ public class BatteryModuleGroupRealtime {
     private Double environmentTemperature2;
 
     /**
-     * 响应是否成功。
-     */
-    private Boolean success;
-
-    /**
-     * 原始应答标志。
-     */
-    private Integer responseFlag;
-
-    /**
      * 轮询批次号。
      */
     private String pollBatchNo;
@@ -92,4 +82,85 @@ public class BatteryModuleGroupRealtime {
      * 轮询开始时间。
      */
     private Date pollStartedAt;
+
+    /**
+     * 单体数量。
+     */
+    private Integer cellCount;
+
+    /**
+     * 在线单体数量。
+     */
+    private Integer onlineCellCount;
+
+    /**
+     * 数据陈旧单体数量。
+     */
+    private Integer staleCellCount;
+
+    /**
+     * 数据是否新鲜。
+     */
+    private Boolean dataFresh;
+
+    private Integer maxVoltageBatNum;
+
+    private Double maxCellVoltage;
+
+    private Integer minVoltageBatNum;
+
+    private Double minCellVoltage;
+
+    private Double avgCellVoltage;
+
+    private Double voltageRange;
+
+    private Integer maxTemperatureBatNum;
+
+    private Double maxCellTemperature;
+
+    private Integer minTemperatureBatNum;
+
+    private Double minCellTemperature;
+
+    private Double avgCellTemperature;
+
+    private Double temperatureRange;
+
+    private Integer maxResistanceBatNum;
+
+    private Integer maxInternalResistance;
+
+    private Integer minResistanceBatNum;
+
+    private Integer minInternalResistance;
+
+    private Double avgInternalResistance;
+
+    private Integer resistanceRange;
+
+    /**
+     * 电池组 SOC，算法来源未明确时保持为空。
+     */
+    private Double batteryPackSoc;
+
+    /**
+     * 电池组 SOH，算法来源未明确时保持为空。
+     */
+    private Double batteryPackSoh;
+
+    /**
+     * 最新单体更新时间。
+     */
+    private Date latestCellUpdateTime;
+
+    /**
+     * 最新 246 组模块更新时间。
+     */
+    private Date latestGroupUpdateTime;
+
+    /**
+     * 246 组模块数据是否为本轮新鲜数据。
+     */
+    private Boolean groupModuleFresh;
 }

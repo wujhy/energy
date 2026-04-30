@@ -24,7 +24,9 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -87,8 +89,13 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         }
 
         List<BatteryCollectorChannelConfig> enabledChannels = new ArrayList<>();
+        Set<Integer> enabledBatteryGroups = new HashSet<>();
         for (BatteryCollectorChannelConfig channel : properties.getChannels()) {
-            if (channel != null && Boolean.TRUE.equals(channel.getEnabled()) && shouldRunChannel(channel) && validateChannel(channel)) {
+            if (channel != null
+                    && Boolean.TRUE.equals(channel.getEnabled())
+                    && shouldRunChannel(channel)
+                    && validateChannel(channel)
+                    && validateUniqueBatteryGroup(channel, enabledBatteryGroups)) {
                 enabledChannels.add(channel);
             }
         }
@@ -186,7 +193,24 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                     channel.getDeviceAddress());
             return false;
         }
+        if (channel.getBatteryGroup() == null || channel.getBatteryGroup() <= 0) {
+            log.warn("battery collector channel ignored because batteryGroup is invalid, channel={}, batteryGroup={}",
+                    channel.getName(),
+                    channel.getBatteryGroup());
+            return false;
+        }
         return true;
+    }
+
+    private boolean validateUniqueBatteryGroup(BatteryCollectorChannelConfig channel, Set<Integer> enabledBatteryGroups) {
+        Integer batteryGroup = channel.getBatteryGroup();
+        if (enabledBatteryGroups.add(batteryGroup)) {
+            return true;
+        }
+        log.warn("battery collector channel ignored because batteryGroup is duplicated, channel={}, batteryGroup={}",
+                channel.getName(),
+                batteryGroup);
+        return false;
     }
 
     private void runChannel(BatteryCollectorChannelState state) {
@@ -660,7 +684,19 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             state.getFullDiscoveryRequested().set(true);
             return fullModuleAddressRange(state.getConfig());
         }
+        appendRequiredGroupModuleAddress(activeAddresses, state.getConfig());
         return activeAddresses;
+    }
+
+    private void appendRequiredGroupModuleAddress(List<Integer> addresses, BatteryCollectorChannelConfig config) {
+        int groupModuleAddress = 246;
+        if (resolveModuleAddressStart(config) > groupModuleAddress
+                || resolveModuleAddressEnd(config) < groupModuleAddress
+                || addresses.contains(groupModuleAddress)) {
+            return;
+        }
+        addresses.add(groupModuleAddress);
+        Collections.sort(addresses);
     }
 
     private List<Integer> fullModuleAddressRange(BatteryCollectorChannelConfig config) {

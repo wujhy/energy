@@ -49,6 +49,12 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
     @Resource
     private BatteryModuleGroupCalculationService calculationService;
 
+    /**
+     * 单体兼容字段缓存填充服务。
+     */
+    @Resource
+    private BatteryModuleCellCompatibilityFillService compatibilityFillService;
+
     @Override
     public void consume(BatteryCollectorChannelConfig channelConfig,
                         BatteryCollectorFrame frame,
@@ -63,6 +69,9 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
         try {
             boolean saved = false;
             if (data.getType() == BatteryModuleDataType.SINGLE_MODULE_INFO) {
+                if (!data.isSuccess()) {
+                    return;
+                }
                 BatteryModuleCellRealtime cell = buildCell(channelConfig, data);
                 BatteryModulePollContext context = BatteryModulePollContextHolder.get();
                 if (context == null) {
@@ -82,7 +91,7 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
                 saved = true;
             }
             if (saved && BatteryModulePollContextHolder.get() == null && shouldCalculateAfterSave(data.getType())) {
-                calculateIfEnabled(channelConfig);
+                calculateIfEnabled(channelConfig, null);
             }
         } catch (Exception e) {
             log.warn("save battery module realtime failed, channel={}, type={}",
@@ -113,7 +122,9 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
             }
             if (!context.getGroups().isEmpty()) {
                 realtimeMapper.upsertGroups(context.getGroups());
-                calculateIfEnabled(channelConfig);
+            }
+            if (!context.getCells().isEmpty() || !context.getGroups().isEmpty()) {
+                calculateIfEnabled(channelConfig, context);
             }
         } catch (Exception e) {
             log.warn("flush battery module realtime batch failed, channel={}, batch={}",
@@ -123,7 +134,7 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
         }
     }
 
-    void calculateIfEnabled(BatteryCollectorChannelConfig channelConfig) {
+    void calculateIfEnabled(BatteryCollectorChannelConfig channelConfig, BatteryModulePollContext context) {
         if (!Boolean.TRUE.equals(properties.getGroupCalculationEnabled())) {
             return;
         }
@@ -132,9 +143,15 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
             return;
         }
         try {
-            calculationService.calculateAndSave(channelConfig.getName(),
-                    channelConfig.getBatteryGroup(),
-                    resolveCalculationStaleThresholdMs());
+            if (context == null) {
+                calculationService.calculateAndSave(channelConfig.getBatteryGroup(),
+                        resolveCalculationStaleThresholdMs());
+            } else {
+                calculationService.calculateAndSave(channelConfig.getBatteryGroup(),
+                        context.getPollBatchNo(),
+                        context.getPollStartedAt(),
+                        resolveCalculationStaleThresholdMs());
+            }
         } catch (Exception e) {
             log.warn("calculate battery module group failed, channel={}, group={}",
                     channelConfig.getName(),
@@ -150,34 +167,30 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
 
     BatteryModuleCellRealtime buildCell(BatteryCollectorChannelConfig channelConfig, BatteryModuleFrameData data) {
         BatteryModuleCellRealtime realtime = new BatteryModuleCellRealtime();
-        realtime.setChannelName(channelConfig == null ? null : channelConfig.getName());
-        realtime.setPortName(channelConfig == null ? null : channelConfig.getPortName());
-        realtime.setBatteryGroup(channelConfig == null ? null : channelConfig.getBatteryGroup());
-        realtime.setModuleAddress(data.getModuleAddress());
-        realtime.setCellVoltage(data.getCellVoltage());
-        realtime.setInternalResistance(data.getInternalResistance());
-        realtime.setCellTemperature(data.getCellTemperature());
-        realtime.setLeakageStatus(data.getLeakageStatus());
+        realtime.setPackNum(channelConfig == null ? null : channelConfig.getBatteryGroup());
+        realtime.setBatNum(data.getModuleAddress());
+        realtime.setVoltage(data.getCellVoltage());
+        realtime.setResistance(data.getInternalResistance());
+        realtime.setTemperature(data.getCellTemperature());
         realtime.setSwollenVoltage(data.getSwollenVoltage());
-        realtime.setSuccess(data.isSuccess());
-        realtime.setResponseFlag(data.getResponseFlag());
+        realtime.setLeakageStatus(data.getLeakageStatus());
+        compatibilityFillService.fillFromCache(channelConfig, realtime);
         applyPollContext(realtime);
         return realtime;
     }
 
     BatteryModuleGroupRealtime buildGroup(BatteryCollectorChannelConfig channelConfig, BatteryModuleFrameData data) {
         BatteryModuleGroupRealtime realtime = new BatteryModuleGroupRealtime();
-        realtime.setChannelName(channelConfig == null ? null : channelConfig.getName());
-        realtime.setPortName(channelConfig == null ? null : channelConfig.getPortName());
-        realtime.setBatteryGroup(channelConfig == null ? null : channelConfig.getBatteryGroup());
-        realtime.setModuleAddress(data.getModuleAddress());
+        realtime.setPackNum(channelConfig == null ? null : channelConfig.getBatteryGroup());
+        realtime.setPackCurrent(data.getChargeDischargeCurrent());
+        realtime.setBatteryPackFloatCurrent(data.getFloatCurrent());
+        realtime.setBatteryPackOuterVoltage(data.getExternalVoltage());
         realtime.setChargeDischargeCurrent(data.getChargeDischargeCurrent());
         realtime.setFloatCurrent(data.getFloatCurrent());
         realtime.setExternalVoltage(data.getExternalVoltage());
         realtime.setEnvironmentTemperature1(data.getEnvironmentTemperature1());
         realtime.setEnvironmentTemperature2(data.getEnvironmentTemperature2());
-        realtime.setSuccess(data.isSuccess());
-        realtime.setResponseFlag(data.getResponseFlag());
+        realtime.setGroupModuleFresh(data.isSuccess());
         applyPollContext(realtime);
         return realtime;
     }

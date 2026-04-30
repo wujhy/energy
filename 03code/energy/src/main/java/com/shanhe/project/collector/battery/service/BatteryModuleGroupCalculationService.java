@@ -2,7 +2,6 @@ package com.shanhe.project.collector.battery.service;
 
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
-import com.shanhe.project.collector.battery.model.BatteryModuleGroupCalculation;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import org.springframework.stereotype.Service;
 
@@ -33,40 +32,58 @@ public class BatteryModuleGroupCalculationService {
     /**
      * 按默认新鲜度阈值计算并保存电池组指标。
      *
-     * @param channelName 通道名称
      * @param batteryGroup 电池组编号
      * @return 计算结果
      */
-    public BatteryModuleGroupCalculation calculateAndSave(String channelName, Integer batteryGroup) {
-        return calculateAndSave(channelName, batteryGroup, DEFAULT_STALE_THRESHOLD_MS);
+    public BatteryModuleGroupRealtime calculateAndSave(Integer batteryGroup) {
+        return calculateAndSave(batteryGroup, null, null, DEFAULT_STALE_THRESHOLD_MS);
     }
 
     /**
      * 计算并保存电池组指标。
      *
-     * @param channelName 通道名称
      * @param batteryGroup 电池组编号
      * @param staleThresholdMs 单体数据新鲜度阈值
      * @return 计算结果
      */
-    public BatteryModuleGroupCalculation calculateAndSave(String channelName, Integer batteryGroup, long staleThresholdMs) {
-        List<BatteryModuleCellRealtime> cells = realtimeMapper.selectCells(channelName, batteryGroup);
-        BatteryModuleGroupRealtime group = realtimeMapper.selectGroup(channelName, batteryGroup);
-        BatteryModuleGroupCalculation calculation = buildCalculation(channelName, batteryGroup, cells, group,
-                new Date(), staleThresholdMs);
-        realtimeMapper.upsertCalculation(calculation);
+    public BatteryModuleGroupRealtime calculateAndSave(Integer batteryGroup, long staleThresholdMs) {
+        return calculateAndSave(batteryGroup, null, null, staleThresholdMs);
+    }
+
+    /**
+     * 按指定轮询批次计算并保存电池组指标。
+     *
+     * @param batteryGroup 电池组编号
+     * @param pollBatchNo 轮询批次号
+     * @param pollStartedAt 轮询开始时间
+     * @param staleThresholdMs 单体数据新鲜度阈值
+     * @return 计算后的组实时数据
+     */
+    public BatteryModuleGroupRealtime calculateAndSave(Integer batteryGroup,
+                                                       String pollBatchNo,
+                                                       Date pollStartedAt,
+                                                       long staleThresholdMs) {
+        List<BatteryModuleCellRealtime> cells = pollBatchNo == null
+                ? realtimeMapper.selectCells(batteryGroup)
+                : realtimeMapper.selectCellsByBatch(batteryGroup, pollBatchNo);
+        BatteryModuleGroupRealtime group = realtimeMapper.selectGroup(batteryGroup);
+        BatteryModuleGroupRealtime calculation = buildCalculation(batteryGroup, cells, group,
+                new Date(), pollBatchNo, pollStartedAt, staleThresholdMs);
+        realtimeMapper.updateGroupCalculation(calculation);
         return calculation;
     }
 
-    BatteryModuleGroupCalculation buildCalculation(String channelName,
-                                                   Integer batteryGroup,
-                                                   List<BatteryModuleCellRealtime> cells,
-                                                   BatteryModuleGroupRealtime group,
-                                                   Date now,
-                                                   long staleThresholdMs) {
-        BatteryModuleGroupCalculation calculation = new BatteryModuleGroupCalculation();
-        calculation.setChannelName(channelName);
-        calculation.setBatteryGroup(batteryGroup);
+    BatteryModuleGroupRealtime buildCalculation(Integer batteryGroup,
+                                                List<BatteryModuleCellRealtime> cells,
+                                                BatteryModuleGroupRealtime group,
+                                                Date now,
+                                                String pollBatchNo,
+                                                Date pollStartedAt,
+                                                long staleThresholdMs) {
+        BatteryModuleGroupRealtime calculation = new BatteryModuleGroupRealtime();
+        calculation.setPackNum(batteryGroup);
+        calculation.setPollBatchNo(pollBatchNo);
+        calculation.setPollStartedAt(pollStartedAt);
         calculation.setCellCount(cells == null ? 0 : cells.size());
 
         long nowMs = now == null ? System.currentTimeMillis() : now.getTime();
@@ -83,20 +100,20 @@ public class BatteryModuleGroupCalculationService {
                 if (cell == null) {
                     continue;
                 }
-                Date updateTime = cell.getUpdateTime();
-                latestCellUpdateTime = latest(latestCellUpdateTime, updateTime);
-                boolean online = Boolean.TRUE.equals(cell.getSuccess());
+                Date sampleTime = cell.getCreateTime();
+                latestCellUpdateTime = latest(latestCellUpdateTime, sampleTime);
+                boolean online = true;
                 // 超过新鲜度阈值的最新值不参与在线数量判断。
-                if (updateTime == null || nowMs - updateTime.getTime() > staleThresholdMs) {
+                if (sampleTime == null || nowMs - sampleTime.getTime() > staleThresholdMs) {
                     staleCount++;
                     online = false;
                 }
                 if (online) {
                     onlineCount++;
                 }
-                voltage.accept(cell.getModuleAddress(), cell.getCellVoltage());
-                temperature.accept(cell.getModuleAddress(), cell.getCellTemperature());
-                resistance.accept(cell.getModuleAddress(), cell.getInternalResistance());
+                voltage.accept(cell.getBatNum(), cell.getVoltage());
+                temperature.accept(cell.getBatNum(), cell.getTemperature());
+                resistance.accept(cell.getBatNum(), cell.getResistance());
             }
         }
 
@@ -110,12 +127,21 @@ public class BatteryModuleGroupCalculationService {
         resistance.apply(calculation);
 
         if (group != null) {
+            calculation.setPackVoltage(group.getPackVoltage());
+            calculation.setPackCurrent(group.getPackCurrent());
+            calculation.setBatteryPackFloatCurrent(group.getBatteryPackFloatCurrent());
+            calculation.setBatteryPackOuterVoltage(group.getBatteryPackOuterVoltage());
             calculation.setExternalVoltage(group.getExternalVoltage());
             calculation.setChargeDischargeCurrent(group.getChargeDischargeCurrent());
             calculation.setFloatCurrent(group.getFloatCurrent());
             calculation.setEnvironmentTemperature1(group.getEnvironmentTemperature1());
             calculation.setEnvironmentTemperature2(group.getEnvironmentTemperature2());
-            calculation.setLatestGroupUpdateTime(group.getUpdateTime());
+            calculation.setLatestGroupUpdateTime(group.getCreateTime());
+            calculation.setGroupModuleFresh(pollBatchNo != null
+                    && pollBatchNo.equals(group.getPollBatchNo())
+                    && Boolean.TRUE.equals(group.getGroupModuleFresh()));
+        } else {
+            calculation.setGroupModuleFresh(Boolean.FALSE);
         }
         return calculation;
     }
@@ -154,19 +180,19 @@ public class BatteryModuleGroupCalculationService {
             count++;
         }
 
-        void applyVoltage(BatteryModuleGroupCalculation calculation) {
-            calculation.setMinVoltageModuleAddress(minAddress);
+        void applyVoltage(BatteryModuleGroupRealtime calculation) {
+            calculation.setMinVoltageBatNum(minAddress);
             calculation.setMinCellVoltage(min);
-            calculation.setMaxVoltageModuleAddress(maxAddress);
+            calculation.setMaxVoltageBatNum(maxAddress);
             calculation.setMaxCellVoltage(max);
             calculation.setAvgCellVoltage(avg());
             calculation.setVoltageRange(range());
         }
 
-        void applyTemperature(BatteryModuleGroupCalculation calculation) {
-            calculation.setMinTemperatureModuleAddress(minAddress);
+        void applyTemperature(BatteryModuleGroupRealtime calculation) {
+            calculation.setMinTemperatureBatNum(minAddress);
             calculation.setMinCellTemperature(min);
-            calculation.setMaxTemperatureModuleAddress(maxAddress);
+            calculation.setMaxTemperatureBatNum(maxAddress);
             calculation.setMaxCellTemperature(max);
             calculation.setAvgCellTemperature(avg());
             calculation.setTemperatureRange(range());
@@ -205,10 +231,10 @@ public class BatteryModuleGroupCalculationService {
             count++;
         }
 
-        void apply(BatteryModuleGroupCalculation calculation) {
-            calculation.setMinResistanceModuleAddress(minAddress);
+        void apply(BatteryModuleGroupRealtime calculation) {
+            calculation.setMinResistanceBatNum(minAddress);
             calculation.setMinInternalResistance(min);
-            calculation.setMaxResistanceModuleAddress(maxAddress);
+            calculation.setMaxResistanceBatNum(maxAddress);
             calculation.setMaxInternalResistance(max);
             calculation.setAvgInternalResistance(count == 0 ? null : (double) sum / count);
             calculation.setResistanceRange(min == null || max == null ? null : max - min);
