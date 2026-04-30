@@ -161,6 +161,12 @@ public class BatteryModuleGroupCalculationService {
         resistance.apply(calculation);
 
         if (group != null) {
+            boolean currentGroupModule = isCurrentGroupModule(group, pollBatchNo);
+            calculation.setLatestGroupUpdateTime(group.getCreateTime());
+            calculation.setGroupModuleFresh(currentGroupModule);
+            if (!currentGroupModule) {
+                return calculation;
+            }
             calculation.setPackVoltage(group.getPackVoltage());
             calculation.setPackCurrent(group.getPackCurrent());
             calculation.setBatteryPackFloatCurrent(group.getBatteryPackFloatCurrent());
@@ -170,15 +176,22 @@ public class BatteryModuleGroupCalculationService {
             calculation.setFloatCurrent(group.getFloatCurrent());
             calculation.setEnvironmentTemperature1(group.getEnvironmentTemperature1());
             calculation.setEnvironmentTemperature2(group.getEnvironmentTemperature2());
-            calculation.setLatestGroupUpdateTime(group.getCreateTime());
-            calculation.setGroupModuleFresh(pollBatchNo != null
-                    && pollBatchNo.equals(group.getPollBatchNo())
-                    && Boolean.TRUE.equals(group.getGroupModuleFresh()));
             copyCompatibilityFields(group, calculation);
         } else {
             calculation.setGroupModuleFresh(Boolean.FALSE);
         }
         return calculation;
+    }
+
+    private boolean isCurrentGroupModule(BatteryModuleGroupRealtime group, String pollBatchNo) {
+        if (group == null) {
+            return false;
+        }
+        if (pollBatchNo == null) {
+            return Boolean.TRUE.equals(group.getGroupModuleFresh());
+        }
+        return pollBatchNo.equals(group.getPollBatchNo())
+                && Boolean.TRUE.equals(group.getGroupModuleFresh());
     }
 
     private void copyCompatibilityFields(BatteryModuleGroupRealtime source,

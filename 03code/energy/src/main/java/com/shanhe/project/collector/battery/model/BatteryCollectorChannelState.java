@@ -4,9 +4,11 @@ import com.fazecast.jSerialComm.SerialPort;
 import lombok.Data;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -95,6 +97,11 @@ public class BatteryCollectorChannelState {
      * 下轮是否强制执行全量发现。
      */
     private final AtomicBoolean fullDiscoveryRequested = new AtomicBoolean(true);
+
+    /**
+     * 等待下发的显式600节模块端控制命令。
+     */
+    private final Queue<BatteryModuleControlCommand> queuedModuleCommands = new ConcurrentLinkedQueue<>();
 
     /**
      * 串口接收缓冲。

@@ -20,6 +20,16 @@ public class BatteryCollectorCommandResult {
     private BatteryAggregateCommandDefinition commandDefinition;
 
     /**
+     * 是否已映射为明确的600节模块端命令。
+     */
+    private boolean mappedToModuleCommand;
+
+    /**
+     * 映射后的600节模块端命令。
+     */
+    private BatteryModuleControlCommand moduleControlCommand;
+
+    /**
      * 命令是否成功。
      */
     private boolean success;

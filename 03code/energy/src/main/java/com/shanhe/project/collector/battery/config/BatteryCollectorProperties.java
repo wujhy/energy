@@ -51,6 +51,11 @@ public class BatteryCollectorProperties {
     private Boolean groupCalculationEnabled = Boolean.FALSE;
 
     /**
+     * 是否把独立模块采集结果同步为旧 dev_battery_report_log 历史记录。
+     */
+    private Boolean compatReportLogEnabled = Boolean.FALSE;
+
+    /**
      * 组计算时单体实时数据的新鲜度阈值。
      */
     private Long groupCalculationStaleThresholdMs = 180_000L;

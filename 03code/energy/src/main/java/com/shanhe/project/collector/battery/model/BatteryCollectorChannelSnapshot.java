@@ -157,6 +157,11 @@ public class BatteryCollectorChannelSnapshot {
     private Boolean pendingAutoPoll;
 
     /**
+     * 等待下发的显式模块端控制命令数量。
+     */
+    private Integer queuedModuleCommandCount;
+
+    /**
      * 接收缓冲长度。
      */
     private Integer receiveBufferSize;

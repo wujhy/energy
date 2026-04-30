@@ -18,6 +18,7 @@ class BatteryModuleRealtimeConsumerTest {
 
     @Test
     void shouldBuildCellRealtime() {
+        ReflectionTestUtils.setField(consumer, "compatibilityFillService", new BatteryModuleCellCompatibilityFillService());
         BatteryCollectorChannelConfig channelConfig = channelConfig();
         Date pollStartedAt = new Date(1000L);
         BatteryModulePollContextHolder.set(com.shanhe.project.collector.battery.model.BatteryModulePollContext.builder()
@@ -43,13 +44,13 @@ class BatteryModuleRealtimeConsumerTest {
             BatteryModulePollContextHolder.clear();
         }
 
-        Assertions.assertEquals("battery-group-1", realtime.getChannelName());
-        Assertions.assertEquals("ttyS9", realtime.getPortName());
-        Assertions.assertEquals(1, realtime.getBatteryGroup());
-        Assertions.assertEquals(8, realtime.getModuleAddress());
-        Assertions.assertEquals(2.5d, realtime.getCellVoltage(), 0.0001d);
-        Assertions.assertEquals(120, realtime.getInternalResistance());
-        Assertions.assertTrue(realtime.getSuccess());
+        Assertions.assertEquals(1, realtime.getPackNum());
+        Assertions.assertEquals(8, realtime.getBatNum());
+        Assertions.assertEquals(2.5d, realtime.getVoltage(), 0.0001d);
+        Assertions.assertEquals(120, realtime.getResistance());
+        Assertions.assertEquals(24.5d, realtime.getTemperature(), 0.0001d);
+        Assertions.assertEquals(123.4d, realtime.getSwollenVoltage(), 0.0001d);
+        Assertions.assertEquals(0, realtime.getLeakageStatus());
         Assertions.assertEquals("batch-1", realtime.getPollBatchNo());
         Assertions.assertEquals(pollStartedAt, realtime.getPollStartedAt());
     }
@@ -71,13 +72,14 @@ class BatteryModuleRealtimeConsumerTest {
 
         BatteryModuleGroupRealtime realtime = consumer.buildGroup(channelConfig, data);
 
-        Assertions.assertEquals("battery-group-1", realtime.getChannelName());
-        Assertions.assertEquals(1, realtime.getBatteryGroup());
-        Assertions.assertEquals(246, realtime.getModuleAddress());
+        Assertions.assertEquals(1, realtime.getPackNum());
         Assertions.assertEquals(12.3d, realtime.getChargeDischargeCurrent(), 0.0001d);
         Assertions.assertEquals(0.123d, realtime.getFloatCurrent(), 0.0001d);
         Assertions.assertEquals(123.45d, realtime.getExternalVoltage(), 0.0001d);
-        Assertions.assertTrue(realtime.getSuccess());
+        Assertions.assertEquals(12.3d, realtime.getPackCurrent(), 0.0001d);
+        Assertions.assertEquals(0.123d, realtime.getBatteryPackFloatCurrent(), 0.0001d);
+        Assertions.assertEquals(123.45d, realtime.getBatteryPackOuterVoltage(), 0.0001d);
+        Assertions.assertTrue(realtime.getGroupModuleFresh());
     }
 
     @Test

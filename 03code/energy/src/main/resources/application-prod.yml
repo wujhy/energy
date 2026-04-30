@@ -120,6 +120,7 @@ battery-collector:
         rawFrameLogEnabled: false
         realtimeDataEnabled: false
         groupCalculationEnabled: false
+        compatReportLogEnabled: false
         groupCalculationStaleThresholdMs: 180000
         moduleAddressCacheEnabled: true
         moduleAddressMissThreshold: 3

@@ -55,6 +55,18 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
     @Resource
     private BatteryModuleCellCompatibilityFillService compatibilityFillService;
 
+    /**
+     * 旧历史记录兼容同步服务。
+     */
+    @Resource
+    private BatteryModuleCompatReportLogSyncService compatReportLogSyncService;
+
+    /**
+     * 告警适配服务。
+     */
+    @Resource
+    private BatteryModuleAlarmAdaptService alarmAdaptService;
+
     @Override
     public void consume(BatteryCollectorChannelConfig channelConfig,
                         BatteryCollectorFrame frame,
@@ -124,7 +136,9 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
                 realtimeMapper.upsertGroups(context.getGroups());
             }
             if (!context.getCells().isEmpty() || !context.getGroups().isEmpty()) {
-                calculateIfEnabled(channelConfig, context);
+                BatteryModuleGroupRealtime calculation = calculateIfEnabled(channelConfig, context);
+                adaptAlarmContext(channelConfig, context, calculation);
+                syncCompatReportLogIfEnabled(channelConfig, context, calculation);
             }
         } catch (Exception e) {
             log.warn("flush battery module realtime batch failed, channel={}, batch={}",
@@ -134,23 +148,24 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
         }
     }
 
-    void calculateIfEnabled(BatteryCollectorChannelConfig channelConfig, BatteryModulePollContext context) {
+    BatteryModuleGroupRealtime calculateIfEnabled(BatteryCollectorChannelConfig channelConfig,
+                                                  BatteryModulePollContext context) {
         if (!Boolean.TRUE.equals(properties.getGroupCalculationEnabled())) {
-            return;
+            return null;
         }
         if (calculationService == null || channelConfig == null
                 || channelConfig.getName() == null || channelConfig.getBatteryGroup() == null) {
-            return;
+            return null;
         }
         try {
             if (context == null) {
-                calculationService.calculateAndSave(channelConfig,
+                return calculationService.calculateAndSave(channelConfig,
                         channelConfig.getBatteryGroup(),
                         null,
                         null,
                         resolveCalculationStaleThresholdMs());
             } else {
-                calculationService.calculateAndSave(channelConfig,
+                return calculationService.calculateAndSave(channelConfig,
                         channelConfig.getBatteryGroup(),
                         context.getPollBatchNo(),
                         context.getPollStartedAt(),
@@ -160,6 +175,42 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
             log.warn("calculate battery module group failed, channel={}, group={}",
                     channelConfig.getName(),
                     channelConfig.getBatteryGroup(),
+                    e);
+        }
+        return null;
+    }
+
+    void adaptAlarmContext(BatteryCollectorChannelConfig channelConfig,
+                           BatteryModulePollContext context,
+                           BatteryModuleGroupRealtime calculation) {
+        if (alarmAdaptService == null || context == null) {
+            return;
+        }
+        try {
+            alarmAdaptService.buildContext(calculation, context.getCells());
+        } catch (Exception e) {
+            log.warn("adapt battery module alarm context failed, channel={}, group={}",
+                    channelConfig == null ? null : channelConfig.getName(),
+                    channelConfig == null ? null : channelConfig.getBatteryGroup(),
+                    e);
+        }
+    }
+
+    void syncCompatReportLogIfEnabled(BatteryCollectorChannelConfig channelConfig,
+                                      BatteryModulePollContext context,
+                                      BatteryModuleGroupRealtime calculation) {
+        if (!Boolean.TRUE.equals(properties.getCompatReportLogEnabled())
+                || compatReportLogSyncService == null
+                || context == null
+                || calculation == null) {
+            return;
+        }
+        try {
+            compatReportLogSyncService.sync(channelConfig, calculation, context.getCells());
+        } catch (Exception e) {
+            log.warn("sync battery module compat report log failed, channel={}, group={}",
+                    channelConfig == null ? null : channelConfig.getName(),
+                    channelConfig == null ? null : channelConfig.getBatteryGroup(),
                     e);
         }
     }

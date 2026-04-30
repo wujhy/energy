@@ -5,11 +5,15 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelSnapshot;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelState;
 import com.shanhe.project.collector.battery.model.BatteryCollectorRunState;
+import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.model.BatteryPendingRequest;
+import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
+import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.Arrays;
 import java.util.List;
 
 class BatteryCollectorServiceTest {
@@ -84,6 +88,13 @@ class BatteryCollectorServiceTest {
         state.getActiveModuleAddresses().add(8);
         state.getActiveModuleAddresses().add(246);
         state.setPendingCommand(BatteryPendingRequest.command(0x01, 0x81, new byte[0], "MODULE_INFO"));
+        state.getQueuedModuleCommands().offer(BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST)
+                .address(8)
+                .requestCode(0x02)
+                .responseCode(0x82)
+                .payload(new byte[0])
+                .build());
 
         BatteryCollectorChannelSnapshot snapshot = service.buildSnapshot(state);
 
@@ -106,6 +117,7 @@ class BatteryCollectorServiceTest {
         Assertions.assertEquals("MODULE_INFO", snapshot.getPendingCommandName());
         Assertions.assertEquals(0x01, snapshot.getPendingRequestCode());
         Assertions.assertEquals(0x81, snapshot.getPendingResponseCode());
+        Assertions.assertEquals(1, snapshot.getQueuedModuleCommandCount());
     }
 
     @Test
@@ -126,5 +138,112 @@ class BatteryCollectorServiceTest {
         Assertions.assertTrue(state.getActiveModuleAddresses().isEmpty());
         Assertions.assertTrue(state.getModuleAddressMissCounts().isEmpty());
         Assertions.assertTrue(state.getFullDiscoveryRequested().get());
+    }
+
+    @Test
+    void shouldRequireFullDiscoveryWhenOnlyGroupModuleAddressIsCached() {
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setModuleAddressStart(1);
+        channelConfig.setModuleAddressEnd(246);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        state.getActiveModuleAddresses().add(246);
+
+        Assertions.assertFalse(service.hasActiveCellModuleAddress(state));
+    }
+
+    @Test
+    void shouldDetectActiveCellModuleAddress() {
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setModuleAddressStart(1);
+        channelConfig.setModuleAddressEnd(246);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        state.getActiveModuleAddresses().add(8);
+        state.getActiveModuleAddresses().add(246);
+
+        Assertions.assertTrue(service.hasActiveCellModuleAddress(state));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldAlwaysPollGroupModuleAddressEvenWhenCellRangeEndsAt245() {
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        properties.setModuleAddressCacheEnabled(true);
+        ReflectionTestUtils.setField(service, "properties", properties);
+
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setModuleAddressStart(1);
+        channelConfig.setModuleAddressEnd(245);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        state.getActiveModuleAddresses().add(8);
+
+        List<Integer> fullDiscoveryAddresses = ReflectionTestUtils.invokeMethod(service,
+                "resolvePollingAddresses", state, true);
+        List<Integer> cachedAddresses = ReflectionTestUtils.invokeMethod(service,
+                "resolvePollingAddresses", state, false);
+
+        Assertions.assertNotNull(fullDiscoveryAddresses);
+        Assertions.assertTrue(fullDiscoveryAddresses.contains(246));
+        Assertions.assertEquals(246, fullDiscoveryAddresses.get(fullDiscoveryAddresses.size() - 1));
+        Assertions.assertNotNull(cachedAddresses);
+        Assertions.assertEquals(Arrays.asList(8, 246), cachedAddresses);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldQueueModuleCommandForActiveChannel() {
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setName("battery-group-1");
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        List<BatteryCollectorChannelState> channelStates =
+                (List<BatteryCollectorChannelState>) ReflectionTestUtils.getField(service, "channelStates");
+        channelStates.add(state);
+
+        boolean queued = service.submitModuleCommand("battery-group-1", BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST)
+                .address(8)
+                .requestCode(0x02)
+                .responseCode(0x82)
+                .payload(new byte[0])
+                .build());
+
+        Assertions.assertTrue(queued);
+        Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldRequeueModuleCommandWhenSerialPortIsUnavailable() {
+        ReflectionTestUtils.setField(service, "frameCodec", new BatteryCollectorFrameCodec());
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setName("battery-group-1");
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        state.getQueuedModuleCommands().offer(BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST)
+                .address(8)
+                .requestCode(0x02)
+                .responseCode(0x82)
+                .payload(new byte[0])
+                .build());
+
+        ReflectionTestUtils.invokeMethod(service, "processQueuedModuleCommand", state);
+
+        Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
+    }
+
+    @Test
+    void shouldSkipPollingImmediatelyAfterAnySend() {
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        ReflectionTestUtils.setField(service, "properties", properties);
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setName("battery-group-1");
+        channelConfig.setBatteryGroup(1);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        state.setLastSendTime(System.currentTimeMillis());
+        state.setLastPollTime(0L);
+
+        ReflectionTestUtils.invokeMethod(service, "pollIfNecessary", state);
+
+        Assertions.assertEquals(0L, state.getPollRoundCount());
+        Assertions.assertEquals(0L, state.getLastPollTime());
     }
 }
