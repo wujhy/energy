@@ -4,6 +4,7 @@ import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelSnapshot;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelState;
+import com.shanhe.project.collector.battery.model.BatteryCollectorFrame;
 import com.shanhe.project.collector.battery.model.BatteryCollectorRunState;
 import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.model.BatteryPendingRequest;
@@ -161,6 +162,84 @@ class BatteryCollectorServiceTest {
         state.getActiveModuleAddresses().add(246);
 
         Assertions.assertTrue(service.hasActiveCellModuleAddress(state));
+    }
+
+    @Test
+    void shouldMatchCurrentPendingResponseByCommandAndAddress() {
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
+        state.setExpectedResponseCode(0x81);
+        state.setPendingCommand(BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.MODULE_INFO,
+                8,
+                new byte[0],
+                true));
+        BatteryCollectorFrame currentResponse = BatteryCollectorFrame.builder()
+                .address(8)
+                .command(0x81)
+                .payload(new byte[0])
+                .build();
+        BatteryCollectorFrame lateResponse = BatteryCollectorFrame.builder()
+                .address(7)
+                .command(0x81)
+                .payload(new byte[0])
+                .build();
+
+        Boolean currentMatched = ReflectionTestUtils.invokeMethod(service,
+                "isCurrentPendingResponse", state, currentResponse);
+        Boolean lateMatched = ReflectionTestUtils.invokeMethod(service,
+                "isCurrentPendingResponse", state, lateResponse);
+
+        Assertions.assertTrue(Boolean.TRUE.equals(currentMatched));
+        Assertions.assertFalse(Boolean.TRUE.equals(lateMatched));
+    }
+
+    @Test
+    void shouldNotCompletePendingRequestWhenOnlyCommandOrAddressMatches() {
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
+        state.setExpectedResponseCode(0x81);
+        state.setPendingCommand(BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.MODULE_INFO,
+                8,
+                new byte[0],
+                true));
+        BatteryCollectorFrame sameCommandDifferentAddress = BatteryCollectorFrame.builder()
+                .address(7)
+                .command(0x81)
+                .payload(new byte[0])
+                .build();
+        BatteryCollectorFrame sameAddressDifferentCommand = BatteryCollectorFrame.builder()
+                .address(8)
+                .command(0x91)
+                .payload(new byte[0])
+                .build();
+
+        Boolean sameCommandMatched = ReflectionTestUtils.invokeMethod(service,
+                "isCurrentPendingResponse", state, sameCommandDifferentAddress);
+        Boolean sameAddressMatched = ReflectionTestUtils.invokeMethod(service,
+                "isCurrentPendingResponse", state, sameAddressDifferentCommand);
+
+        Assertions.assertFalse(Boolean.TRUE.equals(sameCommandMatched));
+        Assertions.assertFalse(Boolean.TRUE.equals(sameAddressMatched));
+    }
+
+    @Test
+    void shouldRemoveCachedModuleAddressAfterConsecutiveMisses() {
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        properties.setModuleAddressCacheEnabled(true);
+        properties.setModuleAddressMissThreshold(2);
+        ReflectionTestUtils.setField(service, "properties", properties);
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setName("battery-group-1");
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        state.getActiveModuleAddresses().add(8);
+
+        ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 8, false);
+        Assertions.assertTrue(state.getActiveModuleAddresses().contains(8));
+
+        ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 8, false);
+
+        Assertions.assertFalse(state.getActiveModuleAddresses().contains(8));
+        Assertions.assertFalse(state.getModuleAddressMissCounts().containsKey(8));
     }
 
     @Test

@@ -121,6 +121,8 @@ battery-collector:
         realtimeDataEnabled: false
         groupCalculationEnabled: false
         compatReportLogEnabled: false
+        jsonTcpRealtimeSourceEnabled: false
+        jsonTcpModuleCommandEnabled: false
         groupCalculationStaleThresholdMs: 180000
         moduleAddressCacheEnabled: true
         moduleAddressMissThreshold: 3

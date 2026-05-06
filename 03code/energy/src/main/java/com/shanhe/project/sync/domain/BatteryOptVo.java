@@ -48,6 +48,9 @@ public class BatteryOptVo implements Serializable {
     /** 放电时长 */
     private Integer dischargeTime;
 
+    /** 单体编号 */
+    private Integer modelNum;
+
     /** 操作指令，根据参数配置生成指令 */
     private String optCommand;
 }

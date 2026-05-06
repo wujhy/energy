@@ -72,6 +72,18 @@ class BatteryModuleReportLogAdapterServiceTest {
         Assertions.assertEquals(3.3d, monitor.getGbvoltage(), 0.0001d);
     }
 
+    @Test
+    void shouldBuildEmptyShapeWhenRealtimeDataMissing() {
+        BatteryReportLog reportLog = service.buildReportLog(10L, 1, null, null);
+
+        Assertions.assertEquals(10L, reportLog.getConfigId());
+        Assertions.assertEquals(1, reportLog.getPackNum());
+        Assertions.assertTrue(reportLog.getPackParam().isEmpty());
+        Assertions.assertTrue(reportLog.getBatteryList().isEmpty());
+        Assertions.assertEquals("{}", reportLog.getPackData());
+        Assertions.assertEquals("[]", reportLog.getMonitorData());
+    }
+
     private BatteryModuleCellRealtime cell(int batNum, double voltage, int resistance, double temperature) {
         BatteryModuleCellRealtime cell = new BatteryModuleCellRealtime();
         cell.setCreateTime(new Date(1_000L + batNum));

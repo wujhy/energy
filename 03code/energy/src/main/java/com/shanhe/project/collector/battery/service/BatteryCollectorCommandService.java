@@ -1,8 +1,10 @@
 package com.shanhe.project.collector.battery.service;
 
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
+import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
+import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,8 @@ public class BatteryCollectorCommandService {
      */
     @Resource
     private BatteryModuleControlCommandService moduleControlCommandService = new BatteryModuleControlCommandService();
+    @Resource
+    private BatteryCollectorProperties properties;
 
     /**
      * 独立采集服务，负责按通道线程串行下发显式模块端命令。
@@ -134,6 +138,42 @@ public class BatteryCollectorCommandService {
 
     public BatteryCollectorCommandResult setSwollenVoltageReference(String channelName, int batteryGroup, double referenceValue, Long timeoutMs) {
         return unsupported(BatteryAggregateCommandDefinition.SET_SWOLLEN_VOLTAGE_REFERENCE, channelName);
+    }
+
+    /**
+     * 按旧业务设备和电池组解析独立采集通道名称。
+     *
+     * @param configId 旧业务设备ID
+     * @param batteryGroup 电池组编号
+     * @return 通道名称；无法唯一定位时返回null
+     */
+    public String resolveChannelName(Long configId, Integer batteryGroup) {
+        if (properties == null || properties.getChannels() == null || batteryGroup == null) {
+            return null;
+        }
+        String matchedByGroup = null;
+        for (BatteryCollectorChannelConfig channel : properties.getChannels()) {
+            if (channel == null
+                    || isBlank(channel.getName())
+                    || !Boolean.TRUE.equals(channel.getEnabled())
+                    || !batteryGroup.equals(channel.getBatteryGroup())) {
+                continue;
+            }
+            if (configId != null && configId.equals(channel.getConfigId())) {
+                return channel.getName();
+            }
+            if (configId == null) {
+                if (matchedByGroup != null) {
+                    return null;
+                }
+                matchedByGroup = channel.getName();
+            }
+        }
+        return configId == null ? matchedByGroup : null;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     private BatteryModuleControlCommand mapToModuleCommand(BatteryAggregateCommandDefinition commandDefinition,

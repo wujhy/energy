@@ -21,6 +21,41 @@ class BatteryModuleControlCommandServiceTest {
     }
 
     @Test
+    void shouldBuildAddressAndMaintenanceCommands() {
+        BatteryModuleControlCommand setAddress = service.setModuleAddress(8, 9);
+        Assertions.assertEquals(BatteryDeviceProtocolCode.SET_MODULE_ADDRESS, setAddress.getProtocolCode());
+        Assertions.assertEquals(8, setAddress.getAddress());
+        Assertions.assertEquals(0x08, setAddress.getRequestCode());
+        Assertions.assertEquals(0x88, setAddress.getResponseCode());
+        Assertions.assertArrayEquals(new byte[]{9}, setAddress.getPayload());
+
+        BatteryModuleControlCommand clearDebugData = service.clearSingleDebugData(1);
+        Assertions.assertEquals(BatteryDeviceProtocolCode.CLEAR_SINGLE_DEBUG_DATA, clearDebugData.getProtocolCode());
+        Assertions.assertEquals(0, clearDebugData.getAddress());
+        Assertions.assertEquals(0x0A, clearDebugData.getRequestCode());
+        Assertions.assertNull(clearDebugData.getResponseCode());
+        Assertions.assertArrayEquals(new byte[]{1}, clearDebugData.getPayload());
+
+        BatteryModuleControlCommand calibration = service.setCalibrationParameter(8, 1, 2, 3, 4, 5, 6);
+        Assertions.assertEquals(BatteryDeviceProtocolCode.SET_CALIBRATION_PARAMETER, calibration.getProtocolCode());
+        Assertions.assertEquals(8, calibration.getAddress());
+        Assertions.assertEquals(0x76, calibration.getRequestCode());
+        Assertions.assertEquals(0xF6, calibration.getResponseCode());
+        Assertions.assertArrayEquals(new byte[]{1, 2, 3, 4, 5, 6}, calibration.getPayload());
+    }
+
+    @Test
+    void shouldBuildAutomaticAddressCommand() {
+        BatteryModuleControlCommand command = service.autoSetModuleAddress(0, 1, 2, 3, 4, 5, 6, 7);
+
+        Assertions.assertEquals(BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS, command.getProtocolCode());
+        Assertions.assertEquals(0, command.getAddress());
+        Assertions.assertEquals(0x18, command.getRequestCode());
+        Assertions.assertEquals(0xA8, command.getResponseCode());
+        Assertions.assertArrayEquals(new byte[]{1, 2, 3, 4, 5, 6, 7}, command.getPayload());
+    }
+
+    @Test
     void shouldBuildNoResponseBroadcastCommand() {
         BatteryModuleControlCommand command = service.connectStripResistanceTest();
 
@@ -38,6 +73,26 @@ class BatteryModuleControlCommandServiceTest {
                 () -> service.setCalibrationParameter(1, 1, 2, 3, 4, 5));
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> service.setInternalResistanceCoefficient(1, 1, 2, 3));
+    }
+
+    @Test
+    void shouldValidatePayloadByteRange() {
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.clearSingleDebugData(-1));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.clearSingleDebugData(256));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.autoSetModuleAddress(0, 1, 2, 3, 4, 5, 6, 256));
+    }
+
+    @Test
+    void shouldValidateModuleAddressRange() {
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.singleBatteryInternalResistanceTest(247));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.setModuleAddress(8, 247));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.autoSetModuleAddress(247, 1, 2, 3, 4, 5, 6, 7));
     }
 
     @Test

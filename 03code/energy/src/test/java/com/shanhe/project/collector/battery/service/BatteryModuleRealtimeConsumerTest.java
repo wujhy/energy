@@ -1,10 +1,12 @@
 package com.shanhe.project.collector.battery.service;
 
+import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleDataType;
 import com.shanhe.project.collector.battery.model.BatteryModuleFrameData;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -97,11 +99,36 @@ class BatteryModuleRealtimeConsumerTest {
         Assertions.assertTrue(consumer.shouldCalculateAfterSave(BatteryModuleDataType.ARRAY_MODULE_INFO));
     }
 
+    @Test
+    void shouldKeepAlarmContextInPollBatch() {
+        ReflectionTestUtils.setField(consumer, "alarmAdaptService", new BatteryModuleAlarmAdaptService());
+        BatteryModulePollContext context = BatteryModulePollContext.builder().build();
+        context.getCells().add(cell(8, 1));
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackNum(1);
+
+        consumer.adaptAlarmContext(channelConfig(), context, group);
+
+        Assertions.assertNotNull(context.getAlarmContext());
+        Assertions.assertEquals(1, context.getAlarmContext().getPackNum());
+        Assertions.assertEquals("1", context.getAlarmContext()
+                .getCellWarnParam()
+                .get(8)
+                .get(ItemCode.DTLYGJ.getCode()));
+    }
+
     private BatteryCollectorChannelConfig channelConfig() {
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
         channelConfig.setName("battery-group-1");
         channelConfig.setPortName("ttyS9");
         channelConfig.setBatteryGroup(1);
         return channelConfig;
+    }
+
+    private BatteryModuleCellRealtime cell(int batNum, Integer leakageStatus) {
+        BatteryModuleCellRealtime cell = new BatteryModuleCellRealtime();
+        cell.setBatNum(batNum);
+        cell.setLeakageStatus(leakageStatus);
+        return cell;
     }
 }

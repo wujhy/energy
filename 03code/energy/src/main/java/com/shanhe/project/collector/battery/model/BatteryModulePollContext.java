@@ -38,4 +38,9 @@ public class BatteryModulePollContext {
      */
     @Builder.Default
     private List<BatteryModuleGroupRealtime> groups = new ArrayList<>();
+
+    /**
+     * 当前批次的告警候选上下文，仅用于后续标准告警服务衔接。
+     */
+    private BatteryModuleAlarmContext alarmContext;
 }

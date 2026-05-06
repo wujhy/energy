@@ -3,6 +3,7 @@ package com.shanhe.project.collector.battery.service;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelState;
+import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
 import org.junit.jupiter.api.Assertions;
@@ -95,5 +96,101 @@ class BatteryCollectorCommandServiceTest {
         Assertions.assertFalse(result.isMappedToModuleCommand());
         Assertions.assertNull(result.getModuleControlCommand());
         Assertions.assertTrue(result.getMessage().contains("cannot be sent directly"));
+    }
+
+    @Test
+    void shouldKeepAggregateCommandsWithInsufficientContextUnsupported() {
+        Assertions.assertFalse(service.setSystemState("battery-rs485-1", 1, 1, 1000L).isMappedToModuleCommand());
+        Assertions.assertFalse(service.automaticSetSubmoduleAddress("battery-rs485-1", 1, 1000L).isMappedToModuleCommand());
+        Assertions.assertFalse(service.clearHostDebuggingData("battery-rs485-1", 1000L).isMappedToModuleCommand());
+        Assertions.assertFalse(service.settingInternalResistanceCoefficient("battery-rs485-1", 1, 1.0d, 1000L)
+                .isMappedToModuleCommand());
+    }
+
+    @Test
+    void shouldMapExplicitAggregateCommandOnlyWhenPayloadIsComplete() {
+        BatteryCollectorCommandResult incomplete = service.execute(
+                BatteryAggregateCommandDefinition.AUTOMATIC_SET_SUBMODULE_ADDRESS,
+                "battery-rs485-1",
+                1000L,
+                1, 2, 3);
+        BatteryCollectorCommandResult complete = service.execute(
+                BatteryAggregateCommandDefinition.AUTOMATIC_SET_SUBMODULE_ADDRESS,
+                "battery-rs485-1",
+                1000L,
+                1, 2, 3, 4, 5, 6, 7);
+
+        Assertions.assertFalse(incomplete.isMappedToModuleCommand());
+        Assertions.assertTrue(complete.isMappedToModuleCommand());
+        Assertions.assertEquals(BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS,
+                complete.getModuleControlCommand().getProtocolCode());
+        Assertions.assertArrayEquals(new byte[]{1, 2, 3, 4, 5, 6, 7},
+                complete.getModuleControlCommand().getPayload());
+    }
+
+    @Test
+    void shouldResolveChannelNameByConfigIdAndBatteryGroup() {
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        BatteryCollectorChannelConfig first = new BatteryCollectorChannelConfig();
+        first.setName("battery-rs485-1");
+        first.setConfigId(10L);
+        first.setBatteryGroup(1);
+        BatteryCollectorChannelConfig second = new BatteryCollectorChannelConfig();
+        second.setName("battery-rs485-2");
+        second.setConfigId(20L);
+        second.setBatteryGroup(2);
+        properties.getChannels().add(first);
+        properties.getChannels().add(second);
+        ReflectionTestUtils.setField(service, "properties", properties);
+
+        String channelName = service.resolveChannelName(20L, 2);
+
+        Assertions.assertEquals("battery-rs485-2", channelName);
+    }
+
+    @Test
+    void shouldNotFallbackToBlankConfigIdChannelWhenConfigIdIsSpecified() {
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        BatteryCollectorChannelConfig channel = new BatteryCollectorChannelConfig();
+        channel.setName("battery-rs485-1");
+        channel.setBatteryGroup(1);
+        properties.getChannels().add(channel);
+        ReflectionTestUtils.setField(service, "properties", properties);
+
+        String channelName = service.resolveChannelName(10L, 1);
+
+        Assertions.assertNull(channelName);
+    }
+
+    @Test
+    void shouldResolveByBatteryGroupOnlyWhenConfigIdIsBlank() {
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        BatteryCollectorChannelConfig channel = new BatteryCollectorChannelConfig();
+        channel.setName("battery-rs485-1");
+        channel.setBatteryGroup(1);
+        properties.getChannels().add(channel);
+        ReflectionTestUtils.setField(service, "properties", properties);
+
+        String channelName = service.resolveChannelName(null, 1);
+
+        Assertions.assertEquals("battery-rs485-1", channelName);
+    }
+
+    @Test
+    void shouldNotResolveByBatteryGroupWhenMultipleChannelsMatch() {
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        BatteryCollectorChannelConfig first = new BatteryCollectorChannelConfig();
+        first.setName("battery-rs485-1");
+        first.setBatteryGroup(1);
+        BatteryCollectorChannelConfig second = new BatteryCollectorChannelConfig();
+        second.setName("battery-rs485-2");
+        second.setBatteryGroup(1);
+        properties.getChannels().add(first);
+        properties.getChannels().add(second);
+        ReflectionTestUtils.setField(service, "properties", properties);
+
+        String channelName = service.resolveChannelName(null, 1);
+
+        Assertions.assertNull(channelName);
     }
 }

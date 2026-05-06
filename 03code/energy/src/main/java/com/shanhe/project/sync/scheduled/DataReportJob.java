@@ -3,6 +3,8 @@ package com.shanhe.project.sync.scheduled;
 import cn.hutool.core.util.StrUtil;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.enums.*;
+import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
+import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.device.alarm.domain.AlarmLog;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
@@ -48,6 +50,10 @@ public class DataReportJob {
     private ClientReportService clientReportService;
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    @Resource
+    private BatteryCollectorProperties batteryCollectorProperties;
+    @Resource
+    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
 
     /** 是否上报 **/
     private boolean isReport = false;
@@ -174,9 +180,9 @@ public class DataReportJob {
             return;
         }
         for (BatteryPack pack : packList) {
-            // 取缓存
-            BatteryReportLog log = batteryReportLogService.lastCache(configId, pack.getPackNum());
-            if (log == null || log.getPackParam() == null || log.getPackParam().isEmpty()) {
+            // 取蓄电池上报数据
+            BatteryReportLog log = resolveBatteryReportLog(configId, pack.getPackNum());
+            if (!isUsableBatteryReportLog(log)) {
                 continue;
             }
 
@@ -188,7 +194,7 @@ public class DataReportJob {
             // 蓄电池组参数
             List<ConfigHistoryItemVo> items = new ArrayList<>();
             for (String key : log.getPackParam().keySet()) {
-                items.add(new ConfigHistoryItemVo(key, (String) log.getPackParam().get(key)));
+                items.add(new ConfigHistoryItemVo(key, String.valueOf(log.getPackParam().get(key))));
             }
             history.setListData(items);
 
@@ -216,6 +222,33 @@ public class DataReportJob {
             clientReportService.uploadData(history, imei);
             */
         }
+    }
+
+    /**
+     * 解析蓄电池 JSON/TCP 上报数据源。
+     *
+     * @param configId 设备ID
+     * @param packNum 电池组编号
+     * @return 蓄电池上报数据
+     */
+    BatteryReportLog resolveBatteryReportLog(Long configId, Integer packNum) {
+        if (Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
+            BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(configId, packNum);
+            if (isUsableBatteryReportLog(realtimeLog)) {
+                return realtimeLog;
+            }
+        }
+        return batteryReportLogService.lastCache(configId, packNum);
+    }
+
+    /**
+     * 判断蓄电池上报数据是否可用于 JSON/TCP 上报。
+     *
+     * @param log 蓄电池上报数据
+     * @return true 表示可上报
+     */
+    boolean isUsableBatteryReportLog(BatteryReportLog log) {
+        return log != null && log.getPackParam() != null && !log.getPackParam().isEmpty();
     }
 
     /**

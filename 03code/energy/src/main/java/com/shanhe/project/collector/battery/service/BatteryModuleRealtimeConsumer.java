@@ -4,6 +4,7 @@ import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryCollectorFrame;
+import com.shanhe.project.collector.battery.model.BatteryModuleAlarmContext;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleDataType;
 import com.shanhe.project.collector.battery.model.BatteryModuleFrameData;
@@ -187,7 +188,8 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
             return;
         }
         try {
-            alarmAdaptService.buildContext(calculation, context.getCells());
+            BatteryModuleAlarmContext alarmContext = alarmAdaptService.buildContext(calculation, context.getCells());
+            context.setAlarmContext(alarmContext);
         } catch (Exception e) {
             log.warn("adapt battery module alarm context failed, channel={}, group={}",
                     channelConfig == null ? null : channelConfig.getName(),
