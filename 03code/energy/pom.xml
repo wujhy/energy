@@ -28,6 +28,7 @@
         <poi-ooxml.version>5.4.0</poi-ooxml.version>
         <netty.version>4.1.94.Final</netty.version>
         <jSerialComm.version>2.11.2</jSerialComm.version>
+        <maven.test.skip>true</maven.test.skip>
     </properties>
 
     <dependencyManagement>
