@@ -70,6 +70,15 @@ public interface IConfigAttributeService
     void insertBatchConfigAttribute(List<ConfigAttribute> configAttributeList);
 
     /**
+     * 按模板属性同步生成设备属性
+     *
+     * @param configId 配置ID
+     * @param packNum 电池组编号
+     * @param model 电池规格型号
+     */
+    void insertByTemplateAttribute(Long configId, Integer packNum, Integer model);
+
+    /**
      * 修改设备属性
      * 
      * @param configAttribute 设备属性

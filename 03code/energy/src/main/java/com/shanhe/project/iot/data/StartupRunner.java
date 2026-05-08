@@ -1,7 +1,6 @@
 package com.shanhe.project.iot.data;
 
 import com.shanhe.project.device.config.mapper.BatteryReportLogMapper;
-import com.shanhe.project.device.history.mapper.HistoryLogMapper;
 import com.shanhe.project.energy.stat.mapper.StatBatteryBatMapper;
 import com.shanhe.project.energy.stat.mapper.StatBatteryPackMapper;
 import org.slf4j.Logger;
@@ -28,8 +27,6 @@ public class StartupRunner implements ApplicationRunner {
     @Resource
     private BatteryReportLogMapper batteryReportLogMapper;
     @Resource
-    private HistoryLogMapper historyLogMapper;
-    @Resource
     private StatBatteryPackMapper statBatteryPackMapper;
     @Resource
     private StatBatteryBatMapper statBatteryBatMapper;
@@ -49,7 +46,7 @@ public class StartupRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         //启动日志工厂
-        MessageFactory.initQueue(10000, batteryReportLogMapper, historyLogMapper, statBatteryPackMapper, statBatteryBatMapper);
+        MessageFactory.initQueue(10000, batteryReportLogMapper, statBatteryPackMapper, statBatteryBatMapper);
         threadPoolExecutor.execute(() -> MessageFactory.starGainData(1000));
     }
 }

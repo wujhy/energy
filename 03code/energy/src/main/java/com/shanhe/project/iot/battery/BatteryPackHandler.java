@@ -181,23 +181,6 @@ public class BatteryPackHandler {
             log.error("上传蓄电池实时数据出错，无单体数据！电池组：{}，info={}", packNum, deviceData.getInfo());
             return;
         }
-
-        /* 蓄电池单独存储
-        // 保存历史记录
-        String cacheKey;
-        for (String key : packMap.keySet()) {
-            cacheKey = String.format(CacheKeyEnum.ATTRIBUTE.getKey(), config.getConfigId(), packNum, key);
-            ConfigAttribute attribute = (ConfigAttribute) CacheUtils.get(CacheKeyEnum.ATTRIBUTE.getCache(), cacheKey);
-            if (attribute != null) {
-                historyLogService.insertHistoryLog(attribute, packMap.get(key));
-            }
-        }
-
-        // 更新单体电池记录
-        if (!batteryList.isEmpty()) {
-            batteryMonitorService.insertBatchBatteryMonitor(batteryList);
-        }
-        */
         Date date = new Date();
         // 设备在线
         CacheUtils.put(String.format(CacheKeyEnum.CONFIG_ONLINE.getKey(), deviceData.getC0(), deviceData.getC1(), deviceData.getC2()), date);

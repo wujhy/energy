@@ -101,7 +101,6 @@ public class OperLogServiceImpl implements IOperLogService
         SQL_LIST.add("DELETE FROM dev_alarm_log;");
         SQL_LIST.add("DELETE FROM dev_battery_opt;");
         SQL_LIST.add("DELETE FROM dev_battery_opt_log;");
-        SQL_LIST.add("DELETE FROM dev_history_log;");
         SQL_LIST.add("DELETE FROM dev_opt_log;");
         SQL_LIST.add("DELETE FROM dev_patrol;");
         SQL_LIST.add("DELETE FROM sys_oper_log;");

@@ -38,8 +38,6 @@ public class ClientDeviceService {
     @Resource
     private AlarmHandler alarmHandler;
     @Resource
-    private PatrolHandler patrolHandler;
-    @Resource
     private BatterySyncHandler batterySyncHandler;
     @Resource
     private TcpClient tcpClient;
@@ -143,10 +141,6 @@ public class ClientDeviceService {
             case _35:
                 // 同步设备数据
                 response = configHandler.reportSynDev(request);
-                break;
-            case _40:
-                // 同步巡检模版
-                response = patrolHandler.getPatrolTemplateRes(request);
                 break;
             case _43:
                 // 同步测试计划

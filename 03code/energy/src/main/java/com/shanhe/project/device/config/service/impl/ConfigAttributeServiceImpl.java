@@ -16,8 +16,6 @@ import com.shanhe.framework.manager.AsyncTaskManager;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.ConfigAttributeListVO;
 import com.shanhe.project.device.config.domain.ConfigAttributeVO;
-import com.shanhe.project.device.history.domain.HistoryLog;
-import com.shanhe.project.device.history.service.IHistoryLogService;
 import com.shanhe.project.device.opt.service.ControlBattery;
 import com.shanhe.project.sync.service.ClientReportService;
 import lombok.extern.slf4j.Slf4j;
@@ -41,9 +39,6 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
 {
     @Resource
     private ConfigAttributeMapper configAttributeMapper;
-    @Resource
-    private IHistoryLogService historyLogService;
-    @Resource
     private IAlarmLogService alarmLogService;
     @Resource
     private ControlBattery controlBattery;
@@ -97,14 +92,6 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
             if (StrUtil.equals(vo.getCode(), HostAlarmItemEnum._6.getCode())) {
                 return vo;
             }
-            // 最新历史数据
-            HistoryLog historyLog = historyLogService.lastValue(attribute);
-            if (historyLog != null) {
-                vo.setValue(historyLog.getValueInfo());
-                vo.setDataInfo(historyLog.getDataInfo());
-                vo.setValueCreateTime(historyLog.getCreateTime());
-                vo.setValueUpdateTime(historyLog.getUpdateTime());
-            }
             return vo;
         }).collect(Collectors.toList());
     }
@@ -132,6 +119,11 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
     @Override
     public void insertBatchConfigAttribute(List<ConfigAttribute> configAttributeList) {
         configAttributeMapper.insertBatchConfigAttribute(configAttributeList);
+    }
+
+    @Override
+    public void insertByTemplateAttribute(Long configId, Integer packNum, Integer model) {
+        configAttributeMapper.insertByTemplateAttribute(configId, packNum, model);
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.shanhe.project.sync.scheduled;
 
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
+import com.shanhe.project.device.config.domain.BatteryMonitor;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import org.junit.jupiter.api.Assertions;
@@ -10,6 +11,7 @@ import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.LinkedHashMap;
+import java.util.Collections;
 import java.util.Map;
 
 class DataReportJobTest {
@@ -62,6 +64,24 @@ class DataReportJobTest {
         Assertions.assertSame(oldLog, result);
     }
 
+    @Test
+    void shouldFallbackToOldCacheWhenRealtimeLogHasNoCells() {
+        DataReportJob job = newJob(true);
+        BatteryReportLogService oldService = Mockito.mock(BatteryReportLogService.class);
+        BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
+        BatteryReportLog realtimeLog = log("realtime");
+        realtimeLog.setBatteryList(Collections.emptyList());
+        BatteryReportLog oldLog = log("old");
+        ReflectionTestUtils.setField(job, "batteryReportLogService", oldService);
+        ReflectionTestUtils.setField(job, "batteryModuleReportLogAdapterService", adapterService);
+        Mockito.when(adapterService.buildReportLog(10L, 1)).thenReturn(realtimeLog);
+        Mockito.when(oldService.lastCache(10L, 1)).thenReturn(oldLog);
+
+        BatteryReportLog result = job.resolveBatteryReportLog(10L, 1);
+
+        Assertions.assertSame(oldLog, result);
+    }
+
     private DataReportJob newJob(boolean realtimeSourceEnabled) {
         DataReportJob job = new DataReportJob();
         BatteryCollectorProperties properties = new BatteryCollectorProperties();
@@ -75,6 +95,7 @@ class DataReportJobTest {
         Map<String, Object> packParam = new LinkedHashMap<>();
         packParam.put("source", value);
         log.setPackParam(packParam);
+        log.setBatteryList(Collections.singletonList(new BatteryMonitor()));
         return log;
     }
 }

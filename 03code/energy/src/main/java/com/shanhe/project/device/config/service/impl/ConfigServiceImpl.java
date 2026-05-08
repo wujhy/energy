@@ -3,14 +3,13 @@ package com.shanhe.project.device.config.service.impl;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.common.utils.Crc16m;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.CheckCode;
-import com.shanhe.common.utils.StringUtils;
 import com.shanhe.common.utils.uuid.IdUtils;
 import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.enums.*;
@@ -18,26 +17,19 @@ import com.shanhe.framework.manager.AsyncTaskManager;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import com.shanhe.project.device.alarm.domain.AlarmLog;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
+import com.shanhe.project.device.config.DefaultBatteryConfigRepository;
 import com.shanhe.project.device.config.domain.*;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IConfigAttributeService;
 import com.shanhe.project.device.config.service.IConfigProtocolService;
 import com.shanhe.project.device.opt.service.ControlBattery;
-import com.shanhe.project.device.opt.service.ControlBatterySet;
 import com.shanhe.project.device.opt.service.DeviceCmdService;
 import com.shanhe.project.device.opt.service.OptLogService;
-import com.shanhe.project.device.opt.vo.BatterySetVO;
-import com.shanhe.project.device.template.domain.Template;
-import com.shanhe.project.device.template.domain.TemplateAttribute;
-import com.shanhe.project.device.template.mapper.TemplateAttributeMapper;
-import com.shanhe.project.device.template.mapper.TemplateMapper;
 import com.shanhe.project.sync.service.ClientReportService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import com.shanhe.project.device.config.mapper.ConfigMapper;
 import com.shanhe.project.device.config.service.IConfigService;
-import com.shanhe.common.utils.text.Convert;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -52,15 +44,9 @@ import javax.annotation.Resource;
 public class ConfigServiceImpl implements IConfigService {
     protected static Logger logger = LoggerFactory.getLogger(IConfigService.class);
     @Resource
-    private ConfigMapper configMapper;
-    @Resource
     private IConfigAttributeService configAttributeService;
     @Resource
     private IConfigProtocolService configProtocolService;
-    @Resource
-    private TemplateMapper templateMapper;
-    @Resource
-    private TemplateAttributeMapper templateAttributeMapper;
     @Resource
     private IBatteryPackService batteryPackService;
     @Resource
@@ -74,8 +60,6 @@ public class ConfigServiceImpl implements IConfigService {
     @Resource
     private BatteryPackAsync batteryPackAsync;
     @Resource
-    private ControlBatterySet controlBatterySet;
-    @Resource
     private ClientReportService clientReportService;
 
     // 缓存枚举
@@ -83,7 +67,7 @@ public class ConfigServiceImpl implements IConfigService {
 
     @Override
     public Config selectConfigBy(Integer type, Integer port, Integer channel) {
-        return configMapper.selectConfigBy(type, port, channel);
+        return DefaultBatteryConfigRepository.selectBy(type, port, channel);
     }
 
     /**
@@ -94,7 +78,7 @@ public class ConfigServiceImpl implements IConfigService {
      */
     @Override
     public Config selectConfigByConfigId(Long configId) {
-        Config config = configMapper.selectConfigByConfigId(configId);
+        Config config = DefaultBatteryConfigRepository.selectByConfigId(configId);
         if (config == null) {
             return null;
         }
@@ -147,7 +131,7 @@ public class ConfigServiceImpl implements IConfigService {
      */
     @Override
     public List<Config> selectConfigList(Config config) {
-        List<Config> configs = configMapper.selectConfigList(config);
+        List<Config> configs = DefaultBatteryConfigRepository.selectList(config);
         configs.forEach(item -> {
             if (Objects.equals(item.getType(), DeviceTypeEnum._1.getDictValue())) {
                 item.setPackList(batteryPackService.selectBatteryPackListConfigId(item.getConfigId(), null));
@@ -158,7 +142,7 @@ public class ConfigServiceImpl implements IConfigService {
 
     @Override
     public List<Config> reportConfigList() {
-        List<Config> list = configMapper.selectConfigList(new Config());
+        List<Config> list = DefaultBatteryConfigRepository.selectList(new Config());
         for (Config configDTO : list) {
             // 电池类型补充包列表
             if (Objects.equals(configDTO.getType(), DeviceTypeEnum._1.getDictValue())) {
@@ -172,7 +156,7 @@ public class ConfigServiceImpl implements IConfigService {
     public List<Config> screenConfigList() {
         Config config = new Config();
         config.setStatus(YesNoEnum.YES.getDictValue());
-        List<Config> list = configMapper.selectConfigList(config);
+        List<Config> list = DefaultBatteryConfigRepository.selectList(config);
         for (Config configDTO : list) {
             // 电池类型补充包列表
             if (Objects.equals(configDTO.getType(), DeviceTypeEnum._1.getDictValue())) {
@@ -324,165 +308,40 @@ public class ConfigServiceImpl implements IConfigService {
 
     @Override
     public void importConfig(List<Config> list) {
-        if (list == null || list.isEmpty()) {
-            return;
-        }
-
-        for (Config importConfig : list) {
-            // 配置
-            importConfig.setConfigId(IdUtils.getSnowflakeId());
-            configMapper.insertConfig(importConfig);
-
-            // 电池组
-            if (StringUtils.isNotBlank(importConfig.getPackListJson())) {
-                List<BatteryPack> packList = JSON.parseArray(importConfig.getPackListJson(), BatteryPack.class);
-                packList.forEach(entity -> {
-                    entity.setConfigId(importConfig.getConfigId());
-                    entity.setPackId(IdUtils.getSnowflakeId());
-                });
-                batteryPackService.importBatteryPack(packList);
-            }
-
-            // 属性
-            if (StringUtils.isNotBlank(importConfig.getAttrListJson())) {
-                List<ConfigAttribute> attributeList = JSON.parseArray(importConfig.getAttrListJson(), ConfigAttribute.class);
-                attributeList.forEach(entity -> {
-                    entity.setConfigId(importConfig.getConfigId());
-                    entity.setConfigAttrId(IdUtils.getSnowflakeId());
-                });
-                configAttributeService.importAttribute(attributeList);
-            }
-
-            // 协议
-            if (StringUtils.isNotBlank(importConfig.getProtocolListJson())) {
-                List<ConfigProtocol> protocolList = JSON.parseArray(importConfig.getProtocolListJson(), ConfigProtocol.class);
-                for (ConfigProtocol protocol : protocolList) {
-                    protocol.setConfigId(importConfig.getConfigId());
-                    configProtocolService.insertConfigProtocol(protocol);
-                }
-            }
-        }
+        throw new ServiceException("默认蓄电池配置为静态资源，不支持导入维护");
     }
 
     @Override
     public void insertConfig(Config config) {
-        //校验
-        this.deviceValid(config);
-        //类型
-        Template template = templateMapper.selectTemplateByTmplId(config.getTmplId());
-        if (template == null) {
-            throw new ServiceException(String.format("%1$s模板不存在！", config.getTmplId()));
-        }
-        config.setType(template.getType());
-        config.setSubType(template.getSubType());
-        config.setTypeCode(template.getTypeCode());
-        //id
-        config.setConfigId(IdUtils.getSnowflakeId());
-        config.setOnline(YesNoEnum.NO.getDictValue());
-        config.setStatus(YesNoEnum.NO.getDictValue());
-        configMapper.insertConfig(config);
-        // 蓄电池
-        if (Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
-            // 插入蓄电池组
-            this.insertPack(config);
-        } else {
-            // 同步属性
-            this.insertAttribute(config, null, null);
-            // 同步协议
-            this.insertProtocol(config);
-        }
-        // 下发指令
-        this.sendCmdAsync(config.getConfigId());
+        throw new ServiceException("默认蓄电池配置为静态资源，不支持新增维护");
     }
-
     @Override
     public void insertConfigBySync(Config config) {
-        config.setOnline(YesNoEnum.NO.getDictValue());
-        configMapper.insertConfig(config);
-        // 蓄电池
-        if (Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())
-                && config.getPackList() != null) {
-            // 插入蓄电池组
-            for (BatteryPack batteryPack : config.getPackList()) {
-                batteryPack.setConfigId(config.getConfigId());
-                batteryPack.setPackId(IdUtils.getSnowflakeId());
-                batteryPackService.insertBatteryPack(batteryPack);
-                // 属性
-                this.insertAttribute(config, batteryPack.getPackNum(), batteryPack.getBatSinModel());
-            }
-        }
-        // 下发指令
-        this.sendCmdAsync(config.getConfigId());
+        throw new ServiceException("默认蓄电池配置为静态资源，不支持同步新增");
     }
 
-    /**
-     * 修改设备
-     *
-     * @param config 设备
-     * @return 结果
-     */
+
     @Override
     public int updateConfig(Config config) {
-        // 校验参数
-        this.deviceValid(config);
-
-        // 更新包
-        this.updatePack(config);
-
-        // 保存设备信息
-        configMapper.updateConfig(config);
-
-        // 下发指令
-        this.sendCmdAsync(config.getConfigId());
-        return 1;
+        throw new ServiceException("默认蓄电池配置为静态资源，不支持更新维护");
     }
 
     @Override
     public void updateConfigBySync(Config config) {
-        // 更新包
-        this.updatePack(config, true);
-
-        // 保存设备信息
-        configMapper.updateConfig(config);
-
-        // 下发指令
-        this.sendCmdAsync(config.getConfigId());
+        throw new ServiceException("默认蓄电池配置为静态资源，不支持同步更新");
     }
 
     @Override
     public void updatePost(Config config) {
-        Config query = new Config();
-        query.setType(config.getType());
-        query.setPort(config.getPort());
-        query.setChannel(config.getChannel());
-        List<Config> oldConfigList = configMapper.selectConfigList(query);
-        if (oldConfigList == null || oldConfigList.isEmpty()) {
-            return;
-        }
-
-        // 保存设备信息
-        config.setConfigId(oldConfigList.get(0).getConfigId());
-        configMapper.updatePost(config);
+        this.updateCache(DefaultBatteryConfigRepository.selectByConfigId(Constants.DEFAULT_CONFIG_ID));
     }
 
     @Override
     public int updateStatus(Long configId, Integer status) {
-        Config config = this.selectConfigByConfigId(configId);
-        if (config == null) {
-            throw new ServiceException("设备不存在");
-        }
-        // 更新设备状态
-        config.setStatus(status);
-        configMapper.updateConfig(config);
-
-        // 下发串口配置指令，更新缓存
-        this.sendCmd(config);
-
-        return 1;
+        throw new ServiceException("默认蓄电池配置为静态资源，不支持状态维护");
     }
-
     /**
-     * 异步执行下发指令
+     * 异步执行下发指令。
      */
     @Override
     public void sendCmdAsync(Long configId) {
@@ -500,11 +359,6 @@ public class ConfigServiceImpl implements IConfigService {
         );
     }
 
-    /**
-     * 下发串口指令
-     *
-     * @param config 配置
-     */
     private void sendCmd(Config config) {
         if (config == null) {
             return;
@@ -561,49 +415,12 @@ public class ConfigServiceImpl implements IConfigService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int deleteConfigByConfigIds(String configIds) {
-        String[] configIdArr = Convert.toStrArray(configIds);
-        if (configIdArr.length == 0) {
-            throw new ServiceException("设备ID不可为空");
-        }
-        // 删除包
-        batteryPackService.deleteByConfigIds(configIdArr);
-        // 删除属性
-        configAttributeService.deleteConfigAttributeByConfigIds(configIdArr);
-        // 删除协议
-        configProtocolService.deleteConfigProtocolByConfigIds(configIds);
-        // 删除告警
-        alarmLogService.deleteAlarmLogByConfigIds(configIdArr);
-        // 删除操作日志
-        optLogService.deleteByConfigIds(configIdArr);
-        // 删除设备
-        configMapper.deleteConfigByConfigIds(configIdArr);
-        // 更新缓存
-        this.updateCache();
-        return 1;
+        throw new ServiceException("默认蓄电池配置为静态资源，不支持删除维护");
     }
 
     @Override
     public void deleteConfig(Config config) {
-        // 通道开启且设备删除前为开启状态，需要删除缓存及设备协议
-        if (CommServer.isOpen() && Objects.equals(config.getStatus(), YesNoEnum.YES.getDictValue())) {
-            // 下发删除指令（通过缓存获取设备）
-            configProtocolService.cmdStorageDelByConfig(config);
-        }
-        String[] configIdArr = Convert.toStrArray(String.valueOf(config.getConfigId()));
-        // 删除包
-        batteryPackService.deleteByConfigIds(configIdArr);
-        // 删除属性
-        configAttributeService.deleteConfigAttributeByConfigIds(configIdArr);
-        // 删除协议
-        configProtocolService.deleteConfigProtocolByConfigIds(String.valueOf(config.getConfigId()));
-        // 删除告警
-        alarmLogService.deleteAlarmLogByConfigIds(configIdArr);
-        // 删除操作日志
-        optLogService.deleteByConfigIds(configIdArr);
-        // 删除设备
-        configMapper.deleteConfigByConfigIds(configIdArr);
-        // 更新缓存
-        this.updateCache();
+        throw new ServiceException("默认蓄电池配置为静态资源，不支持删除维护");
     }
 
     @Override
@@ -614,7 +431,7 @@ public class ConfigServiceImpl implements IConfigService {
             Set<String> oldKeys = CacheUtils.getCacheKeys(configCache.getCache());
 
             // 查所有启用的配置（缓存全部，是否启用通过使用端判断）
-            List<Config> list = configMapper.selectConfigList(new Config());
+            List<Config> list = DefaultBatteryConfigRepository.selectList(new Config());
             for (Config config : list) {
                 // 蓄电池，补充包属性
                 if (Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
@@ -660,7 +477,7 @@ public class ConfigServiceImpl implements IConfigService {
     @Override
     public void online(Config config) {
         config.setOnline(YesNoEnum.YES.getDictValue());
-        configMapper.online(config.getConfigId());
+        DefaultBatteryConfigRepository.updateOnline(YesNoEnum.YES.getDictValue());
         // 更新缓存
         this.updateCache(config);
         // 更新告警
@@ -671,8 +488,7 @@ public class ConfigServiceImpl implements IConfigService {
     public void offline(Config config) {
         if (Objects.equals(config.getOnline(), YesNoEnum.YES.getDictValue())) {
             config.setOnline(YesNoEnum.NO.getDictValue());
-            // 设备下线
-            configMapper.offline(config.getConfigId());
+            DefaultBatteryConfigRepository.updateOnline(YesNoEnum.NO.getDictValue());
             // 更新缓存
             this.updateCache(config);
         }
@@ -682,28 +498,24 @@ public class ConfigServiceImpl implements IConfigService {
 
     @Override
     public void offlineAll() {
-        // 所有设备下线
-        configMapper.offline(null);
-
-        // 更新缓存
+        DefaultBatteryConfigRepository.updateOnline(YesNoEnum.NO.getDictValue());
         this.updateCache();
     }
 
     @Override
     public void updateExtend(Long configId, Map<String, Object> map) {
-        Config config = configMapper.selectConfigByConfigId(configId);
+        Config config = DefaultBatteryConfigRepository.selectByConfigId(configId);
         if (config == null) {
             return;
         }
         Map<String, Object> mapAll = StrUtil.isNotBlank(config.getExtend3()) ? JSON.parseObject(config.getExtend3()) : new HashMap<>();
         mapAll.putAll(map);
-        config.setExtend3(JSON.toJSONString(mapAll));
-        configMapper.updateConfig(config);
+        DefaultBatteryConfigRepository.updateExtend(mapAll);
     }
 
     @Override
     public Map<String, Object> getExtend(Long configId) {
-        Config config = configMapper.selectConfigByConfigId(configId);
+        Config config = DefaultBatteryConfigRepository.selectByConfigId(configId);
         if (config == null) {
             return null;
         }
@@ -717,45 +529,9 @@ public class ConfigServiceImpl implements IConfigService {
 
     @Override
     public void deleteAll() {
-        // 所有缓存的已开启设备
-        List<Config> configList = configMapper.selectConfigList(new Config());
-        if (configList.isEmpty()) {
-            return;
-        }
-        try {
-            // 通道开启且设备删除前为开启状态，需要删除缓存及设备协议
-            if (CommServer.isOpen()) {
-                for (Config config : configList) {
-                    // 蓄电池，下发出厂指令
-                    if (Objects.equals(config.getStatus(), YesNoEnum.YES.getDictValue())
-                            && Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
-                        BatterySetVO batterySetVO = new BatterySetVO();
-                        batterySetVO.setConfigId(config.getConfigId());
-                        batterySetVO.setNeedDynResult(false);
-                        controlBatterySet.doSet(batterySetVO, BatteryCidEnum._75);
-                    }
-                }
-                // 删除所有存储指令
-                deviceCmdService.cmdDelAll();
-            }
-        } catch (Exception ignored) { }
-
-        String[] configIdArr = configList.stream().map(Config::getConfigId).map(String::valueOf).toArray(String[]::new);
-        // 删除包
-        batteryPackService.deleteByConfigIds(configIdArr);
-        // 删除属性
-        configAttributeService.deleteConfigAttributeByConfigIds(configIdArr);
-        // 删除协议
-        configProtocolService.deleteConfigProtocolByConfigIds(configIdArr);
-        // 删除告警
-        alarmLogService.deleteAlarmLogByConfigIds(configIdArr);
-        // 删除操作日志
-        optLogService.deleteByConfigIds(configIdArr);
-        // 删除设备
-        configMapper.deleteConfigByConfigIds(configIdArr);
-        // 更新缓存
-        this.updateCache();
+        throw new ServiceException("默认蓄电池配置为静态资源，不支持清空维护");
     }
+
     public void updatePack(Config config, boolean syncAttribute) {
         if (!Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
             return;
@@ -917,27 +693,7 @@ public class ConfigServiceImpl implements IConfigService {
      * @param config 配置id
      */
     private void insertAttribute(Config config, Integer packNum, Integer model) {
-        if (config.getTmplId() == null) {
-            return;
-        }
-        // 同步创建属性
-        TemplateAttribute query = new TemplateAttribute();
-        query.setTmplId(config.getTmplId());
-        query.setModel(model);
-        List<TemplateAttribute> templateAttributeList = templateAttributeMapper.selectTemplateAttributeList(query);
-        if (templateAttributeList == null || templateAttributeList.isEmpty()) {
-            return;
-        }
-
-        List<ConfigAttribute> configAttributeList = new ArrayList<>(templateAttributeList.size());
-        for (TemplateAttribute templateAttribute : templateAttributeList) {
-            ConfigAttribute configAttribute = BeanUtil.copyProperties(templateAttribute, ConfigAttribute.class);
-            configAttribute.setConfigAttrId(IdUtils.getSnowflakeId());
-            configAttribute.setConfigId(config.getConfigId());
-            configAttribute.setPackNum(packNum);
-            configAttributeList.add(configAttribute);
-        }
-        configAttributeService.insertBatchConfigAttribute(configAttributeList);
+        configAttributeService.insertByTemplateAttribute(config.getConfigId(), packNum, model);
     }
 
     /**
@@ -1024,13 +780,5 @@ public class ConfigServiceImpl implements IConfigService {
             config.setChannel(1);
             type = 2;
         }
-
-        // 重名校验（校验通道号及串口号）
-        Long hasName = configMapper.hasName(config.getConfigId(), config.getPort(), config.getChannel(), type);
-        if (hasName > 0) {
-            throw new ServiceException("串口号、通道号重复，操作失败！");
-        }
     }
-
-
 }

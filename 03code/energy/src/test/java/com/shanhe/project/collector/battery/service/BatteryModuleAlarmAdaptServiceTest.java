@@ -17,15 +17,28 @@ class BatteryModuleAlarmAdaptServiceTest {
     void shouldBuildLeakageAlarmCandidates() {
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
         group.setPackNum(1);
+        group.setGroupModuleFresh(false);
 
         BatteryModuleAlarmContext context = service.buildContext(group,
                 Arrays.asList(cell(1, 1), cell(2, 0), cell(3, null)));
 
         Assertions.assertEquals(1, context.getPackNum());
-        Assertions.assertTrue(context.getPackWarnParam().isEmpty());
+        Assertions.assertEquals("1", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
         Assertions.assertEquals("1", context.getCellWarnParam().get(1).get(ItemCode.DTLYGJ.getCode()));
         Assertions.assertEquals("0", context.getCellWarnParam().get(2).get(ItemCode.DTLYGJ.getCode()));
         Assertions.assertFalse(context.getCellWarnParam().containsKey(3));
+    }
+
+    @Test
+    void shouldBuildGroupModuleRecoveredCandidate() {
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackNum(1);
+        group.setGroupModuleFresh(true);
+
+        BatteryModuleAlarmContext context = service.buildContext(group, null);
+
+        Assertions.assertEquals("0", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
+        Assertions.assertTrue(context.getCellWarnParam().isEmpty());
     }
 
     private BatteryModuleCellRealtime cell(int batNum, Integer leakageStatus) {

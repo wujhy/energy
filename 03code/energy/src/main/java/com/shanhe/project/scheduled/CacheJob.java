@@ -2,7 +2,6 @@ package com.shanhe.project.scheduled;
 
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.service.*;
-import com.shanhe.project.device.history.service.IHistoryLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,9 +24,6 @@ public class CacheJob {
     private IConfigService configService;
     @Resource
     private IAlarmLogService alarmLogService;
-    @Resource
-    private IHistoryLogService historyLogService;
-    @Resource
     private BatteryReportLogService batteryReportLogService;
     @Resource
     private IBatteryPackService batteryPackService;
@@ -49,16 +45,6 @@ public class CacheJob {
             alarmLogService.updateCache();
         } catch (Exception e) {
             log.error("更新设备告警缓存异常", e);
-        }
-    }
-
-//    @Scheduled(cron = "${job.historyCache}")
-    public void historyJob() {
-        try {
-            log.debug("更新设备历史记录缓存！");
-            historyLogService.updateCache();
-        } catch (Exception e) {
-            log.error("更新设备历史记录缓存异常");
         }
     }
 

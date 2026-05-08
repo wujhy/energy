@@ -14,8 +14,6 @@ import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.domain.ConfigAttribute;
 import com.shanhe.project.device.config.service.IConfigAttributeService;
 import com.shanhe.project.device.config.service.IConfigService;
-import com.shanhe.project.device.history.service.IHistoryLogService;
-import com.shanhe.project.iot.service.DataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -39,11 +37,7 @@ public class DataSwitchHandler {
     @Resource
     private IConfigAttributeService configAttributeService;
     @Resource
-    private IHistoryLogService historyLogService;
-    @Resource
     private IAlarmLogService alarmLogService;
-    @Resource
-    private DataService dataService;
 
     /** 开关量属性名 */
     String switchingCode = "status";
@@ -213,9 +207,6 @@ public class DataSwitchHandler {
             }
         }
 
-        boolean isInsert = dataService.isInsert(config.getConfigId(), "null", false);
-        // 保存历史
-        historyLogService.insertHistoryLog(attribute, value, isInsert);
         // 校验是否告警处理
         alarmLogService.alarmValid(attribute, null, value, config.getType());
     }

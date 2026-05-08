@@ -6,8 +6,6 @@ import com.google.common.cache.CacheBuilder;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.device.config.domain.MonitorData;
 import com.shanhe.project.device.config.mapper.BatteryReportLogMapper;
-import com.shanhe.project.device.history.domain.HistoryLog;
-import com.shanhe.project.device.history.mapper.HistoryLogMapper;
 import com.shanhe.project.energy.stat.domain.StatBatteryBat;
 import com.shanhe.project.energy.stat.domain.StatBatteryPack;
 import com.shanhe.project.energy.stat.mapper.StatBatteryBatMapper;
@@ -52,7 +50,6 @@ public class MessageFactory {
     private static Boolean logOutPut = true;
 
     private static BatteryReportLogMapper batteryReportLogMapper;
-    private static HistoryLogMapper historyLogMapper;
     private static StatBatteryPackMapper statBatteryPackMapper;
     private static StatBatteryBatMapper statBatteryBatMapper;
 
@@ -62,12 +59,10 @@ public class MessageFactory {
      * @param logQueueSize 队列大小
      */
     public static void initQueue(int logQueueSize, BatteryReportLogMapper initBatteryReportLogMapper,
-                                 HistoryLogMapper initHistoryLogMapper, StatBatteryPackMapper initStatBatteryPackMapper,
-                                 StatBatteryBatMapper initStatBatteryBatMapper) {
+                                 StatBatteryPackMapper initStatBatteryPackMapper, StatBatteryBatMapper initStatBatteryBatMapper) {
         queueSize = logQueueSize;
 
         batteryReportLogMapper = initBatteryReportLogMapper;
-        historyLogMapper = initHistoryLogMapper;
         statBatteryBatMapper = initStatBatteryBatMapper;
         statBatteryPackMapper = initStatBatteryPackMapper;
 
@@ -188,7 +183,6 @@ public class MessageFactory {
         if (logOutPut == null || logOutPut) {
             if (datas != null && !datas.isEmpty()) {
                 List<BatteryReportLog> batteryPackInfos = new ArrayList<>();
-                List<HistoryLog> otherMonitors = new ArrayList<>();
                 List<StatBatteryPack> statBatteryPacks = new ArrayList<>();
                 List<StatBatteryBat> statBatteryBats = new ArrayList<>();
 
@@ -203,8 +197,6 @@ public class MessageFactory {
                             batteryReportLog.setMonitorData(JSON.toJSONString(batteryReportLog.getBatteryList()));
                         }
                         batteryPackInfos.add(batteryReportLog);
-                    } else if (data instanceof HistoryLog) {
-                        otherMonitors.add((HistoryLog) data);
                     } else if (data instanceof StatBatteryPack) {
                         statBatteryPacks.add((StatBatteryPack) data);
                     } else if (data instanceof StatBatteryBat) {
@@ -217,14 +209,6 @@ public class MessageFactory {
                     } catch (Exception e) {
                         // 处理或记录异常
                         logger.error("插入电池数据异常",e);
-                    }
-                }
-                if (!otherMonitors.isEmpty()) {
-                    try {
-                        historyLogMapper.insertList(otherMonitors);
-                    } catch (Exception e) {
-                        // 处理或记录异常
-                        logger.error("插入其他数据异常",e);
                     }
                 }
                 if (!statBatteryPacks.isEmpty()) {

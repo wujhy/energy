@@ -5,12 +5,10 @@ import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IConfigService;
-import com.shanhe.project.device.history.service.IHistoryLogService;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.energy.capacity.service.PreBatteryGroupService;
 import com.shanhe.project.monitor.server.service.SystemService;
-import com.shanhe.project.system.dict.service.ISysDictTypeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -35,12 +33,7 @@ public class CacheInit implements ApplicationRunner {
     IHostService hostService;
     @Resource
     IAlarmLogService alarmLogService;
-    @Resource
-    IHistoryLogService historyLogService;
-    @Resource
     BatteryReportLogService batteryReportLogService;
-    @Resource
-    ISysDictTypeService sysDictTypeService;
     @Resource
     IBatteryPackService batteryPackService;
     @Resource
@@ -53,9 +46,7 @@ public class CacheInit implements ApplicationRunner {
         initHost();
         initConfig();
         initAlarm();
-        initHistory();
         initBattery();
-        initDictType();
         log.info("-----------------初始化缓存结束------------");
     }
 
@@ -88,14 +79,6 @@ public class CacheInit implements ApplicationRunner {
         }
     }
 
-    public void initHistory() {
-        try {
-            historyLogService.updateCache();
-        } catch (Exception e) {
-            log.error("初始化历史记录缓存异常：{}", e.getMessage());
-        }
-    }
-
     public void initBattery() {
 //        try {
 //            batteryMonitorService.updateCache();
@@ -119,11 +102,4 @@ public class CacheInit implements ApplicationRunner {
         }
     }
 
-    public void initDictType() {
-        try {
-            sysDictTypeService.loadingDictCache();
-        } catch (Exception e) {
-            log.error("初始化字典缓存异常：{}", e.getMessage());
-        }
-    }
 }

@@ -55,14 +55,18 @@ public class BatteryModuleFrameDataParserService {
                 return null;
             }
             int responseFlag = u8(payload, 0);
-            return BatteryModuleFrameData.builder()
+            BatteryModuleFrameData.BatteryModuleFrameDataBuilder builder = BatteryModuleFrameData.builder()
                     .type(BatteryModuleDataType.ARRAY_MODULE_INFO)
                     .moduleAddress(address)
                     .responseFlag(responseFlag)
-                    .success(responseFlag == 0)
+                    .success(responseFlag == 0);
+            if (responseFlag != 0) {
+                return builder.build();
+            }
+            return builder
                     .chargeDischargeCurrent(scale(s16(payload, 1), 10.0d))
                     .floatCurrent(scale(s16(payload, 3), 1000.0d))
-                    .externalVoltage(scale(s16(payload, 5), 100.0d))
+                    .externalVoltage(scale(nonNegativeS16(payload, 5), 100.0d))
                     .environmentTemperature1(scale(s16(payload, 7), 10.0d))
                     .environmentTemperature2(scale(s16(payload, 9), 10.0d))
                     .build();
@@ -71,11 +75,15 @@ public class BatteryModuleFrameDataParserService {
             return null;
         }
         int responseFlag = u8(payload, 0);
-        return BatteryModuleFrameData.builder()
+        BatteryModuleFrameData.BatteryModuleFrameDataBuilder builder = BatteryModuleFrameData.builder()
                 .type(BatteryModuleDataType.SINGLE_MODULE_INFO)
                 .moduleAddress(address)
                 .responseFlag(responseFlag)
-                .success(responseFlag == 0)
+                .success(responseFlag == 0);
+        if (responseFlag != 0) {
+            return builder.build();
+        }
+        return builder
                 .cellVoltage(scale(u16(payload, 1), 1000.0d))
                 .internalResistance(u16(payload, 3))
                 .cellTemperature(scale(s16(payload, 5), 10.0d))
@@ -142,6 +150,10 @@ public class BatteryModuleFrameDataParserService {
 
     private short s16(byte[] payload, int offset) {
         return (short) u16(payload, offset);
+    }
+
+    private int nonNegativeS16(byte[] payload, int offset) {
+        return Math.max(s16(payload, offset), 0);
     }
 
     private long u32(byte[] payload, int offset) {

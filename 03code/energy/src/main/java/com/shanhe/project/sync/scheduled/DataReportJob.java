@@ -1,7 +1,6 @@
 package com.shanhe.project.sync.scheduled;
 
 import cn.hutool.core.util.StrUtil;
-import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.enums.*;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
@@ -12,7 +11,6 @@ import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.device.config.service.IConfigService;
-import com.shanhe.project.device.history.domain.HistoryLog;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.sync.domain.ConfigHistoryItemVo;
@@ -89,7 +87,7 @@ public class DataReportJob {
 
             // 上报告警数据
             this.alarmReport(host.getImei(), configList);
-            // 上报历史数据
+            // 上报蓄电池历史数据
             this.historyReport(host.getImei(), configList);
         } catch (Exception e) {
             logger.error("上报平台数据，同步异常：{}", e.getMessage());
@@ -146,8 +144,6 @@ public class DataReportJob {
      */
     private void historyReport(String imei, List<Config> configList) {
         try {
-            // 全部属性
-            Set<String> keys = CacheUtils.getCacheKeys(CacheKeyEnum.HISTORY.getCache());
             // 循环设备
             for (Config config : configList) {
                 // 如果子设备不在线，则不上报
@@ -157,10 +153,7 @@ public class DataReportJob {
                 // 处理上报数据
                 if (Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
                     // 蓄电池
-                    this.configPackHistory(imei, config.getConfigId(), config.getPackList(), keys);
-                } else {
-                    // 普通设备
-                    this.configHistory(imei, config.getConfigId(), keys);
+                    this.configPackHistory(imei, config.getConfigId(), config.getPackList());
                 }
             }
         } catch (Exception ignored) {
@@ -173,9 +166,8 @@ public class DataReportJob {
      * @param imei 主机
      * @param configId 设备ID
      * @param packList 组
-     * @param keys 缓存
      */
-    private void configPackHistory(String imei, Long configId, List<BatteryPack> packList, Set<String> keys) {
+    private void configPackHistory(String imei, Long configId, List<BatteryPack> packList) {
         if (packList == null || packList.isEmpty()) {
             return;
         }
@@ -248,51 +240,11 @@ public class DataReportJob {
      * @return true 表示可上报
      */
     boolean isUsableBatteryReportLog(BatteryReportLog log) {
-        return log != null && log.getPackParam() != null && !log.getPackParam().isEmpty();
+        return log != null
+                && log.getPackParam() != null
+                && !log.getPackParam().isEmpty()
+                && log.getBatteryList() != null
+                && !log.getBatteryList().isEmpty();
     }
 
-    /**
-     * 普通设备历史
-     *
-     * @param imei 主机
-     * @param configId 设备ID
-     * @param keys 缓存
-     */
-    private void configHistory(String imei, Long configId, Set<String> keys) {
-        ConfigHistoryVo history = this.getHistory(configId, null, keys);
-        if (history == null) {
-            return;
-        }
-        clientReportService.uploadData(history, imei);
-    }
-
-    /**
-     * 取缓存记录
-     *
-     * @param configId 设备ID
-     * @param keys 缓存
-     */
-    private ConfigHistoryVo getHistory(Long configId, Integer packNum, Set<String> keys) {
-        // 历史记录
-        List<ConfigHistoryItemVo> items = new ArrayList<>();
-        String historyKey = String.format("history:%s:%s:", configId, packNum);
-        for (String key : keys) {
-            if (StrUtil.startWith(key, historyKey)) {
-                Object object = CacheUtils.get(CacheKeyEnum.HISTORY.getCache(), key);
-                if (object == null) {
-                    continue;
-                }
-                HistoryLog log = (HistoryLog) object;
-                items.add(new ConfigHistoryItemVo(log.getItemCode(), log.getValueInfo()));
-            }
-        }
-        if (items.isEmpty()) {
-            return null;
-        }
-        ConfigHistoryVo history = new ConfigHistoryVo();
-        history.setDevId(configId);
-        history.setPackNum(packNum);
-        history.setListData(items);
-        return history;
-    }
 }

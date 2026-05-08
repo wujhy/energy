@@ -82,7 +82,7 @@
         <include refid="selectBatteryMonitorVo"/>
         from dev_battery_monitor
         where id in (
-            SELECT max(m.id) FROM dev_battery_monitor m, dev_config c WHERE m.config_id = c.config_id AND c.status = 0 group by pack_num, bat_num
+            SELECT max(m.id) FROM dev_battery_monitor m WHERE m.config_id = 1 group by pack_num, bat_num
         )
         order by pack_num, bat_num
     </select>

@@ -1,5 +1,6 @@
 package com.shanhe.project.device.config.controller;
 
+import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.aspectj.lang.annotation.Log;
 import com.shanhe.framework.enums.BusinessType;
 import com.shanhe.framework.web.controller.BaseController;
@@ -33,6 +34,7 @@ public class BatteryReportLogController extends BaseController
     @ResponseBody
     public TableDataInfo list(BatteryReportLog batteryReportLog)
     {
+        batteryReportLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
         startPage();
         List<BatteryReportLog> list = batteryReportLogService.selectBatteryReportLog(batteryReportLog);
         return getDataTable(list);
@@ -45,7 +47,7 @@ public class BatteryReportLogController extends BaseController
     @ResponseBody
     public AjaxResult detailList(@PathVariable Long configId, @PathVariable Integer packNum)
     {
-        BatteryReportLog log = batteryReportLogService.selectLastHasAlarm(configId, packNum);
+        BatteryReportLog log = batteryReportLogService.selectLastHasAlarm(Constants.DEFAULT_CONFIG_ID, packNum);
         if(log!=null){
             //置空数据，实体中已经解析好结构
             log.setPackData(null);
@@ -72,6 +74,7 @@ public class BatteryReportLogController extends BaseController
         if (SystemService.isWin()) {
             return error("WINDOWS 暂不支持");
         }
+        params.setConfigId(Constants.DEFAULT_CONFIG_ID);
         batteryReportLogService.export(params);
         return success();
     }

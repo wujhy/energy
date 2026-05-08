@@ -15,8 +15,6 @@ import com.shanhe.project.device.config.domain.ConfigProtocolAttribute;
 import com.shanhe.project.device.config.service.IConfigAttributeService;
 import com.shanhe.project.device.config.service.IConfigProtocolService;
 import com.shanhe.project.device.config.service.IConfigService;
-import com.shanhe.project.device.history.service.IHistoryLogService;
-import com.shanhe.project.iot.service.DataService;
 import com.shanhe.project.iot.service.HandlerUtils;
 import org.apache.commons.jexl3.JexlBuilder;
 import org.apache.commons.jexl3.JexlScript;
@@ -46,11 +44,7 @@ public class DataUploadHandler {
     @Resource
     private IConfigAttributeService configAttributeService;
     @Resource
-    private IHistoryLogService historyLogService;
-    @Resource
     private IAlarmLogService alarmLogService;
-    @Resource
-    private DataService dataService;
 
     /**
      * 数据上报，自动上报
@@ -130,8 +124,6 @@ public class DataUploadHandler {
             logger.error("{} 采集发生校验错误 c3={}，info={}", config.getName(), deviceData.getC3(), deviceData.getInfo());
             return;
         }
-        boolean isInsert = dataService.isInsert(config.getConfigId(), deviceData.getC3(), false);
-
         //解析数据
         int i=0;
         for (ConfigProtocolAttribute protocolAttribute : protocolAttributes) {
@@ -154,8 +146,6 @@ public class DataUploadHandler {
                 logger.error("deviceName={}，c3={}的数据转换失败", config.getName(), deviceData.getC3());
                 continue;
             }
-            // 保存历史
-            historyLogService.insertHistoryLog(attribute, newVal.toString(), isInsert);
             // 校验是否告警处理
             alarmLogService.alarmValid(attribute, null, newVal.toString(), config.getType());
             i++;

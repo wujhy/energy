@@ -3,6 +3,7 @@ package com.shanhe.project.device.config.controller;
 import java.util.List;
 import java.util.Objects;
 
+import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.enums.DeviceTypeEnum;
 import org.springframework.web.bind.annotation.*;
@@ -140,14 +141,17 @@ public class ConfigController extends BaseController
     @GetMapping( "/sendBatterySync/{configId}")
     public AjaxResult sendBatterySync(@PathVariable Long configId)
     {
-        if (configId == null || Objects.equals(configId, 0L)) {
-            return error("设备ID不能为空！！！");
-        }
-        Config config = configService.selectConfigByConfigId(configId);
+        Config config = configService.selectConfigByConfigId(Constants.DEFAULT_CONFIG_ID);
         if (config == null || !Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
             return error("非蓄电池设备，同步失败！！！");
         }
         configService.sendBatterySyncCmd(config);
         return success();
+    }
+
+    @GetMapping( "/sendBatterySync")
+    public AjaxResult sendBatterySync()
+    {
+        return sendBatterySync(Constants.DEFAULT_CONFIG_ID);
     }
 }

@@ -2,6 +2,7 @@ package com.shanhe.project.device.alarm.controller;
 
 import java.util.List;
 
+import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.text.Convert;
 import com.shanhe.framework.aspectj.lang.annotation.Log;
 import com.shanhe.framework.enums.BusinessType;
@@ -36,6 +37,7 @@ public class AlarmLogController extends BaseController
     @ResponseBody
     public TableDataInfo list(AlarmLog alarmLog)
     {
+        alarmLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
         startPage();
         List<AlarmLog> list = alarmLogService.selectAlarmLogList(alarmLog);
         return getDataTable(list);
@@ -52,6 +54,7 @@ public class AlarmLogController extends BaseController
         if (SystemService.isWin()) {
             return error("WINDOWS 暂不支持");
         }
+        alarmLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
         alarmLogService.export(alarmLog);
         return success();
     }
@@ -114,7 +117,7 @@ public class AlarmLogController extends BaseController
     @GetMapping("/clear")
     @ResponseBody
     public AjaxResult clear(@RequestParam(required = false) Long configId) {
-        String[] configIdArr = Convert.toStrArray(String.valueOf(configId));
+        String[] configIdArr = Convert.toStrArray(String.valueOf(Constants.DEFAULT_CONFIG_ID));
         alarmLogService.deleteAlarmLogByConfigIds(configIdArr);
         alarmLogService.updateCache();
         return success();

@@ -1,7 +1,6 @@
 package com.shanhe.project.scheduled;
 
 import com.shanhe.project.device.config.service.BatteryReportLogService;
-import com.shanhe.project.device.history.service.IHistoryLogService;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.monitor.operlog.service.IOperLogService;
@@ -27,8 +26,6 @@ public class CleanLogJob {
 
     protected static Logger logger = LoggerFactory.getLogger(CleanLogJob.class);
 
-    @Value("${job.cleanHistoryLogDays:3}")
-    private Integer cleanHistoryLogDays;
     @Value("${job.cleanBatteryMonitorDays:3}")
     private Integer cleanBatteryMonitorDays;
     @Value("${job.cleanSysLogMonth:2}")
@@ -36,9 +33,6 @@ public class CleanLogJob {
 
     @Resource
     private IHostService hostService;
-    @Resource
-    private IHistoryLogService historyLogService;
-    @Resource
     private BatteryReportLogService batteryReportLogService;
     @Resource
     private IOperLogService operLogService;
@@ -50,15 +44,7 @@ public class CleanLogJob {
             SystemService.closeWatchDog();
 
             Host host = hostService.getDetail();
-            Integer cleanHistory = host.getCleanLogDays() != null ? host.getCleanLogDays() : cleanHistoryLogDays;
             Integer cleanBattery = host.getCleanLogDays() != null ? host.getCleanLogDays() : cleanBatteryMonitorDays;
-
-            logger.info("删除设备历史记录：{}天前", cleanHistory);
-            try {
-                historyLogService.deleteHistoryLog(cleanHistory);
-            } catch (Exception e) {
-                logger.error("删除设备历史记录异常：{}", e.getMessage());
-            }
 
             logger.info("删除电池历史记录异常：{}天前", cleanBattery);
             try {

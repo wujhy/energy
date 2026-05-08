@@ -1,6 +1,5 @@
 package com.shanhe.project.device.config.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.google.common.collect.Lists;
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.common.utils.CacheUtils;
@@ -13,15 +12,12 @@ import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.Config;
-import com.shanhe.project.device.config.domain.ConfigAttribute;
 import com.shanhe.project.device.config.mapper.BatteryPackMapper;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IConfigAttributeService;
 import com.shanhe.project.device.config.service.IConfigService;
 import com.shanhe.project.device.opt.service.ControlBatterySet;
 import com.shanhe.project.device.opt.vo.BatterySetVO;
-import com.shanhe.project.device.template.domain.TemplateAttribute;
-import com.shanhe.project.device.template.mapper.TemplateAttributeMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,8 +46,6 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
     private IAlarmLogService alarmLogService;
     @Resource
     private IConfigAttributeService configAttributeService;
-    @Resource
-    private TemplateAttributeMapper templateAttributeMapper;
     @Resource
     private BatteryPackAsync batteryPackAsync;
 
@@ -272,7 +266,7 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         }
         insertBatteryPack(batteryPack);
         // 属性挂电池组
-        this.insertAttribute(config, batteryPack.getPackNum(), batteryPack.getBatSinModel());
+        configAttributeService.insertByTemplateAttribute(config.getConfigId(), batteryPack.getPackNum(), batteryPack.getBatSinModel());
         // 指令
         batteryPackAsync.updateBatteryCmd(config, batteryPack);
     }
@@ -281,35 +275,4 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
     public Integer getBatteryMaxNumber(Long configId, Integer packNum) {
         return batteryPackMapper.getBatteryMaxNumber(configId, packNum);
     }
-
-
-    /**
-     * 同步更新属性
-     *
-     * @param config 配置id
-     */
-    private void insertAttribute(Config config, Integer packNum, Integer model) {
-        if (config.getTmplId() == null) {
-            return;
-        }
-        // 同步创建属性
-        TemplateAttribute query = new TemplateAttribute();
-        query.setTmplId(config.getTmplId());
-        query.setModel(model);
-        List<TemplateAttribute> templateAttributeList = templateAttributeMapper.selectTemplateAttributeList(query);
-        if (templateAttributeList == null || templateAttributeList.isEmpty()) {
-            return;
-        }
-
-        List<ConfigAttribute> configAttributeList = new ArrayList<>(templateAttributeList.size());
-        for (TemplateAttribute templateAttribute : templateAttributeList) {
-            ConfigAttribute configAttribute = BeanUtil.copyProperties(templateAttribute, ConfigAttribute.class);
-            configAttribute.setConfigAttrId(IdUtils.getSnowflakeId());
-            configAttribute.setConfigId(config.getConfigId());
-            configAttribute.setPackNum(packNum);
-            configAttributeList.add(configAttribute);
-        }
-        configAttributeService.insertBatchConfigAttribute(configAttributeList);
-    }
-
 }

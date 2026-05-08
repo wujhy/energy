@@ -68,6 +68,26 @@ public class BatteryCollectorChannelState {
 
     private volatile boolean lastPendingTimedOut;
 
+    /**
+     * 最近完成的显式模块端命令名称。
+     */
+    private volatile String lastCompletedModuleCommandName;
+
+    /**
+     * 最近完成的显式模块端命令响应码。
+     */
+    private volatile int lastCompletedModuleResponseCode;
+
+    /**
+     * 最近完成的显式模块端命令是否成功。
+     */
+    private volatile boolean lastCompletedModuleCommandSuccess;
+
+    /**
+     * 最近完成的显式模块端命令完成时间戳。
+     */
+    private volatile long lastCompletedModuleCommandTime;
+
     private volatile String currentPollBatchNo;
 
     private volatile long currentPollStartedAt;

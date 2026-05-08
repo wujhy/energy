@@ -49,6 +49,40 @@ class BatteryModuleFrameDataParserServiceTest {
     }
 
     @Test
+    void shouldClampNegativeArrayExternalVoltageToZero() {
+        BatteryCollectorFrame frame = codec.buildRequest(0xF6, 0x81,
+                new byte[]{0x00, 0x00, 0x7B, 0x00, 0x7B, (byte) 0xFF, (byte) 0xFF,
+                        (byte) 0xFF, (byte) 0x9C, 0x00, (byte) 0xFA});
+
+        BatteryModuleFrameData data = service.parse(frame);
+
+        Assertions.assertNotNull(data);
+        Assertions.assertEquals(0.0d, data.getExternalVoltage(), 0.0001d);
+    }
+
+    @Test
+    void shouldKeepFailedModuleInfoAsStatusOnly() {
+        BatteryCollectorFrame singleFrame = codec.buildRequest(0x05, 0x81,
+                new byte[]{0x01, 0x09, (byte) 0xC4, 0x00, 0x64, 0x00, (byte) 0xFB, 0x01, 0x04, (byte) 0xD2});
+        BatteryCollectorFrame groupFrame = codec.buildRequest(0xF6, 0x81,
+                new byte[]{0x02, 0x00, 0x7B, 0x00, 0x7B, 0x30, 0x39, (byte) 0xFF, (byte) 0x9C, 0x00, (byte) 0xFA});
+
+        BatteryModuleFrameData singleData = service.parse(singleFrame);
+        BatteryModuleFrameData groupData = service.parse(groupFrame);
+
+        Assertions.assertNotNull(singleData);
+        Assertions.assertEquals(BatteryModuleDataType.SINGLE_MODULE_INFO, singleData.getType());
+        Assertions.assertEquals(1, singleData.getResponseFlag());
+        Assertions.assertFalse(singleData.isSuccess());
+        Assertions.assertNull(singleData.getCellVoltage());
+        Assertions.assertNotNull(groupData);
+        Assertions.assertEquals(BatteryModuleDataType.ARRAY_MODULE_INFO, groupData.getType());
+        Assertions.assertEquals(2, groupData.getResponseFlag());
+        Assertions.assertFalse(groupData.isSuccess());
+        Assertions.assertNull(groupData.getChargeDischargeCurrent());
+    }
+
+    @Test
     void shouldParseConnectResistanceVoltage() {
         BatteryCollectorFrame frame = codec.buildRequest(0x03, 0x91,
                 new byte[]{0x00, 0x00, 0x61, (byte) 0xA8, 0x00, 0x00, (byte) 0xC3, 0x50});
@@ -101,6 +135,10 @@ class BatteryModuleFrameDataParserServiceTest {
         Assertions.assertNull(service.parse(null));
         Assertions.assertNull(service.parse(codec.buildRequest(0x03, 0x81, new byte[]{0x00, 0x01})));
         Assertions.assertNull(service.parse(codec.buildRequest(0xF6, 0x81, new byte[]{0x00, 0x01})));
+        Assertions.assertNull(service.parse(codec.buildRequest(0x00, 0x81,
+                new byte[]{0x00, 0x09, (byte) 0xC4, 0x00, 0x64, 0x00, (byte) 0xFB, 0x01, 0x04, (byte) 0xD2})));
+        Assertions.assertNull(service.parse(codec.buildRequest(0xF7, 0x81,
+                new byte[]{0x00, 0x09, (byte) 0xC4, 0x00, 0x64, 0x00, (byte) 0xFB, 0x01, 0x04, (byte) 0xD2})));
         Assertions.assertNull(service.parse(codec.buildRequest(0x03, 0x91, new byte[]{0x00, 0x01})));
         Assertions.assertNull(service.parse(codec.buildRequest(0x03, 0x83, new byte[]{})));
         Assertions.assertNull(service.parse(codec.buildRequest(0x00, 0xA8, new byte[]{0x00, 0x05})));

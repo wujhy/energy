@@ -30,7 +30,7 @@ public class DataService {
     @Resource
     private IHostService hostService;
 
-    CacheKeyEnum cache = CacheKeyEnum.HISTORY_TIME;
+    CacheKeyEnum cache = CacheKeyEnum.STORAGE_TIME;
 
     /**
      * 是否存储

@@ -88,6 +88,42 @@ public class BatteryCollectorCommandController extends BaseController {
                 request.getTimeoutMs()));
     }
 
+    @Log(title = "蓄电池模块手动编号", businessType = BusinessType.UPDATE)
+    @PostMapping("/manualModuleAddress")
+    public AjaxResult manualModuleAddress(@RequestBody ManualModuleAddressRequest request) {
+        if (request == null) {
+            return error("请求不能为空");
+        }
+        if (request.getChannelName() == null || request.getChannelName().trim().isEmpty()
+                || request.getBatteryGroup() == null
+                || request.getModuleAddress() == null
+                || request.getNewModuleAddress() == null) {
+            return error("channelName、batteryGroup、moduleAddress、newModuleAddress不能为空");
+        }
+        return success(commandService.manualSetSubmoduleAddress(
+                request.getChannelName(),
+                request.getBatteryGroup(),
+                request.getModuleAddress(),
+                request.getNewModuleAddress(),
+                request.getTimeoutMs()));
+    }
+
+    @Log(title = "蓄电池连接条电阻测试", businessType = BusinessType.UPDATE)
+    @PostMapping("/connectResistanceTest")
+    public AjaxResult connectResistanceTest(@RequestBody ConnectResistanceTestRequest request) {
+        if (request == null) {
+            return error("请求不能为空");
+        }
+        if (request.getChannelName() == null || request.getChannelName().trim().isEmpty()
+                || request.getBatteryGroup() == null) {
+            return error("channelName、batteryGroup不能为空");
+        }
+        return success(commandService.connectResistanceTest(
+                request.getChannelName(),
+                request.getBatteryGroup(),
+                request.getTimeoutMs()));
+    }
+
     @Log(title = "蓄电池时间同步", businessType = BusinessType.UPDATE)
     @PostMapping("/updateTimeAll")
     public AjaxResult updateTimeAll(@RequestBody UpdateTimeAllRequest request) {
@@ -171,6 +207,22 @@ public class BatteryCollectorCommandController extends BaseController {
         private String channelName;
         private Integer batteryGroup;
         private Integer batteryNumber;
+        private Long timeoutMs;
+    }
+
+    @Data
+    public static class ManualModuleAddressRequest {
+        private String channelName;
+        private Integer batteryGroup;
+        private Integer moduleAddress;
+        private Integer newModuleAddress;
+        private Long timeoutMs;
+    }
+
+    @Data
+    public static class ConnectResistanceTestRequest {
+        private String channelName;
+        private Integer batteryGroup;
         private Long timeoutMs;
     }
 

@@ -1,5 +1,6 @@
 package com.shanhe.project.device.opt.controller;
 
+import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.aspectj.lang.annotation.Log;
 import com.shanhe.framework.enums.BatteryCidEnum;
@@ -53,8 +54,10 @@ public class OptBatteryController extends BaseController {
      * 获取【蓄电池测试操作参数】详细信息
      */
     @GetMapping(value = "/info")
-    public AjaxResult getInfo(@RequestParam Long configId, @RequestParam Integer packNum, @RequestParam Integer testType) {
-        return success(devBatteryOptService.selectDevBatteryOptByPackNum(configId, packNum, testType));
+    public AjaxResult getInfo(@RequestParam(required = false) Long configId,
+                              @RequestParam Integer packNum,
+                              @RequestParam Integer testType) {
+        return success(devBatteryOptService.selectDevBatteryOptByPackNum(Constants.DEFAULT_CONFIG_ID, packNum, testType));
     }
 
     /**
@@ -63,6 +66,7 @@ public class OptBatteryController extends BaseController {
     @Log(title = "蓄电池测试操作", businessType = BusinessType.UPDATE)
     @PostMapping("/edit")
     public AjaxResult edit(@RequestBody DevBatteryOpt devBatteryOpt) {
+        applyDefaultConfigId(devBatteryOpt);
         devBatteryOpt.setIsSync(false);
         //发送指令到终端设备
         return controlBattery.toSendCmdToOat(devBatteryOpt);
@@ -73,6 +77,7 @@ public class OptBatteryController extends BaseController {
      */
     @PostMapping("/doCmdOptBatteryTest")
     public AjaxResult doCmdOptBatteryTest(@RequestBody DevBatteryOpt devBatteryOpt) {
+        applyDefaultConfigId(devBatteryOpt);
         BatteryTestEnum testEnum = BatteryTestEnum.find(devBatteryOpt.getTestType());
         OptLog opt = optLogService.getRunningOptLog(devBatteryOpt.getConfigId(),null,testEnum.getDictValue());
         if(opt!=null){
@@ -105,6 +110,11 @@ public class OptBatteryController extends BaseController {
     @PostMapping("/doCmdStopBattery")
     public AjaxResult doCmdStopBattery(@RequestBody DevBatteryOpt devBatteryOpt) {
         //发送指令到终端设备
+        applyDefaultConfigId(devBatteryOpt);
         return controlBattery.toSendStopBatteryCmdToOat(devBatteryOpt);
+    }
+
+    private void applyDefaultConfigId(DevBatteryOpt devBatteryOpt) {
+        devBatteryOpt.setConfigId(Constants.DEFAULT_CONFIG_ID);
     }
 }

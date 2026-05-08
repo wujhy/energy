@@ -34,6 +34,26 @@
         poll_started_at = excluded.poll_started_at
     </sql>
 
+    <sql id="groupRealtimeUpdateSet">
+        create_time = datetime(CURRENT_TIMESTAMP, 'localtime'),
+        pack_voltage = coalesce(excluded.pack_voltage, battery_module_group_realtime.pack_voltage),
+        pack_current = coalesce(excluded.pack_current, battery_module_group_realtime.pack_current),
+        battery_pack_float_current = coalesce(excluded.battery_pack_float_current, battery_module_group_realtime.battery_pack_float_current),
+        battery_pack_outer_voltage = coalesce(excluded.battery_pack_outer_voltage, battery_module_group_realtime.battery_pack_outer_voltage),
+        environment_temperature1 = coalesce(excluded.environment_temperature1, battery_module_group_realtime.environment_temperature1),
+        environment_temperature2 = coalesce(excluded.environment_temperature2, battery_module_group_realtime.environment_temperature2),
+        charge_discharge_current = coalesce(excluded.charge_discharge_current, battery_module_group_realtime.charge_discharge_current),
+        float_current = coalesce(excluded.float_current, battery_module_group_realtime.float_current),
+        external_voltage = coalesce(excluded.external_voltage, battery_module_group_realtime.external_voltage),
+        latest_group_update_time = case
+            when excluded.group_module_fresh = 1 then excluded.latest_group_update_time
+            else battery_module_group_realtime.latest_group_update_time
+        end,
+        group_module_fresh = excluded.group_module_fresh,
+        poll_batch_no = excluded.poll_batch_no,
+        poll_started_at = excluded.poll_started_at
+    </sql>
+
     <insert id="upsertCell" parameterType="com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime">
         insert into battery_module_cell_realtime (
             <include refid="cellColumns"/>
@@ -110,26 +130,13 @@
             #{chargeDischargeCurrent},
             #{floatCurrent},
             #{externalVoltage},
-            datetime(CURRENT_TIMESTAMP, 'localtime'),
+            case when #{groupModuleFresh} = 1 then datetime(CURRENT_TIMESTAMP, 'localtime') else null end,
             #{groupModuleFresh},
             #{pollBatchNo},
             #{pollStartedAt}
         )
         on conflict(pack_num) do update set
-            create_time = datetime(CURRENT_TIMESTAMP, 'localtime'),
-            pack_voltage = excluded.pack_voltage,
-            pack_current = excluded.pack_current,
-            battery_pack_float_current = excluded.battery_pack_float_current,
-            battery_pack_outer_voltage = excluded.battery_pack_outer_voltage,
-            environment_temperature1 = excluded.environment_temperature1,
-            environment_temperature2 = excluded.environment_temperature2,
-            charge_discharge_current = excluded.charge_discharge_current,
-            float_current = excluded.float_current,
-            external_voltage = excluded.external_voltage,
-            latest_group_update_time = excluded.latest_group_update_time,
-            group_module_fresh = excluded.group_module_fresh,
-            poll_batch_no = excluded.poll_batch_no,
-            poll_started_at = excluded.poll_started_at
+            <include refid="groupRealtimeUpdateSet"/>
     </insert>
 
     <insert id="upsertGroups">
@@ -163,27 +170,14 @@
                 #{group.chargeDischargeCurrent},
                 #{group.floatCurrent},
                 #{group.externalVoltage},
-                datetime(CURRENT_TIMESTAMP, 'localtime'),
+                case when #{group.groupModuleFresh} = 1 then datetime(CURRENT_TIMESTAMP, 'localtime') else null end,
                 #{group.groupModuleFresh},
                 #{group.pollBatchNo},
                 #{group.pollStartedAt}
             )
         </foreach>
         on conflict(pack_num) do update set
-            create_time = datetime(CURRENT_TIMESTAMP, 'localtime'),
-            pack_voltage = excluded.pack_voltage,
-            pack_current = excluded.pack_current,
-            battery_pack_float_current = excluded.battery_pack_float_current,
-            battery_pack_outer_voltage = excluded.battery_pack_outer_voltage,
-            environment_temperature1 = excluded.environment_temperature1,
-            environment_temperature2 = excluded.environment_temperature2,
-            charge_discharge_current = excluded.charge_discharge_current,
-            float_current = excluded.float_current,
-            external_voltage = excluded.external_voltage,
-            latest_group_update_time = excluded.latest_group_update_time,
-            group_module_fresh = excluded.group_module_fresh,
-            poll_batch_no = excluded.poll_batch_no,
-            poll_started_at = excluded.poll_started_at
+            <include refid="groupRealtimeUpdateSet"/>
     </insert>
 
     <sql id="cellSelectColumns">

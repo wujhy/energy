@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 设备对象 dev_config
+ * 设备配置静态对象
  * 
  * @author wjh
  * @since 2024-12-23

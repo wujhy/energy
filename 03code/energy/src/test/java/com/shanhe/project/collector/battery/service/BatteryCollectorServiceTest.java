@@ -69,6 +69,14 @@ class BatteryCollectorServiceTest {
     }
 
     @Test
+    void shouldResolveExpectedCellCountFromChannelConfig() {
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setExpectedCellCount(600);
+
+        Assertions.assertEquals(245, service.resolveExpectedCellCount(channelConfig));
+    }
+
+    @Test
     void shouldBuildChannelSnapshot() {
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
         channelConfig.setName("battery-group-1");
@@ -86,6 +94,10 @@ class BatteryCollectorServiceTest {
         state.setPollRoundCount(2L);
         state.setCurrentFullDiscovery(true);
         state.setLastFullDiscoveryTime(90L);
+        state.setLastCompletedModuleCommandName("SET_MODULE_ADDRESS");
+        state.setLastCompletedModuleResponseCode(0x88);
+        state.setLastCompletedModuleCommandSuccess(true);
+        state.setLastCompletedModuleCommandTime(300L);
         state.getActiveModuleAddresses().add(8);
         state.getActiveModuleAddresses().add(246);
         state.setPendingCommand(BatteryPendingRequest.command(0x01, 0x81, new byte[0], "MODULE_INFO"));
@@ -118,6 +130,10 @@ class BatteryCollectorServiceTest {
         Assertions.assertEquals("MODULE_INFO", snapshot.getPendingCommandName());
         Assertions.assertEquals(0x01, snapshot.getPendingRequestCode());
         Assertions.assertEquals(0x81, snapshot.getPendingResponseCode());
+        Assertions.assertEquals("SET_MODULE_ADDRESS", snapshot.getLastCompletedModuleCommandName());
+        Assertions.assertEquals(0x88, snapshot.getLastCompletedModuleResponseCode());
+        Assertions.assertTrue(snapshot.getLastCompletedModuleCommandSuccess());
+        Assertions.assertEquals(300L, snapshot.getLastCompletedModuleCommandTime());
         Assertions.assertEquals(1, snapshot.getQueuedModuleCommandCount());
     }
 
@@ -268,6 +284,15 @@ class BatteryCollectorServiceTest {
     }
 
     @Test
+    void shouldSkipRemainingCellDiscoveryAfterExpectedCellResponsesButKeepGroupModule() {
+        Assertions.assertFalse(service.shouldSkipRemainingCellDiscovery(true, 8, 23, 24));
+        Assertions.assertTrue(service.shouldSkipRemainingCellDiscovery(true, 24, 24, 24));
+        Assertions.assertFalse(service.shouldSkipRemainingCellDiscovery(true, 246, 24, 24));
+        Assertions.assertFalse(service.shouldSkipRemainingCellDiscovery(false, 24, 24, 24));
+        Assertions.assertFalse(service.shouldSkipRemainingCellDiscovery(true, 24, 24, 0));
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void shouldQueueModuleCommandForActiveChannel() {
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
@@ -307,6 +332,87 @@ class BatteryCollectorServiceTest {
         ReflectionTestUtils.invokeMethod(service, "processQueuedModuleCommand", state);
 
         Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
+    }
+
+    @Test
+    void shouldResetAddressCacheAfterSuccessfulAddressCommandResponse() {
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setName("battery-group-1");
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        state.getActiveModuleAddresses().add(8);
+        state.getModuleAddressMissCounts().put(8, 2);
+        state.getFullDiscoveryRequested().set(false);
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.SET_MODULE_ADDRESS,
+                8,
+                new byte[]{9},
+                false);
+        BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(8, 0x88, new byte[]{0});
+
+        service.handleCompletedPendingResponse(state, frame, pendingRequest);
+
+        Assertions.assertEquals("SET_MODULE_ADDRESS", state.getLastCompletedModuleCommandName());
+        Assertions.assertEquals(0x88, state.getLastCompletedModuleResponseCode());
+        Assertions.assertTrue(state.isLastCompletedModuleCommandSuccess());
+        Assertions.assertTrue(state.getActiveModuleAddresses().isEmpty());
+        Assertions.assertTrue(state.getModuleAddressMissCounts().isEmpty());
+        Assertions.assertTrue(state.getFullDiscoveryRequested().get());
+    }
+
+    @Test
+    void shouldKeepAddressCacheAfterFailedAddressCommandResponse() {
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
+        state.getActiveModuleAddresses().add(8);
+        state.getFullDiscoveryRequested().set(false);
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS,
+                0,
+                new byte[]{1, 2, 3, 4, 5, 6, 7},
+                false);
+        BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(0, 0xA8, new byte[]{1, 5, 2});
+
+        service.handleCompletedPendingResponse(state, frame, pendingRequest);
+
+        Assertions.assertEquals("AUTO_SET_MODULE_ADDRESS", state.getLastCompletedModuleCommandName());
+        Assertions.assertEquals(0xA8, state.getLastCompletedModuleResponseCode());
+        Assertions.assertFalse(state.isLastCompletedModuleCommandSuccess());
+        Assertions.assertFalse(state.getActiveModuleAddresses().isEmpty());
+        Assertions.assertFalse(state.getFullDiscoveryRequested().get());
+    }
+
+    @Test
+    void shouldTreatMatchedDataResponseAsModuleCommandSuccess() {
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE,
+                8,
+                new byte[0],
+                false);
+        BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(8, 0x91,
+                new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
+
+        service.handleCompletedPendingResponse(state, frame, pendingRequest);
+
+        Assertions.assertEquals("GET_CONNECT_STRIP_RESISTANCE_VOLTAGE", state.getLastCompletedModuleCommandName());
+        Assertions.assertEquals(0x91, state.getLastCompletedModuleResponseCode());
+        Assertions.assertTrue(state.isLastCompletedModuleCommandSuccess());
+    }
+
+    @Test
+    void shouldRecordTimedOutModuleCommandAsFailed() {
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
+                8,
+                new byte[0],
+                false);
+
+        service.handleTimedOutPendingRequest(state, pendingRequest);
+
+        Assertions.assertEquals("SINGLE_BATTERY_IR_TEST", state.getLastCompletedModuleCommandName());
+        Assertions.assertEquals(0x82, state.getLastCompletedModuleResponseCode());
+        Assertions.assertFalse(state.isLastCompletedModuleCommandSuccess());
+        Assertions.assertTrue(state.getLastCompletedModuleCommandTime() > 0);
     }
 
     @Test

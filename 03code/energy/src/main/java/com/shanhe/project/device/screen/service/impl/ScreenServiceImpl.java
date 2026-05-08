@@ -1,7 +1,6 @@
 package com.shanhe.project.device.screen.service.impl;
 
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.StrUtil;
 import com.shanhe.framework.enums.DeviceTypeEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
@@ -9,11 +8,9 @@ import com.shanhe.project.device.config.domain.*;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.device.config.service.IConfigAttributeService;
 import com.shanhe.project.device.config.service.IConfigService;
-import com.shanhe.project.device.history.service.IHistoryLogService;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.device.screen.service.ScreenService;
-import com.shanhe.project.monitor.patrol.service.IPatrolService;
 import com.shanhe.project.system.user.domain.Index;
 import org.springframework.stereotype.Service;
 
@@ -37,10 +34,6 @@ public class ScreenServiceImpl implements ScreenService {
     @Resource
     private IConfigAttributeService configAttributeService;
     @Resource
-    private IHistoryLogService historyLogService;
-    @Resource
-    private IPatrolService patrolService;
-    @Resource
     private IAlarmLogService alarmLogService;
     @Resource
     private BatteryReportLogService batteryReportLogService;
@@ -53,8 +46,8 @@ public class ScreenServiceImpl implements ScreenService {
         index.setName(host != null ? host.getName() : "");
         index.setVersion(host != null ? host.getSoftVersion() : "");
 
-        // 是否巡检
-        index.setHasPatrol(patrolService.hasPatrol());
+        // 巡检功能已精简
+        index.setHasPatrol(false);
 
         // 安全天数
         if (host != null && host.getCreateTime() != null) {
@@ -132,23 +125,7 @@ public class ScreenServiceImpl implements ScreenService {
             return;
         }
 
-        // 温湿度总数、个数
-        double wdCount = 0D, sdCount = 0D;
-        int wdNum = 0, sdNum = 0;
-        for (Config config : configList) {
-            String wd = historyLogService.getCacheBy(config.getConfigId(), null, "wd");
-            if (StrUtil.isNotBlank(wd)) {
-                wdCount += Double.parseDouble(wd);
-                wdNum++;
-            }
-            String sd = historyLogService.getCacheBy(config.getConfigId(), null, "sd");
-            if (StrUtil.isNotBlank(sd)) {
-                sdCount += Double.parseDouble(sd);
-                sdNum++;
-            }
-        }
-
-        index.setWd(wdNum == 0 ? "" : String.format("%.1f", wdCount / wdNum));
-        index.setSd(sdNum == 0 ? "" : String.format("%.1f", sdCount / sdNum));
+        index.setWd("");
+        index.setSd("");
     }
 }

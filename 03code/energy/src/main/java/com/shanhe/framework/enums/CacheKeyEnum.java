@@ -12,7 +12,6 @@ import lombok.Getter;
 public enum CacheKeyEnum {
 
     LOGIN("sys-authCache", "login:%s", "登录信息"),
-    DICT("sys-dict", "dict:", "字典信息"),
     HOST("sys-cache", "device:host", "站点信息"),
     HOST_TOKEN("sys-cache", "device:host:token", "站点token信息"),
     AIR_MODEL("sys-cache", "device:airModel:%s", "空调模式"),
@@ -31,9 +30,7 @@ public enum CacheKeyEnum {
     OPT_LOG("device-log", "log:%s:%s:%s", "操作日志处理"),
     /* alarm.level */
     ALARM_LEVEL("sys-cache", "alarm:level", "告警等级"),
-    /* alarm.配置id.包编号.属性编码 */
-    HISTORY("device-history", "history:%s:%s:%s", "设备历史"),
-    HISTORY_TIME("device-history", "historyTime:%s:%s", "设备最后存储时间"),
+    STORAGE_TIME("data-storage-time", "storageTime:%s:%s", "数据最后存储时间"),
     /* battery.配置id.包编号.模块编号 */
     BATTERY("device-battery", "battery:%s:%s:%s", "单体电池"),
     /* battery.配置id.包编号 */

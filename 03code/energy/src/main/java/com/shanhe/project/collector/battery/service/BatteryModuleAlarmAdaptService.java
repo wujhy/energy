@@ -29,9 +29,16 @@ public class BatteryModuleAlarmAdaptService {
         BatteryModuleAlarmContext context = new BatteryModuleAlarmContext();
         if (group != null) {
             context.setPackNum(group.getPackNum());
+            appendGroupDirectStatus(context, group);
         }
         appendCellDirectStatus(context, cells);
         return context;
+    }
+
+    private void appendGroupDirectStatus(BatteryModuleAlarmContext context, BatteryModuleGroupRealtime group) {
+        if (group.getGroupModuleFresh() != null) {
+            context.putPackWarn(ItemCode.TXZT.getCode(), Boolean.TRUE.equals(group.getGroupModuleFresh()) ? "0" : "1");
+        }
     }
 
     private void appendCellDirectStatus(BatteryModuleAlarmContext context, List<BatteryModuleCellRealtime> cells) {

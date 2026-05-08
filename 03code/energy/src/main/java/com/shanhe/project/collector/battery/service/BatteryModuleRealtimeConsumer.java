@@ -14,7 +14,13 @@ import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 600节模块端实时数据入库消费器。
@@ -25,6 +31,13 @@ import javax.annotation.Resource;
 @Slf4j
 @Component
 public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer {
+
+    private static final AtomicInteger POST_PROCESS_THREAD_INDEX = new AtomicInteger(1);
+
+    /**
+     * 轮询外后处理线程池，避免兼容历史和告警上下文占用采集轮询线程。
+     */
+    private final ExecutorService postProcessExecutor = Executors.newFixedThreadPool(2, postProcessThreadFactory());
 
     /**
      * 采集模块配置。
@@ -138,8 +151,7 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
             }
             if (!context.getCells().isEmpty() || !context.getGroups().isEmpty()) {
                 BatteryModuleGroupRealtime calculation = calculateIfEnabled(channelConfig, context);
-                adaptAlarmContext(channelConfig, context, calculation);
-                syncCompatReportLogIfEnabled(channelConfig, context, calculation);
+                submitPostProcess(channelConfig, context, calculation);
             }
         } catch (Exception e) {
             log.warn("flush battery module realtime batch failed, channel={}, batch={}",
@@ -147,6 +159,28 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
                     context.getPollBatchNo(),
                     e);
         }
+    }
+
+    void submitPostProcess(BatteryCollectorChannelConfig channelConfig,
+                           BatteryModulePollContext context,
+                           BatteryModuleGroupRealtime calculation) {
+        if (context == null) {
+            return;
+        }
+        BatteryModulePollContext snapshot = BatteryModulePollContext.builder()
+                .pollBatchNo(context.getPollBatchNo())
+                .pollStartedAt(context.getPollStartedAt())
+                .cells(new ArrayList<>(context.getCells()))
+                .groups(new ArrayList<>(context.getGroups()))
+                .build();
+        postProcessExecutor.execute(() -> runPostProcess(channelConfig, snapshot, calculation));
+    }
+
+    void runPostProcess(BatteryCollectorChannelConfig channelConfig,
+                        BatteryModulePollContext context,
+                        BatteryModuleGroupRealtime calculation) {
+        adaptAlarmContext(channelConfig, context, calculation);
+        syncCompatReportLogIfEnabled(channelConfig, context, calculation);
     }
 
     BatteryModuleGroupRealtime calculateIfEnabled(BatteryCollectorChannelConfig channelConfig,
@@ -239,14 +273,16 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
     BatteryModuleGroupRealtime buildGroup(BatteryCollectorChannelConfig channelConfig, BatteryModuleFrameData data) {
         BatteryModuleGroupRealtime realtime = new BatteryModuleGroupRealtime();
         realtime.setPackNum(channelConfig == null ? null : channelConfig.getBatteryGroup());
-        realtime.setPackCurrent(data.getChargeDischargeCurrent());
-        realtime.setBatteryPackFloatCurrent(data.getFloatCurrent());
-        realtime.setBatteryPackOuterVoltage(data.getExternalVoltage());
-        realtime.setChargeDischargeCurrent(data.getChargeDischargeCurrent());
-        realtime.setFloatCurrent(data.getFloatCurrent());
-        realtime.setExternalVoltage(data.getExternalVoltage());
-        realtime.setEnvironmentTemperature1(data.getEnvironmentTemperature1());
-        realtime.setEnvironmentTemperature2(data.getEnvironmentTemperature2());
+        if (data.isSuccess()) {
+            realtime.setPackCurrent(data.getChargeDischargeCurrent());
+            realtime.setBatteryPackFloatCurrent(data.getFloatCurrent());
+            realtime.setBatteryPackOuterVoltage(data.getExternalVoltage());
+            realtime.setChargeDischargeCurrent(data.getChargeDischargeCurrent());
+            realtime.setFloatCurrent(data.getFloatCurrent());
+            realtime.setExternalVoltage(data.getExternalVoltage());
+            realtime.setEnvironmentTemperature1(data.getEnvironmentTemperature1());
+            realtime.setEnvironmentTemperature2(data.getEnvironmentTemperature2());
+        }
         realtime.setGroupModuleFresh(data.isSuccess());
         applyPollContext(realtime);
         return realtime;
@@ -268,5 +304,19 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
         }
         realtime.setPollBatchNo(context.getPollBatchNo());
         realtime.setPollStartedAt(context.getPollStartedAt());
+    }
+
+    @PreDestroy
+    public void destroy() {
+        postProcessExecutor.shutdownNow();
+    }
+
+    private static ThreadFactory postProcessThreadFactory() {
+        return runnable -> {
+            Thread thread = new Thread(runnable,
+                    "battery-module-post-process-" + POST_PROCESS_THREAD_INDEX.getAndIncrement());
+            thread.setDaemon(true);
+            return thread;
+        };
     }
 }

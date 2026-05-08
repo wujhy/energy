@@ -1,7 +1,6 @@
 package com.shanhe.project.device.opt.service;
 
 import cn.hutool.core.util.StrUtil;
-import com.shanhe.common.exception.ServiceException;
 import com.shanhe.common.utils.Crc16m;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.comm.CommServer;
@@ -9,12 +8,8 @@ import com.shanhe.framework.enums.*;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.device.config.domain.Config;
-import com.shanhe.project.device.config.domain.ConfigAttribute;
-import com.shanhe.project.device.config.service.IConfigAttributeService;
-import com.shanhe.project.device.history.service.IHistoryLogService;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.opt.cmd.DeviceModel;
-import com.shanhe.project.device.opt.vo.PrecisionAirVO;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,11 +30,6 @@ public class ControlAir extends ControlBase {
     protected static Logger logger = LoggerFactory.getLogger(ControlAir.class);
     /** 缓存结果 **/
     CacheKeyEnum cacheKeyEnum = CacheKeyEnum.RESULT_CX;
-
-    @Resource
-    private IConfigAttributeService configAttributeService;
-    @Resource
-    private IHistoryLogService historyLogService;
 
     /**
      * 空调控制
@@ -80,38 +70,9 @@ public class ControlAir extends ControlBase {
         // 结果监控
         AjaxResult ajaxResult = super.getControlResult(resultKey, cacheKeyEnum);
 
-        // 响应成功，保存历史记录
+        // 响应成功后缓存空调模式，普通设备历史记录已精简
         if (Objects.equals(ajaxResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value())) {
-            // 保存温度历史
-            if (StrUtil.isNotBlank(temperature)) {
-                ConfigAttribute setWd = configAttributeService.getCacheBy(config.getConfigId(), AirAttrEnum.WD.getCode());
-                if (setWd != null) {
-                    historyLogService.insertHistoryLog(setWd, temperature, true);
-                }
-            }
-            // 空调开关机状态
-            if (Objects.equals(airCmdEnum.getType(), AirCmdTypeEnum._2.getCode())) {
-                ConfigAttribute switchStatus = configAttributeService.getCacheBy(config.getConfigId(), AirAttrEnum.STATUS.getCode());
-                if (switchStatus != null) {
-                    historyLogService.insertHistoryLog(switchStatus, cmdId, true);
-                }
-            }
-            // 保存操作模式
             if (Objects.equals(airCmdEnum.getType(), AirCmdTypeEnum._1.getCode())) {
-                ConfigAttribute tempModel = configAttributeService.getCacheBy(config.getConfigId(), AirAttrEnum.MODEL.getCode());
-                if (tempModel != null) {
-                    historyLogService.insertHistoryLog(tempModel, cmdId, true);
-                }
-
-                // 最后关机状态需同时开启
-                String statusLast = historyLogService.getCacheBy(config.getConfigId(), null, AirAttrEnum.STATUS.getCode());
-                if (Objects.equals(statusLast, AirCmdEnum._6.getCode())) {
-                    ConfigAttribute switchStatus = configAttributeService.getCacheBy(config.getConfigId(), AirAttrEnum.STATUS.getCode());
-                    if (switchStatus != null) {
-                        historyLogService.insertHistoryLog(switchStatus, AirCmdEnum._5.getCode(), true);
-                    }
-                }
-                // 缓存空调模式
                 CacheUtils.put(CacheKeyEnum.AIR_MODEL.getCache(), airModelKey, cmdId);
             }
         }
@@ -185,105 +146,6 @@ public class ControlAir extends ControlBase {
         //CRC校验码
         byte[] sendBuf = Crc16m.getSendBuf(info.toString());
         CommServer.returnCmd(DeviceModel.getCmd(host, config, Crc16m.getBufHexStr(sendBuf), TcpCidEnum._54.getDictValue(), TcpCidEnum._E0.getDictValue()));
-    }
-
-    /**
-     * 精密空调控制
-     */
-    public AjaxResult doPrecisionAirCmd(PrecisionAirVO params) {
-        // 主机信息
-        Host host = super.getHost();
-        // 设备信息
-        Config config = super.getConfig(params.getConfigId());
-
-        // 避免重复请求
-        String resultKey = super.setControlStatus(config, TcpCidEnum._E0.getDictValue(), cacheKeyEnum);
-
-        // 生成指令下发
-        CommServer.returnCmd(this.doPrecisionAirCmd(host, config, params));
-
-        // 结果监控
-        return super.getControlResult(resultKey, cacheKeyEnum);
-    }
-
-    /**
-     * 获取海信精密空调控制类的指令
-     *
-     * @param host   主机信息
-     * @param config 设备配置
-     * @param params 空调参数
-     * @return 指令
-     */
-    public String doPrecisionAirCmd(Host host, Config config, PrecisionAirVO params) {
-        /*
-         * 控制指令
-         *
-         * cmdType 1:机组开关设定 2:机组模式设定 3:制冷温度设定值 4:制热温度设定值 5:温度报警上限 6:温度报警下限 7:内风机设定风速 8:首次上电压缩机延时时间
-         * value 设置值
-         * 地址	数据	                    数据说明	                                            数据格式
-         * 5010	机组开关设定 	            10H开机、01H关机
-         * 5013	机组模式设定	            00H:FAN　10H:制热  20H:COLD 30H:DEHUMI 40H:AUTO
-         * 5015	制冷温度设定值	            整机温度设置值	                                        （x+20）*2的标准
-         * 5017	制热温度设定值	            整机温度设置值	                                        （x+20）*2的标准
-         * 5038	温度报警上限	            默认50度，50到25度范围	                                （x+20）*2的标准
-         * 5039	温度报警下限	            默认1度，35到0度范围，不能超过温度报警上限。	            （x+20）*2的标准
-         * 5142	内风机设定风速	            自动0， 低速 1，中速2，高速3
-         * 5166	首次上电压缩机延时时间	    秒计时
-         */
-
-        // 指令内容
-        StringBuilder info = new StringBuilder();
-        // 默认地址、写入指令编码
-        info.append("01").append("06");
-        switch(params.getCmdType()) {
-            case 1:
-                if (!StrUtil.equalsAny(params.getValue(), "10", "01")) {
-                    throw new RuntimeException("指令参数错误！");
-                }
-                info.append(CodingUtil.integerToHexString(5010, 4));
-                info.append("00").append(params.getValue());
-                break;
-            case 2:
-                if (!StrUtil.equalsAny(params.getValue(),"00", "10", "20", "30", "40")) {
-                    throw new ServiceException("指令参数错误！");
-                }
-                info.append(CodingUtil.integerToHexString(5013, 4));
-                info.append("00").append(params.getValue());
-                break;
-            case 3:
-                info.append(CodingUtil.integerToHexString(5015, 4));
-                info.append(CodingUtil.integerToHexString((Integer.parseInt(params.getValue()) + 20) * 2, 4));
-                break;
-            case 4:
-                info.append(CodingUtil.integerToHexString(5017, 4));
-                info.append(CodingUtil.integerToHexString((Integer.parseInt(params.getValue()) + 20) * 2, 4));
-                break;
-            case 5:
-                info.append(CodingUtil.integerToHexString(5038, 4));
-                info.append(CodingUtil.integerToHexString((Integer.parseInt(params.getValue()) + 20) * 2, 4));
-                break;
-            case 6:
-                info.append(CodingUtil.integerToHexString(5039, 4));
-                info.append(CodingUtil.integerToHexString((Integer.parseInt(params.getValue()) + 20) * 2, 4));
-                break;
-            case 7:
-                if (!StrUtil.equalsAny(params.getValue(),"0", "1", "2", "3")) {
-                    throw new ServiceException("指令参数错误！");
-                }
-                info.append(CodingUtil.integerToHexString(5142, 4));
-                info.append("000").append(params.getValue());
-                break;
-            case 8:
-                info.append(CodingUtil.integerToHexString(5166, 4));
-                info.append(CodingUtil.stringToHexString(params.getValue(), 4));
-                break;
-            default:
-                throw new RuntimeException("控制指令类型错误");
-        }
-
-        // 生成完整指令
-        return DeviceModel.getCmd(host, config, Crc16m.getBufHexStr(Crc16m.getSendBuf(info.toString())),
-                TcpCidEnum._54.getDictValue(), TcpCidEnum._E0.getDictValue());
     }
 
     /**

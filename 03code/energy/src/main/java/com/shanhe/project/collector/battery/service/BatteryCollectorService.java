@@ -13,6 +13,7 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorRunState;
 import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
 import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
+import com.shanhe.project.device.config.service.IBatteryPackService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.ApplicationArguments;
@@ -66,6 +67,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
      */
     @Resource
     private BatteryModuleRealtimeConsumer realtimeConsumer;
+
+    /**
+     * 旧后台电池组配置服务，用于读取每组期望单体数量。
+     */
+    @Resource
+    private IBatteryPackService batteryPackService;
 
     /**
      * 当前运行的通道状态。
@@ -157,6 +164,10 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         snapshot.setLastResponseCode(state.getLastResponseCode());
         snapshot.setLastPendingCompletedAt(state.getLastPendingCompletedAt());
         snapshot.setLastPendingTimedOut(state.isLastPendingTimedOut());
+        snapshot.setLastCompletedModuleCommandName(state.getLastCompletedModuleCommandName());
+        snapshot.setLastCompletedModuleResponseCode(state.getLastCompletedModuleResponseCode());
+        snapshot.setLastCompletedModuleCommandSuccess(state.isLastCompletedModuleCommandSuccess());
+        snapshot.setLastCompletedModuleCommandTime(state.getLastCompletedModuleCommandTime());
         snapshot.setCurrentPollBatchNo(state.getCurrentPollBatchNo());
         snapshot.setCurrentPollStartedAt(state.getCurrentPollStartedAt());
         snapshot.setCurrentPollAddress(state.getCurrentPollAddress());
@@ -325,9 +336,15 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         try {
             // 默认自动轮询只允许 600 节模块端 01/81，不引入 980 聚合命令。
             BatteryDeviceProtocolCode pollingCommand = BatteryDeviceProtocolCode.MODULE_INFO;
+            int expectedCellCount = resolveExpectedCellCount(state.getConfig());
+            int completedCellCount = 0;
+            boolean skipRemainingCellAddresses = false;
             for (Integer address : resolvePollingAddresses(state, fullDiscovery)) {
                 if (!running) {
                     break;
+                }
+                if (skipRemainingCellAddresses && isCellModuleAddress(address)) {
+                    continue;
                 }
                 state.setCurrentPollAddress(address);
                 polledCommands.add(String.format("%02X:%02X/%02X",
@@ -343,6 +360,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                             address,
                             pollingCommand.getRequestCode(),
                             pollingCommand.getResponseCode()));
+                    if (isCellModuleAddress(address)) {
+                        completedCellCount++;
+                    }
+                }
+                if (shouldSkipRemainingCellDiscovery(fullDiscovery, address, completedCellCount, expectedCellCount)) {
+                    skipRemainingCellAddresses = true;
                 }
             }
             realtimeConsumer.flushCurrentPollBatch(state.getConfig());
@@ -454,6 +477,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         state.setExpectedResponseCode(0);
         state.setLastPendingTimedOut(false);
         state.setRunState(BatteryCollectorRunState.READ);
+        markCompletedModuleCommand(state, command.getProtocolCode().name(), 0, true);
         logProtocol(state, "tx", "cmd=" + String.format("%02X", command.getRequestCode())
                 + ", expect=-"
                 + ", retry=0"
@@ -496,6 +520,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                     + ", hex=" + frame.toHex());
             moduleFrameDispatcher.dispatch(state.getConfig(), frame);
             if (isCurrentPendingResponse(state, frame)) {
+                handleCompletedPendingResponse(state, frame, state.getPendingCommand());
                 state.setPendingCommand(null);
                 state.setExpectedResponseCode(0);
                 state.setCurrentRetryCount(0);
@@ -516,6 +541,40 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                         String.format("%02X", frame.getCommand()));
             }
         }
+    }
+
+    void handleCompletedPendingResponse(BatteryCollectorChannelState state,
+                                        BatteryCollectorFrame frame,
+                                        BatteryPendingRequest pendingRequest) {
+        if (state == null || frame == null || pendingRequest == null || pendingRequest.isAutoPoll()) {
+            return;
+        }
+        boolean success = isSuccessResponse(frame, pendingRequest);
+        markCompletedModuleCommand(state, pendingRequest.getName(), frame.getCommand(), success);
+        if (success && shouldResetModuleAddressCacheAfterCommand(pendingRequest)) {
+            resetModuleAddressCache(state);
+            log.info("battery module address cache reset after address command success, channel={}, command={}",
+                    state.getConfig() == null ? null : state.getConfig().getName(),
+                    pendingRequest.getName());
+        }
+    }
+
+    private boolean isSuccessResponse(BatteryCollectorFrame frame, BatteryPendingRequest pendingRequest) {
+        BatteryDeviceProtocolCode protocolCode = BatteryDeviceProtocolCode.find(pendingRequest.getResponseCode());
+        if (protocolCode == null) {
+            return true;
+        }
+        if (!protocolCode.isStatusResponse() && protocolCode != BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS) {
+            return true;
+        }
+        byte[] payload = frame.getPayloadSafe();
+        return payload.length > 0 && (payload[0] & 0xFF) == 0;
+    }
+
+    private boolean shouldResetModuleAddressCacheAfterCommand(BatteryPendingRequest pendingRequest) {
+        String name = pendingRequest.getName();
+        return BatteryDeviceProtocolCode.SET_MODULE_ADDRESS.name().equals(name)
+                || BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.name().equals(name);
     }
 
     private boolean isKnownModuleResponse(int commandCode) {
@@ -589,6 +648,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 String.format("%02X", state.getLastRequestCode()),
                 String.format("%02X", state.getExpectedResponseCode()),
                 state.getTimeoutCount() + 1);
+        handleTimedOutPendingRequest(state, state.getPendingCommand());
         state.setPendingCommand(null);
         state.setExpectedResponseCode(0);
         state.setCurrentRetryCount(0);
@@ -598,6 +658,23 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         state.setTimeoutCount(state.getTimeoutCount() + 1);
         state.setLastTimeoutTime(now);
         state.getReceiveBuffer().reset();
+    }
+
+    void handleTimedOutPendingRequest(BatteryCollectorChannelState state, BatteryPendingRequest pendingRequest) {
+        if (state == null || pendingRequest == null || pendingRequest.isAutoPoll()) {
+            return;
+        }
+        markCompletedModuleCommand(state, pendingRequest.getName(), pendingRequest.getResponseCode(), false);
+    }
+
+    private void markCompletedModuleCommand(BatteryCollectorChannelState state,
+                                            String commandName,
+                                            int responseCode,
+                                            boolean success) {
+        state.setLastCompletedModuleCommandName(commandName);
+        state.setLastCompletedModuleResponseCode(responseCode);
+        state.setLastCompletedModuleCommandSuccess(success);
+        state.setLastCompletedModuleCommandTime(System.currentTimeMillis());
     }
 
     private void closeQuietly(BatteryCollectorChannelState state) {
@@ -750,6 +827,36 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return value == null || value <= 0 ? 3 : value;
     }
 
+    int resolveExpectedCellCount(BatteryCollectorChannelConfig config) {
+        Integer configured = config == null ? null : config.getExpectedCellCount();
+        int count = sanitizeExpectedCellCount(configured);
+        if (count > 0) {
+            return count;
+        }
+        if (batteryPackService == null || config == null
+                || config.getConfigId() == null || config.getBatteryGroup() == null) {
+            return 0;
+        }
+        try {
+            return sanitizeExpectedCellCount(batteryPackService.getBatteryMaxNumber(
+                    config.getConfigId(),
+                    config.getBatteryGroup()));
+        } catch (Exception e) {
+            log.warn("resolve battery expected cell count failed, configId={}, packNum={}",
+                    config.getConfigId(),
+                    config.getBatteryGroup(),
+                    e);
+            return 0;
+        }
+    }
+
+    private int sanitizeExpectedCellCount(Integer count) {
+        if (count == null || count <= 0) {
+            return 0;
+        }
+        return Math.min(count, 245);
+    }
+
     private int resolvePositiveInt(Number value, int defaultValue) {
         if (value == null || value.longValue() <= 0 || value.longValue() > Integer.MAX_VALUE) {
             return defaultValue;
@@ -824,6 +931,20 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 && now - state.getLastFullDiscoveryTime() >= interval;
     }
 
+    boolean shouldSkipRemainingCellDiscovery(boolean fullDiscovery,
+                                             Integer currentAddress,
+                                             int completedCellCount,
+                                             int expectedCellCount) {
+        return fullDiscovery
+                && isCellModuleAddress(currentAddress)
+                && expectedCellCount > 0
+                && completedCellCount >= expectedCellCount;
+    }
+
+    private boolean isCellModuleAddress(Integer address) {
+        return address != null && address >= 1 && address <= 245;
+    }
+
     boolean hasActiveCellModuleAddress(BatteryCollectorChannelState state) {
         if (state == null || state.getActiveModuleAddresses().isEmpty()) {
             return false;
@@ -873,13 +994,20 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         for (BatteryCollectorChannelState state : new ArrayList<>(channelStates)) {
             if (channelName == null || channelName.trim().isEmpty()
                     || channelName.equals(state.getConfig().getName())) {
-                state.getActiveModuleAddresses().clear();
-                state.getModuleAddressMissCounts().clear();
-                state.getFullDiscoveryRequested().set(true);
+                resetModuleAddressCache(state);
                 matched = true;
             }
         }
         return matched;
+    }
+
+    private void resetModuleAddressCache(BatteryCollectorChannelState state) {
+        if (state == null) {
+            return;
+        }
+        state.getActiveModuleAddresses().clear();
+        state.getModuleAddressMissCounts().clear();
+        state.getFullDiscoveryRequested().set(true);
     }
 
     @Override

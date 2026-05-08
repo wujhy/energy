@@ -64,7 +64,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="configAttributeList" resultMap="ConfigAttributeResult">
         <include refid="selectConfigAttributeVo"/>
-        where config_id in (select config_id from dev_config where status = 0) and status = 0
+        where config_id = 1 and status = 0
     </select>
 
     <select id="selectByConfigId" parameterType="Long" resultMap="ConfigAttributeResult">
@@ -78,7 +78,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where config_attr_id = #{configAttrId}
     </select>
 
-    <select id="hasName" parameterType="com.shanhe.project.device.template.domain.TemplateAttribute" resultType="Long">
+    <select id="hasName" parameterType="com.shanhe.project.device.config.domain.ConfigAttribute" resultType="Long">
         SELECT count(0) FROM dev_config_attribute
         WHERE (name = #{name} OR code = #{code}) AND config_id = #{configId}
         <if test="packNum != null "> and pack_num = #{packNum}</if>
@@ -162,6 +162,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             (#{bt.configAttrId},#{bt.configId},#{bt.packNum},#{bt.code},#{bt.name},#{bt.value},#{bt.unit},#{bt.point},#{bt.type},#{bt.sort},#{bt.track},#{bt.listDisplay},#{bt.screenDisplay},#{bt.pack},#{bt.status},#{bt.alarm},#{bt.alarmConfig},
              #{bt.remark}, #{bt.protValue}, #{bt.val0}, #{bt.val1}, #{bt.isLinear}, #{bt.minOrigRange}, #{bt.minTargetRange}, #{bt.maxOrigRange}, #{bt.maxTargetRange}, #{bt.spk}, #{bt.spb}, #{bt.levelList}, datetime(CURRENT_TIMESTAMP,'localtime'))
         </foreach>
+    </insert>
+
+    <insert id="insertByTemplateAttribute">
+        insert into dev_config_attribute
+        (config_id, pack_num, code, name, unit, point, type, sort, track, list_display, screen_display, pack, status, alarm_config,
+         remark, prot_value, val0, val1, is_linear, min_orig_range, min_target_range, max_orig_range, max_target_range, spk, spb, level_list, create_time)
+        select #{configId}, #{packNum}, code, name, unit, point, type, sort, track, list_display, screen_display, pack, status, alarm_config,
+               remark, prot_value, val0, val1, is_linear, min_orig_range, min_target_range, max_orig_range, max_target_range, spk, spb, level_list,
+               datetime(CURRENT_TIMESTAMP,'localtime')
+        from dev_template_attribute
+        where model = #{model}
+        order by sort
     </insert>
 
     <insert id="importAttribute">

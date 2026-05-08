@@ -2,7 +2,6 @@ package com.shanhe.project.sync.service;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
-import com.shanhe.common.exception.ServiceException;
 import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.comm.tcp.client.TcpClient;
 import com.shanhe.framework.consts.SysConst;
@@ -16,10 +15,8 @@ import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.energy.capacity.vo.PreBatteryGroup;
 import com.shanhe.project.energy.stat.domain.DevBatteryMonomer;
-import com.shanhe.project.monitor.patrol.domain.Patrol;
 import com.shanhe.project.sync.common.AttributeUtil;
 import com.shanhe.project.sync.common.ConfigUtil;
-import com.shanhe.project.sync.common.PatrolUtil;
 import com.shanhe.project.sync.consts.MethodEnum;
 import com.shanhe.project.sync.domain.*;
 import org.springframework.stereotype.Service;
@@ -123,20 +120,6 @@ public class ClientReportService {
     }
 
     /**
-     * 获取巡检清单
-     */
-    public void getPatrolTemplate() {
-        // 是否同步上报、是否已建立通道
-        if (!this.canSend()) {
-            throw new ServiceException("尚未与平台建立连接！！！");
-        }
-        Host host = hostService.getDetail();
-        Map<String, Object> params = new HashMap<>(1);
-        params.put("isForce", 1);
-        tcpClient.sendMsg(new RequestVo(host != null ? host.getImei() : "", MethodEnum._39.getDictValue(), params).toJsonString());
-    }
-
-    /**
      * 上报测试指令结果
      */
     public void updateCmdDebug(String imei, String info) {
@@ -167,17 +150,6 @@ public class ClientReportService {
         }
 
         tcpClient.sendMsg(new RequestVo(imei, MethodEnum._4.getDictValue(), ArmRecordInfo.of(alarmLog)).toJsonString());
-    }
-
-    /**
-     * 上报巡检结果
-     *
-     * @param patrol 巡检结果
-     */
-    public void uploadPatrol(Patrol patrol) {
-        String imei = this.getImei();
-        patrol.setImei(imei);
-        tcpClient.sendMsg(new RequestVo(patrol.getImei(), MethodEnum._32.getDictValue(), PatrolUtil.uploadPatrol(patrol)).toJsonString());
     }
 
     /**

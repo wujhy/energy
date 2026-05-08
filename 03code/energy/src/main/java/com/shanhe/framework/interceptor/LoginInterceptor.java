@@ -20,10 +20,10 @@ import java.util.List;
 public class LoginInterceptor implements HandlerInterceptor
 {
     private static final List<String> excludeSessionUrl =
-            Arrays.asList("/vite.svg", "/index", "/login", "/logout", "/assets/", "/dict/", "/patrol/", "/screen/", "/alarm/",
-                    "/device/alarm/", "/alarm/level/list", "/device/history/", "/battery/log/", "/battery/pack/list",
-                    "/battery/monitor/", "/shim/southData", "/configuration/battery/", "/stat/battery/", "/opt/log/",
-                    "/batteryOpt/", "/battery/set/", "/patrol/", "/optCmd/", "/file/");
+            Arrays.asList("/vite.svg", "/index", "/login", "/logout", "/assets/", "/screen/", "/alarm/",
+                    "/device/alarm/", "/alarm/level/list", "/battery/log/", "/battery/pack/list",
+                    "/shim/southData", "/configuration/battery/", "/stat/battery/",
+                    "/batteryOpt/", "/battery/set/", "/file/");
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception

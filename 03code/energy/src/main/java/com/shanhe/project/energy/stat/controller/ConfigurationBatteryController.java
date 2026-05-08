@@ -1,5 +1,6 @@
 package com.shanhe.project.energy.stat.controller;
 
+import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.web.controller.BaseController;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.device.config.service.IBatteryPackService;
@@ -35,8 +36,8 @@ public class ConfigurationBatteryController extends BaseController {
      * 查询设备列表
      */
     @GetMapping("/listMonomer")
-    public AjaxResult list(@RequestParam Long configId, @RequestParam Integer packNum) {
-        List<DevBatteryMonomer> list = devBatteryMonomerService.selectList(configId, packNum);
+    public AjaxResult list(@RequestParam(required = false) Long configId, @RequestParam Integer packNum) {
+        List<DevBatteryMonomer> list = devBatteryMonomerService.selectList(Constants.DEFAULT_CONFIG_ID, packNum);
         return success(list);
     }
 
@@ -44,47 +45,47 @@ public class ConfigurationBatteryController extends BaseController {
      * 内阻警戒线
      */
     @GetMapping("/getResWarnLine")
-    public AjaxResult getResWarnLine(@RequestParam Long configId, @RequestParam Integer packNum) {
-        return success(configurationBatteryService.getResWarnLine(configId, packNum));
+    public AjaxResult getResWarnLine(@RequestParam(required = false) Long configId, @RequestParam Integer packNum) {
+        return success(configurationBatteryService.getResWarnLine(Constants.DEFAULT_CONFIG_ID, packNum));
     }
 
     /**
      * 温度警戒线
      */
     @GetMapping("/getTempWarnLine")
-    public AjaxResult getTempWarnLine(@RequestParam Long configId, @RequestParam Integer packNum) {
-        return success(configurationBatteryService.getTempWarnLine(configId, packNum));
+    public AjaxResult getTempWarnLine(@RequestParam(required = false) Long configId, @RequestParam Integer packNum) {
+        return success(configurationBatteryService.getTempWarnLine(Constants.DEFAULT_CONFIG_ID, packNum));
     }
 
     /**
      * 健康报告
      */
     @GetMapping("/getBatteryHealthReport")
-    public AjaxResult getBatteryHealthReport(@RequestParam Long configId, @RequestParam Integer packNum) {
-        return success(configurationBatteryService.getBatteryHealthReport(configId, packNum));
+    public AjaxResult getBatteryHealthReport(@RequestParam(required = false) Long configId, @RequestParam Integer packNum) {
+        return success(configurationBatteryService.getBatteryHealthReport(Constants.DEFAULT_CONFIG_ID, packNum));
     }
 
     /**
      * 电池信息
      */
     @GetMapping("/getBatteryPack")
-    public AjaxResult getBatteryPack(@RequestParam Long configId, @RequestParam Integer packNum) {
-        return success(batteryPackService.selectBatteryInfoByPackNum(configId, packNum));
+    public AjaxResult getBatteryPack(@RequestParam(required = false) Long configId, @RequestParam Integer packNum) {
+        return success(batteryPackService.selectBatteryInfoByPackNum(Constants.DEFAULT_CONFIG_ID, packNum));
     }
 
     /**
      * 电池信息
      */
     @GetMapping("/getVoltageBalance")
-    public AjaxResult getVoltageBalance(@RequestParam Long configId, @RequestParam Integer packNum) {
-        return success(batteryPackService.getVoltageBalance(configId, packNum));
+    public AjaxResult getVoltageBalance(@RequestParam(required = false) Long configId, @RequestParam Integer packNum) {
+        return success(batteryPackService.getVoltageBalance(Constants.DEFAULT_CONFIG_ID, packNum));
     }
     /**
      * 清除预估容量
      */
     @GetMapping("/clearPreBatteryGroup")
-    public AjaxResult clearPreBatteryGroup(@RequestParam Long configId, @RequestParam Integer packNum) {
-        preBatteryGroupService.deleteByConfigId(configId, packNum);
+    public AjaxResult clearPreBatteryGroup(@RequestParam(required = false) Long configId, @RequestParam Integer packNum) {
+        preBatteryGroupService.deleteByConfigId(Constants.DEFAULT_CONFIG_ID, packNum);
         preBatteryGroupService.updateCache();
         return success();
     }

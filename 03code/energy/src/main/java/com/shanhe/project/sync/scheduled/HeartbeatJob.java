@@ -100,18 +100,6 @@ public class HeartbeatJob {
     }
 
     /**
-     * 每天执行巡检清单同步
-     */
-    @Scheduled(cron = "0 40 23 * * ?")
-    public void getPatrolTemplate() {
-        try {
-            clientReportService.getPatrolTemplate();
-        } catch (Exception e) {
-            logger.error("请求巡检清单异常：{}", e.getMessage());
-        }
-    }
-
-    /**
      * 心跳
      */
     private void heartbeat(Host host) {

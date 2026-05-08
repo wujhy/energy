@@ -85,6 +85,31 @@ class BatteryModuleRealtimeConsumerTest {
     }
 
     @Test
+    void shouldBuildFailedGroupRealtimeAsFreshnessOnly() {
+        BatteryModuleFrameData data = BatteryModuleFrameData.builder()
+                .type(BatteryModuleDataType.ARRAY_MODULE_INFO)
+                .moduleAddress(246)
+                .success(false)
+                .responseFlag(2)
+                .chargeDischargeCurrent(12.3d)
+                .floatCurrent(0.123d)
+                .externalVoltage(123.45d)
+                .environmentTemperature1(25.1d)
+                .environmentTemperature2(25.2d)
+                .build();
+
+        BatteryModuleGroupRealtime realtime = consumer.buildGroup(channelConfig(), data);
+
+        Assertions.assertEquals(1, realtime.getPackNum());
+        Assertions.assertFalse(realtime.getGroupModuleFresh());
+        Assertions.assertNull(realtime.getChargeDischargeCurrent());
+        Assertions.assertNull(realtime.getFloatCurrent());
+        Assertions.assertNull(realtime.getExternalVoltage());
+        Assertions.assertNull(realtime.getEnvironmentTemperature1());
+        Assertions.assertNull(realtime.getEnvironmentTemperature2());
+    }
+
+    @Test
     void shouldResolveDefaultCalculationStaleThreshold() {
         BatteryCollectorProperties properties = new BatteryCollectorProperties();
         properties.setGroupCalculationStaleThresholdMs(0L);

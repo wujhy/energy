@@ -25,14 +25,14 @@
 
     <sql id="selectAlarmLogVo">
         select
-            l.alarm_id, l.config_id, l.pack_num, l.model_num, l.item_code, l.alarm_level, l.data_info, l.status, l.shied, l.shied_time, l.duration, l.remark, l.create_time, l.update_time, c.name as config_Name, c.type
-        from dev_alarm_log l left join dev_config c on l.config_id = c.config_id and c.status = 0
+            l.alarm_id, l.config_id, l.pack_num, l.model_num, l.item_code, l.alarm_level, l.data_info, l.status, l.shied, l.shied_time, l.duration, l.remark, l.create_time, l.update_time, '蓄电池' as config_Name, 1 as type
+        from dev_alarm_log l
     </sql>
 
     <select id="selectAlarmLogList" parameterType="com.shanhe.project.device.alarm.domain.AlarmLog" resultMap="AlarmLogResult">
         <include refid="selectAlarmLogVo"/>
         <where>
-            and (l.config_id = 1 or c.type is not null)
+            and l.config_id = 1
             <if test="configId != null "> and l.config_id = #{configId}</if>
             <if test="packNum != null "> and l.pack_num = #{packNum}</if>
             <if test="modelNum != null "> and l.model_num = #{modelNum}</if>
@@ -78,7 +78,7 @@
     <select id="allAlarmLog" parameterType="com.shanhe.project.device.alarm.domain.AlarmLog" resultMap="AlarmLogResult">
         select
             l.alarm_id, l.config_id, l.pack_num, l.model_num, l.item_code, l.alarm_level, l.data_info, l.status, l.shied, l.shied_time, l.duration, l.remark, l.create_time, l.update_time
-        from dev_alarm_log l left join dev_config c on l.config_id = c.config_id
+        from dev_alarm_log l
         WHERE l.status = 1 or (strftime('%Y-%m-%d %H:%M:%S', l.shied_time) &gt;= strftime('%Y-%m-%d %H:%M:%S', datetime(CURRENT_TIMESTAMP,'localtime'))) order by l.alarm_id desc
     </select>
 
@@ -88,11 +88,11 @@
     </select>
 
     <select id="alarmDeviceNum" resultType="Long">
-        SELECT count(0) from dev_config c WHERE c.status = 0 AND EXISTS (select 1 from dev_alarm_log l where l.status = 1 and l.config_id = c.config_id)
+        select case when exists (select 1 from dev_alarm_log l where l.status = 1 and l.config_id = 1) then 1 else 0 end
     </select>
 
     <select id="alarmAllNum" resultType="Long">
-        select count(0) from dev_alarm_log l where l.status = 1 and (l.config_id = 1 or EXISTS (SELECT 1 from dev_config c WHERE l.config_id = c.config_id and c.status = 0))
+        select count(0) from dev_alarm_log l where l.status = 1 and l.config_id = 1
     </select>
 
     <select id="alarmNum" parameterType="com.shanhe.project.device.alarm.domain.AlarmLog" resultType="Long">

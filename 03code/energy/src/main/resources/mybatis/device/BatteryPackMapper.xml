@@ -253,7 +253,6 @@
         select
         <include refid="selectBatteryPackVo"/>
         from dev_battery_pack battery
-        left join dev_config base on base.config_id = battery.config_id
         <where>
             <if test="configId != null ">
                 and battery.config_id = #{configId}
@@ -290,7 +289,6 @@
         select
         <include refid="selectBatteryPackVo"/>
         from dev_battery_pack battery
-        left join dev_config base on base.config_id = battery.config_id
     </select>
 
     <delete id="deleteByConfigIds">

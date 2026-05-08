@@ -8,7 +8,6 @@ import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.service.*;
 import com.shanhe.project.device.config.service.impl.BatteryPackAsync;
-import com.shanhe.project.device.history.service.IHistoryLogService;
 import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.device.opt.service.ControlBatterySet;
 import com.shanhe.project.device.opt.service.OptLogService;
@@ -44,9 +43,6 @@ public class RestoreServiceImpl implements RestoreService {
     private BatteryPackAsync batteryPackAsync;
     @Resource
     private IConfigProtocolService configProtocolService;
-    @Resource
-    private IHistoryLogService historyLogService;
-    @Resource
     private OptLogService optLogService;
     @Resource
     private IStatBatteryBatService statBatteryBatService;
@@ -98,10 +94,6 @@ public class RestoreServiceImpl implements RestoreService {
         // 删除历史记录
         batteryReportLogService.deleteByConfigId(batterySetVO.getConfigId(), null);
         batteryReportLogService.updateCache();
-
-        // 删除历史记录
-        historyLogService.deleteByConfigId(batterySetVO.getConfigId());
-        historyLogService.updateCache();
 
         // 删除操作日志
         optLogService.deleteByConfigIds(configIdArr);

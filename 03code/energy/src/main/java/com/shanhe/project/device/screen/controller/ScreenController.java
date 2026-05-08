@@ -1,5 +1,6 @@
 package com.shanhe.project.device.screen.controller;
 
+import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.aspectj.lang.annotation.Log;
 import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.enums.BusinessType;
@@ -50,27 +51,27 @@ public class ScreenController extends BaseController {
      * 设备详情
      */
     @GetMapping("/configDetail")
-    public AjaxResult configDetail(@RequestParam Long configId) {
-        return success(screenService.config(configId));
+    public AjaxResult configDetail(@RequestParam(required = false) Long configId) {
+        return success(screenService.config(Constants.DEFAULT_CONFIG_ID));
     }
 
     /**
      * 设备属性列表
      */
     @GetMapping("/attribute")
-    public AjaxResult viewList(@RequestParam Long configId, @RequestParam(required = false) Integer packNum, @RequestParam(required = false) Integer screen) {
-        return success(screenService.attribute(configId, packNum, screen));
+    public AjaxResult viewList(@RequestParam(required = false) Long configId, @RequestParam(required = false) Integer packNum, @RequestParam(required = false) Integer screen) {
+        return success(screenService.attribute(Constants.DEFAULT_CONFIG_ID, packNum, screen));
     }
 
     /**
      * 设备属性下拉列表
      */
     @GetMapping("/attributeSelect")
-    public AjaxResult selectList(@RequestParam Long configId,
+    public AjaxResult selectList(@RequestParam(required = false) Long configId,
                                  @RequestParam(required = false) Integer packNum,
                                  @RequestParam(required = false) Integer screen,
                                  @RequestParam(required = false) Integer track) {
-        return success(screenService.attributeSelect(configId, packNum, screen, track));
+        return success(screenService.attributeSelect(Constants.DEFAULT_CONFIG_ID, packNum, screen, track));
     }
 
     // 系统首页

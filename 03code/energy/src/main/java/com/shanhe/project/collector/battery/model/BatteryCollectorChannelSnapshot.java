@@ -97,6 +97,26 @@ public class BatteryCollectorChannelSnapshot {
     private Boolean lastPendingTimedOut;
 
     /**
+     * 最近完成的显式模块端命令名称。
+     */
+    private String lastCompletedModuleCommandName;
+
+    /**
+     * 最近完成的显式模块端命令响应码。
+     */
+    private Integer lastCompletedModuleResponseCode;
+
+    /**
+     * 最近完成的显式模块端命令是否成功。
+     */
+    private Boolean lastCompletedModuleCommandSuccess;
+
+    /**
+     * 最近完成的显式模块端命令完成时间戳。
+     */
+    private Long lastCompletedModuleCommandTime;
+
+    /**
      * 当前轮询批次号。
      */
     private String currentPollBatchNo;

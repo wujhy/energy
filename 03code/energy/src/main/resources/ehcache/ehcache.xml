@@ -48,14 +48,6 @@
            statistics="false">
     </cache>
 
-    <!-- 系统字典缓存 -->
-    <cache name="sys-dict"
-           maxEntriesLocalHeap="1000"
-           eternal="true"
-           overflowToDisk="true"
-           statistics="false">
-    </cache>
-
     <!-- 设备配置缓存 -->
     <cache name="device-config"
            maxEntriesLocalHeap="100"
@@ -96,8 +88,8 @@
            statistics="false">
     </cache>
 
-    <!-- 设备历史缓存 -->
-    <cache name="device-history"
+    <!-- 数据存储间隔缓存 -->
+    <cache name="data-storage-time"
            maxEntriesLocalHeap="1000"
            eternal="false"
            timeToLiveSeconds="172800"
@@ -163,4 +155,3 @@
            statistics="false">
     </cache>
 </ehcache>
-	

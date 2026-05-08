@@ -60,6 +60,24 @@ class BatteryCollectorCommandServiceTest {
     }
 
     @Test
+    void shouldMapManualModuleAddressToModuleCommand() {
+        BatteryCollectorCommandResult result = service.manualSetSubmoduleAddress(
+                "battery-rs485-1",
+                1,
+                8,
+                9,
+                1000L);
+
+        Assertions.assertTrue(result.isMappedToModuleCommand());
+        Assertions.assertFalse(result.isSuccess());
+        Assertions.assertEquals(BatteryAggregateCommandDefinition.SET_SUBMODULE_ID, result.getCommandDefinition());
+        Assertions.assertEquals(BatteryDeviceProtocolCode.SET_MODULE_ADDRESS,
+                result.getModuleControlCommand().getProtocolCode());
+        Assertions.assertEquals(8, result.getModuleControlCommand().getAddress());
+        Assertions.assertArrayEquals(new byte[]{9}, result.getModuleControlCommand().getPayload());
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void shouldQueueMappedModuleCommandWhenCollectorChannelExists() {
         BatteryCollectorService collectorService = new BatteryCollectorService();

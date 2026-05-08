@@ -100,4 +100,14 @@ public class Constants
      * 资源映射路径 前缀
      */
     public static final String USB_PATH = "/media";
+
+    /**
+     * 默认蓄电池设备ID
+     */
+    public static final Long DEFAULT_CONFIG_ID = 1L;
+
+    /**
+     * 默认蓄电池模板ID
+     */
+    public static final Long DEFAULT_TEMPLATE_ID = 1L;
 }

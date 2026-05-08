@@ -1,5 +1,6 @@
 package com.shanhe.project.energy.stat.controller;
 
+import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.web.controller.BaseController;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.framework.web.page.TableDataInfo;
@@ -32,22 +33,23 @@ public class StatBatteryController extends BaseController {
 
     // 获取内阻报表
     @GetMapping("/getResistanceReport")
-    public AjaxResult getResistanceReport(@RequestParam Long configId,
+    public AjaxResult getResistanceReport(@RequestParam(required = false) Long configId,
                                           @RequestParam Integer packNum) {
-        return success(statBatteryResService.getResistanceReport(configId, packNum));
+        return success(statBatteryResService.getResistanceReport(Constants.DEFAULT_CONFIG_ID, packNum));
     }
 
     // 获取内阻报表
     @GetMapping("/listResistance")
-    public AjaxResult listResistance(@RequestParam Long configId,
+    public AjaxResult listResistance(@RequestParam(required = false) Long configId,
                                      @RequestParam Integer packNum,
                                      @RequestParam Integer batNum) {
-        return success(statBatteryResService.listResistance(configId, packNum, batNum));
+        return success(statBatteryResService.listResistance(Constants.DEFAULT_CONFIG_ID, packNum, batNum));
     }
 
     // 组数据
     @PostMapping("/listPackStat")
     public TableDataInfo listPackStat(StatBatteryPack params) {
+        params.setConfigId(Constants.DEFAULT_CONFIG_ID);
         startPage();
         return getDataTable(statBatteryPackService.selectList(params));
     }
@@ -55,15 +57,16 @@ public class StatBatteryController extends BaseController {
     // 单体数据
     @PostMapping("/listBatStat")
     public TableDataInfo listPackStat(StatBatteryBat params) {
+        params.setConfigId(Constants.DEFAULT_CONFIG_ID);
         startPage();
         return getDataTable(statBatteryBatService.selectList(params));
     }
 
     // 单体数据
     @GetMapping("/updateMonomer")
-    public AjaxResult updateMonomer(@RequestParam Long configId,
+    public AjaxResult updateMonomer(@RequestParam(required = false) Long configId,
                                     @RequestParam Integer packNum) {
-        devBatteryMonomerService.init(configId, packNum);
+        devBatteryMonomerService.init(Constants.DEFAULT_CONFIG_ID, packNum);
         return success();
     }
 
@@ -73,6 +76,7 @@ public class StatBatteryController extends BaseController {
         if (SystemService.isWin()) {
             return error("WINDOWS 暂不支持");
         }
+        params.setConfigId(Constants.DEFAULT_CONFIG_ID);
         statBatteryPackService.export(params);
         return success();
     }
@@ -83,7 +87,7 @@ public class StatBatteryController extends BaseController {
         if (SystemService.isWin()) {
             return error("WINDOWS 暂不支持");
         }
-        statBatteryResService.export(params.getConfigId(), params.getPackNum(), params.getExportPath());
+        statBatteryResService.export(Constants.DEFAULT_CONFIG_ID, params.getPackNum(), params.getExportPath());
         return success();
     }
 }

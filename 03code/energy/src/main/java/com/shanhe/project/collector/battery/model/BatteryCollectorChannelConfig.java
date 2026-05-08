@@ -62,6 +62,11 @@ public class BatteryCollectorChannelConfig {
      */
     private Integer moduleAddressEnd = 246;
 
+    /**
+     * 期望单体数量；为空时优先按 configId + batteryGroup 读取 BatteryPack.batSinSize。
+     */
+    private Integer expectedCellCount;
+
     private Integer batteryPort;
 
     private Integer batteryChannel;

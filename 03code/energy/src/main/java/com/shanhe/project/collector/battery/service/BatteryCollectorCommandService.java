@@ -86,6 +86,29 @@ public class BatteryCollectorCommandService {
         return unsupported(BatteryAggregateCommandDefinition.AUTOMATIC_SET_SUBMODULE_ADDRESS, channelName);
     }
 
+    public BatteryCollectorCommandResult manualSetSubmoduleAddress(String channelName,
+                                                                   int batteryGroup,
+                                                                   int moduleAddress,
+                                                                   int newModuleAddress,
+                                                                   Long timeoutMs) {
+        BatteryModuleControlCommand moduleCommand;
+        try {
+            moduleCommand = moduleControlCommandService.setModuleAddress(moduleAddress, newModuleAddress);
+        } catch (IllegalArgumentException e) {
+            log.warn("manual module address command rejected, channel={}, group={}, address={}, newAddress={}, reason={}",
+                    channelName,
+                    batteryGroup,
+                    moduleAddress,
+                    newModuleAddress,
+                    e.getMessage());
+            return unsupported(BatteryAggregateCommandDefinition.SET_SUBMODULE_ID, channelName);
+        }
+        return mapped(BatteryAggregateCommandDefinition.SET_SUBMODULE_ID,
+                channelName,
+                moduleCommand,
+                queueModuleCommand(channelName, moduleCommand));
+    }
+
     public BatteryCollectorCommandResult connectResistanceTest(String channelName, int batteryGroup, Long timeoutMs) {
         return execute(BatteryAggregateCommandDefinition.CONNECT_RESISTANCE_TEST, channelName, timeoutMs, batteryGroup);
     }

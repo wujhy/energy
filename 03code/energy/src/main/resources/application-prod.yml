@@ -72,17 +72,15 @@ thread:
 
 # 定时任务配置
 job:
-    # 更新缓存（设备、告警、历史、电池）
+    # 更新缓存（设备、告警、电池）
     configCache: "0 0 * * * ?"
     alarmCache: "20 0 * * * ?"
-    historyCache: "30 0 * * * ?"
     batteryCache: "40 0 * * * ?"
     #定时同步电池告警配置（是否开启，调度时间）
     isSynBattery: true
     cmdSynBattery: "50 0 * * * ?"
     cmdSynBatteryStatus: "0/10 0 * * * ?"
-    #清理指定月份日志（历史记录天数，电池监控记录天数，系统操作日志月数，调度时间，包含今天数据就是N+1）
-    cleanHistoryLogDays: 2
+    #清理指定月份日志（电池监控记录天数，系统操作日志月数，调度时间，包含今天数据就是N+1）
     cleanBatteryMonitorDays: 2
     cleanSysLogMonth: 2
     cleanLog: "5 10 0 * * ?"
