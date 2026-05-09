@@ -41,8 +41,6 @@ public class RestoreServiceImpl implements RestoreService {
     private IBatteryPackService batteryPackService;
     @Resource
     private BatteryPackAsync batteryPackAsync;
-    @Resource
-    private IConfigProtocolService configProtocolService;
     private OptLogService optLogService;
     @Resource
     private IStatBatteryBatService statBatteryBatService;
@@ -84,9 +82,6 @@ public class RestoreServiceImpl implements RestoreService {
         // 删除属性
         configAttributeService.deleteConfigAttributeByConfigIds(configIdArr);
         configAttributeService.updateCache();
-        // 删除协议
-        configProtocolService.deleteConfigProtocolByConfigIds(String.valueOf(batterySetVO.getConfigId()));
-        configProtocolService.updateCache();
         // 删除告警
         alarmLogService.deleteAlarmLogByConfigIds(configIdArr);
         alarmLogService.updateCache();

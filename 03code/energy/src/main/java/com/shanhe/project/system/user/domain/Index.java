@@ -25,7 +25,6 @@ public class Index {
     /**
      * 是否有巡检
      */
-    Boolean hasPatrol;
     /**
      * 用户管理-账号初始密码
      */

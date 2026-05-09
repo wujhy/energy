@@ -378,7 +378,6 @@ public class HostServiceImpl implements IHostService {
         // 同步上报间隔时间
         cmdHostService.cmd63(host);
         // 下发所有已开启设备指令
-//        configService.sendAllStorageCmd();
     }
 
     @Override

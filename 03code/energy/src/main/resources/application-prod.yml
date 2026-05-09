@@ -81,11 +81,10 @@ job:
     cmdSynBattery: "50 0 * * * ?"
     cmdSynBatteryStatus: "0/10 0 * * * ?"
     #清理指定月份日志（电池监控记录天数，系统操作日志月数，调度时间，包含今天数据就是N+1）
-    cleanBatteryMonitorDays: 2
+    cleanBatteryReportDays: 2
     cleanSysLogMonth: 2
     cleanLog: "5 10 0 * * ?"
     #定时下发存储指令（52、57）
-    cmdSend: "50 5 * * * ?"
     #定时同步设备在线状态（最大校验次数，调度时间）
     offlineNum: 3
     deviceOnline: "0/20 * * * * ?"

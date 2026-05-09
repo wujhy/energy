@@ -118,6 +118,4 @@ public class Config extends BaseEntity
     @Excel(name = "属性")
     private String attrListJson;
 
-    @Excel(name = "协议")
-    private String protocolListJson;
 }

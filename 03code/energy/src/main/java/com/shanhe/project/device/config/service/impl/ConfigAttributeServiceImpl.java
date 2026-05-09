@@ -29,16 +29,17 @@ import javax.annotation.Resource;
 
 /**
  * 设备属性Service业务层处理
- * 
+ *
  * @author wjh
  * @since 2024-12-23
  */
 @Slf4j
 @Service
-public class ConfigAttributeServiceImpl implements IConfigAttributeService 
+public class ConfigAttributeServiceImpl implements IConfigAttributeService
 {
     @Resource
     private ConfigAttributeMapper configAttributeMapper;
+    @Resource
     private IAlarmLogService alarmLogService;
     @Resource
     private ControlBattery controlBattery;
@@ -49,7 +50,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
 
     /**
      * 查询设备属性
-     * 
+     *
      * @param configAttrId 设备属性主键
      * @return 设备属性
      */
@@ -66,7 +67,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
 
     /**
      * 查询设备属性列表
-     * 
+     *
      * @param configAttribute 设备属性
      * @return 设备属性
      */
@@ -184,7 +185,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
 
     /**
      * 批量删除设备属性
-     * 
+     *
      * @param configAttrIds 需要删除的设备属性主键
      * @return 结果
      */

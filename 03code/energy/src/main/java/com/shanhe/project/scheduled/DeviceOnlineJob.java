@@ -5,7 +5,6 @@ import com.shanhe.common.utils.DateUtils;
 import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.consts.DeviceCommConst;
 import com.shanhe.framework.enums.CacheKeyEnum;
-import com.shanhe.framework.enums.DeviceTypeEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.service.IConfigService;
@@ -108,25 +107,6 @@ public class DeviceOnlineJob {
             int num;
             Date nowDate = new Date();
             for (Config config : configList) {
-                // 空调，恒上线处理
-                if (Objects.equals(config.getType(), DeviceTypeEnum._4.getDictValue())) {
-                    if (Objects.equals(config.getOnline(), YesNoEnum.NO.getDictValue())) {
-                        configService.online(config);
-                    }
-                    continue;
-                }
-
-                /* 如果是DI、DO、AI、AO端口，恒上线处理
-                if(Objects.equals(config.getPortType(), PortTypeEnum._3.getDictValue())
-                        || Objects.equals(config.getPortType(), PortTypeEnum._4.getDictValue())
-                        || Objects.equals(config.getPortType(), PortTypeEnum._5.getDictValue())
-                        || Objects.equals(config.getPortType(), PortTypeEnum._6.getDictValue())) {
-                    if (Objects.equals(config.getOnline(), YesNoEnum.NO.getDictValue())) {
-                        configService.online(config);
-                    }
-                    continue;
-                }
-                */
                 // 上线缓存信息
                 String key = String.format(CacheKeyEnum.CONFIG_ONLINE.getKey(), config.getType(), config.getPort(), config.getChannel());
                 Object object = CacheUtils.get(key);

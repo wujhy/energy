@@ -34,8 +34,6 @@ public class ClientDeviceService {
     @Resource
     private AttributeHandler attributeHandler;
     @Resource
-    private ProtocolHandler protocolHandler;
-    @Resource
     private AlarmHandler alarmHandler;
     @Resource
     private BatterySyncHandler batterySyncHandler;
@@ -116,11 +114,11 @@ public class ClientDeviceService {
                 break;
             case _21:
                 // 同步设备指令
-                response = protocolHandler.synAlarmOrder(request);
+                response = new ResponseVo(host.getImei(), MethodEnum._22.getDictValue(), request.getBusinessId(), "协议同步已废弃");
                 break;
             case _23:
                 // 删除设备指令
-                response = protocolHandler.delAlarmOrder(request);
+                response = new ResponseVo(host.getImei(), MethodEnum._24.getDictValue(), request.getBusinessId(), "协议同步已废弃");
                 break;
             case _25:
                 // 屏蔽告警内容

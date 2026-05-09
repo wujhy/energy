@@ -11,10 +11,8 @@ import com.shanhe.framework.consts.SysConst;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.framework.manager.AsyncTaskManager;
-import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.service.IHostService;
-import com.shanhe.project.device.opt.service.ControlAir;
 import com.shanhe.project.sync.consts.MethodEnum;
 import com.shanhe.project.sync.domain.RequestVo;
 import com.shanhe.project.sync.domain.ResponseVo;
@@ -41,8 +39,6 @@ public class HostHandler {
 
     @Resource
     private IHostService hostService;
-    @Resource
-    private ControlAir controlAir;
     @Resource
     private ClientReportService clientReportService;
 
@@ -189,19 +185,13 @@ public class HostHandler {
             String contentStr = JSONObject.toJSONString(request.getContent());
             log.debug("控制指令信息：{}", contentStr);
             JSONObject param = JSONObject.parseObject(contentStr);
-            Long devId = param.getLong("devId");
             String cmd = param.getString("cmd");
             String classId = param.getString("classId");
 
             // 空调控制指令
             if (StrUtil.isNotBlank(classId) && StrUtil.equals(classId, "4")) {
-                AjaxResult result = controlAir.doControlAir(devId,
-                        String.valueOf(param.get("airMode")),
-                        String.valueOf(param.get("temperature")));
+                msg = "空调控制已废弃";
                 // 指令下发结果
-                if (!Objects.equals(result.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value())) {
-                    msg = (String) result.get(AjaxResult.MSG_TAG);
-                }
                 return new ResponseVo(request.getImei(), MethodEnum._28.getDictValue(), request.getBusinessId(), msg);
             }
 

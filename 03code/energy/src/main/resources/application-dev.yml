@@ -102,11 +102,10 @@ job:
     isSynBattery: true
     cmdSynBattery: "50 0 * * * ?"
     #清理指定月份日志（电池监控记录天数，系统操作日志月数，调度时间）
-    cleanBatteryMonitorDays: 3
+    cleanBatteryReportDays: 3
     cleanSysLogMonth: 2
     cleanLog: "0 30 0 * * ?"
     #定时下发存储指令（52、57）
-    cmdSend: "50 5 * * * ?"
     #定时同步设备在线状态（最大校验次数，调度时间）
     offlineNum: 5
     deviceOnline: "0 0/1 * * * ?"
@@ -157,7 +156,7 @@ battery-collector:
     channels:
       - name: battery-group-1
         enabled: true
-        portName: COM4
+        portName: COM5
         baudRate: 9600
         dataBits: 8
         stopBits: 1

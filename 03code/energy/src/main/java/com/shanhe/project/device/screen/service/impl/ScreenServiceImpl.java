@@ -1,7 +1,6 @@
 package com.shanhe.project.device.screen.service.impl;
 
 import cn.hutool.core.date.DateUtil;
-import com.shanhe.framework.enums.DeviceTypeEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.*;
@@ -47,17 +46,12 @@ public class ScreenServiceImpl implements ScreenService {
         index.setVersion(host != null ? host.getSoftVersion() : "");
 
         // 巡检功能已精简
-        index.setHasPatrol(false);
-
         // 安全天数
         if (host != null && host.getCreateTime() != null) {
             index.setSafeDays(DateUtil.betweenDay(host.getCreateTime(), new Date(), true));
         } else {
             index.setSafeDays(0L);
         }
-
-        // 温湿度
-        this.getHumiture(index);
 
         // 报警数
         index.setAlarmDeviceNum(alarmLogService.alarmDeviceNum());
@@ -112,20 +106,4 @@ public class ScreenServiceImpl implements ScreenService {
         return alarmLogService.alarmNum();
     }
 
-    /**
-     * 获取平均温湿度
-     */
-    private void getHumiture(Index index) {
-        // 已开启温湿度设备
-        Config query = new Config();
-        query.setType(DeviceTypeEnum._3.getDictValue());
-        query.setStatus(YesNoEnum.YES.getDictValue());
-        List<Config> configList = configService.selectConfigList(query);
-        if (configList == null || configList.isEmpty()) {
-            return;
-        }
-
-        index.setWd("");
-        index.setSd("");
-    }
 }

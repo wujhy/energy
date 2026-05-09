@@ -95,25 +95,17 @@ public class DeviceService
                 dataUploadHandler.cmdD4(deviceData);
                 break;
             case _D5: //响应读取模拟量
-                dataSwitchHandler.cmdD5(deviceData);
-                break;
             case _D6: //响应设置输出模拟量
-                dataSwitchHandler.cmdD6(deviceData);
-                break;
             case _D7: //响应读取开关量
-                dataSwitchHandler.cmdD7(deviceData);
-                break;
-            case _D8: //响应设置输出开关量
-                dataSwitchHandler.cmdD8(deviceData);
-                break;
-            case _E0: //响应设置空调工作模式
-            case _D9: //响应红外学习
             case _DA: //响应删除全部存储指令
             case _DB: //响应删除单条存储指令
             case _DD: //响应读取全部存储指令
             case _DE: //响应设置设备IP地址
             case _DF: //响应设置云服务器IP地址
                 devResponseHandler.responseResult(deviceData);
+                break;
+            case _D8: //响应设置输出开关量
+                dataSwitchHandler.cmdD8(deviceData);
                 break;
             case _E7: //响应修改日期时间
                 devResponseHandler.cmdE7(deviceData);

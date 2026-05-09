@@ -88,24 +88,6 @@ public interface IConfigService
      */
     List<Config> cacheConfigList();
 
-    /**
-     * 发送全部设备指令
-     */
-    void sendAllStorageCmd();
-    /**
-     * 发送全部设备串口指令
-     */
-    void sendAllPortCmd();
-
-    /**
-     * 发送全部设备协议指令
-     */
-    void sendAllProtocolCmd();
-
-    /**
-     * 发送异步指令
-     */
-    void sendCmdAsync(Long configId);
 
     /**
      * 发送蓄电池同步指令
@@ -188,14 +170,6 @@ public interface IConfigService
     void updatePack(Config config);
 
     /**
-     * 批量删除设备
-     * 
-     * @param configIds 需要删除的设备主键集合
-     * @return 结果
-     */
-    int deleteConfigByConfigIds(String configIds);
-
-    /**
      * 删除设备
      *
      * @param config 设备
@@ -231,10 +205,5 @@ public interface IConfigService
      * 扩展字段
      */
     Map<String, Object> getExtend(Long configId);
-
-    /**
-     * 删除全部设备
-     */
-    void deleteAll();
 
 }

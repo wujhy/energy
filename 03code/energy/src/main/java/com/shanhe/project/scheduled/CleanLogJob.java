@@ -26,8 +26,8 @@ public class CleanLogJob {
 
     protected static Logger logger = LoggerFactory.getLogger(CleanLogJob.class);
 
-    @Value("${job.cleanBatteryMonitorDays:3}")
-    private Integer cleanBatteryMonitorDays;
+    @Value("${job.cleanBatteryReportDays:3}")
+    private Integer cleanBatteryReportDays;
     @Value("${job.cleanSysLogMonth:2}")
     private Integer cleanSysLogMonth;
 
@@ -44,7 +44,7 @@ public class CleanLogJob {
             SystemService.closeWatchDog();
 
             Host host = hostService.getDetail();
-            Integer cleanBattery = host.getCleanLogDays() != null ? host.getCleanLogDays() : cleanBatteryMonitorDays;
+            Integer cleanBattery = host.getCleanLogDays() != null ? host.getCleanLogDays() : cleanBatteryReportDays;
 
             logger.info("删除电池历史记录异常：{}天前", cleanBattery);
             try {

@@ -6,7 +6,6 @@ import com.google.common.collect.Lists;
 import com.shanhe.common.utils.StringUtils;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.project.system.user.domain.User;
-import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 import com.shanhe.framework.aspectj.lang.annotation.Log;
 import com.shanhe.framework.enums.BusinessType;
@@ -28,16 +27,18 @@ import javax.annotation.Resource;
 @RestController
 @RequestMapping("/device/config/attribute")
 public class ConfigAttributeController extends BaseController {
-    private final String prefix = "device/config/attribute";
 
     @Resource
     private IConfigAttributeService configAttributeService;
 
-    @GetMapping("/{configId}")
-    public String attribute(@PathVariable("configId") Long configId, ModelMap mMap) {
-        mMap.put("configId", configId);
-        return String.format("%s/attribute", prefix);
-    }
+    /** 排除属性 **/
+    List<String> itemCodes = Lists.newArrayList(ItemCode.DTNZGX.getCode(), ItemCode.DTNZBJ.getCode(),
+            ItemCode.DTDCWDD.getCode(), ItemCode.DTFCDYD.getCode(), ItemCode.DTFCDYG.getCode(),
+            ItemCode.DTDYJC.getCode(), ItemCode.DTDCWDBJ.getCode(), ItemCode.DTDCKL.getCode(),
+            ItemCode.DTWDCGQGZ.getCode(), ItemCode.ZFCDYGG.getCode(),
+            ItemCode.ZFCDYGD.getCode(), ItemCode.DTLJTGJ.getCode(),
+            ItemCode.ZWDCGQ1GZ.getCode(), ItemCode.ZWDCGQ2GZ.getCode(), ItemCode.ZTDGJ.getCode(),
+            ItemCode.ZSOCDGJ.getCode(), ItemCode.ZSOHDGJ.getCode());
 
     /**
      * 查询设备属性列表
@@ -50,14 +51,6 @@ public class ConfigAttributeController extends BaseController {
             throw new RuntimeException("服务器超时，请重新登录");
         }
         if (null == user.getSuperAdmin() || !user.getSuperAdmin()) {
-            // DTNZGX,DTNZBJ,DTDCWDD,DTFCDYD,DTFCDYG,DTDYJC,DTDCWDBJ,DTDCKL,DTWDCGQGZ,ZFCDYGG,ZFCDYGD,DTLJTGJ,ZWDCGQ1GZ,ZWDCGQ2GZ,ZTDGJ,ZSOCDGJ,ZSOHDGJ
-            List<String> itemCodes = Lists.newArrayList(ItemCode.DTNZGX.getCode(), ItemCode.DTNZBJ.getCode(),
-                    ItemCode.DTDCWDD.getCode(), ItemCode.DTFCDYD.getCode(), ItemCode.DTFCDYG.getCode(),
-                    ItemCode.DTDYJC.getCode(), ItemCode.DTDCWDBJ.getCode(), ItemCode.DTDCKL.getCode(),
-                    ItemCode.DTWDCGQGZ.getCode(), ItemCode.ZFCDYGG.getCode(),
-                    ItemCode.ZFCDYGD.getCode(), ItemCode.DTLJTGJ.getCode(),
-                    ItemCode.ZWDCGQ1GZ.getCode(), ItemCode.ZWDCGQ2GZ.getCode(), ItemCode.ZTDGJ.getCode(),
-                    ItemCode.ZSOCDGJ.getCode(), ItemCode.ZSOHDGJ.getCode());
             configAttribute.setExcludeCodes(itemCodes);
         }
         startPage();
@@ -78,15 +71,6 @@ public class ConfigAttributeController extends BaseController {
     }
 
     /**
-     * 新增设备属性
-     */
-    @GetMapping("/add/{configId}")
-    public String add(@PathVariable("configId") Long configId, ModelMap mMap) {
-        mMap.put("configId", configId);
-        return String.format("%s/add", prefix);
-    }
-
-    /**
      * 新增保存设备属性
      */
     @Log(title = "设备属性", businessType = BusinessType.INSERT)
@@ -95,16 +79,6 @@ public class ConfigAttributeController extends BaseController {
     public AjaxResult addSave(ConfigAttribute configAttribute) {
         configAttributeService.insertConfigAttribute(configAttribute, true);
         return success();
-    }
-
-    /**
-     * 修改设备属性
-     */
-    @GetMapping("/edit/{configAttrId}")
-    public String edit(@PathVariable("configAttrId") Long configAttrId, ModelMap mMap) {
-        ConfigAttribute configAttribute = configAttributeService.selectConfigAttributeByConfigAttrId(configAttrId);
-        mMap.put("configAttribute", configAttribute);
-        return String.format("%s/edit", prefix);
     }
 
     /**
