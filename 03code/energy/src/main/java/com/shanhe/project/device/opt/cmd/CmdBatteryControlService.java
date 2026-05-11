@@ -1,6 +1,8 @@
 package com.shanhe.project.device.opt.cmd;
 
-import com.shanhe.framework.enums.*;
+import com.shanhe.framework.enums.BatteryCidEnum;
+import com.shanhe.framework.enums.TcpCharEnum;
+import com.shanhe.framework.enums.TcpCidEnum;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
@@ -33,41 +35,29 @@ public class CmdBatteryControlService {
     public String getCmd31(Config config, DevBatteryOpt opt) {
         // 指令内容
         StringBuilder info = new StringBuilder();
-        // 协议解析类型
-        ProtocolTypeEnum protocolTypeEnum = ProtocolTypeEnum.find(config.getProtocolType());
-        switch (protocolTypeEnum){
-            case _1:
-            case _2:
-            case _3:
-                // 标准modbus协议配置
-            case _99:
-            default:
-                // 默认地址、指令编码
-                info.append("01").append("31");
-                // 长度，默认10
-                info.append(CodingUtil.stringToHexString("10",2));
-                //电池组编号
-                info.append(CodingUtil.integerToHexString(opt.getPackNum(), 2));
-                //是否开启
-                info.append(CodingUtil.integerToHexString(opt.getIsEnabled(), 2));
-                //截止电压
-                String endVoltage = CodingUtil.integerToHexString(Float.floatToIntBits(opt.getEndVoltage().floatValue()), 8);
-                info.append(endVoltage, 6, 8);
-                info.append(endVoltage, 4, 6);
-                info.append(endVoltage, 2, 4);
-                info.append(endVoltage, 0, 2);
-                //恢复电压
-                String recVoltage = CodingUtil.integerToHexString(Float.floatToIntBits(opt.getRecVoltage().floatValue()), 8);
-                info.append(recVoltage, 6, 8);
-                info.append(recVoltage, 4, 6);
-                info.append(recVoltage, 2, 4);
-                info.append(recVoltage, 0, 2);
+        // 默认地址、指令编码
+        info.append("01").append("31");
+        // 长度，默认10
+        info.append(CodingUtil.stringToHexString("10",2));
+        //电池组编号
+        info.append(CodingUtil.integerToHexString(opt.getPackNum(), 2));
+        //是否开启
+        info.append(CodingUtil.integerToHexString(opt.getIsEnabled(), 2));
+        //截止电压
+        String endVoltage = CodingUtil.integerToHexString(Float.floatToIntBits(opt.getEndVoltage().floatValue()), 8);
+        info.append(endVoltage, 6, 8);
+        info.append(endVoltage, 4, 6);
+        info.append(endVoltage, 2, 4);
+        info.append(endVoltage, 0, 2);
+        //恢复电压
+        String recVoltage = CodingUtil.integerToHexString(Float.floatToIntBits(opt.getRecVoltage().floatValue()), 8);
+        info.append(recVoltage, 6, 8);
+        info.append(recVoltage, 4, 6);
+        info.append(recVoltage, 2, 4);
+        info.append(recVoltage, 0, 2);
 
-                // 追加校验码、头尾等
-                this.appendHeadAndEnd(info);
-                break;
-        }
-
+        // 追加校验码、头尾等
+        this.appendHeadAndEnd(info);
         // 生成完整指令
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._E1.getDictValue());
     }
@@ -93,40 +83,28 @@ public class CmdBatteryControlService {
     public String getCmd32(Config config, DevBatteryOpt opt) {
         // 指令内容
         StringBuilder info = new StringBuilder();
-        // 协议解析类型
-        ProtocolTypeEnum protocolTypeEnum = ProtocolTypeEnum.find(config.getProtocolType());
-        switch (protocolTypeEnum){
-            case _1:
-            case _2:
-            case _3:
-                // 标准modbus协议配置
-            case _99:
-            default:
-                // 默认地址、指令编码
-                info.append("01").append("32");
-                // 长度，默认13
-                info.append(CodingUtil.stringToHexString("13",2));
-                //电池组编号
-                info.append(CodingUtil.integerToHexString(opt.getPackNum(), 2));
-                //是否开启
-                info.append(CodingUtil.integerToHexString(opt.getIsEnabled(), 2));
-                //时间：年月日时分秒
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(0, 4), 4));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(4, 6), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(6, 8), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(8, 10), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(10, 12), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(12, 14), 2));
-                //相隔天数
-                info.append(CodingUtil.integerToHexString(opt.getIntervalDays(), 4));
-                //执行次数
-                info.append(CodingUtil.integerToHexString(opt.getExecCount(), 4));
+        // 默认地址、指令编码
+        info.append("01").append("32");
+        // 长度，默认13
+        info.append(CodingUtil.stringToHexString("13",2));
+        //电池组编号
+        info.append(CodingUtil.integerToHexString(opt.getPackNum(), 2));
+        //是否开启
+        info.append(CodingUtil.integerToHexString(opt.getIsEnabled(), 2));
+        //时间：年月日时分秒
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(0, 4), 4));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(4, 6), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(6, 8), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(8, 10), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(10, 12), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(12, 14), 2));
+        //相隔天数
+        info.append(CodingUtil.integerToHexString(opt.getIntervalDays(), 4));
+        //执行次数
+        info.append(CodingUtil.integerToHexString(opt.getExecCount(), 4));
 
-                // 追加校验码、头尾等
-                this.appendHeadAndEnd(info);
-                break;
-        }
-
+        // 追加校验码、头尾等
+        this.appendHeadAndEnd(info);
         // 生成完整指令
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._E2.getDictValue());
     }
@@ -141,40 +119,28 @@ public class CmdBatteryControlService {
     public String getCmd33(Config config, DevBatteryOpt opt) {
         // 指令内容
         StringBuilder info = new StringBuilder();
-        // 协议解析类型
-        ProtocolTypeEnum protocolTypeEnum = ProtocolTypeEnum.find(config.getProtocolType());
-        switch (protocolTypeEnum){
-            case _1:
-            case _2:
-            case _3:
-                // 标准modbus协议配置
-            case _99:
-            default:
-                // 默认地址、指令编码
-                info.append("01").append("33");
-                // 长度，默认13
-                info.append(CodingUtil.stringToHexString("13",2));
-                //电池组编号
-                info.append(CodingUtil.integerToHexString(opt.getPackNum(), 2));
-                //是否开启
-                info.append(CodingUtil.integerToHexString(opt.getIsEnabled(), 2));
-                //时间：年月日时分秒
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(0, 4), 4));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(4, 6), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(6, 8), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(8, 10), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(10, 12), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(12, 14), 2));
-                //相隔天数
-                info.append(CodingUtil.integerToHexString(opt.getIntervalDays(), 4));
-                //执行次数
-                info.append(CodingUtil.integerToHexString(opt.getExecCount(), 4));
+        // 默认地址、指令编码
+        info.append("01").append("33");
+        // 长度，默认13
+        info.append(CodingUtil.stringToHexString("13",2));
+        //电池组编号
+        info.append(CodingUtil.integerToHexString(opt.getPackNum(), 2));
+        //是否开启
+        info.append(CodingUtil.integerToHexString(opt.getIsEnabled(), 2));
+        //时间：年月日时分秒
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(0, 4), 4));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(4, 6), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(6, 8), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(8, 10), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(10, 12), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(12, 14), 2));
+        //相隔天数
+        info.append(CodingUtil.integerToHexString(opt.getIntervalDays(), 4));
+        //执行次数
+        info.append(CodingUtil.integerToHexString(opt.getExecCount(), 4));
 
-                // 追加校验码、头尾等
-                this.appendHeadAndEnd(info);
-                break;
-        }
-
+        // 追加校验码、头尾等
+        this.appendHeadAndEnd(info);
         // 生成完整指令
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._E3.getDictValue());
     }
@@ -189,46 +155,34 @@ public class CmdBatteryControlService {
     public String getCmd34(Config config, DevBatteryOpt opt) {
         // 指令内容
         StringBuilder info = new StringBuilder();
-        // 协议解析类型
-        ProtocolTypeEnum protocolTypeEnum = ProtocolTypeEnum.find(config.getProtocolType());
-        switch (protocolTypeEnum){
-            case _1:
-            case _2:
-            case _3:
-                // 标准modbus协议配置
-            case _99:
-            default:
-                // 默认地址、指令编码
-                info.append("01").append("34");
-                // 长度，默认17
-                info.append(CodingUtil.stringToHexString("17",2));
-                //电池组编号
-                info.append(CodingUtil.integerToHexString(opt.getPackNum(), 2));
-                //是否开启
-                info.append(CodingUtil.integerToHexString(opt.getIsEnabled(), 2));
-                //时间：年月日时分秒
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(0, 4), 4));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(4, 6), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(6, 8), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(8, 10), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(10, 12), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(12, 14), 2));
-                //截止电压
-                String endVoltage = CodingUtil.integerToHexString(Float.floatToIntBits(opt.getEndVoltage().floatValue()), 8);
-                info.append(endVoltage, 6, 8);
-                info.append(endVoltage, 4, 6);
-                info.append(endVoltage, 2, 4);
-                info.append(endVoltage, 0, 2);
-                //相隔天数
-                info.append(CodingUtil.integerToHexString(opt.getIntervalDays(), 4));
-                //执行次数
-                info.append(CodingUtil.integerToHexString(opt.getExecCount(), 4));
+        // 默认地址、指令编码
+        info.append("01").append("34");
+        // 长度，默认17
+        info.append(CodingUtil.stringToHexString("17",2));
+        //电池组编号
+        info.append(CodingUtil.integerToHexString(opt.getPackNum(), 2));
+        //是否开启
+        info.append(CodingUtil.integerToHexString(opt.getIsEnabled(), 2));
+        //时间：年月日时分秒
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(0, 4), 4));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(4, 6), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(6, 8), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(8, 10), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(10, 12), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(12, 14), 2));
+        //截止电压
+        String endVoltage = CodingUtil.integerToHexString(Float.floatToIntBits(opt.getEndVoltage().floatValue()), 8);
+        info.append(endVoltage, 6, 8);
+        info.append(endVoltage, 4, 6);
+        info.append(endVoltage, 2, 4);
+        info.append(endVoltage, 0, 2);
+        //相隔天数
+        info.append(CodingUtil.integerToHexString(opt.getIntervalDays(), 4));
+        //执行次数
+        info.append(CodingUtil.integerToHexString(opt.getExecCount(), 4));
 
-                // 追加校验码、头尾等
-                this.appendHeadAndEnd(info);
-                break;
-        }
-
+        // 追加校验码、头尾等
+        this.appendHeadAndEnd(info);
         // 生成完整指令
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._E4.getDictValue());
     }
@@ -243,48 +197,36 @@ public class CmdBatteryControlService {
     public String getCmd35(Config config, DevBatteryOpt opt) {
         // 指令内容
         StringBuilder info = new StringBuilder();
-        // 协议解析类型
-        ProtocolTypeEnum protocolTypeEnum = ProtocolTypeEnum.find(config.getProtocolType());
-        switch (protocolTypeEnum){
-            case _1:
-            case _2:
-            case _3:
-                // 标准modbus协议配置
-            case _99:
-            default:
-                // 默认地址、指令编码
-                info.append("01").append(BatteryCidEnum._35.getDictValue());
-                // 长度，默认17
-                info.append(CodingUtil.stringToHexString("19",2));
-                //电池组编号
-                info.append(CodingUtil.integerToHexString(opt.getPackNum(), 2));
-                //是否开启
-                info.append(CodingUtil.integerToHexString(opt.getIsEnabled(), 2));
-                //时间：年月日时分秒
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(0, 4), 4));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(4, 6), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(6, 8), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(8, 10), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(10, 12), 2));
-                info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(12, 14), 2));
-                //放电时长
-                info.append(CodingUtil.integerToHexString(opt.getDischargeTime(), 4));
-                //截止电压
-                String endVoltage = CodingUtil.integerToHexString(Float.floatToIntBits(opt.getEndVoltage().floatValue()), 8);
-                info.append(endVoltage, 6, 8);
-                info.append(endVoltage, 4, 6);
-                info.append(endVoltage, 2, 4);
-                info.append(endVoltage, 0, 2);
-                //相隔天数
-                info.append(CodingUtil.integerToHexString(opt.getIntervalDays(), 4));
-                //执行次数
-                info.append(CodingUtil.integerToHexString(opt.getExecCount(), 4));
+        // 默认地址、指令编码
+        info.append("01").append(BatteryCidEnum._35.getDictValue());
+        // 长度，默认17
+        info.append(CodingUtil.stringToHexString("19",2));
+        //电池组编号
+        info.append(CodingUtil.integerToHexString(opt.getPackNum(), 2));
+        //是否开启
+        info.append(CodingUtil.integerToHexString(opt.getIsEnabled(), 2));
+        //时间：年月日时分秒
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(0, 4), 4));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(4, 6), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(6, 8), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(8, 10), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(10, 12), 2));
+        info.append(CodingUtil.stringToHexString(opt.getReplaceTime().substring(12, 14), 2));
+        //放电时长
+        info.append(CodingUtil.integerToHexString(opt.getDischargeTime(), 4));
+        //截止电压
+        String endVoltage = CodingUtil.integerToHexString(Float.floatToIntBits(opt.getEndVoltage().floatValue()), 8);
+        info.append(endVoltage, 6, 8);
+        info.append(endVoltage, 4, 6);
+        info.append(endVoltage, 2, 4);
+        info.append(endVoltage, 0, 2);
+        //相隔天数
+        info.append(CodingUtil.integerToHexString(opt.getIntervalDays(), 4));
+        //执行次数
+        info.append(CodingUtil.integerToHexString(opt.getExecCount(), 4));
 
-                // 追加校验码、头尾等
-                this.appendHeadAndEnd(info);
-                break;
-        }
-
+        // 追加校验码、头尾等
+        this.appendHeadAndEnd(info);
         // 生成完整指令
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._E5.getDictValue());
     }
@@ -324,47 +266,35 @@ public class CmdBatteryControlService {
     public String genCmd05(Config config, String paramNumber, String paramValue) {
         // 指令内容
         StringBuilder info = new StringBuilder();
-        // 协议解析类型
-        ProtocolTypeEnum protocolTypeEnum = ProtocolTypeEnum.find(config.getProtocolType());
-        switch (protocolTypeEnum){
-            case _1:
-            case _2:
-            case _3:
-                // 标准modbus协议配置
-            case _99:
-            default:
-                // 默认地址、指令编码
-                info.append("01").append("05");
-                // 值长度
-                int valueNum;
-                switch (paramNumber) {
-                    case "72":
-                    case "81":
-                        valueNum = 4;
-                        break;
-                    case "78":
-                        valueNum = 14;
-                        break;
-                    case "79":
-                    case "80":
-                    case "83":
-                        valueNum = 2;
-                        break;
-                    default:
-                        return null;
-                }
-                // 长度（编号 + 值）
-                info.append(CodingUtil.integerToHexString(1 + (valueNum / 2), 2));
-                // 编号
-                info.append(paramNumber);
-                // 值
-                info.append(CodingUtil.stringToHexString(paramValue, valueNum));
-
-                // 追加校验码、头尾等
-                this.appendHeadAndEnd(info);
+        // 默认地址、指令编码
+        info.append("01").append("05");
+        // 值长度
+        int valueNum;
+        switch (paramNumber) {
+            case "72":
+            case "81":
+                valueNum = 4;
                 break;
+            case "78":
+                valueNum = 14;
+                break;
+            case "79":
+            case "80":
+            case "83":
+                valueNum = 2;
+                break;
+            default:
+                return null;
         }
+        // 长度（编号 + 值）
+        info.append(CodingUtil.integerToHexString(1 + (valueNum / 2), 2));
+        // 编号
+        info.append(paramNumber);
+        // 值
+        info.append(CodingUtil.stringToHexString(paramValue, valueNum));
 
+        // 追加校验码、头尾等
+        this.appendHeadAndEnd(info);
         // 生成完整指令
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._85.getDictValue());
     }
@@ -379,25 +309,13 @@ public class CmdBatteryControlService {
     public String genCmd0F(Config config, DevBatteryOpt opt) {
         // 指令内容
         StringBuilder info = new StringBuilder();
-        // 协议解析类型
-        ProtocolTypeEnum protocolTypeEnum = ProtocolTypeEnum.find(config.getProtocolType());
-        switch (protocolTypeEnum){
-            case _1:
-            case _2:
-            case _3:
-                // 标准modbus协议配置
-            case _99:
-            default:
-                // 默认地址、指令编码、长度
-                info.append("01").append("0F").append("01");
-                //电池组编号
-                info.append(CodingUtil.integerToHexString(opt.getPackNum(), 2));
+        // 默认地址、指令编码、长度
+        info.append("01").append("0F").append("01");
+        //电池组编号
+        info.append(CodingUtil.integerToHexString(opt.getPackNum(), 2));
 
-                // 追加校验码、头尾等
-                this.appendHeadAndEnd(info);
-                break;
-        }
-
+        // 追加校验码、头尾等
+        this.appendHeadAndEnd(info);
         // 生成完整指令
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._8F.getDictValue());
     }
@@ -415,34 +333,22 @@ public class CmdBatteryControlService {
     public String genCmd30(Config config, Integer packNum, String workModel, Integer dischargeTime, Double endVoltage) {
         // 指令内容
         StringBuilder info = new StringBuilder();
-        // 协议解析类型
-        ProtocolTypeEnum protocolTypeEnum = ProtocolTypeEnum.find(config.getProtocolType());
-        switch (protocolTypeEnum){
-            case _1:
-            case _2:
-            case _3:
-                // 标准modbus协议配置
-            case _99:
-            default:
-                // 默认地址、指令编码、长度
-                info.append("01").append("30").append("08");
-                // 电池组编号
-                info.append(CodingUtil.integerToHexString(packNum, 2));
-                // 工作模式
-                info.append(CodingUtil.stringToHexString(workModel, 2));
-                // 备电时长
-                info.append(CodingUtil.integerToHexString(dischargeTime, 4));
-                // 截止电压
-                String stopVoltage = CodingUtil.integerToHexString(Float.floatToIntBits(endVoltage.floatValue()), 8);
-                info.append(stopVoltage, 6, 8);
-                info.append(stopVoltage, 4, 6);
-                info.append(stopVoltage, 2, 4);
-                info.append(stopVoltage, 0, 2);
-                // 追加校验码、头尾等
-                this.appendHeadAndEnd(info);
-                break;
-        }
-
+        // 默认地址、指令编码、长度
+        info.append("01").append("30").append("08");
+        // 电池组编号
+        info.append(CodingUtil.integerToHexString(packNum, 2));
+        // 工作模式
+        info.append(CodingUtil.stringToHexString(workModel, 2));
+        // 备电时长
+        info.append(CodingUtil.integerToHexString(dischargeTime, 4));
+        // 截止电压
+        String stopVoltage = CodingUtil.integerToHexString(Float.floatToIntBits(endVoltage.floatValue()), 8);
+        info.append(stopVoltage, 6, 8);
+        info.append(stopVoltage, 4, 6);
+        info.append(stopVoltage, 2, 4);
+        info.append(stopVoltage, 0, 2);
+        // 追加校验码、头尾等
+        this.appendHeadAndEnd(info);
         // 生成完整指令
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._E0.getDictValue());
     }
@@ -481,24 +387,12 @@ public class CmdBatteryControlService {
     public String genCmd39(Config config, Integer batteryPackNumber) {
         // 指令内容
         StringBuilder info = new StringBuilder();
-        // 协议解析类型
-        ProtocolTypeEnum protocolTypeEnum = ProtocolTypeEnum.find(config.getProtocolType());
-        switch (protocolTypeEnum){
-            case _1:
-            case _2:
-            case _3:
-                // 标准modbus协议配置
-            case _99:
-            default:
-                // 默认地址、指令编码、长度
-                info.append("01").append("39").append("01");
-                //电池组编号
-                info.append(CodingUtil.integerToHexString(batteryPackNumber, 2));
-                // 追加校验码、头尾等
-                this.appendHeadAndEnd(info);
-                break;
-        }
-
+        // 默认地址、指令编码、长度
+        info.append("01").append("39").append("01");
+        //电池组编号
+        info.append(CodingUtil.integerToHexString(batteryPackNumber, 2));
+        // 追加校验码、头尾等
+        this.appendHeadAndEnd(info);
         // 生成完整指令
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._E9.getDictValue());
     }
@@ -514,26 +408,14 @@ public class CmdBatteryControlService {
     public String genCmd0B(Config config, Integer batteryPackNumber, int alarmLevel) {
         // 指令内容
         StringBuilder info = new StringBuilder();
-        // 协议解析类型
-        ProtocolTypeEnum protocolTypeEnum = ProtocolTypeEnum.find(config.getProtocolType());
-        switch (protocolTypeEnum){
-            case _1:
-            case _2:
-            case _3:
-                // 标准modbus协议配置
-            case _99:
-            default:
-                // 默认地址、指令编码、长度
-                info.append("01").append("0B").append("02");
-                //电池组编号
-                info.append(CodingUtil.integerToHexString(batteryPackNumber, 2));
-                // 报警等级
-                info.append(CodingUtil.integerToHexString(alarmLevel, 2));
-                // 追加校验码、头尾等
-                this.appendHeadAndEnd(info);
-                break;
-        }
-
+        // 默认地址、指令编码、长度
+        info.append("01").append("0B").append("02");
+        //电池组编号
+        info.append(CodingUtil.integerToHexString(batteryPackNumber, 2));
+        // 报警等级
+        info.append(CodingUtil.integerToHexString(alarmLevel, 2));
+        // 追加校验码、头尾等
+        this.appendHeadAndEnd(info);
         // 生成完整指令
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._8B.getDictValue());
     }
@@ -551,30 +433,18 @@ public class CmdBatteryControlService {
     public String genCmd0A(Config config, Integer batteryPackNumber, int alarmLevel, int alarmShield, String paramNumber) {
         // 指令内容
         StringBuilder info = new StringBuilder();
-        // 协议解析类型
-        ProtocolTypeEnum protocolTypeEnum = ProtocolTypeEnum.find(config.getProtocolType());
-        switch (protocolTypeEnum){
-            case _1:
-            case _2:
-            case _3:
-                // 标准modbus协议配置
-            case _99:
-            default:
-                // 默认地址、指令编码、长度
-                info.append("01").append(BatteryCidEnum._0A.getDictValue()).append("03");
-                //电池组编号
-                info.append(CodingUtil.integerToHexString(batteryPackNumber, 2));
-                // 报警等级
-                info.append(alarmLevel);
-                // 报警屏蔽
-                info.append(alarmShield);
-                // 参数
-                info.append(paramNumber);
-                // 追加校验码、头尾等
-                this.appendHeadAndEnd(info);
-                break;
-        }
-
+        // 默认地址、指令编码、长度
+        info.append("01").append(BatteryCidEnum._0A.getDictValue()).append("03");
+        //电池组编号
+        info.append(CodingUtil.integerToHexString(batteryPackNumber, 2));
+        // 报警等级
+        info.append(alarmLevel);
+        // 报警屏蔽
+        info.append(alarmShield);
+        // 参数
+        info.append(paramNumber);
+        // 追加校验码、头尾等
+        this.appendHeadAndEnd(info);
         // 生成完整指令
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._8A.getDictValue());
     }
@@ -588,22 +458,10 @@ public class CmdBatteryControlService {
     public String genCmd06(Config config) {
         // 指令内容
         StringBuilder info = new StringBuilder();
-        // 协议解析类型
-        ProtocolTypeEnum protocolTypeEnum = ProtocolTypeEnum.find(config.getProtocolType());
-        switch (protocolTypeEnum){
-            case _1:
-            case _2:
-            case _3:
-                // 标准modbus协议配置
-            case _99:
-            default:
-                // 默认地址、指令编码、长度
-                info.append("01").append("06").append("00");
-                // 追加校验码、头尾等
-                this.appendHeadAndEnd(info);
-                break;
-        }
-
+        // 默认地址、指令编码、长度
+        info.append("01").append("06").append("00");
+        // 追加校验码、头尾等
+        this.appendHeadAndEnd(info);
         // 生成完整指令
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._86.getDictValue());
     }
@@ -617,22 +475,10 @@ public class CmdBatteryControlService {
     public String genCmd0E(Config config) {
         // 指令内容
         StringBuilder info = new StringBuilder();
-        // 协议解析类型
-        ProtocolTypeEnum protocolTypeEnum = ProtocolTypeEnum.find(config.getProtocolType());
-        switch (protocolTypeEnum){
-            case _1:
-            case _2:
-            case _3:
-                // 标准modbus协议配置
-            case _99:
-            default:
-                // 默认地址、指令编码、长度
-                info.append("01").append("0E").append("00");
-                // 追加校验码、头尾等
-                this.appendHeadAndEnd(info);
-                break;
-        }
-
+        // 默认地址、指令编码、长度
+        info.append("01").append("0E").append("00");
+        // 追加校验码、头尾等
+        this.appendHeadAndEnd(info);
         // 生成完整指令
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._8E.getDictValue());
     }
@@ -650,31 +496,19 @@ public class CmdBatteryControlService {
     public String genCmd03(Config config, Integer packNum, String level, String paramNumber, Double value) {
         // 指令内容
         StringBuilder info = new StringBuilder();
-        // 协议解析类型
-        ProtocolTypeEnum protocolTypeEnum = ProtocolTypeEnum.find(config.getProtocolType());
-        switch (protocolTypeEnum){
-            case _1:
-            case _2:
-            case _3:
-                // 标准modbus协议配置
-            case _99:
-            default:
-                // 默认地址、指令编码、长度
-                info.append("01").append(BatteryCidEnum._03.getDictValue()).append("05");
-                //电池组编号
-                info.append(CodingUtil.integerToHexString(packNum, 2));
-                // 报警等级
-                info.append(CodingUtil.stringToHexString(level, 2));
-                // 参数编号
-                info.append(paramNumber);
-                // 参数值
-                info.append(CodingUtil.stringToHexString(formatBatteryPackParam(paramNumber, value), 4));
+        // 默认地址、指令编码、长度
+        info.append("01").append(BatteryCidEnum._03.getDictValue()).append("05");
+        //电池组编号
+        info.append(CodingUtil.integerToHexString(packNum, 2));
+        // 报警等级
+        info.append(CodingUtil.stringToHexString(level, 2));
+        // 参数编号
+        info.append(paramNumber);
+        // 参数值
+        info.append(CodingUtil.stringToHexString(formatBatteryPackParam(paramNumber, value), 4));
 
-                // 追加校验码、头尾等
-                this.appendHeadAndEnd(info);
-                break;
-        }
-
+        // 追加校验码、头尾等
+        this.appendHeadAndEnd(info);
         // 生成完整指令
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._83.getDictValue());
     }
