@@ -195,24 +195,6 @@ public class DataReportJob {
 
             // 上报
             clientReportService.uploadData(history, imei);
-
-            /* 组属性
-            ConfigHistoryVo history = this.getHistory(configId, pack.getPackNum(), keys);
-            if (history == null) {
-                continue;
-            }
-            // 单体属性
-            List<BatteryMonitor> listData2 = new ArrayList<>();
-            for (int i = 1; i <= pack.getBatSinSize(); i++) {
-                BatteryMonitor batteryMonitor = batteryMonitorService.lastCache(configId, pack.getPackNum(), i);
-                if (batteryMonitor == null) {
-                    continue;
-                }
-                listData2.add(batteryMonitor);
-            }
-            history.setListData2(listData2);
-            clientReportService.uploadData(history, imei);
-            */
         }
     }
 

@@ -1,9 +1,6 @@
 package com.shanhe.project.device.screen.controller;
 
 import com.shanhe.common.constant.Constants;
-import com.shanhe.framework.aspectj.lang.annotation.Log;
-import com.shanhe.framework.comm.CommServer;
-import com.shanhe.framework.enums.BusinessType;
 import com.shanhe.framework.web.controller.BaseController;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.device.screen.service.ScreenService;
@@ -89,14 +86,6 @@ public class ScreenController extends BaseController {
     public AjaxResult batteryList()
     {
         return success(screenService.batteryList());
-    }
-
-    @Log(title = "执行指令", businessType = BusinessType.OTHER)
-    @GetMapping( "/cmd")
-    public AjaxResult cmd(String q)
-    {
-        CommServer.returnCmd(q);
-        return success();
     }
 
     /**

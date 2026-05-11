@@ -5,7 +5,6 @@ import com.shanhe.common.exception.ServiceException;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.spring.SpringUtils;
 import com.shanhe.common.utils.uuid.IdUtils;
-import com.shanhe.framework.enums.BatteryCidEnum;
 import com.shanhe.framework.enums.BatteryModelEnum;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.YesNoEnum;
@@ -16,8 +15,6 @@ import com.shanhe.project.device.config.mapper.BatteryPackMapper;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IConfigAttributeService;
 import com.shanhe.project.device.config.service.IConfigService;
-import com.shanhe.project.device.opt.service.ControlBatterySet;
-import com.shanhe.project.device.opt.vo.BatterySetVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,13 +38,9 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
     @Resource
     private BatteryPackMapper batteryPackMapper;
     @Resource
-    private ControlBatterySet controlBatterySet;
-    @Resource
     private IAlarmLogService alarmLogService;
     @Resource
     private IConfigAttributeService configAttributeService;
-    @Resource
-    private BatteryPackAsync batteryPackAsync;
 
     CacheKeyEnum packInfoCache = CacheKeyEnum.BATTERY_PACK_INFO;
 
@@ -123,31 +116,6 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
     }
 
     @Override
-    public void cmdBatteryPack(Long configId, List<BatteryPack> packList) {
-        for (int i = 1; i <= 4; i++) {
-            try {
-                BatterySetVO batterySetVO = new BatterySetVO();
-                batterySetVO.setPackNum(i);
-                batterySetVO.setConfigId(configId);
-                int finalI = i;
-                BatteryPack batteryPack = packList.stream().filter(pack -> Objects.equals(pack.getPackNum(), finalI)).findFirst().orElse(null);
-                if (batteryPack != null) {
-                    batterySetVO.setBatCapacity(batteryPack.getBatCapacity());
-                    batterySetVO.setBatSinSize(batteryPack.getBatSinSize());
-                    batterySetVO.setBatSinModel(batteryPack.getBatSinModel());
-                } else {
-                    batterySetVO.setBatCapacity(0D);
-                    batterySetVO.setBatSinSize(0);
-                    batterySetVO.setBatSinModel(0);
-                }
-                controlBatterySet.doSet(batterySetVO, BatteryCidEnum._09);
-            } catch (Exception e) {
-                log.error("设置电池组 {} 失败：{}", i, e.getMessage());
-            }
-        }
-    }
-
-    @Override
     public void updateCache() {
         // 属性键
         List<String> startKeys = new ArrayList<>();
@@ -209,7 +177,6 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
             configAttributeService.updateCache(config.getConfigId(), YesNoEnum.NO.getDictValue());
         }
 
-        batteryPackAsync.del(batteryPack, config);
     }
 
     @Override
@@ -238,7 +205,6 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
             configAttributeService.updateCache(config.getConfigId(), YesNoEnum.NO.getDictValue());
         }
 
-        batteryPackAsync.updateBatteryCmd(config, batteryPack);
     }
 
     @Override
@@ -267,8 +233,6 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         insertBatteryPack(batteryPack);
         // 属性挂电池组
         configAttributeService.insertByTemplateAttribute(config.getConfigId(), batteryPack.getPackNum(), batteryPack.getBatSinModel());
-        // 指令
-        batteryPackAsync.updateBatteryCmd(config, batteryPack);
     }
 
     @Override

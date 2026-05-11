@@ -14,7 +14,6 @@ public enum CacheKeyEnum {
     LOGIN("sys-authCache", "login:%s", "登录信息"),
     HOST("sys-cache", "device:host", "站点信息"),
     HOST_TOKEN("sys-cache", "device:host:token", "站点token信息"),
-    AIR_MODEL("sys-cache", "device:airModel:%s", "空调模式"),
     WARN("device-warn", "device:warn", "站点告警"),
     /* config.类型.端口号.通道号 */
     CONFIG("device-config", "config:%s:%s:%s", "设备配置"),
@@ -22,8 +21,6 @@ public enum CacheKeyEnum {
     CONFIG_ONLINE("sys-cache", "config:%s:%s:%s", "设备在线"),
     /* attribute.配置id.组.属性编码 */
     ATTRIBUTE("device-attribute", "attribute:%s:%s:%s", "设备属性"),
-    /* protocol.配置id.协议编码 */
-    PROTOCOL("device-protocol", "protocol:%s:%s", "设备协议"),
     /* alarm.配置id.包编号.模块编号.属性编码 */
     ALARM("device-alarm", "alarm:%s:%s:%s:%s", "设备告警"),
     /* log:configId:packNum:type */

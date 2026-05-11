@@ -18,7 +18,6 @@ import com.shanhe.project.device.config.domain.*;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IConfigAttributeService;
 import com.shanhe.project.device.opt.service.ControlBattery;
-import com.shanhe.project.device.opt.service.DeviceCmdService;
 import com.shanhe.project.device.opt.service.OptLogService;
 import com.shanhe.project.sync.service.ClientReportService;
 import org.slf4j.Logger;
@@ -44,13 +43,9 @@ public class ConfigServiceImpl implements IConfigService {
     @Resource
     private IAlarmLogService alarmLogService;
     @Resource
-    private DeviceCmdService deviceCmdService;
-    @Resource
     private ControlBattery controlBattery;
     @Resource
     private OptLogService optLogService;
-    @Resource
-    private BatteryPackAsync batteryPackAsync;
     @Resource
     private ClientReportService clientReportService;
 
@@ -402,10 +397,6 @@ public class ConfigServiceImpl implements IConfigService {
 
                 if (!deletePackNums.isEmpty()) {
                     configAttributeService.deleteConfigAttributeByPackNums(config.getConfigId(), deletePackNums);
-                    deletePackNums.forEach(packNum -> {
-                        // 删除指令
-                        batteryPackAsync.delSendCmd(config, packNum);
-                    });
                 }
             }
             return;
@@ -437,10 +428,6 @@ public class ConfigServiceImpl implements IConfigService {
             // 删除告警
             deletePackNums.forEach(packNum -> {
                 alarmLogService.alarmFix(config.getConfigId(), packNum, false, null, null);
-            });
-            // 删除指令
-            deletePackNums.forEach(packNum -> {
-                batteryPackAsync.delSendCmd(config, packNum);
             });
         }
 

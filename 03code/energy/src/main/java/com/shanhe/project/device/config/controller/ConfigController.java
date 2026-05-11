@@ -1,10 +1,6 @@
 package com.shanhe.project.device.config.controller;
 
-import com.shanhe.framework.aspectj.lang.annotation.Log;
-import com.shanhe.framework.comm.CommServer;
-import com.shanhe.framework.enums.BusinessType;
 import com.shanhe.framework.web.controller.BaseController;
-import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.framework.web.page.TableDataInfo;
 import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.service.IConfigService;
@@ -43,10 +39,4 @@ public class ConfigController extends BaseController {
         return getDataTable(list);
     }
 
-    @Log(title = "执行指令", businessType = BusinessType.OTHER)
-    @PostMapping("/cmd")
-    public AjaxResult cmd(String cmd) {
-        CommServer.returnCmd(cmd);
-        return success();
-    }
 }

@@ -33,6 +33,7 @@ public class CacheInit implements ApplicationRunner {
     IHostService hostService;
     @Resource
     IAlarmLogService alarmLogService;
+    @Resource
     BatteryReportLogService batteryReportLogService;
     @Resource
     IBatteryPackService batteryPackService;
@@ -80,11 +81,6 @@ public class CacheInit implements ApplicationRunner {
     }
 
     public void initBattery() {
-//        try {
-//            batteryMonitorService.updateCache();
-//        } catch (Exception e) {
-//            log.error("初始化电池记录缓存异常：{}", e.getMessage());
-//        }
         try {
             batteryPackService.updateCache();
         } catch (Exception e) {

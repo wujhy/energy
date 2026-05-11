@@ -6,7 +6,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.uuid.IdUtils;
-import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.consts.SysConst;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.YesNoEnum;
@@ -177,26 +176,18 @@ public class HostHandler {
     public ResponseVo controlDev(RequestVo request) {
         String msg = null;
         try {
-            if (!CommServer.isOpen()) {
-                msg = "设备未建立连接，下发控制指令失败";
-                return new ResponseVo(request.getImei(), MethodEnum._28.getDictValue(), request.getBusinessId(), msg);
-            }
-
             String contentStr = JSONObject.toJSONString(request.getContent());
             log.debug("控制指令信息：{}", contentStr);
             JSONObject param = JSONObject.parseObject(contentStr);
-            String cmd = param.getString("cmd");
             String classId = param.getString("classId");
 
             // 空调控制指令
             if (StrUtil.isNotBlank(classId) && StrUtil.equals(classId, "4")) {
                 msg = "空调控制已废弃";
-                // 指令下发结果
                 return new ResponseVo(request.getImei(), MethodEnum._28.getDictValue(), request.getBusinessId(), msg);
             }
 
-             // 直接下发指令
-            CommServer.returnCmd(cmd);
+            msg = "通用控制入口已废弃，请使用内部蓄电池控制服务";
         } catch (Exception e) {
             msg = String.format("控制指令异常：%s", e.getMessage());
             log.error(msg);

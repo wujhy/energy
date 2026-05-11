@@ -24,6 +24,7 @@ public class CacheJob {
     private IConfigService configService;
     @Resource
     private IAlarmLogService alarmLogService;
+    @Resource
     private BatteryReportLogService batteryReportLogService;
     @Resource
     private IBatteryPackService batteryPackService;
@@ -50,13 +51,6 @@ public class CacheJob {
 
     @Scheduled(cron = "${job.batteryCache}")
     public void batteryJob() {
-//        try {
-//            log.debug("更新电池历史缓存！");
-//            batteryMonitorService.updateCache();
-//        } catch (Exception e) {
-//            log.error("更新电池历史缓存异常：{}", e.getMessage());
-//        }
-
         try {
             log.debug("更新电池组缓存！");
             batteryPackService.updateCache();

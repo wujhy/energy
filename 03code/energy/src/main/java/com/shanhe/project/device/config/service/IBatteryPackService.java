@@ -60,14 +60,6 @@ public interface IBatteryPackService
     void update(BatteryPack batteryPack);
 
     /**
-     * 同步蓄电池组
-     *
-     * @param configId 配置id
-     * @param packList 组列表
-     */
-    void cmdBatteryPack(Long configId, List<BatteryPack> packList);
-
-    /**
      * 批量删除电池组
      * 
      * @param configIds 需要删除的设备id
