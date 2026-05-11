@@ -24,10 +24,6 @@ public enum DictType {
      */
     DEVICE_TYPE,
     /**
-     * 设备ups子类型
-     */
-    DEVICE_UPS_TYPE,
-    /**
      * 数据类型
      */
     DATA_TYPE,
@@ -39,18 +35,6 @@ public enum DictType {
      * 波特率
      */
     BAUD_RATE,
-    /**
-     * 协议解析方式
-     */
-    PROTOCOL_TYPE,
-    /**
-     * 协议校验算法
-     */
-    PROTOCOL_ALGORITHM,
-    /**
-     * 校验码类型
-     */
-    CHECK_TYPE,
     /**
      * 连接状态
      */
@@ -76,10 +60,6 @@ public enum DictType {
      */
     TCP_CID,
     /**
-     * 数据解析方式
-     */
-    ANY_FLAG,
-    /**
      * 主机类型
      */
     HOST_TYPE,
@@ -87,10 +67,6 @@ public enum DictType {
      * 比较
      */
     COMPARE,
-    /**
-     * 数据进制精度
-     */
-    DATA_DECIMAL,
     /**
      * 电池规格
      */

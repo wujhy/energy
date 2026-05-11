@@ -23,23 +23,17 @@ public class DictService implements CommandLineRunner {
     static List<Dict> resultList;
     static List<Dict> yesNoList;
     static List<Dict> deviceTypeList;
-    static List<Dict> deviceUpsTypeList;
     static List<Dict> dataTypeList;
     static List<Dict> portTypeList;
     static List<Dict> baudRateList;
-    static List<Dict> protocolTypeList;
-    static List<Dict> protocolAlgorithmList;
-    static List<Dict> checkTypeList;
     static List<Dict> connectionStatusList;
     static List<Dict> alarmLevelList;
     static List<Dict> parityBitsList;
     static List<Dict> stopBitsList;
     static List<Dict> dataBitsList;
     static List<Dict> tcpCidList;
-    static List<Dict> anyFlagList;
     static List<Dict> hostTypeList;
     static List<Dict> compareList;
-    static List<Dict> dataDecimalList;
     static List<Dict> batteryBrandList;
     static List<Dict> batteryModelList;
     static List<Dict> ipAddrList;
@@ -50,23 +44,17 @@ public class DictService implements CommandLineRunner {
         resultList = ResultEnum.getDictList();
         yesNoList = YesNoEnum.getDictList();
         deviceTypeList = DeviceTypeEnum.getDictList();
-        deviceUpsTypeList = DeviceUpsTypeEnum.getDictList();
         dataTypeList = DataTypeEnum.getDictList();
         portTypeList = PortTypeEnum.getDictList();
         baudRateList = BaudRateEnum.getDictList();
-        protocolTypeList = ProtocolTypeEnum.getDictList();
-        protocolAlgorithmList = ProtocolAlgorithmEnum.getDictList();
-        checkTypeList = CheckTypeEnum.getDictList();
         connectionStatusList = ConnectionStatusEnum.getDictList();
         alarmLevelList = AlarmLevelEnum.getDictList();
         parityBitsList = ParityBitsEnum.getDictList();
         stopBitsList = StopBitsEnum.getDictList();
         dataBitsList = DataBitsEnum.getDictList();
         tcpCidList = TcpCidEnum.getDictList();
-        anyFlagList = AnyFlagEnum.getDictList();
         hostTypeList = HostTypeEnum.getDictList();
         compareList = CompareEnum.getDictList();
-        dataDecimalList = DataDecimalEnum.getDictList();
         batteryBrandList = BatteryBrandEnum.getDictList();
         batteryModelList = BatteryModelEnum.getDictList();
         ipAddrList = IpAddrEnum.getDictList();
@@ -89,20 +77,12 @@ public class DictService implements CommandLineRunner {
                 return yesNoList;
             case DEVICE_TYPE:
                 return deviceTypeList;
-            case DEVICE_UPS_TYPE:
-                return deviceUpsTypeList;
             case DATA_TYPE:
                 return dataTypeList;
             case PORT_TYPE:
                 return portTypeList;
             case BAUD_RATE:
                 return baudRateList;
-            case PROTOCOL_TYPE:
-                return protocolTypeList;
-            case PROTOCOL_ALGORITHM:
-                return protocolAlgorithmList;
-            case CHECK_TYPE:
-                return checkTypeList;
             case CONNECTION_STATUS:
                 return connectionStatusList;
             case ALARM_LEVEL:
@@ -115,14 +95,10 @@ public class DictService implements CommandLineRunner {
                 return dataBitsList;
             case TCP_CID:
                 return tcpCidList;
-            case ANY_FLAG:
-                return anyFlagList;
             case HOST_TYPE:
                 return hostTypeList;
             case COMPARE:
                 return compareList;
-            case DATA_DECIMAL:
-                return dataDecimalList;
             case BATTERY_BRAND:
                 return batteryBrandList;
             case BATTERY_MODEL:
@@ -152,20 +128,12 @@ public class DictService implements CommandLineRunner {
                 return YesNoEnum.findByValue(dictValue);
             case DEVICE_TYPE:
                 return DeviceTypeEnum.findByValue(dictValue);
-            case DEVICE_UPS_TYPE:
-                return DeviceUpsTypeEnum.findByValue(dictValue);
             case DATA_TYPE:
                 return DataTypeEnum.findByValue(dictValue);
             case PORT_TYPE:
                 return PortTypeEnum.findByValue(dictValue);
             case BAUD_RATE:
                 return BaudRateEnum.findByValue(dictValue);
-            case PROTOCOL_TYPE:
-                return ProtocolTypeEnum.findByValue(dictValue);
-            case PROTOCOL_ALGORITHM:
-                return ProtocolAlgorithmEnum.findByValue(dictValue);
-            case CHECK_TYPE:
-                return CheckTypeEnum.findByValue(dictValue);
             case CONNECTION_STATUS:
                 return ConnectionStatusEnum.findByValue(dictValue);
             case ALARM_LEVEL:
@@ -178,14 +146,10 @@ public class DictService implements CommandLineRunner {
                 return DataBitsEnum.findByValue(dictValue);
             case TCP_CID:
                 return TcpCidEnum.findByValue(dictValue);
-            case ANY_FLAG:
-                return AnyFlagEnum.findByValue(dictValue);
             case HOST_TYPE:
                 return HostTypeEnum.findByValue(dictValue);
             case COMPARE:
                 return CompareEnum.findByValue(dictValue);
-            case DATA_DECIMAL:
-                return DataDecimalEnum.findByValue(dictValue);
             case BATTERY_BRAND:
                 return BatteryBrandEnum.findByValue(dictValue);
             case BATTERY_MODEL:
