@@ -1,10 +1,7 @@
 package com.shanhe.framework.enums;
 
-import com.shanhe.common.utils.bean.Dict;
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -45,32 +42,4 @@ public enum ProtocolTypeEnum {
         return _99;
     }
 
-    /**
-     * 通过值查标签名
-     */
-    public static String findByValue(Object value) {
-        Integer dictValue;
-        if (value instanceof String) {
-            dictValue = Integer.valueOf((String) value);
-        } else {
-            dictValue = (Integer) value;
-        }
-        for (ProtocolTypeEnum dictEnum : ProtocolTypeEnum.values()) {
-            if (Objects.equals(dictEnum.getDictValue(), dictValue)) {
-                return dictEnum.getDictLabel();
-            }
-        }
-        return null;
-    }
-
-    /**
-     * 转list
-     */
-    public static List<Dict> getDictList() {
-        List<Dict> list = new ArrayList<>();
-        for (ProtocolTypeEnum dictEnum : ProtocolTypeEnum.values()) {
-            list.add(new Dict(dictEnum.getDictLabel(), dictEnum.getDictValue()));
-        }
-        return list;
-    }
 }

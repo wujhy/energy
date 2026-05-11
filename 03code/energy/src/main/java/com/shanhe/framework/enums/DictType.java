@@ -56,10 +56,6 @@ public enum DictType {
      */
     DATA_BITS,
     /**
-     * 指令类型编号
-     */
-    TCP_CID,
-    /**
      * 主机类型
      */
     HOST_TYPE,

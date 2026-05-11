@@ -31,7 +31,6 @@ public class DictService implements CommandLineRunner {
     static List<Dict> parityBitsList;
     static List<Dict> stopBitsList;
     static List<Dict> dataBitsList;
-    static List<Dict> tcpCidList;
     static List<Dict> hostTypeList;
     static List<Dict> compareList;
     static List<Dict> batteryBrandList;
@@ -52,7 +51,6 @@ public class DictService implements CommandLineRunner {
         parityBitsList = ParityBitsEnum.getDictList();
         stopBitsList = StopBitsEnum.getDictList();
         dataBitsList = DataBitsEnum.getDictList();
-        tcpCidList = TcpCidEnum.getDictList();
         hostTypeList = HostTypeEnum.getDictList();
         compareList = CompareEnum.getDictList();
         batteryBrandList = BatteryBrandEnum.getDictList();
@@ -93,8 +91,6 @@ public class DictService implements CommandLineRunner {
                 return stopBitsList;
             case DATA_BITS:
                 return dataBitsList;
-            case TCP_CID:
-                return tcpCidList;
             case HOST_TYPE:
                 return hostTypeList;
             case COMPARE:
@@ -144,8 +140,6 @@ public class DictService implements CommandLineRunner {
                 return StopBitsEnum.findByValue(dictValue);
             case DATA_BITS:
                 return DataBitsEnum.findByValue(dictValue);
-            case TCP_CID:
-                return TcpCidEnum.findByValue(dictValue);
             case HOST_TYPE:
                 return HostTypeEnum.findByValue(dictValue);
             case COMPARE:

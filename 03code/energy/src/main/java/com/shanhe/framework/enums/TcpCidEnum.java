@@ -1,11 +1,8 @@
 package com.shanhe.framework.enums;
 
 import cn.hutool.core.util.StrUtil;
-import com.shanhe.common.utils.bean.Dict;
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -81,26 +78,4 @@ public enum TcpCidEnum {
         return _error;
     }
 
-    /**
-     * 通过值查标签名
-     */
-    public static String findByValue(Object value) {
-        for (TcpCidEnum dictEnum : TcpCidEnum.values()) {
-            if (Objects.equals(dictEnum.getDictValue(), value)) {
-                return dictEnum.getDictLabel();
-            }
-        }
-        return null;
-    }
-
-    /**
-     * 转list
-     */
-    public static List<Dict> getDictList() {
-        List<Dict> list = new ArrayList<>();
-        for (TcpCidEnum dictEnum : TcpCidEnum.values()) {
-            list.add(new Dict(dictEnum.getDictLabel(), dictEnum.getDictValue()));
-        }
-        return list;
-    }
 }
