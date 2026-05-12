@@ -17,7 +17,6 @@ import com.shanhe.project.device.config.DefaultBatteryConfigRepository;
 import com.shanhe.project.device.config.domain.*;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IConfigAttributeService;
-import com.shanhe.project.device.opt.service.ControlBattery;
 import com.shanhe.project.device.opt.service.OptLogService;
 import com.shanhe.project.sync.service.ClientReportService;
 import org.slf4j.Logger;
@@ -42,8 +41,6 @@ public class ConfigServiceImpl implements IConfigService {
     private IBatteryPackService batteryPackService;
     @Resource
     private IAlarmLogService alarmLogService;
-    @Resource
-    private ControlBattery controlBattery;
     @Resource
     private OptLogService optLogService;
     @Resource
@@ -182,30 +179,6 @@ public class ConfigServiceImpl implements IConfigService {
             }
         }
         return configList;
-    }
-
-
-    @Override
-    public void sendBatterySyncCmd(Config config) {
-        // 同步电池组信息
-        controlBattery.doUploadBattery(config);
-        // 同步蓄电池时间
-        controlBattery.doSynBatteryDate(config);
-
-        // 已开启电池组
-        List<BatteryPack> batteryPackList = batteryPackService.selectBatteryPackListConfigId(config.getConfigId(), YesNoEnum.YES.getDictValue());
-        if (batteryPackList.isEmpty()) {
-            logger.debug("蓄电池设备 {} 未设置电池组，同步终止", config.getName());
-            return;
-        }
-        for (BatteryPack batteryPack : batteryPackList) {
-            try {
-                // 同步告警配置
-                controlBattery.doSynBatteryAlarm(config, batteryPack.getPackNum(), false);
-            } catch (Exception e) {
-                logger.error("同步蓄电池设备 {} 参数失败：{}", config.getName(), e.getMessage());
-            }
-        }
     }
 
     @Override

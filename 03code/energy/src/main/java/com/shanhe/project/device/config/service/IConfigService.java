@@ -90,11 +90,6 @@ public interface IConfigService
 
 
     /**
-     * 发送蓄电池同步指令
-     */
-    void sendBatterySyncCmd(Config config);
-
-    /**
      * 查设备详情
      *
      * @param configId 设备id
