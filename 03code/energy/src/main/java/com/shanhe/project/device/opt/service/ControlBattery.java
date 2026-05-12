@@ -304,19 +304,6 @@ public class ControlBattery extends ControlBase {
     }
 
     /**
-     * 修改设备时间
-     */
-    public void doSynBatteryDate(Config config) {
-        String cmdStr = cmdBatteryControlService.genCmd37(config);
-        if (cmdStr == null) {
-            logger.error("37修改设备时间，生成指令失败！");
-            return;
-        }
-        // 下发指令
-        CommServer.returnCmd(cmdStr);
-    }
-
-    /**
      * 同步参数信息
      *
      * @param config 设备

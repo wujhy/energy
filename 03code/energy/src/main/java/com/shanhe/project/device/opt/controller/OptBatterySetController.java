@@ -222,7 +222,7 @@ public class OptBatterySetController extends BaseController {
     @PostMapping("/syncTime")
     public AjaxResult syncTime(@RequestBody @Validated(value = BatterySetVO.cmd37.class) BatterySetVO batterySetVO) {
         SystemService.syncServerTime(batterySetVO.getDatetime());
-        return controlBatterySet.doSet(batterySetVO, BatteryCidEnum._37);
+        return success();
     }
 
     @Log(title = "蜂鸣器", businessType = BusinessType.UPDATE)

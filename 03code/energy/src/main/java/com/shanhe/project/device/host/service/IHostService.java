@@ -59,26 +59,9 @@ public interface IHostService
     void updateCleanLogDays(Integer cleanLogDays);
 
     /**
-     * 同步主机数据上报间隔时间
-     */
-    void syncSpaceTime();
-
-    /**
      * 同步服务器时间
      */
     void syncServerTime(String datetime);
-
-    /**
-     * 修改主机IP
-     *
-     * @param host 主机
-     */
-    void updateIp(Host host);
-
-    /**
-     * 同步主机IP
-     */
-    void syncIp();
 
     /**
      * 修改主机上报IP
@@ -86,11 +69,6 @@ public interface IHostService
      * @param host 主机
      */
     void updateReportIp(Host host);
-
-    /**
-     * 同步主机上报IP
-     */
-    void syncReportIp();
 
     /**
      * 上线

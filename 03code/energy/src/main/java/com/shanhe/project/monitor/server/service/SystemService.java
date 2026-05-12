@@ -8,7 +8,6 @@ import com.shanhe.framework.enums.IpAddrEnum;
 import com.shanhe.project.device.host.domain.Host;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +22,6 @@ import java.util.*;
  * @author wjh
  * @since 2025/5/6
  */
-@RestController
 public class SystemService {
     private static final Logger logger = LoggerFactory.getLogger(SystemService.class);
 
@@ -70,40 +68,6 @@ public class SystemService {
             command.append("sudo nmcli connection up '").append(ipName).append("'");
             logger.info("生效本机IP指令 {}", command);
             asyncExeLocalCmd(null, new ProcessBuilder("bash", "-c", command.toString()));
-        } catch (Exception e) {
-            throw new ServiceException("更新本机IP失败！");
-        }
-    }
-
-    /**
-     * 更新本地IP
-     */
-    public static void updateIp(Host host) {
-        try {
-            Process process;
-            if(isWin()) {
-//                process = Runtime.getRuntime().exec(String.format("netsh interface ip set address \"%s\" static %s %s %s", host.getIpAddr(), host.getIp(), host.getSubIp(), host.getNetIp()));
-//                if (!Objects.equals(process.waitFor(), 0)) {
-//                    throw new ServiceException("更新本机IP失败！");
-//                }
-                return;
-            }
-
-            // 输出网关配置
-            String command = String.format("echo -e 'auto %s\\niface %s inet static\\naddress %s\\nnetmask %s\\ngateway %s\\ndns-nameservers 8.8.8.8 8.8.4.4' > /etc/network/interfaces.d/rotating",
-                    host.getIpAddr(), host.getIpAddr(), host.getIp(), host.getSubIp(), host.getNetIp());
-            ProcessBuilder pb = new ProcessBuilder("bash", "-c", command);
-            process = pb.start();
-            logger.info("更新本机IP指令 {} ：{}", process.waitFor(), command);
-            if (!Objects.equals(process.waitFor(), 0)) {
-                throw new ServiceException("更新本机IP失败！");
-            }
-
-            // 生效
-            command = String.format("sudo ip addr flush dev %s; sudo systemctl restart networking", host.getIpAddr());
-            pb = new ProcessBuilder("bash", "-c", command);
-            process = pb.start();
-            logger.info("更新本机IP生效指令 {} ：{}", process.waitFor(), command);
         } catch (Exception e) {
             throw new ServiceException("更新本机IP失败！");
         }
@@ -186,17 +150,6 @@ public class SystemService {
         } catch (Exception e) {
             throw new ServiceException("执行脚本失败！");
         }
-    }
-
-    /**
-     * 查看部署参数
-     */
-    public static Map<String, Object> getParam() {
-        Map<String, Object> map = new HashMap<>(3);
-        map.put("applicationName", SysConst.applicationName);
-        map.put("port", SysConst.port);
-        map.put("deployPath", SysConst.deployPath);
-        return map;
     }
 
     /**

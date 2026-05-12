@@ -1,7 +1,6 @@
 package com.shanhe.project.device.opt.service;
 
 import cn.hutool.core.util.ObjUtil;
-import cn.hutool.core.util.StrUtil;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.enums.BatteryCidEnum;
@@ -20,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import oshi.util.Util;
 
-import java.util.Calendar;
 
 /**
  * 开关量控制类
@@ -136,29 +134,6 @@ public class ControlBatterySet extends ControlBase {
                 info.append("01");
                 // 包序号
                 info.append(CodingUtil.integerToHexString(batterySetVO.getPackNum(), 2));
-                break;
-            case _37:
-                // 设置时间
-                dynCid = BatteryCidEnum._E7.getDictValue();
-                // 长度
-                info.append("08").append("04");
-                // 未指定时间，取服务器当前时间
-                if (StrUtil.isBlank(batterySetVO.getDatetime())) {
-                    Calendar calendar = Calendar.getInstance();
-                    info.append(CodingUtil.integerToHexString(calendar.get(Calendar.YEAR), 4));
-                    info.append(CodingUtil.integerToHexString(calendar.get(Calendar.MONTH) + 1, 2));
-                    info.append(CodingUtil.integerToHexString(calendar.get(Calendar.DAY_OF_MONTH), 2));
-                    info.append(CodingUtil.integerToHexString(calendar.get(Calendar.HOUR_OF_DAY), 2));
-                    info.append(CodingUtil.integerToHexString(calendar.get(Calendar.MINUTE), 2));
-                    info.append(CodingUtil.integerToHexString(calendar.get(Calendar.SECOND), 2));
-                } else {
-                    info.append(CodingUtil.stringToHexString(batterySetVO.getDatetime().substring(0, 4), 4));
-                    info.append(CodingUtil.stringToHexString(batterySetVO.getDatetime().substring(4, 6), 2));
-                    info.append(CodingUtil.stringToHexString(batterySetVO.getDatetime().substring(6, 8), 2));
-                    info.append(CodingUtil.stringToHexString(batterySetVO.getDatetime().substring(8, 10), 2));
-                    info.append(CodingUtil.stringToHexString(batterySetVO.getDatetime().substring(10, 12), 2));
-                    info.append(CodingUtil.stringToHexString(batterySetVO.getDatetime().substring(12, 14), 2));
-                }
                 break;
             case _38:
                 // 均衡设置

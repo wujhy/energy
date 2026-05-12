@@ -70,43 +70,12 @@ public class HostController extends BaseController
         return success();
     }
 
-    @GetMapping("/syncSpaceTime")
-    @ResponseBody
-    public AjaxResult syncSpaceTime() {
-        hostService.syncSpaceTime();
-        return success();
-    }
-
-    @Log(title = "更新主机IP", businessType = BusinessType.UPDATE)
-    @PostMapping("/editIp")
-    @ResponseBody
-    public AjaxResult editIp(Host host) {
-        hostService.updateIp(host);
-        return success();
-    }
-
-    @GetMapping("/syncIp")
-    @ResponseBody
-    public AjaxResult syncIp()
-    {
-        hostService.syncIp();
-        return success();
-    }
-
     @Log(title = "更新主机服务IP", businessType = BusinessType.UPDATE)
     @PostMapping("/editReportIp")
     @ResponseBody
     public AjaxResult editReportIp(Host host)
     {
         hostService.updateReportIp(host);
-        return success();
-    }
-
-    @GetMapping("/syncReportIp")
-    @ResponseBody
-    public AjaxResult syncReportIp()
-    {
-        hostService.syncReportIp();
         return success();
     }
 

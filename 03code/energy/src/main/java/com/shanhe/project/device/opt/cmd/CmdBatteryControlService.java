@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Calendar;
 
 /**
  * 生成蓄电池控制指令
@@ -351,30 +350,6 @@ public class CmdBatteryControlService {
         this.appendHeadAndEnd(info);
         // 生成完整指令
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._E0.getDictValue());
-    }
-
-    /**
-     * 修改日期时间
-     *
-     * @return 指令
-     */
-    public String genCmd37(Config config) {
-        // 指令内容
-        StringBuilder info = new StringBuilder();
-        // 默认地址、指令编码、长度
-        info.append("01").append("37").append("08").append("04");
-        Calendar calendar = Calendar.getInstance();
-        info.append(CodingUtil.integerToHexString(calendar.get(Calendar.YEAR), 4));
-        info.append(CodingUtil.integerToHexString(calendar.get(Calendar.MONTH) + 1, 2));
-        info.append(CodingUtil.integerToHexString(calendar.get(Calendar.DAY_OF_MONTH), 2));
-        info.append(CodingUtil.integerToHexString(calendar.get(Calendar.HOUR_OF_DAY), 2));
-        info.append(CodingUtil.integerToHexString(calendar.get(Calendar.MINUTE), 2));
-        info.append(CodingUtil.integerToHexString(calendar.get(Calendar.SECOND), 2));
-        // 追加校验码、头尾等
-        this.appendHeadAndEnd(info);
-
-        // 生成完整指令
-        return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._E7.getDictValue());
     }
 
     /**
