@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class DictService implements CommandLineRunner {
 
+    static List<Dict> operationTypeList;
+    static List<Dict> resultList;
     static List<Dict> yesNoList;
     static List<Dict> deviceTypeList;
     static List<Dict> dataTypeList;
@@ -37,6 +39,8 @@ public class DictService implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        operationTypeList = OperationType.getDictList();
+        resultList = ResultEnum.getDictList();
         yesNoList = YesNoEnum.getDictList();
         deviceTypeList = DeviceTypeEnum.getDictList();
         dataTypeList = DataTypeEnum.getDictList();
@@ -63,6 +67,10 @@ public class DictService implements CommandLineRunner {
     public static List<Dict> getType(String dictType) {
         DictType type = DictType.valueOf(dictType);
         switch (type) {
+            case OPERATION_TYPE:
+                return operationTypeList;
+            case RESULT:
+                return resultList;
             case YES_NO:
                 return yesNoList;
             case DEVICE_TYPE:
@@ -108,6 +116,10 @@ public class DictService implements CommandLineRunner {
     public static String getLabel(String dictType, Object dictValue) {
         DictType type = DictType.valueOf(dictType);
         switch (type) {
+            case OPERATION_TYPE:
+                return OperationType.findByValue(dictValue);
+            case RESULT:
+                return ResultEnum.findByValue(dictValue);
             case YES_NO:
                 return YesNoEnum.findByValue(dictValue);
             case DEVICE_TYPE:

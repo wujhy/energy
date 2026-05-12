@@ -7,6 +7,14 @@ package com.shanhe.framework.enums;
  */
 public enum DictType {
     /**
+     * 操作类型
+     */
+    OPERATION_TYPE,
+    /**
+     * 结果
+     */
+    RESULT,
+    /**
      * 是否
      */
     YES_NO,
