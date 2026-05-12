@@ -1,20 +1,11 @@
 package com.shanhe.framework.enums;
 
 /**
- * 操作人类别
- * 
- * @author ruoyi
+ * 操作人类型
  *
+ * @author ruoyi
  */
 public enum DictType {
-    /**
-     * 操作类型
-     */
-    OPERATION_TYPE,
-    /**
-     * 结果
-     */
-    RESULT,
     /**
      * 是否
      */
@@ -64,11 +55,11 @@ public enum DictType {
      */
     COMPARE,
     /**
-     * 电池规格
+     * 蓄电池规格
      */
     BATTERY_MODEL,
     /**
-     * 电池品牌
+     * 蓄电池品牌
      */
     BATTERY_BRAND,
     /**
