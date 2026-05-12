@@ -152,7 +152,6 @@ public final class DefaultBatteryConfigRepository
         config.setStopBits(0);
         config.setIntervalTime(5000);
         config.setParityBits(0);
-        config.setProtocolType(0);
         config.setStatus(YesNoEnum.YES.getDictValue());
         config.setOnline(YesNoEnum.NO.getDictValue());
         return config;

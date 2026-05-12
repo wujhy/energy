@@ -87,10 +87,6 @@ public class Config extends BaseEntity
     @Excel(name = "间隔时间ms")
     private Integer intervalTime;
 
-    /** 协议解析 */
-    @Excel(name = "协议解析")
-    private Integer protocolType;
-
     /** 启用状态 0-是，1-否 */
     @Excel(name = "启用状态 0-是，1-否")
     private Integer status;
