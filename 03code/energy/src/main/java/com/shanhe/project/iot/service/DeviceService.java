@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 
 /**
- * Device service.
+ * 设备消息处理服务。
  */
 @Service
 public class DeviceService {
@@ -100,7 +100,7 @@ public class DeviceService {
                 devResponseHandler.cmdB3(deviceData);
                 break;
             default:
-                logger.info("Invalid command cid={}", deviceData.getCid());
+                logger.info("指令错误：{}", deviceData.getCid());
                 break;
         }
 

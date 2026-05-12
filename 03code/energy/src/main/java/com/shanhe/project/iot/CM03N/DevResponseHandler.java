@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 
 /**
- * Device response handler.
+ * 设备响应处理服务。
  */
 @Service
 public class DevResponseHandler {
@@ -55,11 +55,11 @@ public class DevResponseHandler {
             CacheUtils.remove(CacheKeyEnum.RESULT_CX.getCache(), key);
             CacheUtils.put(CacheKeyEnum.RESULT_CX.getCache(), key, result == 0 ? 0 : 1);
             if (result != 0) {
-                logger.info("imei:{} return result:{} key:{}", deviceData.getImei(), result, key);
+                logger.info("imei：{} 返回结果{}：{}", deviceData.getImei(), key, result);
             }
             return result;
         } catch (Exception e) {
-            logger.error("imei:{} return result exception:{}", deviceData.getImei(), deviceData.getInfo());
+            logger.error("imei：{} 返回结果异常：{}", deviceData.getImei(), deviceData.getInfo());
             return 1;
         }
     }
@@ -67,7 +67,7 @@ public class DevResponseHandler {
     public void cmdB0(DeviceData deviceData) {
         int resResult = this.responseResult(deviceData);
         if (1 == resResult) {
-            logger.error("B0 response error => {}", deviceData.getInfo());
+            logger.error("B0：响应读取配置参数=> {}", deviceData.getInfo());
             return;
         }
 
@@ -87,7 +87,7 @@ public class DevResponseHandler {
     public void cmdB1(DeviceData deviceData) {
         int resResult = this.responseResult(deviceData);
         if (1 == resResult) {
-            logger.error("B1 response error => {}", deviceData.getInfo());
+            logger.error("B1：响应读取设备IP地址=> {}", deviceData.getInfo());
             return;
         }
 
@@ -106,7 +106,7 @@ public class DevResponseHandler {
     public void cmdB3(DeviceData deviceData) {
         int resResult = this.responseResult(deviceData);
         if (1 == resResult) {
-            logger.error("B3 response error => {}", deviceData.getInfo());
+            logger.error("B3：响应读取系统数据上报时间=> {}", deviceData.getInfo());
             return;
         }
 
