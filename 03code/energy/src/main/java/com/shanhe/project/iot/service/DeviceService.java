@@ -104,7 +104,6 @@ public class DeviceService {
                 break;
         }
 
-        this.postfilter(deviceData);
     }
 
     private void prefilter(DeviceData deviceData) {
@@ -112,6 +111,4 @@ public class DeviceService {
             clientReportService.updateCmdDebug(deviceData.getImei(), deviceData.getInfo());
         }
     }
-
-    private void postfilter(DeviceData deviceData) {}
 }
