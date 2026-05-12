@@ -210,8 +210,6 @@ public class HostServiceImpl implements IHostService {
 
         // 下发指令前校验
         Host host = this.getDetail();
-//        String keyCache = this.getKeyCache(host.getDeviceType(), TcpCidEnum._DE.getDictValue());
-//        this.sendCmdValid(host, keyCache);
 
         host.setIp(update.getIp());
         host.setSubIp(update.getSubIp());
@@ -219,11 +217,6 @@ public class HostServiceImpl implements IHostService {
         host.setPort(update.getPort());
         host.setDeviceIp(update.getDeviceIp());
         host.setDevicePort(update.getDevicePort());
-        // 下发指令
-//        cmdHostService.cmd5E(host);
-
-        // 异步监听
-//        this.sendResponse(keyCache);
 
         // 更新记录
         this.updateHost(host);
@@ -281,11 +274,6 @@ public class HostServiceImpl implements IHostService {
         }
         host.setNeedReport(update.getNeedReport());
 
-        // 本地IP
-//        if (!StrUtil.equals(update.getIp(), host.getIp())
-//                || !StrUtil.equals(update.getIpAddr(), host.getIpAddr())
-//                || !StrUtil.equals(update.getSubIp(), host.getSubIp())
-//                || !StrUtil.equals(update.getNetIp(), host.getNetIp())) {
         if (StrUtil.isBlank(update.getIp())
                 || StrUtil.isBlank(update.getSubIp())
                 || StrUtil.isBlank(update.getNetIp())) {
@@ -307,7 +295,6 @@ public class HostServiceImpl implements IHostService {
 
         // 获取最新网卡信息
         SystemService.getIp(host);
-//        }
         this.updateHost(host);
 
     }
@@ -334,13 +321,6 @@ public class HostServiceImpl implements IHostService {
         if (StrUtil.equals(device.getCid(), TcpCidEnum._88.getDictValue())
                 && StrUtil.isNotBlank(device.getInfo()) && device.getInfo().length() >= 20) {
             String num = String.valueOf(CodingUtil.hexParseInt(device.getInfo().substring(0, 2)));
-//            String mac = String.format("%s:%s:%s:%s:%s:%s",
-//                    device.getInfo().substring(2, 4),
-//                    device.getInfo().substring(4, 6),
-//                    device.getInfo().substring(6, 8),
-//                    device.getInfo().substring(8, 10),
-//                    device.getInfo().substring(10, 12),
-//                    device.getInfo().substring(12, 14));
             // 数据库类型 是 integer  实际 model = 00，存储后是 0
             String model = Integer.parseInt(device.getInfo().substring(14, 16)) + "";
             String version = String.format("V%s.%s",
@@ -348,12 +328,10 @@ public class HostServiceImpl implements IHostService {
                     CodingUtil.hexParseInt(device.getInfo().substring(18, 20)));
 
             isUpdate = num.equals(host.getNum())
-//                    && mac.equals(host.getMac())
                     && model.equals(host.getModel())
                     && version.equals(host.getVersion());
 
             host.setNum(num);
-//            host.setMac(mac);
             host.setModel(model);
             host.setVersion(version);
         }
@@ -371,10 +349,6 @@ public class HostServiceImpl implements IHostService {
         // 更新通讯告警
         this.updateHostAlarm(YesNoEnum.YES.getDictValue(), HostAlarmItemEnum._1);
 
-        // 同步设备IP
-//        cmdHostService.cmd61(host);
-        // 同步本机IP
-//        cmdHostService.cmd62(host);
         // 同步上报间隔时间
         cmdHostService.cmd63(host);
         // 下发所有已开启设备指令

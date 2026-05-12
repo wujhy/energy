@@ -439,10 +439,6 @@ public class ControlBattery extends ControlBase {
             this.updateParameterByLevel(config, configAttribute.getPackNum(), paramNumber, String.valueOf(i),
                     levelVo.getHightValue(), levelVo.getLowValue(), levelVo.getRecValue());
         }
-//        for (AlarmItemLevelVo levelVo : configAttribute.getListLevel()) {
-//            this.updateParameterByLevel(config, configAttribute.getPackNum(), paramNumber, levelVo.getLevelCode(),
-//                    levelVo.getHightValue(), levelVo.getLowValue(), levelVo.getRecValue());
-//        }
     }
 
     /**
@@ -475,13 +471,6 @@ public class ControlBattery extends ControlBase {
      * @param recValue 恢复值
     、     */
     private void updateParameterByLevel(Config config, Integer packNum, String paramNumber, String level, Double minValue, Double maxValue, Double recValue) {
-        // 告警等级不是1、2、3，则不处理
-//        if (!StrUtil.equals(level, AlarmLevelEnum._1.getDictValue())
-//                || !StrUtil.equals(level, AlarmLevelEnum._2.getDictValue())
-//                || !StrUtil.equals(level, AlarmLevelEnum._3.getDictValue())) {
-//            return;
-//        }
-
         // 告警值
         Double value = minValue != null ? minValue : maxValue;
         if (value == null) {
@@ -508,13 +497,5 @@ public class ControlBattery extends ControlBase {
             }
         }
 
-        // 基准值（内阻系数过大过小设置基准值）
-//        if((StrUtil.equals(ItemCode.DTNZGD.getParamsNumber(), paramNumber)
-//                || StrUtil.equals(ItemCode.DTNZGX.getParamsNumber(), paramNumber)) && standValue != null) {
-//            cmdStr = cmdBatteryControlService.genCmd03(config, packNum, level, "53", standValue);
-//            if (StrUtil.isNotBlank(cmdStr)) {
-//                CommServer.sendCmd(cmdStr);
-//            }
-//        }
     }
 }

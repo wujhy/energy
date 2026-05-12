@@ -94,9 +94,6 @@ public class DeviceOnlineJob {
                 offlineHostNum = 0;
             }
 
-            // 主动下发开关量请求（后续关闭）
-//            cmdHostService.cmd57(host, 1);
-
             // 所有缓存的已开启设备
             List<Config> configList = configService.cacheConfigList();
             if (configList.isEmpty()) {

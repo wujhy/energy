@@ -457,30 +457,6 @@ public class BatteryParamsHandler {
         }
         attribute.setListLevel(levelList);
 
-//        // 告警等级
-//        if (Objects.equals(paramsInfo.getAlarmLevel(), AlarmLevelEnum._1.getDictValue())) {
-//            attribute.setGeneralMin(min);
-//            attribute.setGeneralMax(max);
-//            if (StrUtil.isNotBlank(recValue)) {
-//                attribute.setGeneralRecFlag(recOpt);
-//                attribute.setGeneralRecValue(Double.parseDouble(recValue));
-//            }
-//        } else if (Objects.equals(paramsInfo.getAlarmLevel(), AlarmLevelEnum._2.getDictValue())) {
-//            attribute.setImportantMin(min);
-//            attribute.setImportantMax(max);
-//            if (StrUtil.isNotBlank(recValue)) {
-//                attribute.setImportantRecFlag(recOpt);
-//                attribute.setImportantRecValue(Double.parseDouble(recValue));
-//            }
-//        } else if (Objects.equals(paramsInfo.getAlarmLevel(), AlarmLevelEnum._3.getDictValue())) {
-//            attribute.setEmergencyMin(min);
-//            attribute.setEmergencyMax(max);
-//            if (StrUtil.isNotBlank(recValue)) {
-//                attribute.setEmergencyRecFlag(recOpt);
-//                attribute.setEmergencyRecValue(Double.parseDouble(recValue));
-//            }
-//        }
-
         // 更新属性
         configAttributeService.updateConfigAttributeAlarm(attribute);
     }
@@ -630,7 +606,6 @@ public class BatteryParamsHandler {
         }
 
         if (sta != null && Objects.equals(attribute.getStatus(), sta)) {
-//            attribute.setAlarmConfig(sta > 0 ? 0 : 1);
             attribute.setStatus(sta > 0 ? 0 : 1);
             configAttributeService.updateConfigAttributeAlarm(attribute);
         }
