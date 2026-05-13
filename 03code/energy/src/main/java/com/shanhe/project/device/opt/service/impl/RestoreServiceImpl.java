@@ -3,6 +3,7 @@ package com.shanhe.project.device.opt.service.impl;
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.common.utils.text.Convert;
 import com.shanhe.framework.enums.BatteryCidEnum;
+import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.Config;
@@ -59,6 +60,8 @@ public class RestoreServiceImpl implements RestoreService {
     private IConfigAttributeService configAttributeService;
     @Resource
     public IConfigService configService;
+    @Resource
+    private BatteryModuleRealtimeMapper batteryModuleRealtimeMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -111,8 +114,8 @@ public class RestoreServiceImpl implements RestoreService {
         // 清空主机基本信息
         hostService.restore();
 
-        balanced(batterySetVO.getConfigId(), batterySetVO.getPackNum());
-        buzzerStatus(batterySetVO.getConfigId(), batterySetVO.getPackNum());
+        balanced();
+        buzzerStatus();
 
         // 何工的主板恢复出厂指令
         batterySetVO.setNeedDynResult(false);
@@ -145,6 +148,10 @@ public class RestoreServiceImpl implements RestoreService {
         batteryReportLogService.deleteByConfigId(batterySetVO.getConfigId(), batterySetVO.getPackNum());
         batteryReportLogService.updateCache();
 
+        // 删除600节模块端标准实时数据
+        batteryModuleRealtimeMapper.deleteCellsByPackNum(batterySetVO.getPackNum());
+        batteryModuleRealtimeMapper.deleteGroupByPackNum(batterySetVO.getPackNum());
+
         // 删除操作日志
         optLogService.deleteByConfigIdPackNum(batterySetVO.getConfigId(), batterySetVO.getPackNum());
         optLogService.updateCache();
@@ -160,28 +167,13 @@ public class RestoreServiceImpl implements RestoreService {
         preBatteryGroupService.deleteByConfigId(batterySetVO.getConfigId(), batterySetVO.getPackNum());
         preBatteryGroupService.updateCache();
 
-        batterySetVO.setNeedDynResult(false);
-        controlBatterySet.doSet(batterySetVO, BatteryCidEnum._78);
     }
 
-    public void buzzerStatus(Long configId, Integer packNum) {
-        BatterySetVO batterySetVO = new BatterySetVO();
-        batterySetVO.setConfigId(configId);
-        batterySetVO.setPackNum(packNum);
-        batterySetVO.setNeedDynResult(false);
-        batterySetVO.setParamNum("70");
-        batterySetVO.setParamValue("00");
-        controlBatterySet.doSet(batterySetVO, BatteryCidEnum._05);
+    private void buzzerStatus() {
+        controlBatterySet.saveBuzzerStatus(0);
     }
 
-    public void balanced(Long configId, Integer packNum) {
-        BatterySetVO batterySetVO = new BatterySetVO();
-        batterySetVO.setConfigId(configId);
-        batterySetVO.setPackNum(packNum);
-        batterySetVO.setNeedDynResult(false);
-        batterySetVO.setManualBalanced(0);
-        batterySetVO.setAutoBalanced(0);
-
-        controlBatterySet.doSet(batterySetVO, BatteryCidEnum._38);
+    private void balanced() {
+        controlBatterySet.saveBalancedStatus(0, 0);
     }
 }

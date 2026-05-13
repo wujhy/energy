@@ -57,9 +57,6 @@ public class DeviceService {
         TcpCidEnum cidEnum = TcpCidEnum.find(deviceData.getCid());
         logger.debug("{}-{}-{}-{} => {}", deviceData.getC1(), deviceData.getC2(), deviceData.getC3(), deviceData.getCid(), cidEnum.getDictLabel(), deviceData.getInfo());
         switch (cidEnum) {
-            case _D0:
-                devResponseHandler.cmdD0(deviceData);
-                break;
             case _D1:
                 devResponseHandler.cmdD1(deviceData);
                 break;
@@ -78,26 +75,13 @@ public class DeviceService {
             case _DA:
             case _DB:
             case _DD:
-            case _DE:
-            case _DF:
                 devResponseHandler.responseResult(deviceData);
                 break;
             case _D8:
                 dataSwitchHandler.cmdD8(deviceData);
                 break;
-            case _E7:
-                devResponseHandler.cmdE7(deviceData);
-                break;
             case _B0:
                 devResponseHandler.cmdB0(deviceData);
-                break;
-            case _B1:
-                devResponseHandler.cmdB1(deviceData);
-                break;
-            case _B2:
-                break;
-            case _B3:
-                devResponseHandler.cmdB3(deviceData);
                 break;
             default:
                 logger.info("指令错误：{}", deviceData.getCid());

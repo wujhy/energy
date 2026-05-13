@@ -1,24 +1,41 @@
 package com.shanhe.project.device.opt.service;
 
-import cn.hutool.core.util.ObjUtil;
-import com.shanhe.common.utils.CacheUtils;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.enums.BatteryCidEnum;
 import com.shanhe.framework.enums.CacheKeyEnum;
+import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.enums.TcpCharEnum;
 import com.shanhe.framework.enums.TcpCidEnum;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
+import com.shanhe.framework.consts.SysConst;
 import com.shanhe.framework.web.domain.AjaxResult;
+import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
+import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
+import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
+import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.Config;
+import com.shanhe.project.device.config.domain.ConfigAttribute;
+import com.shanhe.project.device.config.service.BatteryReportLogService;
+import com.shanhe.project.device.config.service.IBatteryPackService;
+import com.shanhe.project.device.config.service.IConfigAttributeService;
 import com.shanhe.project.device.host.domain.Host;
+import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.device.opt.cmd.DeviceModel;
 import com.shanhe.project.device.opt.vo.BatterySetVO;
 import com.shanhe.project.iot.model.BatteryModeInfo;
+import com.shanhe.project.monitor.server.service.SystemService;
+import com.shanhe.project.sync.domain.AlarmItemLevelVo;
+import org.springframework.context.annotation.Lazy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import oshi.util.Util;
 
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 开关量控制类
@@ -32,15 +49,244 @@ public class ControlBatterySet extends ControlBase {
     protected static Logger logger = LoggerFactory.getLogger(ControlBatterySet.class);
     /** 缓存结果 **/
     CacheKeyEnum cacheKeyEnum = CacheKeyEnum.RESULT;
+    @Resource
+    private BatteryReportLogService batteryReportLogService;
+    @Resource
+    private IConfigAttributeService configAttributeService;
+    @Resource
+    @Lazy
+    private RestoreService restoreService;
+    @Resource
+    private BatteryCollectorCommandService batteryCollectorCommandService;
+    @Resource
+    private BatteryModeStatusService batteryModeStatusService;
+    @Resource
+    private IHostService hostService;
+    @Resource
+    private IBatteryPackService batteryPackService;
+
+    public AjaxResult manualModelNum(BatterySetVO batterySetVO) {
+        try {
+            applyDefaultConfigId(batterySetVO);
+            String channelName = resolveChannelName(batterySetVO);
+            BatteryCollectorCommandResult result = batteryCollectorCommandService.manualSetSubmoduleAddress(
+                    channelName,
+                    batterySetVO.getPackNum(),
+                    batterySetVO.getModelNum(),
+                    batterySetVO.getNewModelNum(),
+                    null);
+            return toCommandAjaxResult(result);
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    public AjaxResult autoModelNum(BatterySetVO batterySetVO) {
+        try {
+            applyDefaultConfigId(batterySetVO);
+            BatteryModeInfo modelResult = getModelResult(batterySetVO);
+            if (modelResult != null && (modelResult.getMode() != 0 || modelResult.getStatus() != 0)) {
+                String mode = modelResult.getMode() == 1 ? "自动编号" : modelResult.getMode() == 6 ? "内阻测试" : modelResult.getMode() == 10 ? "连接条电阻测试" : "无";
+                return AjaxResult.error("正在进行" + mode + "，请勿进行其他操作");
+            }
+            BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(Constants.DEFAULT_CONFIG_ID, batterySetVO.getPackNum());
+            if (batteryPack == null) {
+                return AjaxResult.error("未找到电池组配置，自动编号失败！");
+            }
+            if (batteryPack.getBatSinSize() == null || batteryPack.getBatSinModel() == null) {
+                return AjaxResult.error("电池组单体数量或规格未配置，自动编号失败！");
+            }
+            String channelName = resolveChannelName(batterySetVO);
+            BatteryCollectorCommandResult result = batteryCollectorCommandService.autoSetSubmoduleAddress(
+                    channelName,
+                    batterySetVO.getPackNum(),
+                    batteryPack.getBatSinSize(),
+                    batteryPack.getBatSinModel(),
+                    null);
+            return toCommandAjaxResult(result);
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    public AjaxResult batteryVersion(BatterySetVO batterySetVO) {
+        Host host = hostService.getDetail();
+        String version = firstNonBlank(
+                host == null ? null : host.getVersion(),
+                host == null ? null : host.getSoftVersion(),
+                SysConst.version == null ? null : "V" + SysConst.version);
+        return AjaxResult.success(version == null ? "" : version);
+    }
+
+    public AjaxResult refreshModelNum(BatterySetVO batterySetVO) {
+        applyDefaultConfigId(batterySetVO);
+        return AjaxResult.success(getModelResult(batterySetVO));
+    }
+
+    public AjaxResult clearModelNum(BatterySetVO batterySetVO) {
+        applyDefaultConfigId(batterySetVO);
+        return clearModelNum(batterySetVO.getPackNum());
+    }
+
+    public AjaxResult resistance(BatterySetVO batterySetVO) {
+        try {
+            applyDefaultConfigId(batterySetVO);
+            int resistance = toResistanceCoefficient(batterySetVO.getResistance());
+            String channelName = resolveChannelName(batterySetVO);
+            int moduleAddress = batterySetVO.getModelNum() == null ? 0 : batterySetVO.getModelNum();
+            BatteryCollectorCommandResult result = batteryCollectorCommandService.setInternalResistanceCoefficient(
+                    channelName,
+                    batterySetVO.getPackNum(),
+                    moduleAddress,
+                    resistance,
+                    null);
+            return toCommandAjaxResult(result);
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    public AjaxResult resistanceDefaultValue(BatterySetVO batterySetVO) {
+        applyDefaultConfigId(batterySetVO);
+        ConfigAttribute configAttribute = configAttributeService.getBy(Constants.DEFAULT_CONFIG_ID, batterySetVO.getPackNum(), ItemCode.DTNZGD.getCode());
+        if (configAttribute == null) {
+            configAttribute = configAttributeService.getBy(Constants.DEFAULT_CONFIG_ID, batterySetVO.getPackNum(), ItemCode.DTNZGX.getCode());
+        }
+        if (configAttribute == null || configAttribute.getListLevel() == null || configAttribute.getListLevel().isEmpty()) {
+            return AjaxResult.success(0L);
+        }
+        return AjaxResult.success(configAttribute.getListLevel().get(0).getStandValue());
+    }
+
+    public AjaxResult resistanceValue(BatterySetVO batterySetVO) {
+        applyDefaultConfigId(batterySetVO);
+        return AjaxResult.success(batteryReportLogService.resistanceValue(Constants.DEFAULT_CONFIG_ID, batterySetVO.getPackNum()));
+    }
+
+    public AjaxResult resistanceValueSet(BatterySetVO batterySetVO) {
+        try {
+            applyDefaultConfigId(batterySetVO);
+            updateResistanceStandValue(batterySetVO.getPackNum(), ItemCode.DTNZGD, batterySetVO.getResistanceStandValue());
+            updateResistanceStandValue(batterySetVO.getPackNum(), ItemCode.DTNZGX, batterySetVO.getResistanceStandValue());
+            configAttributeService.updateCache(Constants.DEFAULT_CONFIG_ID, 1);
+            return AjaxResult.success();
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    public AjaxResult delGb(BatterySetVO batterySetVO) {
+        applyDefaultConfigId(batterySetVO);
+        return sendM460Command(batterySetVO, BatteryCidEnum._20);
+    }
+
+    public AjaxResult getBalanced(BatterySetVO batterySetVO) {
+        applyDefaultConfigId(batterySetVO);
+        Map<String, Object> mapAll = configService.getExtend();
+        Map<String, Object> map = new HashMap<>();
+        map.put("autoBalanced", mapAll != null && mapAll.get("autoBalanced") != null ? mapAll.get("autoBalanced") : 0);
+        map.put("manualBalanced", mapAll != null && mapAll.get("manualBalanced") != null ? mapAll.get("manualBalanced") : 0);
+        map.put("buzzerStatus", mapAll != null && mapAll.get("buzzerStatus") != null ? mapAll.get("buzzerStatus") : 0);
+        return AjaxResult.success(map);
+    }
+
+    public AjaxResult balanced(BatterySetVO batterySetVO) {
+        try {
+            applyDefaultConfigId(batterySetVO);
+            saveBalancedStatus(
+                    batterySetVO.getAutoBalanced(),
+                    batterySetVO.getManualBalanced());
+            return AjaxResult.success();
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    public AjaxResult delPack(BatterySetVO batterySetVO) {
+        try {
+            applyDefaultConfigId(batterySetVO);
+            restoreService.delPack(batterySetVO);
+            String channelName = resolveChannelName(batterySetVO);
+            BatteryCollectorCommandResult result = batteryCollectorCommandService.clearBatteryGroupDebugData(
+                    channelName,
+                    batterySetVO.getPackNum(),
+                    null);
+            return toCommandAjaxResult(result);
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    public AjaxResult delHost(BatterySetVO batterySetVO) {
+        applyDefaultConfigId(batterySetVO);
+        batterySetVO.setNeedDynResult(false);
+        return sendM460Command(batterySetVO, BatteryCidEnum._79);
+    }
+
+    public AjaxResult reset(BatterySetVO batterySetVO) {
+        applyDefaultConfigId(batterySetVO);
+        batterySetVO.setNeedDynResult(false);
+        batterySetVO.setParamNum("71");
+        batterySetVO.setParamValue("08");
+        return sendM460Command(batterySetVO, BatteryCidEnum._05);
+    }
+
+    public AjaxResult restore(BatterySetVO batterySetVO) {
+        applyDefaultConfigId(batterySetVO);
+        restoreService.restore(batterySetVO);
+        return AjaxResult.success();
+    }
+
+    public AjaxResult syncTime(BatterySetVO batterySetVO) {
+        SystemService.syncServerTime(batterySetVO.getDatetime());
+        return AjaxResult.success();
+    }
+
+    public AjaxResult buzzerStatus(BatterySetVO batterySetVO) {
+        try {
+            applyDefaultConfigId(batterySetVO);
+            saveBuzzerStatus(batterySetVO.getBuzzerStatus());
+            return AjaxResult.success();
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    public AjaxResult correct(BatterySetVO batterySetVO) {
+        try {
+            applyDefaultConfigId(batterySetVO);
+            batterySetVO.setNeedDynResult(false);
+            String channelName = resolveChannelName(batterySetVO);
+            BatteryCollectorCommandResult result = batteryCollectorCommandService.setCalibrationParameter(
+                    channelName,
+                    batterySetVO.getPackNum(),
+                    batterySetVO.getModelNum(),
+                    batterySetVO.getDataType(),
+                    batterySetVO.getDataStatus(),
+                    batterySetVO.getDataInfo(),
+                    null);
+            return toCommandAjaxResult(result);
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
 
     /**
      * 设置电池组告警参数
      */
     public AjaxResult doSet(BatterySetVO batterySetVO, BatteryCidEnum cidEnum) {
+        return sendM460Command(batterySetVO, cidEnum);
+    }
+
+    /**
+     * 发送旧 M460 聚合协议指令。后续 /battery/set 接口按能力逐项替换为本地能力或 600 模块端控制。
+     */
+    private AjaxResult sendM460Command(BatterySetVO batterySetVO, BatteryCidEnum cidEnum) {
+        applyDefaultConfigId(batterySetVO);
         // 主机信息
         Host host = super.getHost();
         // 设备信息
-        Config config = super.getConfig(batterySetVO.getConfigId());
+        Config config = super.getConfig(Constants.DEFAULT_CONFIG_ID);
         // 协议内容
         StringBuilder info = new StringBuilder();
         // 指令头、默认地址、指令编码
@@ -49,19 +295,6 @@ public class ControlBatterySet extends ControlBase {
         // 响应动态指令
         String dynCid;
         switch (cidEnum) {
-            case _03:
-                // 设置电池组告警参数
-                dynCid = BatteryCidEnum._83.getDictValue();
-                // 长度
-                info.append("05");
-                // 包序号
-                info.append(CodingUtil.integerToHexString(batterySetVO.getPackNum(), 2));
-                // 异常等级
-                info.append(CodingUtil.integerToHexString(batterySetVO.getLevel(), 2));
-                // 参数号、参数值
-                info.append(batterySetVO.getParamNum());
-                info.append(batterySetVO.getParamValue());
-                break;
             case _05:
                 batterySetVO.setNeedDynResult(false);
                 // 设置系统状态响应
@@ -72,81 +305,9 @@ public class ControlBatterySet extends ControlBase {
                 info.append(batterySetVO.getParamNum());
                 info.append(batterySetVO.getParamValue());
                 break;
-            case _08:
-                // 手动设置模块编号
-                dynCid = BatteryCidEnum._88.getDictValue();
-                // 长度
-                info.append("03");
-                // 包序号、单体编号、新编号
-                info.append(CodingUtil.integerToHexString(batterySetVO.getPackNum(), 2));
-                info.append(CodingUtil.integerToHexString(batterySetVO.getModelNum(), 2));
-                info.append(CodingUtil.integerToHexString(batterySetVO.getNewModelNum(), 2));
-                break;
-            case _09:
-                batterySetVO.setNeedDynResult(false);
-                // 配置电池组
-                dynCid = BatteryCidEnum._89.getDictValue();
-                // 长度
-                info.append("05");
-                // 包序号、电池规格、电池节数、电池容量
-                info.append(CodingUtil.integerToHexString(batterySetVO.getPackNum(), 2));
-                info.append(CodingUtil.integerToHexString(batterySetVO.getBatSinModel(), 2));
-                info.append(CodingUtil.integerToHexString(batterySetVO.getBatSinSize(), 2));
-                info.append(CodingUtil.integerToHexString(batterySetVO.getBatCapacity().intValue(), 4));
-                break;
-            case _0E:
-                // 设备型号及软件版本号
-                dynCid = BatteryCidEnum._8E.getDictValue();
-                // 长度
-                info.append("00");
-                break;
-            case _18:
-                // 自动设置模块编号
-                dynCid = BatteryCidEnum._A8.getDictValue();
-                // 长度
-                info.append("01");
-                // 包序号
-                info.append(CodingUtil.integerToHexString(batterySetVO.getPackNum(), 2));
-                break;
-            case _19:
-                // 未设置单体编号，则为整组内阻系数设置，无需等待响应
-                if (batterySetVO.getModelNum() == null || batterySetVO.getModelNum() == 0) {
-                    batterySetVO.setNeedDynResult(false);
-                    batterySetVO.setModelNum(0);
-                }
-                // 设置内阻系数
-                dynCid = BatteryCidEnum._99.getDictValue();
-                // 长度
-                info.append("04");
-                // 包序号、单体编号、内阻系数
-                info.append(CodingUtil.integerToHexString(batterySetVO.getPackNum(), 2));
-                info.append(CodingUtil.integerToHexString(batterySetVO.getModelNum(), 2));
-                int resistance = (int) (batterySetVO.getResistance() * 1000);
-                if (resistance > 65535) {
-                    return AjaxResult.error("内阻系数过大！");
-                }
-                info.append(CodingUtil.integerToHexString(resistance, 4));
-                break;
             case _20:
                 // 清鼓包数据
                 dynCid = BatteryCidEnum._2A.getDictValue();
-                // 长度
-                info.append("01");
-                // 包序号
-                info.append(CodingUtil.integerToHexString(batterySetVO.getPackNum(), 2));
-                break;
-            case _38:
-                // 均衡设置
-                dynCid = BatteryCidEnum._E8.getDictValue();
-                // 长度
-                info.append("02");
-                // 手动均衡、自动均衡
-                info.append(CodingUtil.integerToHexString(batterySetVO.getManualBalanced(), 2));
-                info.append(CodingUtil.integerToHexString(batterySetVO.getAutoBalanced(), 2));
-                break;
-            case _3B:
-                // 电池组工作模式
-                dynCid = BatteryCidEnum._EB.getDictValue();
                 // 长度
                 info.append("01");
                 // 包序号
@@ -158,45 +319,11 @@ public class ControlBatterySet extends ControlBase {
                 // 长度
                 info.append("00");
                 break;
-            case _78:
-                // 清组数据
-                dynCid = BatteryCidEnum._F8.getDictValue();
-                // 长度
-                info.append("01");
-                // 包序号
-                info.append(CodingUtil.integerToHexString(batterySetVO.getPackNum(), 2));
-                break;
             case _79:
                 // 清主机数据
                 dynCid = BatteryCidEnum._F9.getDictValue();
                 // 长度
                 info.append("01").append("01");
-                break;
-            case _76:
-                // 清主机数据
-                dynCid = BatteryCidEnum._F6.getDictValue();
-                // 长度
-                info.append("06");
-                // 包序号
-                info.append(CodingUtil.integerToHexString(batterySetVO.getPackNum(), 2));
-                // 单体编号
-                info.append(CodingUtil.integerToHexString(batterySetVO.getModelNum(), 2));
-                // 数据类型
-                info.append(CodingUtil.integerToHexString(batterySetVO.getDataType(), 2));
-                // 数据高低
-                info.append(CodingUtil.integerToHexString(batterySetVO.getDataStatus(), 2));
-                // 数据值
-
-
-                /**
-                 * 负数处理
-                 */
-                // batterySetVO.getDataInfo() 负数处理
-                if (batterySetVO.getDataInfo() < 0 ) {
-                    batterySetVO.setDataInfo(batterySetVO.getDataInfo() + 65536);
-                }
-
-                info.append(CodingUtil.integerToHexString(batterySetVO.getDataInfo(), 4));
                 break;
             default:
                 return AjaxResult.error("指令异常！");
@@ -218,14 +345,7 @@ public class ControlBatterySet extends ControlBase {
         // 下发指令
         CommServer.returnCmd(DeviceModel.getCmd(host, config, info.toString(), TcpCidEnum._54.getDictValue(), dynCid));
 
-        // 结果监控
-        if (cidEnum == BatteryCidEnum._0E) {
-            return getVersionResult(resultKey);
-        }
-//        else if (cidEnum == BatteryCidEnum._3B) {
-//            return getModelResult(resultKey);
-//        }
-        else if (batterySetVO.getNeedDynResult()) {
+        if (batterySetVO.getNeedDynResult()) {
             return super.getControlResult(resultKey, cacheKeyEnum);
         } else {
             return AjaxResult.success();
@@ -234,87 +354,98 @@ public class ControlBatterySet extends ControlBase {
 
     /**
      * 监听控制指令执行结果
-     *
-     * @param resultKey 缓存key
-     * @return 结果
-     */
-    public AjaxResult getVersionResult(String resultKey) {
-        for (int i = 0; i < 20; i++) {
-            Object result = CacheUtils.get(cacheKeyEnum.getCache(), resultKey);
-            if (result == null) {
-                // 超时
-                break;
-            } else if (result instanceof String) {
-                CacheUtils.remove(cacheKeyEnum.getCache(), resultKey);
-                return AjaxResult.success(result);
-            }
-            Util.sleep(500L);
-        }
-
-        return AjaxResult.success("");
-    }
-
-    /**
-     * 监听控制指令执行结果
-     *
-     * @param resultKey 缓存key
-     * @return 结果
-     */
-    public AjaxResult getModelResult(String resultKey) {
-        while (true) {
-            Object result = CacheUtils.get(cacheKeyEnum.getCache(), resultKey);
-            if (result == null) {
-                // 超时
-                break;
-            } else if (result instanceof BatteryModeInfo) {
-                CacheUtils.remove(cacheKeyEnum.getCache(), resultKey);
-                return AjaxResult.success(result);
-            }
-            Util.sleep(500L);
-        }
-
-        return AjaxResult.error("请求失败");
-    }
-
-    /**
-     * 监听控制指令执行结果
      */
     public BatteryModeInfo getModelResult(BatterySetVO batterySetVO) {
-        // 设备信息
-        Object result = CacheUtils.get(cacheKeyEnum.getCache(),
-                String.format(cacheKeyEnum.getKey(), batterySetVO.getConfigId(), null, BatteryCidEnum._EB.getDictValue()));
-
-        if (result instanceof BatteryModeInfo) {
-            return (BatteryModeInfo) result;
-        }
-        BatteryModeInfo batteryModeInfo = new BatteryModeInfo();
-        batteryModeInfo.setPackNum(batterySetVO.getPackNum());
-        batteryModeInfo.setMode(0);
-        batteryModeInfo.setResult(0);
-        batteryModeInfo.setStatus(0);
-        return batteryModeInfo;
+        return batteryModeStatusService.get(batterySetVO.getPackNum());
     }
 
     /**
      * 清除编号数据
      */
-    public AjaxResult clearModelNum(Long configId, Integer packNum) {
-        String key = String.format(cacheKeyEnum.getKey(), configId, null, BatteryCidEnum._EB.getDictValue());
-        // 设备信息
-        if (null == packNum) {
-            CacheUtils.remove(cacheKeyEnum.getCache(), key);
-            return AjaxResult.success();
-        }
-        Object result = CacheUtils.get(cacheKeyEnum.getCache(), key);
-        if (null != result) {
-            if (result instanceof BatteryModeInfo) {
-                BatteryModeInfo batteryModeInfo = (BatteryModeInfo) result;
-                if (ObjUtil.equals(packNum, batteryModeInfo.getPackNum())) {
-                    CacheUtils.remove(cacheKeyEnum.getCache(), key);
-                }
-            }
+    public AjaxResult clearModelNum(Integer packNum) {
+        batteryModeStatusService.clear(packNum);
+        return AjaxResult.success();
+    }
+
+    private void updateResistanceStandValue(Integer packNum, ItemCode itemCode, Integer resistanceStandValue) {
+        ConfigAttribute attribute = configAttributeService.getBy(Constants.DEFAULT_CONFIG_ID, packNum, itemCode.getCode());
+        if (attribute == null) {
+            logger.info("电池组{}未配置{}，跳过内阻基准值更新", packNum, itemCode.getCode());
+            return;
         }
 
+        List<AlarmItemLevelVo> levelList = attribute.getListLevel() == null ? new ArrayList<>() : new ArrayList<>(attribute.getListLevel());
+        AlarmItemLevelVo levelVo = levelList.isEmpty() ? new AlarmItemLevelVo() : levelList.get(0);
+        levelVo.setStandValue(resistanceStandValue == null ? null : resistanceStandValue.doubleValue());
+        if (levelList.isEmpty()) {
+            levelList.add(levelVo);
+        } else {
+            levelList.set(0, levelVo);
+        }
+
+        attribute.setListLevel(levelList);
+        configAttributeService.updateConfigAttributeAlarm(attribute);
+    }
+
+    public void saveBalancedStatus(Integer autoBalanced, Integer manualBalanced) {
+        Map<String, Object> mapAll = configService.getExtend();
+        mapAll = mapAll == null ? new HashMap<>() : mapAll;
+        mapAll.put("autoBalanced", autoBalanced == null ? 0 : autoBalanced);
+        mapAll.put("manualBalanced", manualBalanced == null ? 0 : manualBalanced);
+        configService.updateExtend(mapAll);
+    }
+
+    public void saveBuzzerStatus(Integer buzzerStatus) {
+        Map<String, Object> mapAll = configService.getExtend();
+        mapAll = mapAll == null ? new HashMap<>() : mapAll;
+        mapAll.put("buzzerStatus", buzzerStatus == null ? 0 : buzzerStatus);
+        configService.updateExtend(mapAll);
+    }
+
+    private void applyDefaultConfigId(BatterySetVO batterySetVO) {
+        if (batterySetVO != null) {
+            batterySetVO.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        }
+    }
+
+    private String resolveChannelName(BatterySetVO batterySetVO) {
+        String channelName = batteryCollectorCommandService.resolveChannelName(null, batterySetVO.getPackNum());
+        if (channelName == null) {
+            throw new IllegalArgumentException("未找到对应的蓄电池采集通道，操作执行失败！");
+        }
+        return channelName;
+    }
+
+    private AjaxResult toCommandAjaxResult(BatteryCollectorCommandResult result) {
+        if (result == null) {
+            return AjaxResult.error("指令下发失败！");
+        }
+        if (!result.isSuccess()) {
+            return AjaxResult.error(result.getMessage() == null ? "指令下发失败！" : result.getMessage());
+        }
         return AjaxResult.success();
+    }
+
+    private int toResistanceCoefficient(Float resistanceValue) {
+        if (resistanceValue == null) {
+            throw new IllegalArgumentException("内阻系数不能为空！");
+        }
+        int resistance = (int) (resistanceValue * 1000);
+        if (resistance < 0 || resistance > 65535) {
+            throw new IllegalArgumentException("内阻系数过大！");
+        }
+        return resistance;
+    }
+
+    private String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) {
+                return value;
+            }
+        }
+        return null;
     }
 }

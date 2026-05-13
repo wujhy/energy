@@ -43,4 +43,29 @@ public class BatteryModuleControlCommand {
      * 命令说明。
      */
     private String description;
+
+    /**
+     * 旧业务设备ID，用于兼容 BatteryModeInfo 状态缓存。
+     */
+    private Long configId;
+
+    /**
+     * 电池组编号，用于兼容 BatteryModeInfo 状态缓存。
+     */
+    private Integer batteryGroup;
+
+    /**
+     * 旧 BatteryModeInfo 工作模式。
+     */
+    private Integer mode;
+
+    /**
+     * 自动编号目标单体数量。
+     */
+    private Integer autoAddressBatteryCount;
+
+    /**
+     * 自动编号电池规格。
+     */
+    private Integer autoAddressBatterySpecification;
 }

@@ -45,6 +45,31 @@ public class BatteryPendingRequest {
     private boolean autoPoll;
 
     /**
+     * 旧业务设备ID，用于兼容 BatteryModeInfo 状态缓存。
+     */
+    private Long configId;
+
+    /**
+     * 电池组编号，用于兼容 BatteryModeInfo 状态缓存。
+     */
+    private Integer batteryGroup;
+
+    /**
+     * 旧 BatteryModeInfo 工作模式。
+     */
+    private Integer mode;
+
+    /**
+     * 自动编号目标单体数量。
+     */
+    private Integer autoAddressBatteryCount;
+
+    /**
+     * 自动编号电池规格。
+     */
+    private Integer autoAddressBatterySpecification;
+
+    /**
      * 根据 600 节模块端协议码创建待响应请求。
      *
      * @param protocolCode 协议码

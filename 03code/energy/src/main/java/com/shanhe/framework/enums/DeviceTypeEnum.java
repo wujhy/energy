@@ -60,11 +60,12 @@ public enum DeviceTypeEnum {
     }
 
     /**
-     * 转list
+     * 当前页面下拉只暴露 energy 保留的设备类型。
+     * 旧多设备类型枚举值继续保留，供历史数据按值查询标签。
      */
     public static List<Dict> getDictList() {
         List<Dict> list = new ArrayList<>();
-        for (DeviceTypeEnum dictEnum : DeviceTypeEnum.values()) {
+        for (DeviceTypeEnum dictEnum : new DeviceTypeEnum[]{_0, _1}) {
             list.add(new Dict(dictEnum.getDictLabel(), dictEnum.getDictValue()));
         }
         return list;

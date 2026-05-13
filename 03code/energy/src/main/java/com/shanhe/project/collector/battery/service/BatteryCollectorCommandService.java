@@ -21,6 +21,10 @@ import javax.annotation.Resource;
 @Service
 public class BatteryCollectorCommandService {
 
+    private static final int GROUP_MODULE_ADDRESS = 246;
+    private static final int START_SET_ADDRESS = 1;
+    private static final int CLEAR_ALL_DEBUG_PARAMETER = 0x0F;
+
     /**
      * 980 聚合命令不允许直发 600 节下行总线时的提示。
      */
@@ -71,19 +75,12 @@ public class BatteryCollectorCommandService {
             // 兼容入口只保留旧 980 语义，不允许绕过映射直写 600 节下行总线。
             return unsupported(commandDefinition, channelName);
         }
+        applyModeContext(moduleCommand, commandDefinition, payloadBytes);
         return mapped(commandDefinition, channelName, moduleCommand, queueModuleCommand(channelName, moduleCommand));
-    }
-
-    public BatteryCollectorCommandResult setSystemState(String channelName, int batteryGroup, int systemState, Long timeoutMs) {
-        return execute(BatteryAggregateCommandDefinition.SET_SYSTEM_STATE, channelName, timeoutMs, systemState, batteryGroup);
     }
 
     public BatteryCollectorCommandResult singleInternalResistanceTest(String channelName, int batteryGroup, int batteryNumber, Long timeoutMs) {
         return execute(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST, channelName, timeoutMs, batteryGroup, batteryNumber);
-    }
-
-    public BatteryCollectorCommandResult automaticSetSubmoduleAddress(String channelName, int batteryGroup, Long timeoutMs) {
-        return unsupported(BatteryAggregateCommandDefinition.AUTOMATIC_SET_SUBMODULE_ADDRESS, channelName);
     }
 
     public BatteryCollectorCommandResult manualSetSubmoduleAddress(String channelName,
@@ -105,7 +102,7 @@ public class BatteryCollectorCommandService {
         }
         return mapped(BatteryAggregateCommandDefinition.SET_SUBMODULE_ID,
                 channelName,
-                moduleCommand,
+                applyContext(moduleCommand, batteryGroup, null),
                 queueModuleCommand(channelName, moduleCommand));
     }
 
@@ -113,54 +110,107 @@ public class BatteryCollectorCommandService {
         return execute(BatteryAggregateCommandDefinition.CONNECT_RESISTANCE_TEST, channelName, timeoutMs, batteryGroup);
     }
 
-    public BatteryCollectorCommandResult settingInternalResistanceCoefficient(String channelName, int batteryGroup, double coefficient, Long timeoutMs) {
-        return unsupported(BatteryAggregateCommandDefinition.SETTING_INTERNAL_RESISTANCE_COEFFICIENT, channelName);
+    public BatteryCollectorCommandResult clearBatteryGroupDebugData(String channelName,
+                                                                    int batteryGroup,
+                                                                    Long timeoutMs) {
+        BatteryModuleControlCommand moduleCommand;
+        try {
+            moduleCommand = moduleControlCommandService.clearSingleDebugData(CLEAR_ALL_DEBUG_PARAMETER);
+        } catch (IllegalArgumentException e) {
+            log.warn("clear battery group debug data command rejected, channel={}, group={}, reason={}",
+                    channelName,
+                    batteryGroup,
+                    e.getMessage());
+            return unsupported(BatteryAggregateCommandDefinition.CLEAR_INDIVIDUAL_DEBUGGING_DATA, channelName);
+        }
+        return mapped(BatteryAggregateCommandDefinition.CLEAR_INDIVIDUAL_DEBUGGING_DATA,
+                channelName,
+                applyContext(moduleCommand, batteryGroup, null),
+                queueModuleCommand(channelName, moduleCommand));
     }
 
-    public BatteryCollectorCommandResult updateTimeAll(String channelName, int deviceType, int year, int month, int day, int hour, int minute, int second, Long timeoutMs) {
-        return execute(BatteryAggregateCommandDefinition.UPDATE_TIME_ALL, channelName, timeoutMs,
-                deviceType, year, month, day, hour, minute, second);
+    public BatteryCollectorCommandResult autoSetSubmoduleAddress(String channelName,
+                                                                 int batteryGroup,
+                                                                 int batteryCount,
+                                                                 int batterySpecification,
+                                                                 Long timeoutMs) {
+        BatteryModuleControlCommand moduleCommand;
+        try {
+            moduleCommand = moduleControlCommandService.autoSetModuleAddress(
+                    GROUP_MODULE_ADDRESS,
+                    automaticSetAddressStartPayload(batteryCount, batterySpecification));
+            moduleCommand.setAutoAddressBatteryCount(batteryCount);
+            moduleCommand.setAutoAddressBatterySpecification(batterySpecification);
+        } catch (IllegalArgumentException e) {
+            log.warn("automatic module address command rejected, channel={}, group={}, batteryCount={}, specification={}, reason={}",
+                    channelName,
+                    batteryGroup,
+                    batteryCount,
+                    batterySpecification,
+                    e.getMessage());
+            return unsupported(BatteryAggregateCommandDefinition.AUTOMATIC_SET_SUBMODULE_ADDRESS, channelName);
+        }
+        return mapped(BatteryAggregateCommandDefinition.AUTOMATIC_SET_SUBMODULE_ADDRESS,
+                channelName,
+                applyContext(moduleCommand, batteryGroup, BatteryModeStatusService.MODE_AUTO_MODEL_NUM),
+                queueModuleCommand(channelName, moduleCommand));
     }
 
-    public BatteryCollectorCommandResult batteryEqualizationSet(String channelName, int manualEnable, int autoEnable, Long timeoutMs) {
-        return execute(BatteryAggregateCommandDefinition.BATTERY_EQUALIZATION_SET, channelName, timeoutMs, manualEnable, autoEnable);
+    public BatteryCollectorCommandResult setInternalResistanceCoefficient(String channelName,
+                                                                          int batteryGroup,
+                                                                          int moduleAddress,
+                                                                          int coefficient,
+                                                                          Long timeoutMs) {
+        BatteryModuleControlCommand moduleCommand;
+        try {
+            moduleCommand = moduleControlCommandService.setInternalResistanceCoefficient(
+                    moduleAddress,
+                    resistanceCoefficientToM460FloatBytes(coefficient));
+        } catch (IllegalArgumentException e) {
+            log.warn("internal resistance coefficient command rejected, channel={}, group={}, address={}, coefficient={}, reason={}",
+                    channelName,
+                    batteryGroup,
+                    moduleAddress,
+                    coefficient,
+                    e.getMessage());
+            return unsupported(BatteryAggregateCommandDefinition.SETTING_INTERNAL_RESISTANCE_COEFFICIENT, channelName);
+        }
+        return mapped(BatteryAggregateCommandDefinition.SETTING_INTERNAL_RESISTANCE_COEFFICIENT,
+                channelName,
+                applyContext(moduleCommand, batteryGroup, null),
+                queueModuleCommand(channelName, moduleCommand));
     }
 
-    public BatteryCollectorCommandResult setDeviceIpAddress(String channelName,
-                                                            int[] deviceIpBytes,
-                                                            int[] maskBytes,
-                                                            int[] gatewayBytes,
-                                                            int port,
-                                                            Long timeoutMs) {
-        return unsupported(BatteryAggregateCommandDefinition.SET_DEVICE_IP_ADDRESS, channelName);
-    }
-
-    public BatteryCollectorCommandResult setCloudServerIpAddress(String channelName, int[] cloudServerIpBytes, int port, Long timeoutMs) {
-        return unsupported(BatteryAggregateCommandDefinition.SET_CLOUD_SERVER_IP_ADDRESS, channelName);
-    }
-
-    public BatteryCollectorCommandResult setServerClientMode(String channelName, int mode, Long timeoutMs) {
-        return execute(BatteryAggregateCommandDefinition.SET_SERVER_CLIENT_MODE, channelName, timeoutMs, mode);
-    }
-
-    public BatteryCollectorCommandResult clearIndividualDebuggingData(String channelName, int batteryGroup, Long timeoutMs) {
-        return execute(BatteryAggregateCommandDefinition.CLEAR_INDIVIDUAL_DEBUGGING_DATA, channelName, timeoutMs, batteryGroup);
-    }
-
-    public BatteryCollectorCommandResult clearHostDebuggingData(String channelName, Long timeoutMs) {
-        return execute(BatteryAggregateCommandDefinition.CLEAR_HOST_DEBUGGING_DATA, channelName, timeoutMs);
-    }
-
-    public BatteryCollectorCommandResult setDeviceId(String channelName, int deviceId, Long timeoutMs) {
-        return execute(BatteryAggregateCommandDefinition.SET_DEVICE_ID, channelName, timeoutMs, deviceId);
-    }
-
-    public BatteryCollectorCommandResult setSubmoduleId(String channelName, int submoduleId, Long timeoutMs) {
-        return unsupported(BatteryAggregateCommandDefinition.SET_SUBMODULE_ID, channelName);
-    }
-
-    public BatteryCollectorCommandResult setSwollenVoltageReference(String channelName, int batteryGroup, double referenceValue, Long timeoutMs) {
-        return unsupported(BatteryAggregateCommandDefinition.SET_SWOLLEN_VOLTAGE_REFERENCE, channelName);
+    public BatteryCollectorCommandResult setCalibrationParameter(String channelName,
+                                                                 int batteryGroup,
+                                                                 int moduleAddress,
+                                                                 int dataType,
+                                                                 int dataStatus,
+                                                                 int dataInfo,
+                                                                 Long timeoutMs) {
+        BatteryModuleControlCommand moduleCommand;
+        try {
+            moduleCommand = moduleControlCommandService.setCalibrationParameter(
+                    moduleAddress,
+                    dataType,
+                    dataStatus,
+                    unsignedShortHigh(dataInfo),
+                    unsignedShortLow(dataInfo));
+        } catch (IllegalArgumentException e) {
+            log.warn("battery calibration command rejected, channel={}, group={}, address={}, dataType={}, dataStatus={}, dataInfo={}, reason={}",
+                    channelName,
+                    batteryGroup,
+                    moduleAddress,
+                    dataType,
+                    dataStatus,
+                    dataInfo,
+                    e.getMessage());
+            return unsupported(BatteryAggregateCommandDefinition.BATTERY_DATA_CORRECTION, channelName);
+        }
+        return mapped(BatteryAggregateCommandDefinition.BATTERY_DATA_CORRECTION,
+                channelName,
+                applyContext(moduleCommand, batteryGroup, null),
+                queueModuleCommand(channelName, moduleCommand));
     }
 
     /**
@@ -255,6 +305,107 @@ public class BatteryCollectorCommandService {
 
     private boolean queueModuleCommand(String channelName, BatteryModuleControlCommand moduleCommand) {
         return collectorService != null && collectorService.submitModuleCommand(channelName, moduleCommand);
+    }
+
+    private BatteryModuleControlCommand applyContext(BatteryModuleControlCommand moduleCommand,
+                                                     Integer batteryGroup,
+                                                     Integer mode) {
+        if (moduleCommand != null) {
+            moduleCommand.setBatteryGroup(batteryGroup);
+            moduleCommand.setMode(mode);
+        }
+        return moduleCommand;
+    }
+
+    private void applyModeContext(BatteryModuleControlCommand moduleCommand,
+                                  BatteryAggregateCommandDefinition commandDefinition,
+                                  int... payloadBytes) {
+        if (moduleCommand == null || commandDefinition == null) {
+            return;
+        }
+        switch (commandDefinition) {
+            case AUTOMATIC_SET_SUBMODULE_ADDRESS:
+                moduleCommand.setMode(BatteryModeStatusService.MODE_AUTO_MODEL_NUM);
+                break;
+            case SINGLE_INTERNAL_RESISTANCE_TEST:
+                moduleCommand.setMode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+                break;
+            case CONNECT_RESISTANCE_TEST:
+                moduleCommand.setMode(BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+                break;
+            default:
+                return;
+        }
+        if (payloadBytes != null && payloadBytes.length > 0) {
+            moduleCommand.setBatteryGroup(payloadBytes[0]);
+        }
+    }
+
+    private int[] resistanceCoefficientToM460FloatBytes(int coefficient) {
+        if (coefficient < 0 || coefficient > 65535) {
+            throw new IllegalArgumentException("内阻系数必须在0到65535之间");
+        }
+        // 旧 M460 将 980 侧两字节整数除以 1000 后，按 MCU 小端 float 内存字节下发给 600 模块。
+        int bits = Float.floatToIntBits(coefficient / 1000.0f);
+        return new int[]{
+                bits & 0xFF,
+                (bits >> 8) & 0xFF,
+                (bits >> 16) & 0xFF,
+                (bits >> 24) & 0xFF
+        };
+    }
+
+    private int[] automaticSetAddressStartPayload(int batteryCount, int batterySpecification) {
+        validateBatteryCount(batteryCount);
+        validateBatterySpecification(batterySpecification);
+        return new int[]{
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                START_SET_ADDRESS
+        };
+    }
+
+    private void validateBatteryCount(int batteryCount) {
+        if (batteryCount < 1 || batteryCount > 245) {
+            throw new IllegalArgumentException("电池组单体数量必须在1到245之间");
+        }
+    }
+
+    private void validateBatterySpecification(int batterySpecification) {
+        batterySpecificationToVoltage(batterySpecification);
+    }
+
+    private int batterySpecificationToVoltage(int batterySpecification) {
+        switch (batterySpecification) {
+            case 2:
+                return 2;
+            case 8:
+                return 12;
+            default:
+                throw new IllegalArgumentException("自动编号仅支持2V或12V电池规格");
+        }
+    }
+
+    private int unsignedShortHigh(int value) {
+        return (toUnsignedShort(value) >> 8) & 0xFF;
+    }
+
+    private int unsignedShortLow(int value) {
+        return toUnsignedShort(value) & 0xFF;
+    }
+
+    private int toUnsignedShort(int value) {
+        if (value < 0) {
+            value += 65536;
+        }
+        if (value < 0 || value > 65535) {
+            throw new IllegalArgumentException("dataInfo must be between -65535 and 65535");
+        }
+        return value;
     }
 
     private BatteryCollectorCommandResult unsupported(BatteryAggregateCommandDefinition commandDefinition, String channelName) {

@@ -44,6 +44,10 @@ import java.util.concurrent.Executors;
 @Component
 public class BatteryCollectorService implements ApplicationRunner, DisposableBean {
 
+    private static final int GROUP_MODULE_ADDRESS = 246;
+    private static final int START_SET_ADDRESS = 1;
+    private static final int STOP_SET_ADDRESS = 2;
+
     /**
      * 采集模块配置。
      */
@@ -73,6 +77,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
      */
     @Resource
     private IBatteryPackService batteryPackService;
+
+    /**
+     * 旧页面/测试接口工作模式缓存。
+     */
+    @Resource
+    private BatteryModeStatusService batteryModeStatusService;
 
     /**
      * 当前运行的通道状态。
@@ -205,7 +215,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         for (BatteryCollectorChannelState state : new ArrayList<>(channelStates)) {
             BatteryCollectorChannelConfig config = state.getConfig();
             if (config != null && channelName.equals(config.getName())) {
-                state.getQueuedModuleCommands().offer(command);
+                applyCommandChannelContext(config, command);
+                markModeRunning(command);
+                if (!state.getQueuedModuleCommands().offer(command)) {
+                    markModeStopped(command, false);
+                    return false;
+                }
                 log.info("battery module command queued, channel={}, command={}, address={}, response={}",
                         channelName,
                         command.getProtocolCode(),
@@ -218,6 +233,28 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 channelName,
                 command.getProtocolCode());
         return false;
+    }
+
+    private void applyCommandChannelContext(BatteryCollectorChannelConfig config, BatteryModuleControlCommand command) {
+        if (config == null || command == null) {
+            return;
+        }
+        if (command.getConfigId() == null) {
+            command.setConfigId(config.getConfigId());
+        }
+        if (command.getBatteryGroup() == null) {
+            command.setBatteryGroup(config.getBatteryGroup());
+        }
+    }
+
+    private void markModeRunning(BatteryModuleControlCommand command) {
+        if (command == null || command.getMode() == null) {
+            return;
+        }
+        batteryModeStatusService.markRunning(
+                command.getBatteryGroup(),
+                command.getMode(),
+                command.getAddress());
     }
 
     private boolean validateChannel(BatteryCollectorChannelConfig channel) {
@@ -395,13 +432,23 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             }
             return;
         }
-        if (!writeFrame(state, request, BatteryPendingRequest.fromProtocolCode(
+        if (!writeFrame(state, request, pendingFromCommand(command), BatteryCollectorRunState.WAIT_COMMAND_RESPONSE)) {
+            state.getQueuedModuleCommands().offer(command);
+        }
+    }
+
+    private BatteryPendingRequest pendingFromCommand(BatteryModuleControlCommand command) {
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
                 command.getProtocolCode(),
                 command.getAddress(),
                 command.getPayload() == null ? new byte[0] : command.getPayload(),
-                false), BatteryCollectorRunState.WAIT_COMMAND_RESPONSE)) {
-            state.getQueuedModuleCommands().offer(command);
-        }
+                false);
+        pendingRequest.setConfigId(command.getConfigId());
+        pendingRequest.setBatteryGroup(command.getBatteryGroup());
+        pendingRequest.setMode(command.getMode());
+        pendingRequest.setAutoAddressBatteryCount(command.getAutoAddressBatteryCount());
+        pendingRequest.setAutoAddressBatterySpecification(command.getAutoAddressBatterySpecification());
+        return pendingRequest;
     }
 
     private void sendCommand(BatteryCollectorChannelState state, BatteryDeviceProtocolCode pollingCommand) {
@@ -478,6 +525,9 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         state.setLastPendingTimedOut(false);
         state.setRunState(BatteryCollectorRunState.READ);
         markCompletedModuleCommand(state, command.getProtocolCode().name(), 0, true);
+        if (shouldStopModeAfterNoResponseCommand(command)) {
+            markModeStopped(command, true);
+        }
         logProtocol(state, "tx", "cmd=" + String.format("%02X", command.getRequestCode())
                 + ", expect=-"
                 + ", retry=0"
@@ -551,6 +601,21 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         }
         boolean success = isSuccessResponse(frame, pendingRequest);
         markCompletedModuleCommand(state, pendingRequest.getName(), frame.getCommand(), success);
+        if (BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.name().equals(pendingRequest.getName())) {
+            if (!success) {
+                markModeStopped(pendingRequest, false);
+                return;
+            }
+            if (queueNextAutoSetAddressStep(state, frame, pendingRequest)) {
+                return;
+            }
+            markModeStopped(pendingRequest, true);
+            resetModuleAddressCache(state);
+            log.info("battery module address cache reset after auto address success, channel={}",
+                    state.getConfig() == null ? null : state.getConfig().getName());
+            return;
+        }
+        markModeStopped(pendingRequest, success);
         if (success && shouldResetModuleAddressCacheAfterCommand(pendingRequest)) {
             resetModuleAddressCache(state);
             log.info("battery module address cache reset after address command success, channel={}, command={}",
@@ -568,13 +633,119 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             return true;
         }
         byte[] payload = frame.getPayloadSafe();
+        if (protocolCode == BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS) {
+            if (payload.length < 3) {
+                return false;
+            }
+            return pendingRequest.getRequestAddress() != GROUP_MODULE_ADDRESS || (payload[0] & 0xFF) == START_SET_ADDRESS;
+        }
         return payload.length > 0 && (payload[0] & 0xFF) == 0;
     }
 
     private boolean shouldResetModuleAddressCacheAfterCommand(BatteryPendingRequest pendingRequest) {
         String name = pendingRequest.getName();
-        return BatteryDeviceProtocolCode.SET_MODULE_ADDRESS.name().equals(name)
-                || BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.name().equals(name);
+        return BatteryDeviceProtocolCode.SET_MODULE_ADDRESS.name().equals(name);
+    }
+
+    private boolean queueNextAutoSetAddressStep(BatteryCollectorChannelState state,
+                                                BatteryCollectorFrame frame,
+                                                BatteryPendingRequest pendingRequest) {
+        Integer batteryCount = pendingRequest.getAutoAddressBatteryCount();
+        Integer batterySpecification = pendingRequest.getAutoAddressBatterySpecification();
+        if (batteryCount == null || batterySpecification == null) {
+            return false;
+        }
+        int currentAddress = pendingRequest.getRequestAddress();
+        if (currentAddress == GROUP_MODULE_ADDRESS) {
+            return offerAutoSetAddressStep(state, pendingRequest, 1, firstAutoSetAddressCellPayload(batterySpecification));
+        }
+        if (currentAddress < batteryCount) {
+            return offerAutoSetAddressStep(state, pendingRequest, currentAddress + 1, nextAutoSetAddressPayload(frame.getPayloadSafe()));
+        }
+        byte[] stopPayload = stopAutoSetAddressPayload(frame.getPayloadSafe());
+        state.getQueuedModuleCommands().offer(autoSetAddressCommand(pendingRequest, currentAddress, stopPayload, false));
+        BatteryModuleControlCommand stopGroupCommand = autoSetAddressCommand(pendingRequest, GROUP_MODULE_ADDRESS, stopPayload, false);
+        stopGroupCommand.setMode(pendingRequest.getMode());
+        state.getQueuedModuleCommands().offer(stopGroupCommand);
+        resetModuleAddressCache(state);
+        log.info("battery module address cache reset after auto address success, channel={}",
+                state.getConfig() == null ? null : state.getConfig().getName());
+        return true;
+    }
+
+    private boolean offerAutoSetAddressStep(BatteryCollectorChannelState state,
+                                            BatteryPendingRequest pendingRequest,
+                                            int address,
+                                            byte[] payload) {
+        BatteryModuleControlCommand command = autoSetAddressCommand(pendingRequest, address, payload, true);
+        markModeRunning(command);
+        return state.getQueuedModuleCommands().offer(command);
+    }
+
+    private BatteryModuleControlCommand autoSetAddressCommand(BatteryPendingRequest pendingRequest,
+                                                             int address,
+                                                             byte[] payload,
+                                                             boolean waitResponse) {
+        return BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS)
+                .address(address)
+                .requestCode(BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.getRequestCode())
+                .responseCode(waitResponse ? BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.getResponseCode() : null)
+                .payload(payload)
+                .description(BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.getDescription())
+                .configId(pendingRequest.getConfigId())
+                .batteryGroup(pendingRequest.getBatteryGroup())
+                .mode(waitResponse ? pendingRequest.getMode() : null)
+                .autoAddressBatteryCount(pendingRequest.getAutoAddressBatteryCount())
+                .autoAddressBatterySpecification(pendingRequest.getAutoAddressBatterySpecification())
+                .build();
+    }
+
+    private byte[] firstAutoSetAddressCellPayload(int batterySpecification) {
+        int startVoltage = batterySpecificationToVoltage(batterySpecification) * 10;
+        return new byte[]{
+                (byte) ((startVoltage >> 8) & 0xFF),
+                (byte) (startVoltage & 0xFF),
+                (byte) (batterySpecification & 0xFF),
+                0,
+                0,
+                0,
+                START_SET_ADDRESS
+        };
+    }
+
+    private byte[] nextAutoSetAddressPayload(byte[] responsePayload) {
+        return new byte[]{
+                responsePayload[0],
+                responsePayload[1],
+                responsePayload[2],
+                0,
+                0,
+                0,
+                START_SET_ADDRESS
+        };
+    }
+
+    private byte[] stopAutoSetAddressPayload(byte[] responsePayload) {
+        return new byte[]{
+                responsePayload[0],
+                responsePayload[1],
+                responsePayload[2],
+                0,
+                0,
+                0,
+                STOP_SET_ADDRESS
+        };
+    }
+
+    private int batterySpecificationToVoltage(int batterySpecification) {
+        if (batterySpecification == 2) {
+            return 2;
+        }
+        if (batterySpecification == 8) {
+            return 12;
+        }
+        throw new IllegalArgumentException("自动编号仅支持2V或12V电池规格");
     }
 
     private boolean isKnownModuleResponse(int commandCode) {
@@ -665,6 +836,51 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             return;
         }
         markCompletedModuleCommand(state, pendingRequest.getName(), pendingRequest.getResponseCode(), false);
+        markModeStopped(pendingRequest, false);
+    }
+
+    private void markModeStopped(BatteryModuleControlCommand command, boolean success) {
+        if (command == null || command.getMode() == null) {
+            return;
+        }
+        batteryModeStatusService.markStopped(
+                command.getBatteryGroup(),
+                command.getMode(),
+                modeAddress(command),
+                success);
+    }
+
+    private boolean shouldStopModeAfterNoResponseCommand(BatteryModuleControlCommand command) {
+        if (command == null || command.getMode() == null) {
+            return false;
+        }
+        if (command.getMode() == BatteryModeStatusService.MODE_CONNECT_RESISTANCE) {
+            return false;
+        }
+        return true;
+    }
+
+    private Integer modeAddress(BatteryModuleControlCommand command) {
+        if (command == null) {
+            return null;
+        }
+        if (command.getProtocolCode() == BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS
+                && command.getAddress() == GROUP_MODULE_ADDRESS
+                && command.getAutoAddressBatteryCount() != null) {
+            return command.getAutoAddressBatteryCount();
+        }
+        return command.getAddress();
+    }
+
+    private void markModeStopped(BatteryPendingRequest pendingRequest, boolean success) {
+        if (pendingRequest == null || pendingRequest.getMode() == null) {
+            return;
+        }
+        batteryModeStatusService.markStopped(
+                pendingRequest.getBatteryGroup(),
+                pendingRequest.getMode(),
+                pendingRequest.getRequestAddress(),
+                success);
     }
 
     private void markCompletedModuleCommand(BatteryCollectorChannelState state,

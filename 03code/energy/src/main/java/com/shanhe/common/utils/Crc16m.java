@@ -1,10 +1,6 @@
 package com.shanhe.common.utils;
 
 import lombok.Getter;
-import org.apache.commons.jexl3.JexlBuilder;
-import org.apache.commons.jexl3.JexlExpression;
-import org.apache.commons.jexl3.JexlScript;
-import org.apache.commons.jexl3.MapContext;
 
 /**
  * CRC 编码
@@ -212,26 +208,6 @@ public class Crc16m {
                     .append(HEXES.charAt((b & 0x0F)));
         }
         return hex.toString();
-    }
-
-    public static void main(String[] args) {
-        // Auto-generated method stub
-        byte[] buf = Crc16m.getSendBuf("010300000002");
-        System.out.println(Crc16m.getBufHexStr(buf));
-        System.out.println(Crc16m.checkBuf(buf));
-
-        JexlExpression expr = new JexlBuilder().create().createExpression("(x+20)*2");
-        MapContext context = new MapContext();
-        context.set("x", 15);
-        System.out.println(expr.evaluate(context));
-
-        expr = new JexlBuilder().create().createExpression("x/2-20");
-        context = new MapContext();
-        context.set("x", 70);
-        System.out.println(expr.evaluate(context));
-
-        JexlScript script = new JexlBuilder().create().createScript("x/2-20");
-        System.out.println(script.execute(context));
     }
 
 }

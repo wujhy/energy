@@ -71,6 +71,20 @@ public interface BatteryModuleRealtimeMapper {
     BatteryModuleGroupRealtime selectGroup(@Param("batteryGroup") Integer batteryGroup);
 
     /**
+     * 删除指定电池组的单体实时数据。
+     *
+     * @param packNum 电池组编号
+     */
+    void deleteCellsByPackNum(@Param("packNum") Integer packNum);
+
+    /**
+     * 删除指定电池组的组实时数据。
+     *
+     * @param packNum 电池组编号
+     */
+    void deleteGroupByPackNum(@Param("packNum") Integer packNum);
+
+    /**
      * 将电池组计算结果写回组实时表。
      *
      * @param realtime 组实时数据

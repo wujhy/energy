@@ -283,6 +283,16 @@
         limit 1
     </select>
 
+    <delete id="deleteCellsByPackNum">
+        delete from battery_module_cell_realtime
+        where pack_num = #{packNum}
+    </delete>
+
+    <delete id="deleteGroupByPackNum">
+        delete from battery_module_group_realtime
+        where pack_num = #{packNum}
+    </delete>
+
     <insert id="updateGroupCalculation" parameterType="com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime">
         insert into battery_module_group_realtime (
             create_time,

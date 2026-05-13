@@ -44,8 +44,7 @@ public class BatterySetVO {
     Boolean needDynResult = true;
 
     /** 设备ID */
-    @NotNull(message = "设备ID不能为空", groups = {cmd08.class, cmd09.class, cmd18.class, cmd19.class, cmd1.class, cmd119.class, cmd20.class, cmd37.class, cmd38.class, cmd39.class, cmd78.class, cmd.class})
-    private Long configId;
+    private Long configId = 1L;
     /** 包序号 */
     @NotNull(message = "电池组不能为空", groups = {cmd08.class, cmd09.class, cmd18.class, cmd19.class, cmd1.class, cmd119.class, cmd20.class, cmd78.class, cmd76.class})
     private Integer packNum;

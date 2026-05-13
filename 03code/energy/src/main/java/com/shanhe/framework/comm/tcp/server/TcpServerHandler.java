@@ -64,8 +64,6 @@ public class TcpServerHandler extends SimpleChannelInboundHandler<Object> {
                 deviceService.tcpDevice(deviceData);
             } catch (Exception e){
                 logger.error("通道数据消费异常：{}", e.getMessage(), e);
-            } finally {
-//                ReferenceCountUtil.release(msg);
             }
         });
     }

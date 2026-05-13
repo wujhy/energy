@@ -194,11 +194,15 @@ public interface IConfigService
     /**
      * 更新扩展字段
      */
+    void updateExtend(Map<String, Object> map);
+
     void updateExtend(Long configId, Map<String, Object> map);
 
     /**
      * 扩展字段
      */
+    Map<String, Object> getExtend();
+
     Map<String, Object> getExtend(Long configId);
 
 }

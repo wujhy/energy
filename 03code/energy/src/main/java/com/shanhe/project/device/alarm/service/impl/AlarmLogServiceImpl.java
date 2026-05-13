@@ -1074,7 +1074,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
             // 1、结束测试记录
             optLogService.closeOptLog(alarmLog.getConfigId(), alarmLog.getPackNum());
             // 2、自动编号、内阻测试状态缓存重置
-            controlBatterySet.clearModelNum(alarmLog.getConfigId(), alarmLog.getPackNum());
+            controlBatterySet.clearModelNum(alarmLog.getPackNum());
         }
     }
 

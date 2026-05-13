@@ -5,11 +5,13 @@ import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import com.shanhe.project.device.config.domain.Config;
+import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.Objects;
 
 /**
@@ -21,6 +23,8 @@ public class BatteryOptResHandler {
     protected static Logger logger = LoggerFactory.getLogger(BatteryOptResHandler.class);
     /** 缓存结果 **/
     CacheKeyEnum cacheKeyEnum = CacheKeyEnum.RESULT;
+    @Resource
+    private BatteryModeStatusService batteryModeStatusService;
 
     /**
      * 上传设备型号及软件版本号
@@ -118,25 +122,7 @@ public class BatteryOptResHandler {
             batteryModeInfo.setStatus(CodingUtil.hexStringToInteger(info.substring(4, 6)));
             batteryModeInfo.setAddress(CodingUtil.hexStringToInteger(info.substring(6, 8)));
 
-            String key = String.format(cacheKeyEnum.getKey(), config.getConfigId(), null, deviceData.getC3());
-            if (Objects.equals(batteryModeInfo.getStatus(), 0)) {
-                Object result = CacheUtils.get(cacheKeyEnum.getCache(), key);
-                if (result instanceof BatteryModeInfo) {
-                    BatteryModeInfo oldBatteryModeInfo = (BatteryModeInfo) result;
-                    batteryModeInfo.setLastPackNum(oldBatteryModeInfo.getLastPackNum());
-                    batteryModeInfo.setLastMode(oldBatteryModeInfo.getLastMode());
-                    batteryModeInfo.setLastAddress(oldBatteryModeInfo.getAddress());
-                    //如果是启动内阻测试，且数据是无测试的，继续使用系统中的状态
-                    if (Objects.equals(oldBatteryModeInfo.getAddress(), 1) && batteryModeInfo.getMode() == 0) {
-                        batteryModeInfo.setResult(oldBatteryModeInfo.getResult());
-                        batteryModeInfo.setStatus(oldBatteryModeInfo.getStatus());
-                        batteryModeInfo.setAddress(oldBatteryModeInfo.getAddress());
-                    }
-                }
-            }
-
-            // 请求结果放入缓存
-            CacheUtils.put(cacheKeyEnum.getCache(), key, batteryModeInfo);
+            batteryModeStatusService.putFromM460(batteryModeInfo);
         } catch (Exception e) {
             logger.error("电池组工作模式响应结果解析异常：{}", e.getMessage());
         }

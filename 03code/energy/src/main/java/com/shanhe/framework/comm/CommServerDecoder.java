@@ -134,34 +134,6 @@ public class CommServerDecoder {
     private static int getLength(String reqStr){
         // 截取指令长度，该长度是info的长度位数，16进制数据
         int length = Integer.parseInt(reqStr.substring(22, 26), 16);
-        /*
-        根据指令调整对应数据长度
-        try {
-            // 截取指令
-            String CID = reqStr.substring(20, 22);
-            TcpCidEnum cidEnum = TcpCidEnum.find(CID);
-            if (cidEnum == null) {
-                return (length + 15) * 2;
-            }
-            switch (cidEnum) {
-                case _D5:       // 响应读取模拟量
-                    length = length * 3 + 2;
-                    break;
-                case _D6:       //响应设置输出模拟量
-                case _DD:       //响应读取全部存储指令
-                    length = length + 1;
-                    break;
-                case _D7:       //响应读取开关量
-                    length = length * 2 + 2;
-                    break;
-                case _D8:       //响应设置输出开关量
-                    length = length * 2 + 1;
-                    break;
-                default:
-                    break;
-            }
-        } catch (Exception ignored) {}
-        */
         // 请求头5 + IMEI5 + CID1 + 长度2 + 内容 + 校验码1 + 请求尾1
         return (length + 15) * 2;
     }

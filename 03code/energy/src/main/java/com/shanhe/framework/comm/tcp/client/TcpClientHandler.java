@@ -36,6 +36,5 @@ public class TcpClientHandler extends SimpleChannelInboundHandler<Object> {
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
 		clientDeviceService.readByTcp((RequestVo)msg);
-//		ReferenceCountUtil.release(msg);
 	}
-}  
+}

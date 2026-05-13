@@ -1,21 +1,18 @@
 package com.shanhe.project.device.opt.controller;
 
 import com.shanhe.common.constant.Constants;
-import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.aspectj.lang.annotation.Log;
-import com.shanhe.framework.enums.BatteryCidEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.framework.enums.BusinessType;
-import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.web.controller.BaseController;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.framework.web.page.TableDataInfo;
+import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
 import com.shanhe.project.device.config.service.IDevBatteryOptService;
 import com.shanhe.project.device.opt.domain.OptLog;
 import com.shanhe.project.device.opt.service.ControlBattery;
 import com.shanhe.project.device.opt.service.OptLogService;
-import com.shanhe.project.iot.model.BatteryModeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +36,8 @@ public class OptBatteryController extends BaseController {
     private ControlBattery controlBattery;
     @Resource
     private OptLogService optLogService;
+    @Resource
+    private BatteryModeStatusService batteryModeStatusService;
 
     /**
      * 查询【蓄电池测试操作参数】列表
@@ -88,17 +87,10 @@ public class OptBatteryController extends BaseController {
         if ("0".equals(result.get("code").toString())) {
             //立即执行内阻测试，默认设置第一个电池在测试,后续异步实时查询结果更新结果内容
             if(testEnum == BatteryTestEnum._1){
-                CacheKeyEnum cacheKeyEnum = CacheKeyEnum.RESULT;
-                //初始化一个进度结果
-                BatteryModeInfo batteryModeInfo = new BatteryModeInfo();
-                batteryModeInfo.setPackNum(devBatteryOpt.getPackNum());
-                batteryModeInfo.setMode(6);
-                batteryModeInfo.setResult(0);
-                batteryModeInfo.setStatus(1);
-                batteryModeInfo.setAddress(1);
-                CacheUtils.put(cacheKeyEnum.getCache(),
-                        String.format(cacheKeyEnum.getKey(), devBatteryOpt.getConfigId(), null, BatteryCidEnum._EB.getDictValue()),
-                        batteryModeInfo);
+                batteryModeStatusService.markRunning(
+                        devBatteryOpt.getPackNum(),
+                        BatteryModeStatusService.MODE_INTERNAL_RESISTANCE,
+                        1);
             }
         }
         return result;

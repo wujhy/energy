@@ -326,8 +326,8 @@ public class ConfigServiceImpl implements IConfigService {
     }
 
     @Override
-    public void updateExtend(Long configId, Map<String, Object> map) {
-        Config config = DefaultBatteryConfigRepository.selectByConfigId(configId);
+    public void updateExtend(Map<String, Object> map) {
+        Config config = DefaultBatteryConfigRepository.selectByConfigId(Constants.DEFAULT_CONFIG_ID);
         if (config == null) {
             return;
         }
@@ -337,12 +337,22 @@ public class ConfigServiceImpl implements IConfigService {
     }
 
     @Override
-    public Map<String, Object> getExtend(Long configId) {
-        Config config = DefaultBatteryConfigRepository.selectByConfigId(configId);
+    public void updateExtend(Long configId, Map<String, Object> map) {
+        this.updateExtend(map);
+    }
+
+    @Override
+    public Map<String, Object> getExtend() {
+        Config config = DefaultBatteryConfigRepository.selectByConfigId(Constants.DEFAULT_CONFIG_ID);
         if (config == null) {
             return null;
         }
         return StrUtil.isNotBlank(config.getExtend3()) ? JSON.parseObject(config.getExtend3()) : null;
+    }
+
+    @Override
+    public Map<String, Object> getExtend(Long configId) {
+        return this.getExtend();
     }
 
     @Override
@@ -475,65 +485,11 @@ public class ConfigServiceImpl implements IConfigService {
     }
 
     /**
-     * 同步更新电池组
-     *
-     * @param config 配置id
-     */
-    private void insertPack(Config config) {
-        if (config.getPackList() == null || config.getPackList().isEmpty()) {
-            return;
-        }
-        for (BatteryPack batteryPack : config.getPackList()) {
-            batteryPack.setConfigId(config.getConfigId());
-            batteryPack.setPackId(IdUtils.getSnowflakeId());
-            batteryPackService.insertBatteryPack(batteryPack);
-
-            // 属性挂电池组
-            this.insertAttribute(config, batteryPack.getPackNum(), batteryPack.getBatSinModel());
-        }
-    }
-
-    /**
      * 同步更新属性
      *
      * @param config 配置id
      */
     private void insertAttribute(Config config, Integer packNum, Integer model) {
         configAttributeService.insertByTemplateAttribute(config.getConfigId(), packNum, model);
-    }
-
-    /**
-     * 设备信息校验
-     */
-    private void deviceValid(Config config) {
-        // 蓄电池需要传组信息
-        if (Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
-            if (!config.getPackList().isEmpty()) {
-                List<Integer> packNumList = new ArrayList<>();
-                for (BatteryPack batteryPack : config.getPackList()) {
-                    if (!packNumList.contains(batteryPack.getPackNum())) {
-                        packNumList.add(batteryPack.getPackNum());
-                    } else {
-                        throw new ServiceException(String.format("电池组序号 %s 重复", batteryPack.getPackNum()));
-                    }
-                }
-            }
-        }
-
-        if (config.getPort() == null) {
-            throw new ServiceException("串口号不可为空！");
-        }
-
-        int type = 1;
-        // 如果为模拟量、开关量，只区分串口号，通道号设置100用于区分设备
-        if (Objects.equals(config.getPortType(), PortTypeEnum._1.getDictValue())
-                || Objects.equals(config.getPortType(), PortTypeEnum._2.getDictValue())) {
-            if (config.getChannel() == null) {
-                throw new ServiceException("通道号不可为空！");
-            }
-        } else {
-            config.setChannel(1);
-            type = 2;
-        }
     }
 }

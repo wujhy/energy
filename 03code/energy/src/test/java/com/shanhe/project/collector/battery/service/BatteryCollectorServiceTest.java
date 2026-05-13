@@ -10,16 +10,44 @@ import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.model.BatteryPendingRequest;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
+import com.shanhe.project.iot.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 class BatteryCollectorServiceTest {
 
     private final BatteryCollectorService service = new BatteryCollectorService();
+
+    private BatteryModeStatusService newModeStatusService() {
+        BatteryModeStatusService modeStatusService = new BatteryModeStatusService();
+        ReflectionTestUtils.setField(modeStatusService, "cacheAccessor", new TestCacheAccessor());
+        return modeStatusService;
+    }
+
+    private static class TestCacheAccessor implements BatteryModeStatusService.CacheAccessor {
+        private final Map<String, Object> cache = new HashMap<>();
+
+        @Override
+        public Object get(String cacheName, String key) {
+            return cache.get(cacheName + ":" + key);
+        }
+
+        @Override
+        public void put(String cacheName, String key, Object value) {
+            cache.put(cacheName + ":" + key, value);
+        }
+
+        @Override
+        public void remove(String cacheName, String key) {
+            cache.remove(cacheName + ":" + key);
+        }
+    }
 
     @Test
     void shouldUseSafeDefaultsForInvalidTimingConfig() {
@@ -28,6 +56,7 @@ class BatteryCollectorServiceTest {
         properties.setRequestGapMs(null);
         properties.setModuleAddressMissThreshold(0);
         ReflectionTestUtils.setField(service, "properties", properties);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", newModeStatusService());
 
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
         channelConfig.setPollIntervalMs(null);
@@ -297,10 +326,14 @@ class BatteryCollectorServiceTest {
     void shouldQueueModuleCommandForActiveChannel() {
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
         channelConfig.setName("battery-group-1");
+        channelConfig.setConfigId(1L);
+        channelConfig.setBatteryGroup(2);
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
         List<BatteryCollectorChannelState> channelStates =
                 (List<BatteryCollectorChannelState>) ReflectionTestUtils.getField(service, "channelStates");
         channelStates.add(state);
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
 
         boolean queued = service.submitModuleCommand("battery-group-1", BatteryModuleControlCommand.builder()
                 .protocolCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST)
@@ -308,10 +341,19 @@ class BatteryCollectorServiceTest {
                 .requestCode(0x02)
                 .responseCode(0x82)
                 .payload(new byte[0])
+                .mode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE)
                 .build());
 
         Assertions.assertTrue(queued);
         Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
+        BatteryModuleControlCommand queuedCommand = state.getQueuedModuleCommands().peek();
+        Assertions.assertNotNull(queuedCommand);
+        Assertions.assertEquals(1L, queuedCommand.getConfigId());
+        Assertions.assertEquals(2, queuedCommand.getBatteryGroup());
+        BatteryModeInfo modeInfo = modeStatusService.get(2);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, modeInfo.getMode());
+        Assertions.assertEquals(1, modeInfo.getStatus());
+        Assertions.assertEquals(8, modeInfo.getAddress());
     }
 
     @Test
@@ -360,16 +402,41 @@ class BatteryCollectorServiceTest {
     }
 
     @Test
+    void shouldStopModeCacheAfterCommandResponse() {
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        modeStatusService.markRunning(2, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
+                8,
+                new byte[0],
+                false);
+        pendingRequest.setConfigId(1L);
+        pendingRequest.setBatteryGroup(2);
+        pendingRequest.setMode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+        BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(8, 0x82, new byte[]{0});
+
+        service.handleCompletedPendingResponse(state, frame, pendingRequest);
+        BatteryModeInfo modeInfo = modeStatusService.get(2);
+
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Assertions.assertEquals(0, modeInfo.getStatus());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, modeInfo.getLastMode());
+        Assertions.assertEquals(8, modeInfo.getLastAddress());
+    }
+
+    @Test
     void shouldKeepAddressCacheAfterFailedAddressCommandResponse() {
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
         state.getActiveModuleAddresses().add(8);
         state.getFullDiscoveryRequested().set(false);
         BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
                 BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS,
-                0,
+                246,
                 new byte[]{1, 2, 3, 4, 5, 6, 7},
                 false);
-        BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(0, 0xA8, new byte[]{1, 5, 2});
+        BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(246, 0xA8, new byte[]{0, 5, 2});
 
         service.handleCompletedPendingResponse(state, frame, pendingRequest);
 
@@ -378,6 +445,130 @@ class BatteryCollectorServiceTest {
         Assertions.assertFalse(state.isLastCompletedModuleCommandSuccess());
         Assertions.assertFalse(state.getActiveModuleAddresses().isEmpty());
         Assertions.assertFalse(state.getFullDiscoveryRequested().get());
+    }
+
+    @Test
+    void shouldQueueNextAutoAddressStepAfterGroupStartResponse() {
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setConfigId(1L);
+        channelConfig.setBatteryGroup(2);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS,
+                246,
+                new byte[]{0, 0, 0, 0, 0, 0, 1},
+                false);
+        pendingRequest.setConfigId(1L);
+        pendingRequest.setBatteryGroup(2);
+        pendingRequest.setMode(BatteryModeStatusService.MODE_AUTO_MODEL_NUM);
+        pendingRequest.setAutoAddressBatteryCount(2);
+        pendingRequest.setAutoAddressBatterySpecification(2);
+        BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(246, 0xA8, new byte[]{1, 0, 0});
+
+        service.handleCompletedPendingResponse(state, frame, pendingRequest);
+
+        Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
+        BatteryModuleControlCommand command = state.getQueuedModuleCommands().peek();
+        Assertions.assertNotNull(command);
+        Assertions.assertEquals(1, command.getAddress());
+        Assertions.assertEquals(Integer.valueOf(0xA8), command.getResponseCode());
+        Assertions.assertArrayEquals(new byte[]{0, 20, 2, 0, 0, 0, 1}, command.getPayload());
+        BatteryModeInfo modeInfo = modeStatusService.get(2);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_AUTO_MODEL_NUM, modeInfo.getMode());
+        Assertions.assertEquals(1, modeInfo.getAddress());
+    }
+
+    @Test
+    void shouldQueueStopFramesAndKeepModeRunningAfterLastAutoAddressResponse() {
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        modeStatusService.markRunning(2, BatteryModeStatusService.MODE_AUTO_MODEL_NUM, 2);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
+        state.getActiveModuleAddresses().add(1);
+        state.getFullDiscoveryRequested().set(false);
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS,
+                2,
+                new byte[]{0, 20, 2, 0, 0, 0, 1},
+                false);
+        pendingRequest.setConfigId(1L);
+        pendingRequest.setBatteryGroup(2);
+        pendingRequest.setMode(BatteryModeStatusService.MODE_AUTO_MODEL_NUM);
+        pendingRequest.setAutoAddressBatteryCount(2);
+        pendingRequest.setAutoAddressBatterySpecification(2);
+        BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(2, 0xA8, new byte[]{0, 21, 2});
+
+        service.handleCompletedPendingResponse(state, frame, pendingRequest);
+
+        Assertions.assertEquals(2, state.getQueuedModuleCommands().size());
+        BatteryModuleControlCommand stopCell = state.getQueuedModuleCommands().poll();
+        BatteryModuleControlCommand stopGroup = state.getQueuedModuleCommands().poll();
+        Assertions.assertNotNull(stopCell);
+        Assertions.assertNotNull(stopGroup);
+        Assertions.assertEquals(2, stopCell.getAddress());
+        Assertions.assertEquals(246, stopGroup.getAddress());
+        Assertions.assertNull(stopCell.getResponseCode());
+        Assertions.assertArrayEquals(new byte[]{0, 21, 2, 0, 0, 0, 2}, stopCell.getPayload());
+        BatteryModeInfo modeInfo = modeStatusService.get(2);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_AUTO_MODEL_NUM, modeInfo.getMode());
+        Assertions.assertEquals(1, modeInfo.getStatus());
+        Assertions.assertEquals(2, modeInfo.getAddress());
+        Assertions.assertTrue(state.getActiveModuleAddresses().isEmpty());
+        Assertions.assertTrue(state.getFullDiscoveryRequested().get());
+    }
+
+    @Test
+    void shouldStopAutoAddressModeAfterStopGroupFrameWritten() {
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        modeStatusService.markRunning(2, BatteryModeStatusService.MODE_AUTO_MODEL_NUM, 2);
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setName("battery-group-1");
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        BatteryModuleControlCommand stopGroup = BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS)
+                .address(246)
+                .requestCode(0x18)
+                .payload(new byte[]{0, 21, 2, 0, 0, 0, 2})
+                .batteryGroup(2)
+                .mode(BatteryModeStatusService.MODE_AUTO_MODEL_NUM)
+                .autoAddressBatteryCount(2)
+                .build();
+
+        ReflectionTestUtils.invokeMethod(service, "markModeStopped", stopGroup, true);
+        BatteryModeInfo modeInfo = modeStatusService.get(2);
+
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Assertions.assertEquals(0, modeInfo.getStatus());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_AUTO_MODEL_NUM, modeInfo.getLastMode());
+        Assertions.assertEquals(2, modeInfo.getLastAddress());
+    }
+
+    @Test
+    void shouldKeepConnectResistanceModeRunningAfterStartFrameWritten() {
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setName("battery-group-1");
+        channelConfig.setBatteryGroup(2);
+        BatteryModuleControlCommand command = BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.CONNECT_STRIP_RESISTANCE_TEST)
+                .address(0)
+                .requestCode(0x0F)
+                .batteryGroup(2)
+                .mode(BatteryModeStatusService.MODE_CONNECT_RESISTANCE)
+                .build();
+
+        Boolean shouldStop = ReflectionTestUtils.invokeMethod(service, "shouldStopModeAfterNoResponseCommand", command);
+        Assertions.assertFalse(shouldStop);
+        modeStatusService.markRunning(command.getBatteryGroup(), command.getMode(), command.getAddress());
+        BatteryModeInfo modeInfo = modeStatusService.get(2);
+
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, modeInfo.getMode());
+        Assertions.assertEquals(1, modeInfo.getStatus());
+        Assertions.assertEquals(0, modeInfo.getAddress());
     }
 
     @Test

@@ -62,19 +62,6 @@ public class BatteryCollectorCommandController extends BaseController {
         return success(result);
     }
 
-    @Log(title = "蓄电池系统状态设置", businessType = BusinessType.UPDATE)
-    @PostMapping("/systemState")
-    public AjaxResult systemState(@RequestBody SystemStateRequest request) {
-        if (request == null) {
-            return error("请求不能为空");
-        }
-        return success(commandService.setSystemState(
-                request.getChannelName(),
-                request.getBatteryGroup(),
-                request.getSystemState(),
-                request.getTimeoutMs()));
-    }
-
     @Log(title = "蓄电池单体内阻测试", businessType = BusinessType.UPDATE)
     @PostMapping("/singleResistanceTest")
     public AjaxResult singleResistanceTest(@RequestBody SingleResistanceTestRequest request) {
@@ -124,51 +111,6 @@ public class BatteryCollectorCommandController extends BaseController {
                 request.getTimeoutMs()));
     }
 
-    @Log(title = "蓄电池时间同步", businessType = BusinessType.UPDATE)
-    @PostMapping("/updateTimeAll")
-    public AjaxResult updateTimeAll(@RequestBody UpdateTimeAllRequest request) {
-        if (request == null) {
-            return error("请求不能为空");
-        }
-        return success(commandService.updateTimeAll(
-                request.getChannelName(),
-                request.getDeviceType(),
-                request.getYear(),
-                request.getMonth(),
-                request.getDay(),
-                request.getHour(),
-                request.getMinute(),
-                request.getSecond(),
-                request.getTimeoutMs()));
-    }
-
-    @Log(title = "蓄电池设备IP设置", businessType = BusinessType.UPDATE)
-    @PostMapping("/setDeviceIpAddress")
-    public AjaxResult setDeviceIpAddress(@RequestBody SetDeviceIpAddressRequest request) {
-        if (request == null) {
-            return error("请求不能为空");
-        }
-        return success(commandService.setDeviceIpAddress(
-                request.getChannelName(),
-                request.getDeviceIpBytes(),
-                request.getMaskBytes(),
-                request.getGatewayBytes(),
-                request.getPort(),
-                request.getTimeoutMs()));
-    }
-
-    @Log(title = "蓄电池服务器模式设置", businessType = BusinessType.UPDATE)
-    @PostMapping("/setServerClientMode")
-    public AjaxResult setServerClientMode(@RequestBody SetServerClientModeRequest request) {
-        if (request == null) {
-            return error("请求不能为空");
-        }
-        return success(commandService.setServerClientMode(
-                request.getChannelName(),
-                request.getMode(),
-                request.getTimeoutMs()));
-    }
-
     private int[] toIntArray(List<Integer> values) {
         if (values == null || values.isEmpty()) {
             return new int[0];
@@ -195,14 +137,6 @@ public class BatteryCollectorCommandController extends BaseController {
     }
 
     @Data
-    public static class SystemStateRequest {
-        private String channelName;
-        private Integer batteryGroup;
-        private Integer systemState;
-        private Long timeoutMs;
-    }
-
-    @Data
     public static class SingleResistanceTestRequest {
         private String channelName;
         private Integer batteryGroup;
@@ -226,33 +160,4 @@ public class BatteryCollectorCommandController extends BaseController {
         private Long timeoutMs;
     }
 
-    @Data
-    public static class UpdateTimeAllRequest {
-        private String channelName;
-        private Integer deviceType;
-        private Integer year;
-        private Integer month;
-        private Integer day;
-        private Integer hour;
-        private Integer minute;
-        private Integer second;
-        private Long timeoutMs;
-    }
-
-    @Data
-    public static class SetDeviceIpAddressRequest {
-        private String channelName;
-        private int[] deviceIpBytes;
-        private int[] maskBytes;
-        private int[] gatewayBytes;
-        private Integer port;
-        private Long timeoutMs;
-    }
-
-    @Data
-    public static class SetServerClientModeRequest {
-        private String channelName;
-        private Integer mode;
-        private Long timeoutMs;
-    }
 }

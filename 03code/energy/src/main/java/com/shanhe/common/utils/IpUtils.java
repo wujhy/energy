@@ -323,22 +323,4 @@ public class IpUtils
         return isConnected;
     }
 
-    public static void main(String[] args) throws UnknownHostException {
-        System.out.println(getHostIp());
-        System.out.println(getHostName());
-        InetAddress inetAddress1 = InetAddress.getByName("192.168.0.230");
-        InetAddress inetAddress2 = InetAddress.getByName("255.255.255.0");
-        System.out.println(inetAddress1.getHostAddress() + " " + ipToInteger(inetAddress1));
-        System.out.println(inetAddress2.getHostAddress() + " " + ipToInteger(inetAddress2));
-        System.out.println(broadcastIp(ipToInteger(inetAddress1), ipToInteger(inetAddress2)));
-        System.out.println(calcSubnetAddress(inetAddress1, "255.255.255.0"));
-        System.out.println(subIpToInt("255.255.255.0"));
-
-        // hostname 可以是主机的 IP 或者 域名
-        String hostname = "127.0.0.1";
-        int port = 8081;
-        int timeout = 200;
-        boolean isConnected = telnet(hostname, port, timeout);
-        System.out.println("telnet "+ hostname + " " + port + "\n==>isConnected: " + isConnected);
-    }
 }

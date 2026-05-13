@@ -10,8 +10,6 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -870,32 +868,6 @@ public class CodingUtil {
     }
 
     /**
-     * 根据url读取文件byte数组
-     */
-    public static byte[] getBytesByUrl(String fileUrl) throws IOException {
-        URL url = new URL(fileUrl);
-        byte[] buffer = new byte[1024];
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
-        con.setRequestMethod("GET");
-        con.setConnectTimeout(4 * 1000);
-        //通过输入流获取图片数据
-        try (InputStream inputStream = con.getInputStream()) {
-            ByteArrayOutputStream outputByte = new ByteArrayOutputStream();
-            int num = inputStream.read(buffer);
-            while (num != -1) {
-                outputByte.write(buffer, 0, num);
-                num = inputStream.read(buffer);
-            }
-            outputByte.flush();
-            return outputByte.toByteArray();
-        } catch (IOException e) {
-            logger.error("获取文件失败,文件路径:{}", fileUrl);
-            logger.error(e.getMessage());
-            return null;
-        }
-    }
-
-    /**
      * 字符串转Double类型
      */
     public static Double decimalDouble(Integer num, int calcNum){
@@ -1040,56 +1012,6 @@ public class CodingUtil {
             return null;
         }
         return Integer.parseInt(str);
-    }
-
-    public static void main(String[] args) throws Exception {
-		/*String t="你哈123abc";
-		String utf8 = new String(t.getBytes( "UTF-8"));
-		System.out.println(utf8);
-		String unicode = new String(utf8.getBytes(),"UTF-8");
-		System.out.println(unicode);
-		String gbk = new String(unicode.getBytes("GBK"));
-		System.out.println(gbk);
-
-
-		System.out.println(getAlternativeIso8601DateFormat(null).format(new Date()));
-
-		String str = "软件开发";
-		System.out.println(String.format("长度:%s", str.getBytes("UTF-8").length));
-
-		String decimal = decimal(33, "#.0", 10);
-		System.out.println(decimal);
-		String i = decimal.substring(0,1);
-		System.out.println(i);
-
-		System.out.println(decimal(33, "#.0", 10));*/
-
-
-
-        //String s = hexStringToString("0d");
-        //String s = stringToHexString("18");
-        //0C22384E63 05 82 0C16
-        //279 05 130 34
-        //String s = checkSum("0C22384E638000");
-		/*String format = String.format("%06.3f", 1.1);
-		System.out.println(format);
-		String s = format.replace(".", "");*/
-
-        //String s = String.format("%05.3f", 1.98).replace(".", "");
-        //String s = String.format("%05.3f", 1.0).replace(".", "");
-        //String s = String.format("%04d", Integer.parseInt(Integer.toBinaryString(5)));
-        //int s = binaryToDecimal("101");
-
-        //String decimal = CodingUtil.decimal(67, "#.000", 1000);
-        //String s = stringToHexString("121212", 6);
-
-		/*String s = energyCheckSum("0C22384E0AFA040106caff");
-
-		System.out.println(s);*/
-
-        byte[] bytesByUrl = getBytesByUrl("http://alerts.shanhexinxi.cn/exportExcel/batteryPackMonitorData/电池组监控数据_20220726_142430.xlsx");
-        String reqStr = CodingUtil.bytesToHexString(bytesByUrl).toUpperCase();
-        System.out.println(bytesByUrl);
     }
 
 }
