@@ -1,5 +1,6 @@
 package com.shanhe.project.device.opt.vo;
 
+import com.shanhe.common.constant.Constants;
 import lombok.Data;
 
 import javax.validation.constraints.Max;
@@ -44,7 +45,7 @@ public class BatterySetVO {
     Boolean needDynResult = true;
 
     /** 设备ID */
-    private Long configId = 1L;
+    private Long configId = Constants.DEFAULT_CONFIG_ID;
     /** 包序号 */
     @NotNull(message = "电池组不能为空", groups = {cmd08.class, cmd09.class, cmd18.class, cmd19.class, cmd1.class, cmd119.class, cmd20.class, cmd78.class, cmd76.class})
     private Integer packNum;

@@ -1,5 +1,6 @@
 package com.shanhe.project.device.opt.service.impl;
 
+import com.shanhe.common.constant.Constants;
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.common.utils.text.Convert;
 import com.shanhe.framework.enums.BatteryCidEnum;
@@ -39,6 +40,7 @@ public class RestoreServiceImpl implements RestoreService {
     private IDevBatteryOptService devBatteryOptService;
     @Resource
     private IBatteryPackService batteryPackService;
+    @Resource
     private OptLogService optLogService;
     @Resource
     private IStatBatteryBatService statBatteryBatService;
@@ -66,8 +68,9 @@ public class RestoreServiceImpl implements RestoreService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void restore(BatterySetVO batterySetVO) {
+        Long configId = applyDefaultConfigId(batterySetVO);
 
-        Config config = configService.selectConfigByConfigId(batterySetVO.getConfigId());
+        Config config = configService.selectConfigByConfigId(configId);
         if (config == null) {
             throw new ServiceException("设备不存在！");
         }
@@ -75,9 +78,9 @@ public class RestoreServiceImpl implements RestoreService {
         // 内阻初装值
         devBatteryMonomerService.delete();
         // 电池操作记录
-        devBatteryOptService.deleteByConfigId(batterySetVO.getConfigId(), null);
+        devBatteryOptService.deleteByConfigId(configId, null);
 
-        String[] configIdArr = Convert.toStrArray(String.valueOf(batterySetVO.getConfigId()));
+        String[] configIdArr = Convert.toStrArray(String.valueOf(configId));
 
         // 删除属性
         configAttributeService.deleteConfigAttributeByConfigIds(configIdArr);
@@ -87,7 +90,7 @@ public class RestoreServiceImpl implements RestoreService {
         alarmLogService.updateCache();
 
         // 删除历史记录
-        batteryReportLogService.deleteByConfigId(batterySetVO.getConfigId(), null);
+        batteryReportLogService.deleteByConfigId(configId, null);
         batteryReportLogService.updateCache();
 
         // 删除操作日志
@@ -95,14 +98,14 @@ public class RestoreServiceImpl implements RestoreService {
         optLogService.updateCache();
 
         // 删除统计数据
-        statBatteryBatService.deleteByConfigId(batterySetVO.getConfigId(), null);
-        statBatteryPackService.deleteByConfigId(batterySetVO.getConfigId(), null);
+        statBatteryBatService.deleteByConfigId(configId, null);
+        statBatteryPackService.deleteByConfigId(configId, null);
 
         // 删除内阻统计数据
-        statBatteryResService.deleteByConfigId(batterySetVO.getConfigId(), null);
+        statBatteryResService.deleteByConfigId(configId, null);
 
         // 删除预估容量
-        preBatteryGroupService.deleteByConfigId(batterySetVO.getConfigId(), null);
+        preBatteryGroupService.deleteByConfigId(configId, null);
         preBatteryGroupService.updateCache();
 
         // 系统操作记录
@@ -125,12 +128,13 @@ public class RestoreServiceImpl implements RestoreService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delPack(BatterySetVO batterySetVO) {
-        Config config = configService.selectConfigByConfigId(batterySetVO.getConfigId());
+        Long configId = applyDefaultConfigId(batterySetVO);
+        Config config = configService.selectConfigByConfigId(configId);
         if (config == null) {
             throw new RuntimeException("设备不存在！");
         }
 
-        BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(batterySetVO.getConfigId(), batterySetVO.getPackNum());
+        BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(configId, batterySetVO.getPackNum());
         if (null == batteryPack) {
             throw new ServiceException("电池组不存在，操作执行失败！");
         }
@@ -138,14 +142,14 @@ public class RestoreServiceImpl implements RestoreService {
         // 内阻初装值
         devBatteryMonomerService.deleteByPackId(batteryPack.getPackId());
         // 电池操作记录
-        devBatteryOptService.deleteByConfigId(batterySetVO.getConfigId(), batterySetVO.getPackNum());
+        devBatteryOptService.deleteByConfigId(configId, batterySetVO.getPackNum());
 
         // 删除告警
-        alarmLogService.deleteAlarmLogByConfigIdPackNum(config.getConfigId(), batterySetVO.getPackNum());
+        alarmLogService.deleteAlarmLogByConfigIdPackNum(configId, batterySetVO.getPackNum());
         alarmLogService.updateCache();
 
         // 删除历史记录
-        batteryReportLogService.deleteByConfigId(batterySetVO.getConfigId(), batterySetVO.getPackNum());
+        batteryReportLogService.deleteByConfigId(configId, batterySetVO.getPackNum());
         batteryReportLogService.updateCache();
 
         // 删除600节模块端标准实时数据
@@ -153,20 +157,25 @@ public class RestoreServiceImpl implements RestoreService {
         batteryModuleRealtimeMapper.deleteGroupByPackNum(batterySetVO.getPackNum());
 
         // 删除操作日志
-        optLogService.deleteByConfigIdPackNum(batterySetVO.getConfigId(), batterySetVO.getPackNum());
+        optLogService.deleteByConfigIdPackNum(configId, batterySetVO.getPackNum());
         optLogService.updateCache();
 
         // 删除统计数据
-        statBatteryBatService.deleteByConfigId(batterySetVO.getConfigId(), batterySetVO.getPackNum());
-        statBatteryPackService.deleteByConfigId(batterySetVO.getConfigId(), batterySetVO.getPackNum());
+        statBatteryBatService.deleteByConfigId(configId, batterySetVO.getPackNum());
+        statBatteryPackService.deleteByConfigId(configId, batterySetVO.getPackNum());
 
         // 删除内阻统计数据
-        statBatteryResService.deleteByConfigId(batterySetVO.getConfigId(), batterySetVO.getPackNum());
+        statBatteryResService.deleteByConfigId(configId, batterySetVO.getPackNum());
 
         // 删除预估容量
-        preBatteryGroupService.deleteByConfigId(batterySetVO.getConfigId(), batterySetVO.getPackNum());
+        preBatteryGroupService.deleteByConfigId(configId, batterySetVO.getPackNum());
         preBatteryGroupService.updateCache();
 
+    }
+
+    private Long applyDefaultConfigId(BatterySetVO batterySetVO) {
+        batterySetVO.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        return Constants.DEFAULT_CONFIG_ID;
     }
 
     private void buzzerStatus() {
