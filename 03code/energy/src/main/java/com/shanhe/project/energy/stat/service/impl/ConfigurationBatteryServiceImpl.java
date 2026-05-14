@@ -2,6 +2,7 @@ package com.shanhe.project.energy.stat.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.google.common.collect.Lists;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.enums.YesNoEnum;
@@ -54,13 +55,14 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     private PreBatteryGroupService preBatteryGroupService;
 
     @Override
-    public BatteryHealthReport getBatteryHealthReport(Long configId, Integer packNum) {
+    public BatteryHealthReport getBatteryHealthReport(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         BatteryHealthReport batteryHealthReport = new BatteryHealthReport();
-        BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(configId, packNum);
+        BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
         if (batteryPack == null) {
             return batteryHealthReport;
         }
-        PreBatteryGroup preBatteryGroup = preBatteryGroupService.lastCache(batteryPack.getConfigId(), batteryPack.getPackNum());
+        PreBatteryGroup preBatteryGroup = preBatteryGroupService.lastCache(batteryPack.getPackNum());
 
         populateBasicInfo(batteryHealthReport, batteryPack);
 
@@ -68,7 +70,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
 
         Map<String, List<AlarmLog>> logMap = populateAlarmInfo(batteryHealthReport, configId, packNum);
 
-        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(configId, packNum);
+        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(packNum);
         populateBackupDuration(batteryHealthReport, batteryReportLog);
 
         List<EvaluationFactors> evaluationFactorsList = buildEvaluationFactors(
@@ -85,9 +87,10 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     }
 
     @Override
-    public Map<String, Object> getTempWarnLine(Long configId, Integer packNum) {
+    public Map<String, Object> getTempWarnLine(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         Map<String, Object> packMap = new HashMap<>();
-        ConfigAttribute wdgAttribute = configAttributeService.getCacheBy(configId, packNum, ItemCode.DTDCWDG.getCode());
+        ConfigAttribute wdgAttribute = configAttributeService.getCacheBy(packNum, ItemCode.DTDCWDG.getCode());
         if (wdgAttribute != null && wdgAttribute.getListLevel() != null) {
             for (AlarmItemLevelVo level : wdgAttribute.getListLevel()) {
                 if (level.getHightValue() != null) {
@@ -96,7 +99,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
                 }
             }
         }
-        ConfigAttribute wddAttribute = configAttributeService.getCacheBy(configId, packNum, ItemCode.DTDCWDD.getCode());
+        ConfigAttribute wddAttribute = configAttributeService.getCacheBy(packNum, ItemCode.DTDCWDD.getCode());
         if (wddAttribute != null && wddAttribute.getListLevel() != null) {
             for (AlarmItemLevelVo level : wddAttribute.getListLevel()) {
                 if (level.getLowValue() != null) {
@@ -109,11 +112,12 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     }
 
     @Override
-    public Map<String, Object> getResWarnLine(Long configId, Integer packNum) {
+    public Map<String, Object> getResWarnLine(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         Map<String, Object> packMap = new HashMap<>();
-        ConfigAttribute dAttribute = configAttributeService.getCacheBy(configId, packNum, ItemCode.DTNZGD.getCode());
+        ConfigAttribute dAttribute = configAttributeService.getCacheBy(packNum, ItemCode.DTNZGD.getCode());
         if (null == dAttribute) {
-            dAttribute = configAttributeService.getBy(configId, packNum, ItemCode.DTNZGD.getCode());
+            dAttribute = configAttributeService.getBy(packNum, ItemCode.DTNZGD.getCode());
         }
         if (dAttribute != null && dAttribute.getListLevel() != null) {
             for (AlarmItemLevelVo level : dAttribute.getListLevel()) {
@@ -150,7 +154,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         List<Integer> types = Lists.newArrayList(
                 BatteryTestEnum._5.getDictValue(),
                 BatteryTestEnum._7.getDictValue());
-        Integer count = optLogService.count(batteryPack.getConfigId(), batteryPack.getPackNum(), types);
+        Integer count = optLogService.count(batteryPack.getPackNum(), types);
 
 
         List<EvaluationFactors> evaluationFactorsList = Lists.newArrayList();
@@ -257,7 +261,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     }
 
     private Double getSohThreshold(Long configId, Integer packNum) {
-        ConfigAttribute sohAttribute = configAttributeService.getCacheBy(configId, packNum, ItemCode.ZSOHDGJ.getCode());
+        ConfigAttribute sohAttribute = configAttributeService.getCacheBy(packNum, ItemCode.ZSOHDGJ.getCode());
         if (null == sohAttribute || null == sohAttribute.getListLevel() || sohAttribute.getListLevel().isEmpty()) {
             return 80.0;
         }
@@ -378,7 +382,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
             return new EvaluationFactors("内阻变化率/内阻过大", "内阻过大", 0);
         }
 
-        Double maxResistance = devBatteryMonomerService.getMaxResistance(batteryPack.getConfigId(), batteryPack.getPackNum());
+        Double maxResistance = devBatteryMonomerService.getMaxResistance(batteryPack.getPackNum());
         if (maxResistance == null) {
             return new EvaluationFactors("内阻变化率/内阻过大", "--", 1);
         }
@@ -411,7 +415,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
             return new EvaluationFactors("电压均衡度", "--", 1);
         }
 
-        Integer threshold = batteryPackService.getVoltageBalance(batteryPack.getConfigId(), batteryPack.getPackNum());
+        Integer threshold = batteryPackService.getVoltageBalance(batteryPack.getPackNum());
 
         if (voltageRange > threshold) {
             batteryHealthReport.setIsVoltageAlarm(0);

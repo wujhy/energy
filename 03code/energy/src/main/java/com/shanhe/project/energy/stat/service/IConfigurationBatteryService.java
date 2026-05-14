@@ -13,15 +13,15 @@ public interface IConfigurationBatteryService {
     /**
      * 获取健康报告
      */
-    BatteryHealthReport getBatteryHealthReport(Long configId, Integer packNum);
+    BatteryHealthReport getBatteryHealthReport(Integer packNum);
 
     /**
      * 获取温度报警线
      */
-    Map<String, Object> getTempWarnLine(Long configId, Integer packNum);
+    Map<String, Object> getTempWarnLine(Integer packNum);
 
     /**
      * 获取内阻报警线
      */
-    Map<String, Object> getResWarnLine(Long configId, Integer packNum);
+    Map<String, Object> getResWarnLine(Integer packNum);
 }

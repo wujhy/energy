@@ -1,5 +1,6 @@
 package com.shanhe.project.collector.battery.service;
 
+import com.shanhe.common.constant.Constants;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
@@ -51,20 +52,22 @@ public class BatteryModuleCompatReportLogSyncService {
     public void sync(BatteryCollectorChannelConfig channelConfig,
                      BatteryModuleGroupRealtime group,
                      List<BatteryModuleCellRealtime> cells) {
-        if (channelConfig == null || channelConfig.getConfigId() == null || channelConfig.getBatteryGroup() == null) {
+        if (channelConfig == null || channelConfig.getBatteryGroup() == null) {
             return;
         }
         BatteryReportLog reportLog = adapterService.buildReportLog(
-                channelConfig.getConfigId(), channelConfig.getBatteryGroup(), group, cells);
+                Constants.DEFAULT_CONFIG_ID, channelConfig.getBatteryGroup(), group, cells);
+        if (reportLog == null) {
+            return;
+        }
         List<BatteryMonitor> batteryList = reportLog.getBatteryList();
         if (batteryList == null || batteryList.isEmpty() || reportLog.getPackParam() == null) {
             return;
         }
-        boolean isInsert = dataService.isInsert(channelConfig.getConfigId(),
-                channelConfig.getBatteryGroup() + "", true);
-        batteryReportLogService.insert(channelConfig.getConfigId(), channelConfig.getBatteryGroup(),
+        boolean isInsert = dataService.isInsert(channelConfig.getBatteryGroup() + "");
+        batteryReportLogService.insert(channelConfig.getBatteryGroup(),
                 reportLog.getPackParam(), batteryList, isInsert);
-        log.debug("sync battery module realtime to dev_battery_report_log, configId={}, packNum={}, insert={}",
-                channelConfig.getConfigId(), channelConfig.getBatteryGroup(), isInsert);
+        log.debug("sync battery module realtime to dev_battery_report_log, packNum={}, insert={}",
+                channelConfig.getBatteryGroup(), isInsert);
     }
 }

@@ -3,6 +3,7 @@ package com.shanhe.project.energy.stat.service.impl;
 import com.shanhe.project.device.config.domain.BatteryMonitor;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.energy.stat.domain.DevBatteryMonomer;
@@ -35,8 +36,8 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
     private ClientReportService clientReportService;
 
     @Override
-    public List<DevBatteryMonomer> selectList(Long configId, Integer packNum) {
-        BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(configId, packNum);
+    public List<DevBatteryMonomer> selectList(Integer packNum) {
+        BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
         if (batteryPack == null) {
             return new ArrayList<>();
         }
@@ -44,15 +45,16 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
     }
 
     @Override
-    public void init(Long configId, Integer packNum) {
-        BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(configId, packNum);
+    public void init(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
+        BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
 
         // 获取单体数据
         if (batteryPack == null) {
             throw new RuntimeException("请先配置电池组信息");
         }
 
-        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(configId, packNum);
+        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(packNum);
         if (batteryReportLog == null) {
             throw new RuntimeException("暂无无上报数据");
         }
@@ -91,14 +93,15 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
     }
 
     @Override
-    public Double getMaxResistance(Long configId, Integer packNum) {
+    public Double getMaxResistance(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         // 查询所有单体数据
-        BatteryReportLog packInfo = batteryReportLogService.lastCache(configId, packNum);
+        BatteryReportLog packInfo = batteryReportLogService.lastCache(packNum);
         if (packInfo == null || null == packInfo.getBatteryList()) {
             return 0.0;
         }
 
-        List<DevBatteryMonomer> devBatteryMonomers = selectList(configId, packNum);
+        List<DevBatteryMonomer> devBatteryMonomers = selectList(packNum);
         if (devBatteryMonomers == null || devBatteryMonomers.isEmpty()) {
             return 0.0;
         }

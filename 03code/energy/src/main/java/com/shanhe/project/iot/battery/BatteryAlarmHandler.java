@@ -90,7 +90,7 @@ public class BatteryAlarmHandler {
         String seriousStatus = serious.getString("status1").substring(2) + serious.getString("status2");
 
         // 最新电池组上报记录
-        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(config.getConfigId(), warnInfo.getBatteryPackNumber());
+        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(warnInfo.getBatteryPackNumber());
 
         // 电池组告警参数
         Map<String, String> warnParam = new HashMap<>(14);
@@ -109,7 +109,7 @@ public class BatteryAlarmHandler {
 
         // 如果单体电池未告警，则清除改包下所有告警记录
         if (packBatteryStatus == null || packBatteryStatus.isEmpty()) {
-            alarmLogService.alarmFix(config.getConfigId(), warnInfo.getBatteryPackNumber(), true, excludeModelNum, BATTERY_WARN_CODE);
+            alarmLogService.alarmFix(warnInfo.getBatteryPackNumber(), true, excludeModelNum, BATTERY_WARN_CODE);
             return;
         }
         int alarmSum = packBatteryStatus.size();
@@ -142,7 +142,7 @@ public class BatteryAlarmHandler {
         }
 
         // 修复平台正在报警，但是设备没有报警的单体记录
-        alarmLogService.alarmFix(config.getConfigId(), warnInfo.getBatteryPackNumber(), true, excludeModelNum, BATTERY_WARN_CODE);
+        alarmLogService.alarmFix(warnInfo.getBatteryPackNumber(), true, excludeModelNum, BATTERY_WARN_CODE);
     }
 
     /**
@@ -347,7 +347,7 @@ public class BatteryAlarmHandler {
         }
 
         // 最新电池组上报记录
-        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(config.getConfigId(), batteryWarnInfo.getBatteryPackNumber());
+        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(batteryWarnInfo.getBatteryPackNumber());
 
         /*电池组故障状态*/
         String dfs = batteryWarnInfo.getDeviceFaultStatus();
@@ -377,7 +377,7 @@ public class BatteryAlarmHandler {
 
         // 没有故障，处理排除外的全部告警
         if (batteryWarnInfo.getAlarmBatterySum() == 0) {
-            alarmLogService.alarmFix(config.getConfigId(), batteryWarnInfo.getBatteryPackNumber(), true, excludeModelNum, BATTERY_FAULT_CODE);
+            alarmLogService.alarmFix(batteryWarnInfo.getBatteryPackNumber(), true, excludeModelNum, BATTERY_FAULT_CODE);
             return;
         }
 
@@ -415,7 +415,7 @@ public class BatteryAlarmHandler {
         }
 
         // 修复平台正在报警，但是设备没有报警的单体记录
-        alarmLogService.alarmFix(config.getConfigId(), batteryWarnInfo.getBatteryPackNumber(), true, excludeModelNum, BATTERY_FAULT_CODE);
+        alarmLogService.alarmFix(batteryWarnInfo.getBatteryPackNumber(), true, excludeModelNum, BATTERY_FAULT_CODE);
     }
 
     /**

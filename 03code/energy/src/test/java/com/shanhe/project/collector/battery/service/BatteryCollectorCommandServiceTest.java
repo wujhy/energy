@@ -267,7 +267,7 @@ class BatteryCollectorCommandServiceTest {
     }
 
     @Test
-    void shouldResolveChannelNameByConfigIdAndBatteryGroup() {
+    void shouldResolveChannelNameByBatteryGroupAndIgnoreConfigId() {
         BatteryCollectorProperties properties = new BatteryCollectorProperties();
         BatteryCollectorChannelConfig first = new BatteryCollectorChannelConfig();
         first.setName("battery-rs485-1");
@@ -287,7 +287,7 @@ class BatteryCollectorCommandServiceTest {
     }
 
     @Test
-    void shouldNotFallbackToBlankConfigIdChannelWhenConfigIdIsSpecified() {
+    void shouldResolveBlankConfigIdChannelWhenConfigIdIsSpecified() {
         BatteryCollectorProperties properties = new BatteryCollectorProperties();
         BatteryCollectorChannelConfig channel = new BatteryCollectorChannelConfig();
         channel.setName("battery-rs485-1");
@@ -297,7 +297,7 @@ class BatteryCollectorCommandServiceTest {
 
         String channelName = service.resolveChannelName(10L, 1);
 
-        Assertions.assertNull(channelName);
+        Assertions.assertEquals("battery-rs485-1", channelName);
     }
 
     @Test

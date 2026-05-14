@@ -286,7 +286,7 @@ public class BatteryParamsHandler {
 
 
         // 更新属性缓存
-        configAttributeService.updateCache(config.getConfigId(), YesNoEnum.YES.getDictValue());
+        configAttributeService.updateCache(YesNoEnum.YES.getDictValue());
     }
 
     /**
@@ -580,7 +580,7 @@ public class BatteryParamsHandler {
             this.doUpdateAlarmData(attribute, b1.toString());
         }
         // 更新属性缓存
-        configAttributeService.updateCache(config.getConfigId(), YesNoEnum.YES.getDictValue());
+        configAttributeService.updateCache(YesNoEnum.YES.getDictValue());
     }
 
     /**

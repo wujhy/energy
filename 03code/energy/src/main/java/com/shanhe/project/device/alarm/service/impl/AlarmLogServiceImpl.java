@@ -8,6 +8,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.google.common.collect.Lists;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.DataUtils;
@@ -67,6 +68,11 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
                 String.format(alarmCache.getKey(), configId, packNum, modelNum, itemCode));
     }
 
+    @Override
+    public AlarmLog getBatteryByCache(Integer packNum, Integer modelNum, String itemCode) {
+        return getByCache(Constants.DEFAULT_CONFIG_ID, packNum, modelNum, itemCode);
+    }
+
     /**
      * 查询设备历史记录
      *
@@ -108,7 +114,11 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     }
 
     @Override
-    public Long alarmNum(Long configId) {
+    public Integer isBatteryAlarmByCache(Integer packNum) {
+        return isAlarmByCache(Constants.DEFAULT_CONFIG_ID, packNum);
+    }
+
+    private Long alarmNumByConfigId(Long configId) {
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
         long num = 0L;
         // 前缀
@@ -123,6 +133,11 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
             }
         }
         return num;
+    }
+
+    @Override
+    public Long batteryAlarmNum() {
+        return alarmNumByConfigId(Constants.DEFAULT_CONFIG_ID);
     }
 
     @Override
@@ -238,7 +253,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
             }
 
             // 属性配置校验
-            ConfigAttribute configAttribute = configAttributeService.getCacheBy(config.getConfigId(), packNum, itemCode);
+            ConfigAttribute configAttribute = configAttributeService.getCacheBy(packNum, itemCode);
             if (configAttribute == null
                     || Objects.equals(configAttribute.getStatus(), YesNoEnum.NO.getDictValue())
                     || Objects.equals(configAttribute.getAlarmConfig(), YesNoEnum.NO.getDictValue())) {
@@ -389,7 +404,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     public void alarmBatteryValue(Config config, Integer packNum, Integer modelNum, Map<String, String> warnParam) {
         for (String keyParam : warnParam.keySet()) {
             // 属性配置
-            ConfigAttribute configAttribute = configAttributeService.getCacheBy(config.getConfigId(), packNum, keyParam);
+            ConfigAttribute configAttribute = configAttributeService.getCacheBy(packNum, keyParam);
             if (configAttribute == null) {
                 continue;
             }
@@ -399,10 +414,10 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     }
 
     @Override
-    public void alarmFix(Long configId, Integer packNum, Boolean isModel, List<Integer> excludeModelNum, List<String> includeItemCode) {
+    public void alarmFix(Integer packNum, Boolean isModel, List<Integer> excludeModelNum, List<String> includeItemCode) {
         // 查设备组下还在告警的记录
         AlarmLog alarmLog = new AlarmLog();
-        alarmLog.setConfigId(configId);
+        alarmLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
         alarmLog.setPackNum(packNum);
         alarmLog.setExcludeModelNum(excludeModelNum);
         alarmLog.setIncludeItemCodes(includeItemCode);
@@ -731,10 +746,10 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     }
 
     @Override
-    public void closeAlarmLog(Long configId) {
+    public void closeDefaultDeviceAlarmLog() {
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
         // 前缀
-        String prefix = String.format("alarm:%s", configId);
+        String prefix = String.format("alarm:%s", Constants.DEFAULT_CONFIG_ID);
         for (String key : keys) {
             if (!StrUtil.startWith(key, prefix)) {
                 continue;
@@ -854,6 +869,11 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     }
 
     @Override
+    public void deleteDefaultDeviceAlarmLogs() {
+        deleteAlarmLogByConfigIds(new String[]{String.valueOf(Constants.DEFAULT_CONFIG_ID)});
+    }
+
+    @Override
     public void deleteAlarmLogByAlarmId(Long alarmId) {
         if (alarmId == null) {
             return;
@@ -897,14 +917,11 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     }
 
     @Override
-    public List<AlarmLog> selectAlarmLogListCache(Long configId, Integer packNum) {
-        if (configId == null) {
-            return cacheAlarmList();
-        }
+    public List<AlarmLog> selectBatteryAlarmLogListCache(Integer packNum) {
         // 前缀
         String prefix = packNum != null ?
-                String.format("alarm:%s:%s", configId, packNum) :
-                String.format("alarm:%s", configId);
+                String.format("alarm:%s:%s", Constants.DEFAULT_CONFIG_ID, packNum) :
+                String.format("alarm:%s", Constants.DEFAULT_CONFIG_ID);
 
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
         List<AlarmLog> alarmLogs = new ArrayList<>();
@@ -942,8 +959,8 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     }
 
     @Override
-    public void deleteAlarmLogByConfigIdPackNum(Long configId, Integer packNum) {
-        alarmLogMapper.deleteAlarmLogByConfigIdPackNum(configId, packNum);
+    public void deleteBatteryAlarmLogByPackNum(Integer packNum) {
+        alarmLogMapper.deleteAlarmLogByConfigIdPackNum(Constants.DEFAULT_CONFIG_ID, packNum);
     }
 
 
@@ -1072,7 +1089,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
 
         if (ObjUtil.equals(alarmLog.getItemCode(), ItemCode.TXZT.getCode())) {
             // 1、结束测试记录
-            optLogService.closeOptLog(alarmLog.getConfigId(), alarmLog.getPackNum());
+            optLogService.closeOptLog(alarmLog.getPackNum());
             // 2、自动编号、内阻测试状态缓存重置
             controlBatterySet.clearModelNum(alarmLog.getPackNum());
         }

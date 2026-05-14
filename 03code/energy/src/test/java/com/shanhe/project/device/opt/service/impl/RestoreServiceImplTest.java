@@ -26,24 +26,24 @@ class RestoreServiceImplTest {
     void delPackShouldIgnoreRequestConfigIdAndUseDefaultConfig() {
         RestoreServiceImpl service = new RestoreServiceImpl();
         IConfigService configService = Mockito.mock(IConfigService.class);
-        IBatteryPackService batteryPackService = Mockito.mock(IBatteryPackService.class);
+        IBatteryPackService batteryPackService = Mockito.mock(IBatteryPackService.class, Mockito.CALLS_REAL_METHODS);
         IDevBatteryMonomerService devBatteryMonomerService = Mockito.mock(IDevBatteryMonomerService.class);
         IDevBatteryOptService devBatteryOptService = Mockito.mock(IDevBatteryOptService.class);
-        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
-        BatteryReportLogService batteryReportLogService = Mockito.mock(BatteryReportLogService.class);
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class, Mockito.CALLS_REAL_METHODS);
+        BatteryReportLogService batteryReportLogService = Mockito.mock(BatteryReportLogService.class, Mockito.CALLS_REAL_METHODS);
         BatteryModuleRealtimeMapper batteryModuleRealtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
         OptLogService optLogService = Mockito.mock(OptLogService.class);
-        IStatBatteryBatService statBatteryBatService = Mockito.mock(IStatBatteryBatService.class);
-        IStatBatteryPackService statBatteryPackService = Mockito.mock(IStatBatteryPackService.class);
-        IStatBatteryResService statBatteryResService = Mockito.mock(IStatBatteryResService.class);
-        PreBatteryGroupService preBatteryGroupService = Mockito.mock(PreBatteryGroupService.class);
+        IStatBatteryBatService statBatteryBatService = Mockito.mock(IStatBatteryBatService.class, Mockito.CALLS_REAL_METHODS);
+        IStatBatteryPackService statBatteryPackService = Mockito.mock(IStatBatteryPackService.class, Mockito.CALLS_REAL_METHODS);
+        IStatBatteryResService statBatteryResService = Mockito.mock(IStatBatteryResService.class, Mockito.CALLS_REAL_METHODS);
+        PreBatteryGroupService preBatteryGroupService = Mockito.mock(PreBatteryGroupService.class, Mockito.CALLS_REAL_METHODS);
 
         Config config = new Config();
         config.setConfigId(Constants.DEFAULT_CONFIG_ID);
-        Mockito.when(configService.selectConfigByConfigId(Constants.DEFAULT_CONFIG_ID)).thenReturn(config);
+        Mockito.when(configService.selectDefaultConfig()).thenReturn(config);
         BatteryPack batteryPack = new BatteryPack();
         batteryPack.setPackId(12L);
-        Mockito.when(batteryPackService.selectBatteryInfoByPackNum(Constants.DEFAULT_CONFIG_ID, 2)).thenReturn(batteryPack);
+        Mockito.when(batteryPackService.selectBatteryInfoByPackNum(2)).thenReturn(batteryPack);
 
         ReflectionTestUtils.setField(service, "configService", configService);
         ReflectionTestUtils.setField(service, "batteryPackService", batteryPackService);
@@ -64,17 +64,15 @@ class RestoreServiceImplTest {
 
         service.delPack(request);
 
-        Mockito.verify(configService).selectConfigByConfigId(Constants.DEFAULT_CONFIG_ID);
-        Mockito.verify(batteryPackService).selectBatteryInfoByPackNum(Constants.DEFAULT_CONFIG_ID, 2);
-        Mockito.verify(devBatteryOptService).deleteByConfigId(Constants.DEFAULT_CONFIG_ID, 2);
-        Mockito.verify(alarmLogService).deleteAlarmLogByConfigIdPackNum(Constants.DEFAULT_CONFIG_ID, 2);
-        Mockito.verify(batteryReportLogService).deleteByConfigId(Constants.DEFAULT_CONFIG_ID, 2);
-        Mockito.verify(optLogService).deleteByConfigIdPackNum(Constants.DEFAULT_CONFIG_ID, 2);
-        Mockito.verify(statBatteryBatService).deleteByConfigId(Constants.DEFAULT_CONFIG_ID, 2);
-        Mockito.verify(statBatteryPackService).deleteByConfigId(Constants.DEFAULT_CONFIG_ID, 2);
-        Mockito.verify(statBatteryResService).deleteByConfigId(Constants.DEFAULT_CONFIG_ID, 2);
-        Mockito.verify(preBatteryGroupService).deleteByConfigId(Constants.DEFAULT_CONFIG_ID, 2);
-        Mockito.verify(configService, Mockito.never()).selectConfigByConfigId(99L);
-        Mockito.verify(batteryPackService, Mockito.never()).selectBatteryInfoByPackNum(99L, 2);
+        Mockito.verify(configService).selectDefaultConfig();
+        Mockito.verify(batteryPackService).selectBatteryInfoByPackNum(2);
+        Mockito.verify(devBatteryOptService).deleteByConfigId(2);
+        Mockito.verify(alarmLogService).deleteBatteryAlarmLogByPackNum(2);
+        Mockito.verify(batteryReportLogService).deleteByConfigId(2);
+        Mockito.verify(optLogService).deleteByPackNum(2);
+        Mockito.verify(statBatteryBatService).deleteByConfigId(2);
+        Mockito.verify(statBatteryPackService).deleteByConfigId(2);
+        Mockito.verify(statBatteryResService).deleteByConfigId(2);
+        Mockito.verify(preBatteryGroupService).deleteByConfigId(2);
     }
 }

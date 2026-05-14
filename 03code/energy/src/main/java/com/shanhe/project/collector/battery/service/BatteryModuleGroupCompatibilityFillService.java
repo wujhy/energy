@@ -56,12 +56,10 @@ public class BatteryModuleGroupCompatibilityFillService {
     private void fillCapacityCache(BatteryCollectorChannelConfig channelConfig, BatteryModuleGroupRealtime group) {
         if (preBatteryGroupService == null
                 || channelConfig == null
-                || channelConfig.getConfigId() == null
                 || channelConfig.getBatteryGroup() == null) {
             return;
         }
-        PreBatteryGroup preBatteryGroup = preBatteryGroupService.lastCache(
-                channelConfig.getConfigId(), channelConfig.getBatteryGroup());
+        PreBatteryGroup preBatteryGroup = preBatteryGroupService.lastCache(channelConfig.getBatteryGroup());
         if (preBatteryGroup == null) {
             return;
         }

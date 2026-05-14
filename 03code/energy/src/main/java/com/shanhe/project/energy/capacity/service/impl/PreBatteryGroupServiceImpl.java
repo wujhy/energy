@@ -3,6 +3,7 @@ package com.shanhe.project.energy.capacity.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.uuid.IdUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
@@ -43,6 +44,7 @@ public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
      */
     @Override
     public void insert(PreBatteryGroup groupVo) {
+        groupVo.setConfigId(Constants.DEFAULT_CONFIG_ID);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         groupVo.setId(IdUtils.getSnowflakeId());
         groupVo.setStaticTimeStr(sdf.format(groupVo.getStaticTime()));
@@ -56,7 +58,8 @@ public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
     }
 
     @Override
-    public PreBatteryGroup lastCache(Long configId, Integer packNum) {
+    public PreBatteryGroup lastCache(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         String key = String.format(cache.getKey(), configId, packNum);
         Object log = CacheUtils.get(cache.getCache(), key);
         if (log == null) {
@@ -73,7 +76,8 @@ public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
     }
 
     @Override
-    public void deleteByConfigId(Long configId, Integer packNum) {
+    public void deleteByConfigId(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         preBatteryGroupMapper.deleteByConfigId(configId, packNum);
     }
 
@@ -87,13 +91,13 @@ public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
         List<BatteryPack> batteryPackList = batteryPackMapper.selectAllBattery();
         for (BatteryPack batteryPack : batteryPackList) {
             // 查询最新一条记录
-            PreBatteryGroup reportLog = preBatteryGroupMapper.selectLast(batteryPack.getConfigId(), batteryPack.getPackNum());
+            PreBatteryGroup reportLog = preBatteryGroupMapper.selectLast(Constants.DEFAULT_CONFIG_ID, batteryPack.getPackNum());
             if (reportLog == null) {
                 continue;
             }
 
             /* 缓存 */
-            String key = String.format(cache.getKey(), reportLog.getConfigId(), reportLog.getPackNum());
+            String key = String.format(cache.getKey(), Constants.DEFAULT_CONFIG_ID, reportLog.getPackNum());
             if (CacheUtils.get(cache.getCache(), key) == null) {
                 CacheUtils.put(cache.getCache(), key, reportLog);
             }

@@ -3,6 +3,7 @@ package com.shanhe.project.device.opt.service.impl;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.text.Convert;
 import com.shanhe.common.utils.uuid.IdUtils;
@@ -39,10 +40,10 @@ public class OptLogServiceImpl implements OptLogService {
     CacheKeyEnum logCache = CacheKeyEnum.OPT_LOG;
 
     @Override
-    public Long insert(Long configId, Integer packNum, Integer type, Integer result) {
+    public Long insert(Integer packNum, Integer type, Integer result) {
         OptLog optLog = new OptLog();
         optLog.setId(IdUtils.getSnowflakeId());
-        optLog.setConfigId(configId);
+        optLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
         optLog.setPackNum(packNum);
         optLog.setType(type);
         optLog.setResult(result);
@@ -62,10 +63,10 @@ public class OptLogServiceImpl implements OptLogService {
     }
 
     @Override
-    public Long insert(Long configId, Map<String, Object> params, Integer result) {
+    public Long insert(Map<String, Object> params, Integer result) {
         OptLog optLog = new OptLog();
         optLog.setId(IdUtils.getSnowflakeId());
-        optLog.setConfigId(configId);
+        optLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
         optLog.setContent(JSON.toJSONString(params));
         optLog.setResult(result);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -76,12 +77,12 @@ public class OptLogServiceImpl implements OptLogService {
 
     @Async
     @Override
-    public void insertBattery(Long configId, Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
+    public void insertBattery(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
         // 备电测试记录
-        this.batteryTest(configId, packNum, packMap, oldInfo);
+        this.batteryTest(Constants.DEFAULT_CONFIG_ID, packNum, packMap, oldInfo);
 
         // 内阻测试记录
-        this.resistanceTest(configId, packNum, packMap, oldInfo);
+        this.resistanceTest(Constants.DEFAULT_CONFIG_ID, packNum, packMap, oldInfo);
     }
 
     private void batteryTest(Long configId, Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
@@ -256,7 +257,7 @@ public class OptLogServiceImpl implements OptLogService {
                 if (cacheKey != null && batCapacityMap.containsKey(cacheKey)) {
                     log.setBatCapacity(batCapacityMap.get(cacheKey));
                 } else {
-                    BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(log.getConfigId(), log.getPackNum());
+                    BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(log.getPackNum());
                     if (batteryPack != null) {
                         log.setBatCapacity(batteryPack.getBatCapacity());
                         if (cacheKey != null) {
@@ -282,8 +283,8 @@ public class OptLogServiceImpl implements OptLogService {
     }
 
     @Override
-    public void deleteByConfigIds(String[] configIds) {
-        optLogMapper.deleteByConfigIds(configIds);
+    public void deleteDefaultDeviceLogs() {
+        optLogMapper.deleteByConfigIds(Convert.toStrArray(String.valueOf(Constants.DEFAULT_CONFIG_ID)));
     }
 
     @Override
@@ -330,9 +331,9 @@ public class OptLogServiceImpl implements OptLogService {
     }
 
     @Override
-    public OptLog selectNotFinishedCacheLog(Long configId, Integer packNum, Integer type) {
+    public OptLog selectNotFinishedCacheLog(Integer packNum, Integer type) {
         // 缓存记录
-        String cacheKey = String.format(logCache.getKey(), configId, packNum, type);
+        String cacheKey = String.format(logCache.getKey(), Constants.DEFAULT_CONFIG_ID, packNum, type);
         Object object = CacheUtils.get(logCache.getCache(), cacheKey);
         if (object == null) {
             return null;
@@ -341,13 +342,13 @@ public class OptLogServiceImpl implements OptLogService {
     }
 
     @Override
-    public OptLog getRunningOptLog(Long configId, Integer packNum, Integer type) {
-        return optLogMapper.getRunningOptLog(configId, packNum, type);
+    public OptLog getRunningOptLog(Integer packNum, Integer type) {
+        return optLogMapper.getRunningOptLog(Constants.DEFAULT_CONFIG_ID, packNum, type);
     }
 
     @Override
-    public Integer count(Long configId, Integer packNum, List<Integer> types) {
-        Integer count = optLogMapper.count(configId, packNum, types);
+    public Integer count(Integer packNum, List<Integer> types) {
+        Integer count = optLogMapper.count(Constants.DEFAULT_CONFIG_ID, packNum, types);
         if (count != null) {
             return count;
         }
@@ -363,21 +364,21 @@ public class OptLogServiceImpl implements OptLogService {
     }
 
     @Override
-    public OptLog lastType(Long configId, Integer packNum, int type) {
-        return optLogMapper.lastByType(configId, packNum, type);
+    public OptLog lastType(Integer packNum, int type) {
+        return optLogMapper.lastByType(Constants.DEFAULT_CONFIG_ID, packNum, type);
     }
 
     @Override
-    public void deleteByConfigIdPackNum(Long configId, Integer packNum) {
-        optLogMapper.deleteByConfigIdPackNum(configId, packNum);
+    public void deleteByPackNum(Integer packNum) {
+        optLogMapper.deleteByConfigIdPackNum(Constants.DEFAULT_CONFIG_ID, packNum);
     }
 
     @Override
-    public void closeOptLog(Long configId, Integer packNum) {
+    public void closeOptLog(Integer packNum) {
         Set<String> oldKeys = CacheUtils.getCacheKeys(logCache.getCache());
         for (String key : oldKeys) {
             OptLog log = (OptLog) CacheUtils.get(logCache.getCache(), key);
-            if (log != null && ObjUtil.equals(log.getConfigId(), configId) && ObjUtil.equals(log.getPackNum(), packNum)) {
+            if (log != null && ObjUtil.equals(log.getConfigId(), Constants.DEFAULT_CONFIG_ID) && ObjUtil.equals(log.getPackNum(), packNum)) {
                 CacheUtils.remove(logCache.getCache(), key);
                 update(log.getId(), YesNoEnum.YES.getDictValue(), null);
             }
@@ -385,17 +386,17 @@ public class OptLogServiceImpl implements OptLogService {
     }
 
     @Override
-    public void doStopTest(Long configId, Integer packNum, Integer type) {
+    public void doStopTest(Integer packNum, Integer type) {
         // 缓存记录
         int keyType = 1;
         if (BatteryTestEnum._1.getDictValue().equals(type)) {
             // 内阻测试
             keyType = 0;
         }
-        String cacheKey = String.format(logCache.getKey(), configId, packNum, keyType);
+        String cacheKey = String.format(logCache.getKey(), Constants.DEFAULT_CONFIG_ID, packNum, keyType);
         OptLog log = (OptLog) CacheUtils.get(logCache.getCache(), cacheKey);
         if (log == null) {
-            log = optLogMapper.getRunningOptLog(configId, packNum, type);
+            log = optLogMapper.getRunningOptLog(Constants.DEFAULT_CONFIG_ID, packNum, type);
             if (log == null) {
                 return;
             }

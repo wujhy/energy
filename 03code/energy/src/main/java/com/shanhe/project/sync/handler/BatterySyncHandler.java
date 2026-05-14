@@ -154,7 +154,7 @@ public class BatterySyncHandler {
 
             BatteryMonomerPackVo batteryOpt = JSONObject.parseObject(contentStr, BatteryMonomerPackVo.class);
 
-            BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(batteryOpt.getDevId(), batteryOpt.getPackNum());
+            BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(batteryOpt.getPackNum());
             if (batteryPack == null) {
                 return new ResponseVo(request.getImei(), MethodEnum._45.getDictValue(), request.getBusinessId(), "未找到该电池组");
             }
@@ -182,12 +182,12 @@ public class BatterySyncHandler {
             Long configId =  param.getLong("devId");
             Integer packNum = param.getInteger("packNum");
 
-            BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(configId, packNum);
+            BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
             if (batteryPack == null) {
                 return new ResponseVo(request.getImei(), MethodEnum._47.getDictValue(), request.getBusinessId(), "未找到该电池组");
             }
 
-            List<DevBatteryMonomer> devBatteryMonomers = devBatteryMonomerService.selectList(configId, packNum);
+            List<DevBatteryMonomer> devBatteryMonomers = devBatteryMonomerService.selectList(packNum);
             if (devBatteryMonomers == null || devBatteryMonomers.isEmpty()) {
                 return new ResponseVo(request.getImei(), MethodEnum._47.getDictValue(), request.getBusinessId(), "未找到该电池初装值");
             }

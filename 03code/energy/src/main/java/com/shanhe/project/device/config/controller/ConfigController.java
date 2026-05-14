@@ -4,7 +4,6 @@ import com.shanhe.framework.web.controller.BaseController;
 import com.shanhe.framework.web.page.TableDataInfo;
 import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.service.IConfigService;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,20 +21,13 @@ import java.util.List;
 @RequestMapping("/device/config")
 public class ConfigController extends BaseController {
 
-    private final String prefix = "device/config";
-
     @Resource
     private IConfigService configService;
 
-    @GetMapping()
-    public String config() {
-        return String.format("%s/config", prefix);
-    }
-
     @PostMapping("/list")
-    public TableDataInfo list(Config config) {
+    public TableDataInfo list() {
         startPage();
-        List<Config> list = configService.selectConfigList(config);
+        List<Config> list = configService.selectConfigList();
         return getDataTable(list);
     }
 

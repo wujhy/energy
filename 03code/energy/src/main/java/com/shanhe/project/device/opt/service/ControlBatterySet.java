@@ -89,7 +89,7 @@ public class ControlBatterySet extends ControlBase {
                 String mode = modelResult.getMode() == 1 ? "自动编号" : modelResult.getMode() == 6 ? "内阻测试" : modelResult.getMode() == 10 ? "连接条电阻测试" : "无";
                 return AjaxResult.error("正在进行" + mode + "，请勿进行其他操作");
             }
-            BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(Constants.DEFAULT_CONFIG_ID, batterySetVO.getPackNum());
+            BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(batterySetVO.getPackNum());
             if (batteryPack == null) {
                 return AjaxResult.error("未找到电池组配置，自动编号失败！");
             }
@@ -148,9 +148,9 @@ public class ControlBatterySet extends ControlBase {
 
     public AjaxResult resistanceDefaultValue(BatterySetVO batterySetVO) {
         applyDefaultConfigId(batterySetVO);
-        ConfigAttribute configAttribute = configAttributeService.getBy(Constants.DEFAULT_CONFIG_ID, batterySetVO.getPackNum(), ItemCode.DTNZGD.getCode());
+        ConfigAttribute configAttribute = configAttributeService.getBy(batterySetVO.getPackNum(), ItemCode.DTNZGD.getCode());
         if (configAttribute == null) {
-            configAttribute = configAttributeService.getBy(Constants.DEFAULT_CONFIG_ID, batterySetVO.getPackNum(), ItemCode.DTNZGX.getCode());
+            configAttribute = configAttributeService.getBy(batterySetVO.getPackNum(), ItemCode.DTNZGX.getCode());
         }
         if (configAttribute == null || configAttribute.getListLevel() == null || configAttribute.getListLevel().isEmpty()) {
             return AjaxResult.success(0L);
@@ -160,7 +160,7 @@ public class ControlBatterySet extends ControlBase {
 
     public AjaxResult resistanceValue(BatterySetVO batterySetVO) {
         applyDefaultConfigId(batterySetVO);
-        return AjaxResult.success(batteryReportLogService.resistanceValue(Constants.DEFAULT_CONFIG_ID, batterySetVO.getPackNum()));
+        return AjaxResult.success(batteryReportLogService.resistanceValue(batterySetVO.getPackNum()));
     }
 
     public AjaxResult resistanceValueSet(BatterySetVO batterySetVO) {
@@ -168,7 +168,7 @@ public class ControlBatterySet extends ControlBase {
             applyDefaultConfigId(batterySetVO);
             updateResistanceStandValue(batterySetVO.getPackNum(), ItemCode.DTNZGD, batterySetVO.getResistanceStandValue());
             updateResistanceStandValue(batterySetVO.getPackNum(), ItemCode.DTNZGX, batterySetVO.getResistanceStandValue());
-            configAttributeService.updateCache(Constants.DEFAULT_CONFIG_ID, 1);
+            configAttributeService.updateCache(1);
             return AjaxResult.success();
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
@@ -286,7 +286,7 @@ public class ControlBatterySet extends ControlBase {
         // 主机信息
         Host host = super.getHost();
         // 设备信息
-        Config config = super.getConfig(Constants.DEFAULT_CONFIG_ID);
+        Config config = super.getConfig();
         // 协议内容
         StringBuilder info = new StringBuilder();
         // 指令头、默认地址、指令编码
@@ -368,7 +368,7 @@ public class ControlBatterySet extends ControlBase {
     }
 
     private void updateResistanceStandValue(Integer packNum, ItemCode itemCode, Integer resistanceStandValue) {
-        ConfigAttribute attribute = configAttributeService.getBy(Constants.DEFAULT_CONFIG_ID, packNum, itemCode.getCode());
+        ConfigAttribute attribute = configAttributeService.getBy(packNum, itemCode.getCode());
         if (attribute == null) {
             logger.info("电池组{}未配置{}，跳过内阻基准值更新", packNum, itemCode.getCode());
             return;

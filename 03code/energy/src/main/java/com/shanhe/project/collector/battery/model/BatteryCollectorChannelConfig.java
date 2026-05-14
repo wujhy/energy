@@ -63,7 +63,7 @@ public class BatteryCollectorChannelConfig {
     private Integer moduleAddressEnd = 246;
 
     /**
-     * 期望单体数量；为空时优先按 configId + batteryGroup 读取 BatteryPack.batSinSize。
+     * 期望单体数量；为空时优先按 batteryGroup 读取 BatteryPack.batSinSize。
      */
     private Integer expectedCellCount;
 
@@ -72,7 +72,7 @@ public class BatteryCollectorChannelConfig {
     private Integer batteryChannel;
 
     /**
-     * 关联旧业务设备ID，用于从旧缓存补充兼容字段；为空时不影响600节采集主流程。
+     * 兼容旧配置字段，内部通道定位不再依赖该值。
      */
     private Long configId;
 

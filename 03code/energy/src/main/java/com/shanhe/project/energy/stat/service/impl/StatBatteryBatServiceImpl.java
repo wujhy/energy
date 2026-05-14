@@ -2,6 +2,7 @@ package com.shanhe.project.energy.stat.service.impl;
 
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.project.energy.stat.domain.StatBatteryBat;
 import com.shanhe.project.energy.stat.mapper.StatBatteryBatMapper;
 import com.shanhe.project.energy.stat.service.IStatBatteryBatService;
@@ -35,6 +36,7 @@ public class StatBatteryBatServiceImpl implements IStatBatteryBatService {
 
     @Override
     public List<StatBatteryBat> selectList(StatBatteryBat params) {
+        params.setConfigId(Constants.DEFAULT_CONFIG_ID);
         return statBatteryBatMapper.selectList(params);
     }
 
@@ -47,7 +49,8 @@ public class StatBatteryBatServiceImpl implements IStatBatteryBatService {
     }
 
     @Override
-    public void deleteByConfigId(Long configId, Integer packNum) {
+    public void deleteByConfigId(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         statBatteryBatMapper.deleteByConfigId(configId, packNum);
     }
 

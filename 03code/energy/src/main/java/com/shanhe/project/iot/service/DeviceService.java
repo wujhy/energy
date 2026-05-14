@@ -4,7 +4,6 @@ import cn.hutool.core.util.StrUtil;
 import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.enums.TcpCidEnum;
-import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.iot.CM03N.DataSwitchHandler;
 import com.shanhe.project.iot.CM03N.DataUploadHandler;
 import com.shanhe.project.iot.CM03N.DevResponseHandler;
@@ -23,8 +22,6 @@ public class DeviceService {
     private static final Logger logger = LoggerFactory.getLogger(DeviceService.class);
 
     @Resource
-    private IHostService hostService;
-    @Resource
     private DevResponseHandler devResponseHandler;
     @Resource
     private DataUploadHandler dataUploadHandler;
@@ -34,11 +31,11 @@ public class DeviceService {
     private ClientReportService clientReportService;
 
     public void tcpDeviceOnline(DeviceData deviceData) {
-        hostService.online(deviceData);
+        logger.debug("tcp device online event ignored, cid={}, imei={}", deviceData.getCid(), deviceData.getImei());
     }
 
     public void tcpDeviceOffline() {
-        hostService.offline();
+        logger.debug("tcp device offline event ignored");
     }
 
     public void tcpDevice(DeviceData deviceData) {
@@ -48,7 +45,6 @@ public class DeviceService {
 
         if (StrUtil.equals(deviceData.getCid(), TcpCidEnum._80.getDictValue())
                 || StrUtil.equals(deviceData.getCid(), TcpCidEnum._88.getDictValue())) {
-            hostService.online(deviceData);
             return;
         }
 

@@ -1,5 +1,6 @@
 package com.shanhe.project.device.config.service.impl;
 
+import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.uuid.IdUtils;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
 import com.shanhe.project.device.config.mapper.DevBatteryOptMapper;
@@ -27,10 +28,10 @@ public class DevBatteryOptServiceImpl implements IDevBatteryOptService {
     }
 
     @Override
-    public DevBatteryOpt selectDevBatteryOptByPackNum(Long configId, Integer packNum, Integer testType) {
+    public DevBatteryOpt selectDevBatteryOptByPackNum(Integer packNum, Integer testType) {
         DevBatteryOpt tmp = new DevBatteryOpt();
         tmp.setPackNum(packNum);
-        tmp.setConfigId(configId);
+        tmp.setConfigId(Constants.DEFAULT_CONFIG_ID);
         tmp.setTestType(testType);
         List<DevBatteryOpt> list = this.selectDevBatteryOptList(tmp);
         if (list != null && !list.isEmpty()) {
@@ -47,7 +48,7 @@ public class DevBatteryOptServiceImpl implements IDevBatteryOptService {
     @Override
     public void insertDevBatteryOpt(DevBatteryOpt devBatteryOpt) {
         if (devBatteryOpt.getOptId() == null) {
-            DevBatteryOpt bt = this.selectDevBatteryOptByPackNum(devBatteryOpt.getConfigId(), devBatteryOpt.getPackNum(), devBatteryOpt.getTestType());
+            DevBatteryOpt bt = this.selectDevBatteryOptByPackNum(devBatteryOpt.getPackNum(), devBatteryOpt.getTestType());
             if (bt == null || bt.getOptId() == null) {
                 devBatteryOpt.setOptId(IdUtils.getSnowflakeId());
                 devBatteryOptMapper.insertDevBatteryOpt(devBatteryOpt);
@@ -85,8 +86,8 @@ public class DevBatteryOptServiceImpl implements IDevBatteryOptService {
     }
 
     @Override
-    public void deleteByConfigId(Long configId, Integer packNum) {
-        devBatteryOptMapper.deleteByConfigId(configId, packNum);
+    public void deleteByConfigId(Integer packNum) {
+        devBatteryOptMapper.deleteByConfigId(Constants.DEFAULT_CONFIG_ID, packNum);
     }
 
 }

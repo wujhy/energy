@@ -1,5 +1,7 @@
 package com.shanhe.project.collector.battery.service;
 
+import com.shanhe.common.utils.CacheUtils;
+import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -151,6 +154,7 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
             }
             if (!context.getCells().isEmpty() || !context.getGroups().isEmpty()) {
                 BatteryModuleGroupRealtime calculation = calculateIfEnabled(channelConfig, context);
+                refreshBatteryOnlineCache(channelConfig);
                 submitPostProcess(channelConfig, context, calculation);
             }
         } catch (Exception e) {
@@ -181,6 +185,14 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
                         BatteryModuleGroupRealtime calculation) {
         adaptAlarmContext(channelConfig, context, calculation);
         syncCompatReportLogIfEnabled(channelConfig, context, calculation);
+    }
+
+    void refreshBatteryOnlineCache(BatteryCollectorChannelConfig channelConfig) {
+        if (channelConfig == null || channelConfig.getBatteryGroup() == null) {
+            return;
+        }
+        String key = String.format(CacheKeyEnum.BATTERY_ONLINE.getKey(), channelConfig.getBatteryGroup());
+        CacheUtils.put(CacheKeyEnum.BATTERY_ONLINE.getCache(), key, new Date());
     }
 
     BatteryModuleGroupRealtime calculateIfEnabled(BatteryCollectorChannelConfig channelConfig,

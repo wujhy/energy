@@ -25,14 +25,14 @@ public interface IStatBatteryPackService {
      * 新增电池组统计
      *
      */
-    void insertList(Long configId, Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList);
+    void insertList(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList);
 
     /**
      * 删除记录
      *
-     * @param configId 设备ID
+     * @param packNum 电池组编号；为空时删除默认设备全部电池组统计
      */
-    void deleteByConfigId(Long configId, Integer packNum);
+    void deleteByConfigId(Integer packNum);
 
     /**
      * 导出数据

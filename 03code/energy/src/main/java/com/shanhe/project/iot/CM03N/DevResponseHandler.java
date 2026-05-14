@@ -5,13 +5,10 @@ import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import com.shanhe.framework.enums.CacheKeyEnum;
-import com.shanhe.project.device.config.domain.Config;
-import com.shanhe.project.device.config.service.IConfigService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 
 /**
  * 设备响应处理服务。
@@ -20,9 +17,6 @@ import javax.annotation.Resource;
 public class DevResponseHandler {
 
     protected static Logger logger = LoggerFactory.getLogger(DevResponseHandler.class);
-
-    @Resource
-    private IConfigService configService;
 
     public void cmdD1(DeviceData deviceData) {
         this.responseResult(deviceData);
@@ -59,16 +53,7 @@ public class DevResponseHandler {
             return;
         }
 
-        Config config = new Config();
-        config.setType(deviceData.getC0());
-        config.setPort(deviceData.getC1());
-        config.setChannel(deviceData.getC2());
-        config.setPortType(CodingUtil.hexParseInt(deviceData.getInfo().substring(2, 4)));
-        config.setBaudRate(CodingUtil.hexParseInt(deviceData.getInfo().substring(4, 12)));
-        config.setDataBits(CodingUtil.hexParseInt(deviceData.getInfo().substring(12, 14)));
-        config.setStopBits(CodingUtil.hexParseInt(deviceData.getInfo().substring(14, 16)));
-        config.setParityBits(CodingUtil.hexParseInt(deviceData.getInfo().substring(16, 18)));
-        config.setIntervalTime(CodingUtil.hexParseInt(deviceData.getInfo().substring(18, 22)));
-        configService.updatePost(config);
+        logger.debug("ignore static default config response, type={}, port={}, channel={}",
+                deviceData.getC0(), deviceData.getC1(), deviceData.getC2());
     }
 }

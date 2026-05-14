@@ -35,7 +35,7 @@ public class StatBatteryController extends BaseController {
     @GetMapping("/getResistanceReport")
     public AjaxResult getResistanceReport(@RequestParam(required = false) Long configId,
                                           @RequestParam Integer packNum) {
-        return success(statBatteryResService.getResistanceReport(Constants.DEFAULT_CONFIG_ID, packNum));
+        return success(statBatteryResService.getResistanceReport(packNum));
     }
 
     // 获取内阻报表
@@ -43,7 +43,7 @@ public class StatBatteryController extends BaseController {
     public AjaxResult listResistance(@RequestParam(required = false) Long configId,
                                      @RequestParam Integer packNum,
                                      @RequestParam Integer batNum) {
-        return success(statBatteryResService.listResistance(Constants.DEFAULT_CONFIG_ID, packNum, batNum));
+        return success(statBatteryResService.listResistance(packNum, batNum));
     }
 
     // 组数据
@@ -66,7 +66,7 @@ public class StatBatteryController extends BaseController {
     @GetMapping("/updateMonomer")
     public AjaxResult updateMonomer(@RequestParam(required = false) Long configId,
                                     @RequestParam Integer packNum) {
-        devBatteryMonomerService.init(Constants.DEFAULT_CONFIG_ID, packNum);
+        devBatteryMonomerService.init(packNum);
         return success();
     }
 
@@ -87,7 +87,7 @@ public class StatBatteryController extends BaseController {
         if (SystemService.isWin()) {
             return error("WINDOWS 暂不支持");
         }
-        statBatteryResService.export(Constants.DEFAULT_CONFIG_ID, params.getPackNum(), params.getExportPath());
+        statBatteryResService.export(params.getPackNum(), params.getExportPath());
         return success();
     }
 }

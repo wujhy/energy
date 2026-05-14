@@ -5,7 +5,6 @@ import cn.hutool.core.util.StrUtil;
 import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.comm.tcp.client.TcpClient;
 import com.shanhe.framework.consts.SysConst;
-import com.shanhe.framework.enums.ConnectionStatusEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.device.alarm.domain.AlarmLog;
 import com.shanhe.project.device.config.domain.Config;
@@ -84,9 +83,6 @@ public class ClientReportService {
             return;
         }
         // 设备没有上线，不执行注册上报
-        if (!Objects.equals(host.getStatus(), ConnectionStatusEnum._1.getDictValue())) {
-            return;
-        }
         try {
             HostVo hostVo = new HostVo();
             hostVo.setDevName(host.getName());

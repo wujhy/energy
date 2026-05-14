@@ -1,6 +1,5 @@
 package com.shanhe.project.device.screen.controller;
 
-import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.web.controller.BaseController;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.device.screen.service.ScreenService;
@@ -49,7 +48,7 @@ public class ScreenController extends BaseController {
      */
     @GetMapping("/configDetail")
     public AjaxResult configDetail(@RequestParam(required = false) Long configId) {
-        return success(screenService.config(Constants.DEFAULT_CONFIG_ID));
+        return success(screenService.config());
     }
 
     /**
@@ -57,7 +56,7 @@ public class ScreenController extends BaseController {
      */
     @GetMapping("/attribute")
     public AjaxResult viewList(@RequestParam(required = false) Long configId, @RequestParam(required = false) Integer packNum, @RequestParam(required = false) Integer screen) {
-        return success(screenService.attribute(Constants.DEFAULT_CONFIG_ID, packNum, screen));
+        return success(screenService.attribute(packNum, screen));
     }
 
     /**
@@ -68,7 +67,7 @@ public class ScreenController extends BaseController {
                                  @RequestParam(required = false) Integer packNum,
                                  @RequestParam(required = false) Integer screen,
                                  @RequestParam(required = false) Integer track) {
-        return success(screenService.attributeSelect(Constants.DEFAULT_CONFIG_ID, packNum, screen, track));
+        return success(screenService.attributeSelect(packNum, screen, track));
     }
 
     // 系统首页

@@ -1,6 +1,5 @@
 package com.shanhe.project.device.config.controller;
 
-import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.aspectj.lang.annotation.Log;
 import com.shanhe.framework.enums.BusinessType;
 import com.shanhe.framework.web.controller.BaseController;
@@ -29,7 +28,7 @@ public class BatteryPackController extends BaseController {
     @ResponseBody
     public AjaxResult list(@RequestParam(required = false) Long configId,
                            @RequestParam(required = false) Integer isEnabled) {
-        return success(batteryPackService.selectBatteryPackListConfigId(Constants.DEFAULT_CONFIG_ID, isEnabled));
+        return success(batteryPackService.selectBatteryPackListConfigId(isEnabled));
     }
 
 
@@ -56,12 +55,12 @@ public class BatteryPackController extends BaseController {
 
     @GetMapping("/detail/{configId}/{packNum}")
     public AjaxResult detail(@PathVariable("configId") Long configId, @PathVariable("packNum") Integer packNum) {
-        return success(batteryPackService.selectBatteryInfoByPackNum(Constants.DEFAULT_CONFIG_ID, packNum));
+        return success(batteryPackService.selectBatteryInfoByPackNum(packNum));
     }
 
     @GetMapping("/detail/{packNum}")
     public AjaxResult detail(@PathVariable("packNum") Integer packNum) {
-        return success(batteryPackService.selectBatteryInfoByPackNum(Constants.DEFAULT_CONFIG_ID, packNum));
+        return success(batteryPackService.selectBatteryInfoByPackNum(packNum));
     }
 
 }

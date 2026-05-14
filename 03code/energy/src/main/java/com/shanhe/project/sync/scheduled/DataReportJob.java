@@ -24,7 +24,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 上报定时任务
@@ -78,17 +77,10 @@ public class DataReportJob {
                 return;
             }
 
-            // 所有缓存的已开启设备
-            List<Config> configList = configService.cacheConfigList();
-            if (configList.isEmpty()) {
-                logger.debug("上报平台数据，无启用的设备");
-                return;
-            }
-
             // 上报告警数据
-            this.alarmReport(host.getImei(), configList);
+            this.alarmReport(host.getImei());
             // 上报蓄电池历史数据
-            this.historyReport(host.getImei(), configList);
+            this.configPackHistory(host.getImei());
         } catch (Exception e) {
             logger.error("上报平台数据，同步异常：{}", e.getMessage());
         } finally {
@@ -116,7 +108,7 @@ public class DataReportJob {
     /**
      * 上报告警数据
      */
-    private void alarmReport(String imei, List<Config> configList) {
+    private void alarmReport(String imei) {
         try {
             logger.debug("上报平台告警数据，开始同步");
             List<AlarmLog> alarmLogList = alarmLogService.cacheAlarmList();
@@ -124,12 +116,7 @@ public class DataReportJob {
                 logger.debug("上报平台告警数据，无告警数据");
                 return;
             }
-            List<Long> configIds = configList.stream().map(Config::getConfigId).collect(Collectors.toList());
             for (AlarmLog alarmLog : alarmLogList) {
-                // 告警记录不在启动设备缓存内，则不上报
-                if (!configIds.contains(alarmLog.getConfigId())) {
-                    continue;
-                }
                 clientReportService.uploadAlarm(alarmLog, imei);
             }
         } catch (Exception e) {
@@ -140,47 +127,25 @@ public class DataReportJob {
     }
 
     /**
-     * 上报设备历史数据
-     */
-    private void historyReport(String imei, List<Config> configList) {
-        try {
-            // 循环设备
-            for (Config config : configList) {
-                // 如果子设备不在线，则不上报
-                if (Objects.equals(config.getOnline(), YesNoEnum.NO.getDictValue())) {
-                    continue;
-                }
-                // 处理上报数据
-                if (Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
-                    // 蓄电池
-                    this.configPackHistory(imei, config.getConfigId(), config.getPackList());
-                }
-            }
-        } catch (Exception ignored) {
-        }
-    }
-
-    /**
      * 蓄电池组设备历史
      *
      * @param imei 主机
-     * @param configId 设备ID
-     * @param packList 组
      */
-    private void configPackHistory(String imei, Long configId, List<BatteryPack> packList) {
-        if (packList == null || packList.isEmpty()) {
+    private void configPackHistory(String imei) {
+        Config config = configService.getCache();
+        if (config.getPackList() == null || config.getPackList().isEmpty()) {
             return;
         }
-        for (BatteryPack pack : packList) {
+        for (BatteryPack pack : config.getPackList()) {
             // 取蓄电池上报数据
-            BatteryReportLog log = resolveBatteryReportLog(configId, pack.getPackNum());
+            BatteryReportLog log = resolveBatteryReportLog(config.getConfigId(), pack.getPackNum());
             if (!isUsableBatteryReportLog(log)) {
                 continue;
             }
 
             // 上报VO
             ConfigHistoryVo history = new ConfigHistoryVo();
-            history.setDevId(configId);
+            history.setDevId(config.getConfigId());
             history.setPackNum(pack.getPackNum());
 
             // 蓄电池组参数
@@ -212,7 +177,7 @@ public class DataReportJob {
                 return realtimeLog;
             }
         }
-        return batteryReportLogService.lastCache(configId, packNum);
+        return batteryReportLogService.lastCache(packNum);
     }
 
     /**

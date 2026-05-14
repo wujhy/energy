@@ -56,7 +56,7 @@ public class OptBatteryController extends BaseController {
     public AjaxResult getInfo(@RequestParam(required = false) Long configId,
                               @RequestParam Integer packNum,
                               @RequestParam Integer testType) {
-        return success(devBatteryOptService.selectDevBatteryOptByPackNum(Constants.DEFAULT_CONFIG_ID, packNum, testType));
+        return success(devBatteryOptService.selectDevBatteryOptByPackNum(packNum, testType));
     }
 
     /**
@@ -78,7 +78,7 @@ public class OptBatteryController extends BaseController {
     public AjaxResult doCmdOptBatteryTest(@RequestBody DevBatteryOpt devBatteryOpt) {
         applyDefaultConfigId(devBatteryOpt);
         BatteryTestEnum testEnum = BatteryTestEnum.find(devBatteryOpt.getTestType());
-        OptLog opt = optLogService.getRunningOptLog(devBatteryOpt.getConfigId(),null,testEnum.getDictValue());
+        OptLog opt = optLogService.getRunningOptLog(null, testEnum.getDictValue());
         if(opt!=null){
             return AjaxResult.error("蓄电池正在执行测试工作，请稍后再试！");
         }

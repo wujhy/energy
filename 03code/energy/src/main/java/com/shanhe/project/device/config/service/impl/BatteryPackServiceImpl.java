@@ -1,20 +1,18 @@
 package com.shanhe.project.device.config.service.impl;
 
 import com.google.common.collect.Lists;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.common.utils.CacheUtils;
-import com.shanhe.common.utils.spring.SpringUtils;
 import com.shanhe.common.utils.uuid.IdUtils;
 import com.shanhe.framework.enums.BatteryModelEnum;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
-import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.mapper.BatteryPackMapper;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IConfigAttributeService;
-import com.shanhe.project.device.config.service.IConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,12 +48,14 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
     }
 
     @Override
-    public List<BatteryPack> selectBatteryPackListConfigId(Long configId, Integer isEnabled) {
+    public List<BatteryPack> selectBatteryPackListConfigId(Integer isEnabled) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         return batteryPackMapper.selectBatteryPackListConfigId(configId, isEnabled);
     }
 
     @Override
-    public BatteryPack selectBatteryInfoByPackNum(Long configId, Integer packNum) {
+    public BatteryPack selectBatteryInfoByPackNum(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         String key = String.format(packInfoCache.getKey(), configId, packNum);
         Object log = CacheUtils.get(packInfoCache.getCache(), key);
         if (log != null) {
@@ -70,6 +70,7 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
 
     @Override
     public void insertBatteryPack(BatteryPack batteryPack) {
+        batteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID);
         if (null == batteryPack.getIsShowConnect()) {
             batteryPack.setIsShowConnect(YesNoEnum.YES.getDictValue());
         }
@@ -81,30 +82,32 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         }
         batteryPackMapper.insertBatteryPack(batteryPack);
 
-        String key = String.format(packInfoCache.getKey(), batteryPack.getConfigId(), batteryPack.getPackNum());
+        String key = String.format(packInfoCache.getKey(), Constants.DEFAULT_CONFIG_ID, batteryPack.getPackNum());
         CacheUtils.put(packInfoCache.getCache(), key, batteryPack);
     }
 
     @Override
     public void importBatteryPack(List<BatteryPack> list) {
+        list.forEach(batteryPack -> batteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID));
         batteryPackMapper.importBatteryPack(list);
         for (BatteryPack batteryPack : list) {
-            String key = String.format(packInfoCache.getKey(), batteryPack.getConfigId(), batteryPack.getPackNum());
+            String key = String.format(packInfoCache.getKey(), Constants.DEFAULT_CONFIG_ID, batteryPack.getPackNum());
             CacheUtils.put(packInfoCache.getCache(), key, batteryPack);
         }
     }
 
     @Override
     public void update(BatteryPack batteryPack) {
+        batteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID);
         batteryPackMapper.update(batteryPack);
 
-        String key = String.format(packInfoCache.getKey(), batteryPack.getConfigId(), batteryPack.getPackNum());
+        String key = String.format(packInfoCache.getKey(), Constants.DEFAULT_CONFIG_ID, batteryPack.getPackNum());
         CacheUtils.put(packInfoCache.getCache(), key, batteryPack);
     }
 
     @Override
-    public void deleteByConfigIds(String[] configIds) {
-        batteryPackMapper.deleteByConfigIds(configIds);
+    public void deleteDefaultDevicePacks() {
+        batteryPackMapper.deleteByConfigIds(new String[]{String.valueOf(Constants.DEFAULT_CONFIG_ID)});
     }
 
     @Override
@@ -124,7 +127,8 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         // 所有启用的配置属性
         List<BatteryPack> list = batteryPackMapper.selectAllBattery();
         for (BatteryPack attribute : list) {
-            String key = String.format(packInfoCache.getKey(), attribute.getConfigId(), attribute.getPackNum());
+            attribute.setConfigId(Constants.DEFAULT_CONFIG_ID);
+            String key = String.format(packInfoCache.getKey(), Constants.DEFAULT_CONFIG_ID, attribute.getPackNum());
             CacheUtils.put(packInfoCache.getCache(), key, attribute);
             startKeys.add(key);
         }
@@ -138,8 +142,8 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
     }
 
     @Override
-    public Integer getVoltageBalance(Long configId, Integer packNum) {
-        BatteryPack batteryPack = selectBatteryInfoByPackNum(configId, packNum);
+    public Integer getVoltageBalance(Integer packNum) {
+        BatteryPack batteryPack = selectBatteryInfoByPackNum(packNum);
         BatteryModelEnum batteryModelEnum = BatteryModelEnum.find(batteryPack.getBatSinModel());
 
         return batteryPack.getBatSinSize() <= 24 ? batteryModelEnum.getFloatingVoltage24Below() : batteryModelEnum.getFloatingVoltage24Above();
@@ -152,30 +156,18 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         if (batteryPack == null) {
             return;
         }
-        IConfigService configService = SpringUtils.getBean(IConfigService.class);
-        Config config = configService.selectConfigByConfigId(batteryPack.getConfigId());
-        if (config == null) {
-            return;
-        }
         // 报警修复
-        alarmLogService.alarmFix(batteryPack.getConfigId(), batteryPack.getPackNum(), false, null, null);
+        alarmLogService.alarmFix(batteryPack.getPackNum(), false, null, null);
 
         // 删除属性
-        configAttributeService.deleteConfigAttributeByPackNums(config.getConfigId(), Lists.newArrayList(batteryPack.getPackNum()));
+        configAttributeService.deleteConfigAttributeByPackNums(Lists.newArrayList(batteryPack.getPackNum()));
 
         // 删除包
         batteryPackMapper.deleteBatteryPackByBatPackIds(Lists.newArrayList(id));
         // 更新缓存
         updateCache();
 
-        // 属性缓存
-        if (Objects.equals(config.getStatus(), YesNoEnum.YES.getDictValue())) {
-            // 更新属性
-            configAttributeService.updateCache(config.getConfigId(), YesNoEnum.YES.getDictValue());
-        } else {
-            // 删除属性
-            configAttributeService.updateCache(config.getConfigId(), YesNoEnum.NO.getDictValue());
-        }
+        configAttributeService.updateCache(YesNoEnum.YES.getDictValue());
 
     }
 
@@ -189,38 +181,22 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         if (!Objects.equals(old.getPackNum(), batteryPack.getPackNum())) {
             throw new ServiceException("电池组编号不允许修改！");
         }
-        IConfigService configService = SpringUtils.getBean(IConfigService.class);
-        Config config = configService.selectConfigByConfigId(batteryPack.getConfigId());
-        if (config == null) {
-            return;
-        }
         update(batteryPack);
 
-        // 属性缓存
-        if (Objects.equals(config.getStatus(), YesNoEnum.YES.getDictValue())) {
-            // 更新属性
-            configAttributeService.updateCache(config.getConfigId(), YesNoEnum.YES.getDictValue());
-        } else {
-            // 删除属性
-            configAttributeService.updateCache(config.getConfigId(), YesNoEnum.NO.getDictValue());
-        }
+        configAttributeService.updateCache(YesNoEnum.YES.getDictValue());
 
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void insertBatteryPackNew(BatteryPack batteryPack) {
-        IConfigService configService = SpringUtils.getBean(IConfigService.class);
-        Config config = configService.selectConfigByConfigId(batteryPack.getConfigId());
-        if (config == null) {
-            throw new ServiceException("设备数据不存在！");
-        }
+        batteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID);
         if (batteryPack.getPackNum() > 4) {
             throw new ServiceException("请选择正确的蓄电池组！");
         }
 
         batteryPack.setPackId(IdUtils.getSnowflakeId());
-        List<BatteryPack> batteryPacks = selectBatteryPackListConfigId(batteryPack.getConfigId(), null);
+        List<BatteryPack> batteryPacks = selectBatteryPackListConfigId(null);
         if (batteryPacks.size() >= 4) {
             throw new ServiceException("最多支持4个蓄电池组！");
         }
@@ -232,11 +208,12 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         }
         insertBatteryPack(batteryPack);
         // 属性挂电池组
-        configAttributeService.insertByTemplateAttribute(config.getConfigId(), batteryPack.getPackNum(), batteryPack.getBatSinModel());
+        configAttributeService.insertByTemplateAttribute(batteryPack.getPackNum(), batteryPack.getBatSinModel());
     }
 
     @Override
-    public Integer getBatteryMaxNumber(Long configId, Integer packNum) {
+    public Integer getBatteryMaxNumber(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         return batteryPackMapper.getBatteryMaxNumber(configId, packNum);
     }
 }

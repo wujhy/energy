@@ -1,6 +1,5 @@
 package com.shanhe.project.scheduled;
 
-import com.shanhe.framework.enums.ConnectionStatusEnum;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.device.config.service.IBatteryPackService;
@@ -56,7 +55,6 @@ public class CacheInit implements ApplicationRunner {
             // 初始化主机未下线且imei为空
             Host host = hostService.getDetail();
             host.setHostId(1L);
-            host.setStatus(ConnectionStatusEnum._0.getDictValue());
             SystemService.getIp(host);
             hostService.updateHost(host);
         } catch (Exception e) {

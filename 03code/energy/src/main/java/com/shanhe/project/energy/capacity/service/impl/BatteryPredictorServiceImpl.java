@@ -62,7 +62,8 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
 
     @Async
     @Override
-    public void doTotalBatteryStep(Long configId, Integer packNum, String batteryStatus, BatteryReportLog oldInfo) {
+    public void doTotalBatteryStep(Integer packNum, String batteryStatus, BatteryReportLog oldInfo) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         if (oldInfo == null) {
             return;
         }
@@ -82,7 +83,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
             return;
         }
 
-        OptLog optLog = optLogService.lastType(configId, packNum, BatteryTestEnum._5.getDictValue());
+        OptLog optLog = optLogService.lastType(packNum, BatteryTestEnum._5.getDictValue());
         if (optLog == null) {
             return;
         }
@@ -94,7 +95,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         }
 
         logger.error("放电结束，开始预估电池容量==========================");
-        PreBatteryGroup preBatteryGroup = calcPredictorBatCapacity(configId, packNum, optLog.getCreateTime(), endTime);
+        PreBatteryGroup preBatteryGroup = calcPredictorBatCapacity(packNum, optLog.getCreateTime(), endTime);
         if (preBatteryGroup == null) {
             return;
         }
@@ -103,7 +104,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         optLogService.updateBatteryBcapacity(optLog.getId(), preBatteryGroup.getDischargeCapacity(), preBatteryGroup.getBcapacity(), preBatteryGroup.getCurrent(), preBatteryGroup.getEndTime());
     }
 
-    private PreBatteryGroup calcPredictorBatCapacity(Long configId, Integer packNum, Date startTime, Date endTime) {
+    private PreBatteryGroup calcPredictorBatCapacity(Integer packNum, Date startTime, Date endTime) {
         int diffMills = DateUtils.differentMillsByMillisecond(startTime, endTime);
         // 30分钟
         if (diffMills < 30) {
@@ -111,13 +112,13 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
             return null;
         }
         // 电池基本信息
-        BatteryPack batteryInfo = devBatteryInfoService.selectBatteryInfoByPackNum(configId, packNum);
+        BatteryPack batteryInfo = devBatteryInfoService.selectBatteryInfoByPackNum(packNum);
         if (batteryInfo == null) {
             logger.error("未找到电池基本信息");
             return null;
         }
         // 查询所有单体数据
-        BatteryReportLog packInfo = batteryReportLogService.lastCache(configId, packNum);
+        BatteryReportLog packInfo = batteryReportLogService.lastCache(packNum);
         if (packInfo == null) {
             logger.error("Redis找不到电池组实时数据!");
             return null;
@@ -148,7 +149,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         // 额定容量
         Double aCapacity = batteryInfo.getBatCapacity();
         // 电池组充放电电流,获取阶段内的平均电流
-        Double current = dataPointService.getAvgCurrent(configId, packNum, startTime, endTime);
+        Double current = dataPointService.getAvgCurrent(packNum, startTime, endTime);
         if (current == null) {
             current = MapUtil.getDouble(packParam, "packCurrent");
         }
@@ -206,7 +207,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
 
         for (BatteryMonitor bat : packInfo.getBatteryList()) {
             // 查找电池的放电数据
-            dataPoints = dataPointService.findCurrentDataPoint(packInfo.getConfigId(), packInfo.getPackNum(), bat.getBatNum(), startTime, endTime);
+            dataPoints = dataPointService.findCurrentDataPoint(packInfo.getPackNum(), bat.getBatNum(), startTime, endTime);
             if (dataPoints == null || dataPoints.size() < 2) {
                 logger.error("电池编号 {} 放电数据不足", bat.getBatNum());
                 continue;
@@ -337,7 +338,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
      */
     private PreBatteryGroup initPreBatteryGroupVo(BatteryPack batteryInfo, Double current, Date startTime, Date endTime,
                                                   double spec, Map<String, PreBatteryVo> batteryVoMap) {
-        PreBatteryGroup groupVo = preBatteryGroupService.lastCache(batteryInfo.getConfigId(), batteryInfo.getPackNum());
+        PreBatteryGroup groupVo = preBatteryGroupService.lastCache(batteryInfo.getPackNum());
         if (groupVo == null) {
             groupVo = PreBatteryGroup.getNewPreBatteryGroupInfo();
         }
@@ -441,7 +442,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
     // SOH内阻 ≈ 1 - 内阻变化率 / 2 * 100%
     // 实测内阻最小不能超过初始内阻，实测内阻最高只能为初始内阻的1倍
     private double getSohResistance(BatteryPack batteryInfo) {
-        Double maxResistance = devBatteryMonomerService.getMaxResistance(batteryInfo.getConfigId(), batteryInfo.getPackNum());
+        Double maxResistance = devBatteryMonomerService.getMaxResistance(batteryInfo.getPackNum());
         if (maxResistance == null) {
             return 100;
         }

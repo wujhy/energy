@@ -17,34 +17,31 @@ public interface BatteryReportLogService {
     /**
      * 插入记录
      */
-    void insert(Long configId, Integer packNum, Map<String, Object> packParam, List<BatteryMonitor> batteryList, boolean isInsert);
+    void insert(Integer packNum, Map<String, Object> packParam, List<BatteryMonitor> batteryList, boolean isInsert);
 
     /**
      * 查电池历史（告警处理）
      *
-     * @param configId 设备id
      * @param packNum 电池编号
      * @return 结果
      */
-    BatteryReportLog selectLastHasAlarm(Long configId, Integer packNum);
+    BatteryReportLog selectLastHasAlarm(Integer packNum);
 
     /**
      * 获取电池组最新记录（缓存）
      *
-     * @param configId 设备id
      * @param packNum 电池组编号
      * @return 电池组
      */
-    BatteryReportLog lastCache(Long configId, Integer packNum);
+    BatteryReportLog lastCache(Integer packNum);
 
     /**
      * 计算电电池内阻平均值
      *
-     * @param configId 设备id
      * @param packNum 电池组编号
      * @return 电电池内阻平均值
      */
-    Long resistanceValue(Long configId, Integer packNum);
+    Long resistanceValue(Integer packNum);
 
     /**
      * 查电池历史
@@ -84,9 +81,9 @@ public interface BatteryReportLogService {
     /**
      * 删除告警记录
      *
-     * @param configId 设备id
+     * @param packNum 电池组编号；为空时删除默认设备全部历史
      */
-    void deleteByConfigId(Long configId, Integer packNum);
+    void deleteByConfigId(Integer packNum);
 
     /**
      * 导出

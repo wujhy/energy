@@ -8,6 +8,7 @@ import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.github.pagehelper.PageHelper;
 import com.google.common.collect.Lists;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.file.FileUtils;
 import com.shanhe.common.utils.uuid.IdUtils;
 import com.shanhe.framework.enums.BatteryTestEnum;
@@ -87,7 +88,8 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
 
     @Async
     @Override
-    public void insertList(Long configId, Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList) {
+    public void insertList(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         // 参数校验
         if (packMap == null || batteryList == null) {
             return;
@@ -106,7 +108,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
 
         // 浮充状态只记录 2 小时
         if (StrUtil.equals("6", batteryPackStatus)) {
-            OptLog optLog = optLogService.selectNotFinishedCacheLog(configId, packNum, 1);
+            OptLog optLog = optLogService.selectNotFinishedCacheLog(packNum, 1);
             if (optLog == null || optLog.getCreateTime() == null) {
                 return;
             }
@@ -121,13 +123,15 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
     }
 
     @Override
-    public void deleteByConfigId(Long configId, Integer packNum) {
+    public void deleteByConfigId(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         statBatteryPackMapper.deleteByConfigId(configId, packNum);
     }
 
     @Override
     public void export(StatBatteryPack params) {
-        BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(params.getConfigId(), params.getPackNum());
+        params.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(params.getPackNum());
         if (batteryPack == null) {
             throw new RuntimeException("请选择电池组");
         }
@@ -254,6 +258,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
 
 
     private void insert(Long configId, Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList) {
+        configId = Constants.DEFAULT_CONFIG_ID;
         StatBatteryPack statBatteryPack = new StatBatteryPack();
         statBatteryPack.setId(IdUtils.getSnowflakeId());
         statBatteryPack.setConfigId(configId);

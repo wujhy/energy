@@ -24,7 +24,7 @@ class DataReportJobTest {
         BatteryReportLog oldLog = log("old");
         ReflectionTestUtils.setField(job, "batteryReportLogService", oldService);
         ReflectionTestUtils.setField(job, "batteryModuleReportLogAdapterService", adapterService);
-        Mockito.when(oldService.lastCache(10L, 1)).thenReturn(oldLog);
+        Mockito.when(oldService.lastCache(1)).thenReturn(oldLog);
 
         BatteryReportLog result = job.resolveBatteryReportLog(10L, 1);
 
@@ -57,7 +57,7 @@ class DataReportJobTest {
         ReflectionTestUtils.setField(job, "batteryReportLogService", oldService);
         ReflectionTestUtils.setField(job, "batteryModuleReportLogAdapterService", adapterService);
         Mockito.when(adapterService.buildReportLog(10L, 1)).thenReturn(new BatteryReportLog());
-        Mockito.when(oldService.lastCache(10L, 1)).thenReturn(oldLog);
+        Mockito.when(oldService.lastCache(1)).thenReturn(oldLog);
 
         BatteryReportLog result = job.resolveBatteryReportLog(10L, 1);
 
@@ -75,7 +75,7 @@ class DataReportJobTest {
         ReflectionTestUtils.setField(job, "batteryReportLogService", oldService);
         ReflectionTestUtils.setField(job, "batteryModuleReportLogAdapterService", adapterService);
         Mockito.when(adapterService.buildReportLog(10L, 1)).thenReturn(realtimeLog);
-        Mockito.when(oldService.lastCache(10L, 1)).thenReturn(oldLog);
+        Mockito.when(oldService.lastCache(1)).thenReturn(oldLog);
 
         BatteryReportLog result = job.resolveBatteryReportLog(10L, 1);
 

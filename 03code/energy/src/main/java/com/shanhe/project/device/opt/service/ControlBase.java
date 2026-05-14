@@ -48,8 +48,8 @@ public class ControlBase {
     /**
      * 获取设备
      */
-    public Config getConfig(Long configId) {
-        Config config = configService.selectConfigByConfigId(configId);
+    public Config getConfig() {
+        Config config = configService.selectDefaultConfig();
         if (config == null) {
             throw new ServiceException("设备不存在，请求失败！");
         }

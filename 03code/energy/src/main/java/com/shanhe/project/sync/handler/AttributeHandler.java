@@ -47,12 +47,12 @@ public class AttributeHandler {
             log.debug("同步设备属性信息：{}", contentStr);
             AlarmItemVo alarmItem = JSONObject.parseObject(contentStr, AlarmItemVo.class);
             // 校验设备
-            Config config = configService.selectConfigByConfigId(alarmItem.getDevId());
+            Config config = configService.selectDefaultConfig();
             if (config == null) {
                 return new ResponseVo(request.getImei(), MethodEnum._18.getDictValue(), request.getBusinessId(), "设备不存在");
             }
             // 设备属性
-            ConfigAttribute configAttribute = configAttributeService.getBy(alarmItem.getDevId(), alarmItem.getPackNum(), alarmItem.getItemCode());
+            ConfigAttribute configAttribute = configAttributeService.getBy(alarmItem.getPackNum(), alarmItem.getItemCode());
             boolean isUpdate = false;
             // 设备存在
             if (configAttribute != null) {
@@ -125,7 +125,7 @@ public class AttributeHandler {
             String contentStr = JSONObject.toJSONString(request.getContent());
             log.debug("主动同步设备属性信息：{}", contentStr);
             JSONObject param = JSONObject.parseObject(contentStr);
-            List<ConfigAttribute> configAttributeList = configAttributeService.selectByConfigId(param.getLong("devId"));
+            List<ConfigAttribute> configAttributeList = configAttributeService.selectByConfigId();
             if (configAttributeList != null && !configAttributeList.isEmpty()) {
                 for (ConfigAttribute configAttribute : configAttributeList) {
                     clientReportService.uploadAlarmConfigItem(configAttribute, request.getImei());

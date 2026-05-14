@@ -12,6 +12,6 @@ public interface BatteryPredictorService {
     /**
      * 统计蓄电池状态变化过程
      */
-    void doTotalBatteryStep(Long configId, Integer packNum, String batteryStatus, BatteryReportLog oldInfo);
+    void doTotalBatteryStep(Integer packNum, String batteryStatus, BatteryReportLog oldInfo);
 
 }

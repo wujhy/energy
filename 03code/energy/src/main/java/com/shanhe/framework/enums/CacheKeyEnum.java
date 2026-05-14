@@ -15,10 +15,10 @@ public enum CacheKeyEnum {
     HOST("sys-cache", "device:host", "站点信息"),
     HOST_TOKEN("sys-cache", "device:host:token", "站点token信息"),
     WARN("device-warn", "device:warn", "站点告警"),
-    /* config.类型.端口号.通道号 */
-    CONFIG("device-config", "config:%s:%s:%s", "设备配置"),
+    CONFIG("device-config", "config", "设备配置"),
     /* config.类型.端口号.通道号 */
     CONFIG_ONLINE("sys-cache", "config:%s:%s:%s", "设备在线"),
+    BATTERY_ONLINE("sys-cache", "battery:online:%s", "电池组在线"),
     /* attribute.配置id.组.属性编码 */
     ATTRIBUTE("device-attribute", "attribute:%s:%s:%s", "设备属性"),
     /* alarm.配置id.包编号.模块编号.属性编码 */

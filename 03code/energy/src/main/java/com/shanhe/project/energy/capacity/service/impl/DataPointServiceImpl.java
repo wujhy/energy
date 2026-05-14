@@ -2,6 +2,7 @@ package com.shanhe.project.energy.capacity.service.impl;
 
 import com.shanhe.project.energy.capacity.service.DataPointService;
 import com.shanhe.project.energy.capacity.vo.DataPoint;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.project.energy.stat.domain.StatBatteryBat;
 import com.shanhe.project.energy.stat.mapper.StatBatteryBatMapper;
 import com.shanhe.project.energy.stat.mapper.StatBatteryPackMapper;
@@ -26,7 +27,8 @@ public class DataPointServiceImpl implements DataPointService {
     private StatBatteryPackMapper statBatteryPackMapper;
 
     @Override
-    public List<DataPoint> findCurrentDataPoint(Long configId, Integer packNum, Integer batNum, Date startTime, Date endTime) {
+    public List<DataPoint> findCurrentDataPoint(Integer packNum, Integer batNum, Date startTime, Date endTime) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String startDateTimeStr = startTime != null ? sdf.format(startTime) : null;
         String endDateTimeStr = endTime != null ? sdf.format(endTime) : null;
@@ -41,7 +43,8 @@ public class DataPointServiceImpl implements DataPointService {
     }
 
     @Override
-    public Double getAvgCurrent(Long configId, Integer packNum, Date startTime, Date endTime) {
+    public Double getAvgCurrent(Integer packNum, Date startTime, Date endTime) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         StatBatteryBat param = new StatBatteryBat();
         param.setConfigId(configId);
         param.setPackNum(packNum);

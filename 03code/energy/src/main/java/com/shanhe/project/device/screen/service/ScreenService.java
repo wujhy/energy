@@ -40,7 +40,7 @@ public interface ScreenService  {
      * @param configId 设备ID
      * @return 设备
      */
-    Config config(Long configId);
+    Config config();
 
     /**
      * 设备属性列表
@@ -50,7 +50,7 @@ public interface ScreenService  {
      * @param screen 是否显示
      * @return 设备属性
      */
-    List<ConfigAttributeVO> attribute(Long configId, Integer packNum, Integer screen);
+    List<ConfigAttributeVO> attribute(Integer packNum, Integer screen);
 
     /**
      * 设备属性下拉列表
@@ -61,7 +61,7 @@ public interface ScreenService  {
      * @param track 是否显示
      * @return 设备属性
      */
-    List<ConfigAttributeListVO> attributeSelect(Long configId, Integer packNum, Integer screen, Integer track);
+    List<ConfigAttributeListVO> attributeSelect(Integer packNum, Integer screen, Integer track);
 
     /**
      * 电池列表

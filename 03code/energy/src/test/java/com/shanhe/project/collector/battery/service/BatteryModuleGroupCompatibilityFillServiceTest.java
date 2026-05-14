@@ -1,5 +1,6 @@
 package com.shanhe.project.collector.battery.service;
 
+import com.shanhe.common.constant.Constants;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.energy.capacity.service.PreBatteryGroupService;
@@ -41,14 +42,14 @@ class BatteryModuleGroupCompatibilityFillServiceTest {
 
     @Test
     void shouldFillCapacityFieldsFromPredictionCache() {
-        PreBatteryGroupService preBatteryGroupService = Mockito.mock(PreBatteryGroupService.class);
+        PreBatteryGroupService preBatteryGroupService = Mockito.mock(PreBatteryGroupService.class, Mockito.CALLS_REAL_METHODS);
         ReflectionTestUtils.setField(service, "preBatteryGroupService", preBatteryGroupService);
         PreBatteryGroup preBatteryGroup = new PreBatteryGroup();
         preBatteryGroup.setBcapacity(90.5d);
         preBatteryGroup.setBackUpDuration(120);
         preBatteryGroup.setDischargeCapacity(18.6d);
         preBatteryGroup.setSoh(86.4d);
-        Mockito.when(preBatteryGroupService.lastCache(10L, 1)).thenReturn(preBatteryGroup);
+        Mockito.when(preBatteryGroupService.lastCache(1)).thenReturn(preBatteryGroup);
 
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
         channelConfig.setConfigId(10L);
@@ -68,7 +69,6 @@ class BatteryModuleGroupCompatibilityFillServiceTest {
         PreBatteryGroupService preBatteryGroupService = Mockito.mock(PreBatteryGroupService.class);
         ReflectionTestUtils.setField(service, "preBatteryGroupService", preBatteryGroupService);
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
-        channelConfig.setBatteryGroup(1);
 
         service.fillAfterCalculation(channelConfig, new BatteryModuleGroupRealtime());
 

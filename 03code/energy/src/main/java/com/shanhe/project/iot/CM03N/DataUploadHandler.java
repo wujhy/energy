@@ -51,7 +51,7 @@ public class DataUploadHandler {
      * @param deviceData 上报数据
      */
     private void dealData(DeviceData deviceData) {
-        Config config = configService.getCacheBy(deviceData.getC0(), deviceData.getC1(), deviceData.getC2());
+        Config config = configService.getCache();
         if (config == null) {
             logger.error("设备不存在：{}", deviceData);
             return;

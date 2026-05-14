@@ -214,9 +214,9 @@ public class BatteryCollectorCommandService {
     }
 
     /**
-     * 按旧业务设备和电池组解析独立采集通道名称。
+     * 按电池组解析独立采集通道名称，configId 仅作为旧签名兼容字段。
      *
-     * @param configId 旧业务设备ID
+     * @param configId 旧业务设备ID，内部忽略
      * @param batteryGroup 电池组编号
      * @return 通道名称；无法唯一定位时返回null
      */
@@ -232,17 +232,12 @@ public class BatteryCollectorCommandService {
                     || !batteryGroup.equals(channel.getBatteryGroup())) {
                 continue;
             }
-            if (configId != null && configId.equals(channel.getConfigId())) {
-                return channel.getName();
+            if (matchedByGroup != null) {
+                return null;
             }
-            if (configId == null) {
-                if (matchedByGroup != null) {
-                    return null;
-                }
-                matchedByGroup = channel.getName();
-            }
+            matchedByGroup = channel.getName();
         }
-        return configId == null ? matchedByGroup : null;
+        return matchedByGroup;
     }
 
     private boolean isBlank(String value) {

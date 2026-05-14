@@ -1049,17 +1049,13 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         if (count > 0) {
             return count;
         }
-        if (batteryPackService == null || config == null
-                || config.getConfigId() == null || config.getBatteryGroup() == null) {
+        if (batteryPackService == null || config == null || config.getBatteryGroup() == null) {
             return 0;
         }
         try {
-            return sanitizeExpectedCellCount(batteryPackService.getBatteryMaxNumber(
-                    config.getConfigId(),
-                    config.getBatteryGroup()));
+            return sanitizeExpectedCellCount(batteryPackService.getBatteryMaxNumber(config.getBatteryGroup()));
         } catch (Exception e) {
-            log.warn("resolve battery expected cell count failed, configId={}, packNum={}",
-                    config.getConfigId(),
+            log.warn("resolve battery expected cell count failed, packNum={}",
                     config.getBatteryGroup(),
                     e);
             return 0;

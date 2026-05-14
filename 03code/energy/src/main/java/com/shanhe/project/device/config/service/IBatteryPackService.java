@@ -24,19 +24,17 @@ public interface IBatteryPackService
     /**
      * 查询设备列表
      * 
-     * @param configId 设备
      * @param isEnabled 是否启用
      * @return 设备集合
      */
-    List<BatteryPack> selectBatteryPackListConfigId(Long configId, Integer isEnabled);
+    List<BatteryPack> selectBatteryPackListConfigId(Integer isEnabled);
 
     /**
      * 根据电池组编号获取设备信息
-     * @param configId 配置id
      * @param packNum 编号
      * @return 电池组
      */
-    BatteryPack selectBatteryInfoByPackNum(Long configId, Integer packNum);
+    BatteryPack selectBatteryInfoByPackNum(Integer packNum);
 
     /**
      * 新增电池组
@@ -64,7 +62,7 @@ public interface IBatteryPackService
      * 
      * @param configIds 需要删除的设备id
      */
-    void deleteByConfigIds(String[] configIds);
+    void deleteDefaultDevicePacks();
 
     /**
      * 批量删除电池组
@@ -81,11 +79,10 @@ public interface IBatteryPackService
     /**
      * 电压均衡标称值
      *
-     * @param configId 配置id
      * @param packNum 组编号
      * @return 电压均衡
      */
-    Integer getVoltageBalance(Long configId, Integer packNum);
+    Integer getVoltageBalance(Integer packNum);
 
     /**
      * 删除电池组
@@ -106,9 +103,8 @@ public interface IBatteryPackService
 
     /**
      * 获取sin数量
-     * @param configId 配置id
      * @param packNum 组编号
      * @return sin数量
      */
-    Integer getBatteryMaxNumber(Long configId, Integer packNum);
+    Integer getBatteryMaxNumber(Integer packNum);
 }

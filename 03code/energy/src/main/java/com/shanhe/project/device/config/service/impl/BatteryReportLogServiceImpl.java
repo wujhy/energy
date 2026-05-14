@@ -7,6 +7,7 @@ import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.fastjson.JSON;
 import com.github.pagehelper.PageHelper;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.file.FileUtils;
 import com.shanhe.common.utils.text.Convert;
@@ -57,7 +58,8 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
 
     @Async
     @Override
-    public void insert(Long configId, Integer packNum, Map<String, Object> packParam, List<BatteryMonitor> batteryList, boolean isInsert) {
+    public void insert(Integer packNum, Map<String, Object> packParam, List<BatteryMonitor> batteryList, boolean isInsert) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         // 直接新增
         BatteryReportLog batteryReportLog = new BatteryReportLog();
         batteryReportLog.setConfigId(configId);
@@ -81,9 +83,10 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
     }
 
     @Override
-    public BatteryReportLog selectLastHasAlarm(Long configId, Integer packNum) {
+    public BatteryReportLog selectLastHasAlarm(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         // 先取缓存
-        BatteryReportLog log = this.lastCache(configId, packNum);
+        BatteryReportLog log = this.lastCache(packNum);
         if (log == null) {
             log = batteryReportLogMapper.selectLast(configId, packNum);
             if (log == null) {
@@ -98,7 +101,7 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
             if (!log.getBatteryList().isEmpty()) {
 
                 // 告警记录
-                List<AlarmLog> alarmLogs = alarmLogService.selectAlarmLogListCache(configId, packNum);
+                List<AlarmLog> alarmLogs = alarmLogService.selectBatteryAlarmLogListCache(packNum);
                 Map<Integer, List<AlarmLog>> batAlarmMap = alarmLogs.stream()
                         .filter(item -> item.getModelNum() != null)
                         .collect(Collectors.groupingBy(AlarmLog::getModelNum));
@@ -118,7 +121,8 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
     }
 
     @Override
-    public BatteryReportLog lastCache(Long configId, Integer packNum) {
+    public BatteryReportLog lastCache(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         String key = String.format(reportCache.getKey(), configId, packNum);
         Object log = CacheUtils.get(reportCache.getCache(), key);
         if (log == null) {
@@ -137,8 +141,9 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
     }
 
     @Override
-    public Long resistanceValue(Long configId, Integer packNum) {
-        BatteryReportLog log = this.lastCache(configId, packNum);
+    public Long resistanceValue(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
+        BatteryReportLog log = this.lastCache(packNum);
         if (log == null) {
             log = batteryReportLogMapper.selectLast(configId, packNum);
             if (log == null) {
@@ -196,7 +201,7 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         List<BatteryPack> batteryPackList = batteryPackMapper.selectAllBattery();
         for (BatteryPack batteryPack : batteryPackList) {
             // 查询最新一条记录
-            BatteryReportLog reportLog = this.selectLast(batteryPack.getConfigId(), batteryPack.getPackNum());
+            BatteryReportLog reportLog = this.selectLast(batteryPack.getPackNum());
             if (reportLog == null) {
                 continue;
             }
@@ -230,13 +235,13 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
             }
             BatteryReportLogIndex result = new BatteryReportLogIndex();
             result.setPackNum(entity.getPackNum());
-            result.setConfigId(entity.getConfigId());
-            result.setAlarm(alarmLogService.isAlarmByCache(entity.getConfigId(), entity.getPackNum()));
+            result.setConfigId(Constants.DEFAULT_CONFIG_ID);
+            result.setAlarm(alarmLogService.isBatteryAlarmByCache(entity.getPackNum()));
 
-            String key = String.format(reportCache.getKey(), entity.getConfigId(), entity.getPackNum());
+            String key = String.format(reportCache.getKey(), Constants.DEFAULT_CONFIG_ID, entity.getPackNum());
             Object log = CacheUtils.get(reportCache.getCache(), key);
             if (log == null) {
-                log = batteryReportLogMapper.selectLast(entity.getConfigId(), entity.getPackNum());
+                log = batteryReportLogMapper.selectLast(Constants.DEFAULT_CONFIG_ID, entity.getPackNum());
             }
 
             if (log != null) {
@@ -254,13 +259,15 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
     }
 
     @Override
-    public void deleteByConfigId(Long configId, Integer packNum) {
+    public void deleteByConfigId(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         batteryReportLogMapper.deleteByConfigId(configId, packNum);
     }
 
     @Override
     public void export(BatteryReportLog params) {
-        Integer batSinSize = batteryPackService.getBatteryMaxNumber(params.getConfigId(), params.getPackNum());
+        params.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        Integer batSinSize = batteryPackService.getBatteryMaxNumber(params.getPackNum());
         if (batSinSize == null) {
             throw new RuntimeException("查询不到单体节数");
         }
@@ -358,8 +365,8 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
     }
 
     /** 查询最新一条记录 */
-    public BatteryReportLog selectLast(Long configId, Integer packNum) {
-        BatteryReportLog log = batteryReportLogMapper.selectLast(configId, packNum);
+    private BatteryReportLog selectLast(Integer packNum) {
+        BatteryReportLog log = batteryReportLogMapper.selectLast(Constants.DEFAULT_CONFIG_ID, packNum);
         if (log == null) {
             return null;
         }

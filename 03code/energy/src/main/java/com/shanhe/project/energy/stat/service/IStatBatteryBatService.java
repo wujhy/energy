@@ -38,5 +38,5 @@ public interface IStatBatteryBatService {
      * 删除单体电池统计
      *
      */
-    void deleteByConfigId(Long configId, Integer packNum);
+    void deleteByConfigId(Integer packNum);
 }

@@ -47,7 +47,7 @@ public class BatteryReportLogController extends BaseController
     @ResponseBody
     public AjaxResult detailList(@PathVariable Long configId, @PathVariable Integer packNum)
     {
-        BatteryReportLog log = batteryReportLogService.selectLastHasAlarm(Constants.DEFAULT_CONFIG_ID, packNum);
+        BatteryReportLog log = batteryReportLogService.selectLastHasAlarm(packNum);
         if(log!=null){
             //置空数据，实体中已经解析好结构
             log.setPackData(null);

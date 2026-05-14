@@ -63,12 +63,11 @@ public class BatteryModuleCellCompatibilityFillService {
     private void fillBcapacity(BatteryCollectorChannelConfig channelConfig, BatteryModuleCellRealtime cell) {
         if (preBatteryGroupService == null
                 || channelConfig == null
-                || channelConfig.getConfigId() == null
                 || channelConfig.getBatteryGroup() == null
                 || cell.getBatNum() == null) {
             return;
         }
-        PreBatteryGroup group = preBatteryGroupService.lastCache(channelConfig.getConfigId(), channelConfig.getBatteryGroup());
+        PreBatteryGroup group = preBatteryGroupService.lastCache(channelConfig.getBatteryGroup());
         if (group == null || group.getMapBattery() == null) {
             return;
         }

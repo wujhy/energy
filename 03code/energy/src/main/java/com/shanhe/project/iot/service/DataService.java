@@ -1,5 +1,6 @@
 package com.shanhe.project.iot.service;
 
+import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
@@ -42,19 +43,19 @@ public class DataService {
      * @param isPack 是否是蓄电池组数据
      * @return true 存储，false 不存储
      */
-    public boolean isInsert(Long configId, String grouping, boolean isPack) {
-        boolean b = doInsert(configId, grouping, isPack);
+    public boolean isInsert(String grouping) {
+        boolean b = doInsert(grouping);
 
         if (b) {
-            String key = String.format(cache.getKey(), configId, grouping);
+            String key = String.format(cache.getKey(), Constants.DEFAULT_CONFIG_ID, grouping);
             // 记录最后存储时间
             CacheUtils.put(cache.getCache(), key, new Date());
         }
         return b;
     }
 
-    private boolean doInsert(Long configId, String grouping, boolean isPack) {
-        String key = String.format(cache.getKey(), configId, grouping);
+    private boolean doInsert(String grouping) {
+        String key = String.format(cache.getKey(), Constants.DEFAULT_CONFIG_ID, grouping);
         Object o = CacheUtils.get(cache.getCache(), key);
         // 首次存储
         if (o == null) {
@@ -82,8 +83,8 @@ public class DataService {
             return false;
         }
 
-        Integer packNum = isPack ? Integer.parseInt(grouping) : null;
-        Integer alarmByCache = alarmLogService.isAlarmByCache(configId, packNum);
+        Integer packNum = Integer.parseInt(grouping);
+        Integer alarmByCache = alarmLogService.isBatteryAlarmByCache(packNum);
         // 1 不告警，0 告警
         if (alarmByCache == null || alarmByCache == 1) {
             return false;

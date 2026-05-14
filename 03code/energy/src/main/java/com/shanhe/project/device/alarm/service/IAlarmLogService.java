@@ -22,6 +22,11 @@ public interface IAlarmLogService
     AlarmLog getByCache(Long configId, Integer packNum, Integer modelNum, String itemCode);
 
     /**
+     * 通过默认蓄电池设备缓存获取告警记录
+     */
+    AlarmLog getBatteryByCache(Integer packNum, Integer modelNum, String itemCode);
+
+    /**
      * 查询设备历史记录
      * 
      * @param alarmId 设备历史记录主键
@@ -45,12 +50,14 @@ public interface IAlarmLogService
     Integer isAlarmByCache(Long configId, Integer packNum);
 
     /**
-     * 查设备告警记录数
-     *
-     * @param configId 设备主键
-     * @return 告警记录数
+     * 默认蓄电池设备是否告警
      */
-    Long alarmNum(Long configId);
+    Integer isBatteryAlarmByCache(Integer packNum);
+
+    /**
+     * 默认蓄电池设备告警记录数
+     */
+    Long batteryAlarmNum();
 
     /**
      * 查设备告警记录数
@@ -114,7 +121,7 @@ public interface IAlarmLogService
      * @param excludeModelNum 排除的单体电池序号
      * @param includeCode 包含属性
      */
-    void alarmFix(Long configId, Integer packNum, Boolean isModel, List<Integer> excludeModelNum, List<String> includeCode);
+    void alarmFix(Integer packNum, Boolean isModel, List<Integer> excludeModelNum, List<String> includeCode);
 
     /**
      * 告警验证
@@ -150,7 +157,7 @@ public interface IAlarmLogService
     /**
      * 基于设备关闭告警
      */
-    void closeAlarmLog(Long configId);
+    void closeDefaultDeviceAlarmLog();
 
     /**
      * 新增设备历史记录
@@ -192,6 +199,11 @@ public interface IAlarmLogService
     void deleteAlarmLogByConfigIds(String[] configIds);
 
     /**
+     * 删除默认蓄电池设备告警记录
+     */
+    void deleteDefaultDeviceAlarmLogs();
+
+    /**
      * 删除设备历史记录信息
      * 
      * @param alarmId 设备历史记录主键
@@ -210,7 +222,7 @@ public interface IAlarmLogService
      * @param packNum 包序号
      * @return 告警缓存列表
      */
-    List<AlarmLog> selectAlarmLogListCache(Long configId, Integer packNum);
+    List<AlarmLog> selectBatteryAlarmLogListCache(Integer packNum);
 
     /**
      * 获取当前是否告警
@@ -235,5 +247,5 @@ public interface IAlarmLogService
      * @param configId 设备id
      * @param packNum 包序号
      */
-    void deleteAlarmLogByConfigIdPackNum(Long configId, Integer packNum);
+    void deleteBatteryAlarmLogByPackNum(Integer packNum);
 }

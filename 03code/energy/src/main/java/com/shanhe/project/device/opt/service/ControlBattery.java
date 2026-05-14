@@ -120,14 +120,14 @@ public class ControlBattery extends ControlBase {
         Config config = this.getConfig(opt);
         BatteryTestEnum testEnum = BatteryTestEnum.find(opt.getTestType());
 
-        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(config.getConfigId(), opt.getPackNum());
+        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(opt.getPackNum());
         if (null == batteryReportLog) {
             return AjaxResult.error("暂无上报数据", 0);
         }
         if (null == batteryReportLog.getPackParam()) {
             return AjaxResult.error("暂无上报数据", 0);
         }
-        AlarmLog alarmLog = alarmLogService.getByCache(opt.getConfigId(),opt.getPackNum(),null, ItemCode.TXZT.getCode());
+        AlarmLog alarmLog = alarmLogService.getBatteryByCache(opt.getPackNum(), null, ItemCode.TXZT.getCode());
         if (null != alarmLog) {
             if (ObjUtil.equals(YesNoEnum.NO.getDictValue(), alarmLog.getStatus())) {
                 return AjaxResult.error(alarmLog.getDataInfo(), 0);
@@ -172,7 +172,7 @@ public class ControlBattery extends ControlBase {
                     }
                 }
 
-                OptLog optLog = optLogService.lastType(config.getConfigId(), opt.getPackNum(), BatteryTestEnum._1.getDictValue());
+                OptLog optLog = optLogService.lastType(opt.getPackNum(), BatteryTestEnum._1.getDictValue());
                 // 5 分钟内不允许测试
                 if (null != optLog) {
                     if (null == optLog.getUpdateTime()) {
@@ -215,7 +215,7 @@ public class ControlBattery extends ControlBase {
         // 记录操作日志
         Long optLogId = null;
         if (needLog) {
-            optLogId = optLogService.insert(config.getConfigId(), opt.getPackNum(), opt.getTestType(), null);
+            optLogId = optLogService.insert(opt.getPackNum(), opt.getTestType(), null);
         }
 
         // 下发指令
@@ -243,25 +243,25 @@ public class ControlBattery extends ControlBase {
         // 停止内阻测试
         if (Objects.equals(opt.getTestType(), BatteryTestEnum._1.getDictValue())) {
 
-            BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(config.getConfigId(), opt.getPackNum());
+            BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(opt.getPackNum());
 
             // 无数据上报结束
             if (null == batteryReportLog || null == batteryReportLog.getPackParam()) {
-                optLogService.doStopTest(opt.getConfigId(), opt.getPackNum(), BatteryTestEnum._1.getDictValue());
+                optLogService.doStopTest(opt.getPackNum(), BatteryTestEnum._1.getDictValue());
                 return AjaxResult.success();
             }
 
             // 当前不在内阻测试状态
             String resistanceTestStatus = (String) batteryReportLog.getPackParam().get("resistanceTestStatus");
             if (!StrUtil.equals("6", resistanceTestStatus)) {
-                optLogService.doStopTest(opt.getConfigId(), opt.getPackNum(), BatteryTestEnum._1.getDictValue());
+                optLogService.doStopTest(opt.getPackNum(), BatteryTestEnum._1.getDictValue());
                 return AjaxResult.success();
             }
 
             // 上报时间超过 3 分钟
             int diff = DateUtils.differentMillsByMillisecond(batteryReportLog.getCreateTime(), new Date());
             if (diff > 3) {
-                optLogService.doStopTest(opt.getConfigId(), opt.getPackNum(), BatteryTestEnum._1.getDictValue());
+                optLogService.doStopTest(opt.getPackNum(), BatteryTestEnum._1.getDictValue());
                 return AjaxResult.success();
             }
             return AjaxResult.success();
@@ -282,7 +282,7 @@ public class ControlBattery extends ControlBase {
      */
     private Config getConfig(DevBatteryOpt devBatteryOpt) {
         // 设备
-        Config config = configService.selectConfigByConfigId(devBatteryOpt.getConfigId());
+        Config config = configService.selectDefaultConfig();
         if (config == null) {
             throw new ServiceException("设备不存在，操作执行失败！");
         }
@@ -388,7 +388,7 @@ public class ControlBattery extends ControlBase {
      * @param configAttribute 设备属性
      */
     public void doUpdateParameter(ConfigAttribute configAttribute) {
-        Config config = configService.selectConfigByConfigId(configAttribute.getConfigId());
+        Config config = configService.selectDefaultConfig();
         // 设备启用、在线、且为蓄电池
         if (config == null
                 || !Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {

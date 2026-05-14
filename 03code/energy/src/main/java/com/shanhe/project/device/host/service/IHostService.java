@@ -1,6 +1,5 @@
 package com.shanhe.project.device.host.service;
 
-import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.project.device.host.domain.Host;
 
 /**
@@ -73,12 +72,10 @@ public interface IHostService
     /**
      * 上线
      */
-    void online(DeviceData device);
 
     /**
      * 下线
      */
-    void offline();
 
     /**
      * 更新缓存

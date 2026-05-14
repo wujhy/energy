@@ -27,7 +27,7 @@ public interface IConfigAttributeService
      * @param configId 设备id
      * @return 设备属性集合
      */
-    List<ConfigAttribute> selectByConfigId(Long configId);
+    List<ConfigAttribute> selectByConfigId();
 
     /**
      * 查询设备属性列表
@@ -76,7 +76,7 @@ public interface IConfigAttributeService
      * @param packNum 电池组编号
      * @param model 电池规格型号
      */
-    void insertByTemplateAttribute(Long configId, Integer packNum, Integer model);
+    void insertByTemplateAttribute(Integer packNum, Integer model);
 
     /**
      * 修改设备属性
@@ -120,14 +120,14 @@ public interface IConfigAttributeService
      *
      * @param configIds 需要删除设备id
      */
-    void deleteConfigAttributeByConfigIds(String[] configIds);
+    void deleteDefaultDeviceAttributes();
 
     /**
      * 批量删除设备属性
      *
      * @param packNums 需要删除设备包
      */
-    void deleteConfigAttributeByPackNums(Long configId, List<Integer> packNums);
+    void deleteConfigAttributeByPackNums(List<Integer> packNums);
 
     /**
      * 导入属性
@@ -144,7 +144,7 @@ public interface IConfigAttributeService
      * @param code 属性编码
      * @return 属性信息
      */
-    ConfigAttribute getBy(Long configId, Integer packNum, String code);
+    ConfigAttribute getBy(Integer packNum, String code);
 
     /**
      * 通过缓存获取属性
@@ -154,7 +154,7 @@ public interface IConfigAttributeService
      * @param code 属性编码
      * @return 属性信息
      */
-    ConfigAttribute getCacheBy(Long configId, Integer packNum, String code);
+    ConfigAttribute getCacheBy(Integer packNum, String code);
 
     /**
      * 通过缓存获取属性
@@ -163,7 +163,7 @@ public interface IConfigAttributeService
      * @param code 属性编码
      * @return 属性信息
      */
-    ConfigAttribute getCacheBy(Long configId, String code);
+    ConfigAttribute getCacheBy(String code);
 
     /**
      * 通过缓存获取属性名
@@ -173,7 +173,7 @@ public interface IConfigAttributeService
      * @param code 属性编码
      * @return 名
      */
-    String getNameByCache(Long configId, Integer packNum, String code);
+    String getNameByCache(Integer packNum, String code);
 
     /**
      * 更新全部缓存
@@ -186,7 +186,7 @@ public interface IConfigAttributeService
      * @param configId 设备id
      * @param isUpdate 是否更新
      */
-    void updateCache(Long configId, Integer isUpdate);
+    void updateCache(Integer isUpdate);
 
     /**
      * 获取缓存属性列表

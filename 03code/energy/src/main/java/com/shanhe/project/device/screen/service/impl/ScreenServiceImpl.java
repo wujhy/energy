@@ -1,6 +1,7 @@
 package com.shanhe.project.device.screen.service.impl;
 
 import cn.hutool.core.date.DateUtil;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.*;
@@ -71,14 +72,14 @@ public class ScreenServiceImpl implements ScreenService {
     }
 
     @Override
-    public Config config(Long configId) {
-        return configService.screenConfig(configId);
+    public Config config() {
+        return configService.screenConfig();
     }
 
     @Override
-    public List<ConfigAttributeVO> attribute(Long configId, Integer packNum, Integer screen) {
+    public List<ConfigAttributeVO> attribute(Integer packNum, Integer screen) {
         ConfigAttribute configAttribute = new ConfigAttribute();
-        configAttribute.setConfigId(configId);
+        configAttribute.setConfigId(Constants.DEFAULT_CONFIG_ID);
         configAttribute.setPackNum(packNum);
         configAttribute.setStatus(YesNoEnum.YES.getDictValue());
         configAttribute.setScreenDisplay(screen);
@@ -86,9 +87,9 @@ public class ScreenServiceImpl implements ScreenService {
     }
 
     @Override
-    public List<ConfigAttributeListVO> attributeSelect(Long configId, Integer packNum, Integer screen, Integer track) {
+    public List<ConfigAttributeListVO> attributeSelect(Integer packNum, Integer screen, Integer track) {
         ConfigAttribute configAttribute = new ConfigAttribute();
-        configAttribute.setConfigId(configId);
+        configAttribute.setConfigId(Constants.DEFAULT_CONFIG_ID);
         configAttribute.setPackNum(packNum);
         configAttribute.setScreenDisplay(screen);
         configAttribute.setTrack(track);

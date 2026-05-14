@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.LinearCalculator;
@@ -61,8 +62,8 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
     }
 
     @Override
-    public List<ConfigAttribute> selectByConfigId(Long configId) {
-        return configAttributeMapper.selectByConfigId(configId);
+    public List<ConfigAttribute> selectByConfigId() {
+        return configAttributeMapper.selectByConfigId(Constants.DEFAULT_CONFIG_ID);
     }
 
     /**
@@ -123,8 +124,8 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
     }
 
     @Override
-    public void insertByTemplateAttribute(Long configId, Integer packNum, Integer model) {
-        configAttributeMapper.insertByTemplateAttribute(configId, packNum, model);
+    public void insertByTemplateAttribute(Integer packNum, Integer model) {
+        configAttributeMapper.insertByTemplateAttribute(Constants.DEFAULT_CONFIG_ID, packNum, model);
     }
 
     @Override
@@ -203,13 +204,13 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
     }
 
     @Override
-    public void deleteConfigAttributeByConfigIds(String[] configIds) {
-        configAttributeMapper.deleteConfigAttributeByConfigIds(configIds);
+    public void deleteDefaultDeviceAttributes() {
+        configAttributeMapper.deleteConfigAttributeByConfigIds(new String[]{String.valueOf(Constants.DEFAULT_CONFIG_ID)});
     }
 
     @Override
-    public void deleteConfigAttributeByPackNums(Long configId, List<Integer> packNums) {
-        configAttributeMapper.deleteConfigAttributeByPackNums(configId, packNums);
+    public void deleteConfigAttributeByPackNums(List<Integer> packNums) {
+        configAttributeMapper.deleteConfigAttributeByPackNums(Constants.DEFAULT_CONFIG_ID, packNums);
     }
 
     @Override
@@ -218,24 +219,24 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
     }
 
     @Override
-    public ConfigAttribute getBy(Long configId, Integer packNum, String code) {
-        return configAttributeMapper.getBy(configId, packNum, code);
+    public ConfigAttribute getBy(Integer packNum, String code) {
+        return configAttributeMapper.getBy(Constants.DEFAULT_CONFIG_ID, packNum, code);
     }
 
     @Override
-    public ConfigAttribute getCacheBy(Long configId, Integer packNum, String code) {
-        String key = String.format(attributeCache.getKey(), configId, packNum, code);
+    public ConfigAttribute getCacheBy(Integer packNum, String code) {
+        String key = String.format(attributeCache.getKey(), Constants.DEFAULT_CONFIG_ID, packNum, code);
         return (ConfigAttribute) CacheUtils.get(attributeCache.getCache(), key);
     }
 
     @Override
-    public ConfigAttribute getCacheBy(Long configId, String code) {
-        return this.getCacheBy(configId, null, code);
+    public ConfigAttribute getCacheBy(String code) {
+        return this.getCacheBy(null, code);
     }
 
     @Override
-    public String getNameByCache(Long configId, Integer packNum, String code) {
-        ConfigAttribute configAttribute = this.getCacheBy(configId, packNum, code);
+    public String getNameByCache(Integer packNum, String code) {
+        ConfigAttribute configAttribute = this.getCacheBy(packNum, code);
         return configAttribute != null ? configAttribute.getName() : null;
     }
 
@@ -262,9 +263,9 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
     }
 
     @Override
-    public void updateCache(Long configId, Integer isUpdate) {
+    public void updateCache(Integer isUpdate) {
         ConfigAttribute configAttribute = new ConfigAttribute();
-        configAttribute.setConfigId(configId);
+        configAttribute.setConfigId(Constants.DEFAULT_CONFIG_ID);
         configAttribute.setStatus(YesNoEnum.YES.getDictValue());
         List<ConfigAttribute> list = this.selectConfigAttributeList(configAttribute);
         for (ConfigAttribute attribute : list) {

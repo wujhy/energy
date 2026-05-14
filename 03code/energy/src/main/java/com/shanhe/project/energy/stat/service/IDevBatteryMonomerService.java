@@ -19,12 +19,12 @@ public interface IDevBatteryMonomerService {
      * 查询电池单体配置信息列表
      * @return 电池单体配置信息集合
      */
-    List<DevBatteryMonomer> selectList(Long configId, Integer packNum);
+    List<DevBatteryMonomer> selectList(Integer packNum);
 
     /**
      * 初始化
      */
-    void init(Long configId, Integer packNum);
+    void init(Integer packNum);
 
     /**
      * 删除
@@ -35,7 +35,7 @@ public interface IDevBatteryMonomerService {
      * 获取最大内阻变化率
      * @return 最大内阻变化率
      */
-    Double getMaxResistance(Long configId, Integer packNum);
+    Double getMaxResistance(Integer packNum);
 
     /**
      * 删除

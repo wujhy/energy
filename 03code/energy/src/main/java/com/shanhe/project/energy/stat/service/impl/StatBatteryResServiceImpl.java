@@ -7,6 +7,7 @@ import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.github.pagehelper.PageHelper;
 import com.google.common.collect.Lists;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.file.FileUtils;
 import com.shanhe.project.device.config.domain.BatteryMonitor;
 import com.shanhe.project.device.config.domain.BatteryPack;
@@ -53,10 +54,11 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
     }
 
     @Override
-    public Map<String, Object> getResistanceReport(Long configId, Integer packNum) {
+    public Map<String, Object> getResistanceReport(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         Map<String, Object> result = new HashMap<>();
 
-        BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(configId, packNum);
+        BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
         if (batteryPack == null) {
             return result;
         }
@@ -68,7 +70,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         // 1         #1      604uΩ      50%            1208uΩ          1208uΩ      1208uΩ
 
         // 基准值
-        Map<Integer, Integer> baseValueMap = getBaseValueMap(configId, packNum);
+        Map<Integer, Integer> baseValueMap = getBaseValueMap(packNum);
         if (null == baseValueMap || baseValueMap.isEmpty()) {
             return result;
         }
@@ -159,8 +161,8 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
     /**
      * 获取基准值
      */
-    private Map<Integer, Integer> getBaseValueMap(Long configId, Integer packNum) {
-        List<DevBatteryMonomer> devBatteryMonomers = devBatteryMonomerService.selectList(configId, packNum);
+    private Map<Integer, Integer> getBaseValueMap(Integer packNum) {
+        List<DevBatteryMonomer> devBatteryMonomers = devBatteryMonomerService.selectList(packNum);
         if (devBatteryMonomers == null || devBatteryMonomers.isEmpty()) {
             return new HashMap<>();
         }
@@ -193,7 +195,8 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
 
     @Async
     @Override
-    public void init(Long configId, Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList, BatteryReportLog oldInfo) {
+    public void init(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList, BatteryReportLog oldInfo) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         if (null == oldInfo) {
             return;
         }
@@ -228,25 +231,29 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
     }
 
     @Override
-    public Map<Integer, Integer> last(Long configId, Integer packNum) {
+    public Map<Integer, Integer> last(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         // 每次测试内阻值
         List<StatBatteryRes> statBatteryRes = statBatteryResMapper.selectList(configId, packNum, null);
         return getLatestResMap(statBatteryRes, new SimpleDateFormat("yyyy-MM-dd"));
     }
 
     @Override
-    public List<StatBatteryRes> listResistance(Long configId, Integer packNum, Integer batNum) {
+    public List<StatBatteryRes> listResistance(Integer packNum, Integer batNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         return statBatteryResMapper.selectList(configId, packNum, batNum);
     }
 
     @Override
-    public void deleteByConfigId(Long configId, Integer packNum) {
+    public void deleteByConfigId(Integer packNum) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
         statBatteryResMapper.deleteByConfigId(configId, packNum);
     }
 
     @Override
-    public void export(Long configId, Integer packNum, String exportPath) {
-        BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(configId, packNum);
+    public void export(Integer packNum, String exportPath) {
+        Long configId = Constants.DEFAULT_CONFIG_ID;
+        BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
         if (batteryPack == null) {
             return;
         }
@@ -258,7 +265,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         // 1         #1      604uΩ      50%            1208uΩ          1208uΩ      1208uΩ
 
         // 基准值
-        Map<Integer, Integer> baseValueMap = getBaseValueMap(configId, packNum);
+        Map<Integer, Integer> baseValueMap = getBaseValueMap(packNum);
         if (null == baseValueMap || baseValueMap.isEmpty()) {
             return;
         }

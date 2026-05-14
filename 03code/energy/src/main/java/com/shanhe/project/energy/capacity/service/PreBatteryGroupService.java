@@ -16,18 +16,17 @@ public interface PreBatteryGroupService {
     /**
      * 获取电池组最新记录（缓存）
      *
-     * @param configId 设备id
      * @param packNum 电池组编号
      * @return 电池组
      */
-    PreBatteryGroup lastCache(Long configId, Integer packNum);
+    PreBatteryGroup lastCache(Integer packNum);
 
     /**
      * 删除记录
      *
-     * @param configId 设备id
+     * @param packNum 电池组编号；为空时删除默认设备全部预测容量
      */
-    void deleteByConfigId(Long configId, Integer packNum);
+    void deleteByConfigId(Integer packNum);
 
     /**
      * 更新缓存

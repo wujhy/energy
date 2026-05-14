@@ -7,13 +7,8 @@ import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.DateUtils;
 import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.comm.tcp.client.TcpClient;
-import com.shanhe.framework.comm.tcp.model.DeviceData;
-import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import com.shanhe.framework.consts.SysConst;
 import com.shanhe.framework.enums.*;
-import com.shanhe.project.device.alarm.domain.AlarmLog;
-import com.shanhe.project.device.alarm.service.IAlarmLogService;
-import com.shanhe.project.device.config.service.IConfigService;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.mapper.HostMapper;
 import com.shanhe.project.device.host.service.IHostService;
@@ -38,11 +33,6 @@ import java.util.Objects;
 public class HostServiceImpl implements IHostService {
     @Resource
     private HostMapper hostMapper;
-    @Resource
-    private IConfigService configService;
-    @Resource
-    private IAlarmLogService alarmLogService;
-    @Resource
     private TcpClient tcpClient;
     @Resource
     private ClientReportService clientReportService;
@@ -185,50 +175,7 @@ public class HostServiceImpl implements IHostService {
         this.updateHost(host);
     }
 
-    @Override
-    public void online(DeviceData device) {
-        Host host = this.getDetail();
-        boolean isUpdate = true;
-        if (StrUtil.equals(device.getCid(), TcpCidEnum._88.getDictValue())
-                && StrUtil.isNotBlank(device.getInfo())
-                && device.getInfo().length() >= 20) {
-            String num = String.valueOf(CodingUtil.hexParseInt(device.getInfo().substring(0, 2)));
-            String model = Integer.parseInt(device.getInfo().substring(14, 16)) + "";
-            String version = String.format("V%s.%s",
-                    CodingUtil.hexParseInt(device.getInfo().substring(16, 18)),
-                    CodingUtil.hexParseInt(device.getInfo().substring(18, 20)));
 
-            isUpdate = num.equals(host.getNum())
-                    && model.equals(host.getModel())
-                    && version.equals(host.getVersion());
-
-            host.setNum(num);
-            host.setModel(model);
-            host.setVersion(version);
-        }
-        if (Objects.equals(ConnectionStatusEnum._1.getDictValue(), host.getStatus()) && isUpdate) {
-            return;
-        }
-
-        host.setStatus(ConnectionStatusEnum._1.getDictValue());
-        host.setDeviceType(device.getC0());
-        this.updateHost(host);
-        this.updateHostAlarm(YesNoEnum.YES.getDictValue(), HostAlarmItemEnum._1);
-    }
-
-    @Override
-    public void offline() {
-        Host host = this.getDetail();
-        if (Objects.equals(host.getStatus(), ConnectionStatusEnum._0.getDictValue())) {
-            this.updateHostAlarm(YesNoEnum.NO.getDictValue(), HostAlarmItemEnum._1);
-            return;
-        }
-
-        host.setStatus(ConnectionStatusEnum._0.getDictValue());
-        this.updateHost(host);
-        this.updateHostAlarm(YesNoEnum.NO.getDictValue(), HostAlarmItemEnum._1);
-        configService.offlineAll();
-    }
 
     @Override
     public Host updateCache() {
@@ -257,14 +204,4 @@ public class HostServiceImpl implements IHostService {
     /**
      * 更新主机告警项。
      */
-    public void updateHostAlarm(Integer status, HostAlarmItemEnum hostAlarm) {
-        AlarmLog alarmLog = new AlarmLog();
-        alarmLog.setConfigId(this.getDetail().getHostId());
-        alarmLog.setType(DeviceTypeEnum._0.getDictValue());
-        alarmLog.setStatus(status);
-        alarmLog.setItemCode(hostAlarm.getCode());
-        alarmLog.setDataInfo(hostAlarm.getName());
-        alarmLog.setAlarmLevel(hostAlarm.getLevel());
-        alarmLogService.insertAlarmLog(alarmLog);
-    }
 }
