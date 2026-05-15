@@ -1,6 +1,7 @@
 package com.shanhe.project.sync.scheduled;
 
 import cn.hutool.core.util.StrUtil;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.enums.*;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
@@ -8,9 +9,8 @@ import com.shanhe.project.device.alarm.domain.AlarmLog;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
-import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
-import com.shanhe.project.device.config.service.IConfigService;
+import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.sync.domain.ConfigHistoryItemVo;
@@ -40,7 +40,7 @@ public class DataReportJob {
     @Resource
     private IHostService hostService;
     @Resource
-    private IConfigService configService;
+    private IBatteryPackService batteryPackService;
     @Resource
     private IAlarmLogService alarmLogService;
     @Resource
@@ -132,20 +132,20 @@ public class DataReportJob {
      * @param imei 主机
      */
     private void configPackHistory(String imei) {
-        Config config = configService.getCache();
-        if (config.getPackList() == null || config.getPackList().isEmpty()) {
+        List<BatteryPack> packList = batteryPackService.selectBatteryPackListCache(null);
+        if (packList == null || packList.isEmpty()) {
             return;
         }
-        for (BatteryPack pack : config.getPackList()) {
+        for (BatteryPack pack : packList) {
             // 取蓄电池上报数据
-            BatteryReportLog log = resolveBatteryReportLog(config.getConfigId(), pack.getPackNum());
+            BatteryReportLog log = resolveBatteryReportLog(pack.getPackNum());
             if (!isUsableBatteryReportLog(log)) {
                 continue;
             }
 
             // 上报VO
             ConfigHistoryVo history = new ConfigHistoryVo();
-            history.setDevId(config.getConfigId());
+            history.setDevId(Constants.DEFAULT_CONFIG_ID);
             history.setPackNum(pack.getPackNum());
 
             // 蓄电池组参数
@@ -166,13 +166,12 @@ public class DataReportJob {
     /**
      * 解析蓄电池 JSON/TCP 上报数据源。
      *
-     * @param configId 设备ID
      * @param packNum 电池组编号
      * @return 蓄电池上报数据
      */
-    BatteryReportLog resolveBatteryReportLog(Long configId, Integer packNum) {
+    BatteryReportLog resolveBatteryReportLog(Integer packNum) {
         if (Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
-            BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(configId, packNum);
+            BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(Constants.DEFAULT_CONFIG_ID, packNum);
             if (isUsableBatteryReportLog(realtimeLog)) {
                 return realtimeLog;
             }

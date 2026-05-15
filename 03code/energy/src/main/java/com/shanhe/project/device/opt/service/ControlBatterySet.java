@@ -182,7 +182,7 @@ public class ControlBatterySet extends ControlBase {
 
     public AjaxResult getBalanced(BatterySetVO batterySetVO) {
         applyDefaultConfigId(batterySetVO);
-        Map<String, Object> mapAll = configService.getExtend();
+        Map<String, Object> mapAll = hostService.getExtend();
         Map<String, Object> map = new HashMap<>();
         map.put("autoBalanced", mapAll != null && mapAll.get("autoBalanced") != null ? mapAll.get("autoBalanced") : 0);
         map.put("manualBalanced", mapAll != null && mapAll.get("manualBalanced") != null ? mapAll.get("manualBalanced") : 0);
@@ -388,18 +388,18 @@ public class ControlBatterySet extends ControlBase {
     }
 
     public void saveBalancedStatus(Integer autoBalanced, Integer manualBalanced) {
-        Map<String, Object> mapAll = configService.getExtend();
+        Map<String, Object> mapAll = hostService.getExtend();
         mapAll = mapAll == null ? new HashMap<>() : mapAll;
         mapAll.put("autoBalanced", autoBalanced == null ? 0 : autoBalanced);
         mapAll.put("manualBalanced", manualBalanced == null ? 0 : manualBalanced);
-        configService.updateExtend(mapAll);
+        hostService.updateExtend(mapAll);
     }
 
     public void saveBuzzerStatus(Integer buzzerStatus) {
-        Map<String, Object> mapAll = configService.getExtend();
+        Map<String, Object> mapAll = hostService.getExtend();
         mapAll = mapAll == null ? new HashMap<>() : mapAll;
         mapAll.put("buzzerStatus", buzzerStatus == null ? 0 : buzzerStatus);
-        configService.updateExtend(mapAll);
+        hostService.updateExtend(mapAll);
     }
 
     private void applyDefaultConfigId(BatterySetVO batterySetVO) {

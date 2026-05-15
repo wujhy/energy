@@ -10,6 +10,7 @@ import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
+import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Date;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,6 +36,8 @@ public class DeviceOnlineJob {
     private int maxOffline;
     @Resource
     private IConfigService configService;
+    @Resource
+    private IBatteryPackService batteryPackService;
     @Resource
     private IAlarmLogService alarmLogService;
     @Resource
@@ -58,13 +62,14 @@ public class DeviceOnlineJob {
             }
 
             Config config = configService.selectDefaultConfig();
-            if (config == null || config.getPackList() == null || config.getPackList().isEmpty()) {
+            List<BatteryPack> packList = batteryPackService.selectBatteryPackListCache(null);
+            if (packList == null || packList.isEmpty()) {
                 log.debug("sync battery pack online status skipped, no battery pack");
                 return;
             }
 
             Date nowDate = new Date();
-            for (BatteryPack batteryPack : config.getPackList()) {
+            for (BatteryPack batteryPack : packList) {
                 if (batteryPack == null || batteryPack.getPackNum() == null) {
                     continue;
                 }

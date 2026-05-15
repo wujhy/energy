@@ -2,6 +2,8 @@ package com.shanhe.project.device.host.service;
 
 import com.shanhe.project.device.host.domain.Host;
 
+import java.util.Map;
+
 /**
  * 主机Service接口
  * 
@@ -68,6 +70,10 @@ public interface IHostService
      * @param host 主机
      */
     void updateReportIp(Host host);
+
+    void updateExtend(Map<String, Object> map);
+
+    Map<String, Object> getExtend();
 
     /**
      * 上线

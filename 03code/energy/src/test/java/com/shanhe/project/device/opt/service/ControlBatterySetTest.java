@@ -3,7 +3,7 @@ package com.shanhe.project.device.opt.service;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
-import com.shanhe.project.device.config.service.IConfigService;
+import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.device.opt.vo.BatterySetVO;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -23,14 +23,14 @@ class ControlBatterySetTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldSaveBalancedStatusLocally() {
-        IConfigService configService = Mockito.mock(IConfigService.class);
+        IHostService hostService = Mockito.mock(IHostService.class);
 
         Map<String, Object> extend = new HashMap<>();
         extend.put("buzzerStatus", 1);
-        Mockito.when(configService.getExtend()).thenReturn(extend);
+        Mockito.when(hostService.getExtend()).thenReturn(extend);
 
         ControlBatterySet service = new ControlBatterySet();
-        service.configService = configService;
+        ReflectionTestUtils.setField(service, "hostService", hostService);
 
         BatterySetVO request = new BatterySetVO();
         request.setConfigId(10L);
@@ -42,7 +42,7 @@ class ControlBatterySetTest {
         Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         Assertions.assertEquals(1L, request.getConfigId());
-        Mockito.verify(configService).updateExtend(captor.capture());
+        Mockito.verify(hostService).updateExtend(captor.capture());
         Assertions.assertEquals(1, captor.getValue().get("autoBalanced"));
         Assertions.assertEquals(0, captor.getValue().get("manualBalanced"));
         Assertions.assertEquals(1, captor.getValue().get("buzzerStatus"));
@@ -51,11 +51,11 @@ class ControlBatterySetTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldSaveBuzzerStatusLocally() {
-        IConfigService configService = Mockito.mock(IConfigService.class);
-        Mockito.when(configService.getExtend()).thenReturn(null);
+        IHostService hostService = Mockito.mock(IHostService.class);
+        Mockito.when(hostService.getExtend()).thenReturn(null);
 
         ControlBatterySet service = new ControlBatterySet();
-        service.configService = configService;
+        ReflectionTestUtils.setField(service, "hostService", hostService);
 
         BatterySetVO request = new BatterySetVO();
         request.setConfigId(10L);
@@ -66,18 +66,18 @@ class ControlBatterySetTest {
         Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         Assertions.assertEquals(1L, request.getConfigId());
-        Mockito.verify(configService).updateExtend(captor.capture());
+        Mockito.verify(hostService).updateExtend(captor.capture());
         Assertions.assertEquals(1, captor.getValue().get("buzzerStatus"));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     void shouldSaveBuzzerStatusWithDefaultConfigWhenConfigIdBlank() {
-        IConfigService configService = Mockito.mock(IConfigService.class);
-        Mockito.when(configService.getExtend()).thenReturn(null);
+        IHostService hostService = Mockito.mock(IHostService.class);
+        Mockito.when(hostService.getExtend()).thenReturn(null);
 
         ControlBatterySet service = new ControlBatterySet();
-        service.configService = configService;
+        ReflectionTestUtils.setField(service, "hostService", hostService);
 
         BatterySetVO request = new BatterySetVO();
         request.setBuzzerStatus(0);
@@ -87,7 +87,7 @@ class ControlBatterySetTest {
         Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
         Assertions.assertEquals(1L, request.getConfigId());
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
-        Mockito.verify(configService).updateExtend(captor.capture());
+        Mockito.verify(hostService).updateExtend(captor.capture());
         Assertions.assertEquals(0, captor.getValue().get("buzzerStatus"));
     }
 

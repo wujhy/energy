@@ -10,6 +10,7 @@ import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
+import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IConfigService;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
@@ -90,14 +91,17 @@ class DeviceOnlineJobTest {
     private DeviceOnlineJob newJob(BatteryPack... packs) {
         DeviceOnlineJob job = new DeviceOnlineJob();
         IConfigService configService = Mockito.mock(IConfigService.class);
+        IBatteryPackService batteryPackService = Mockito.mock(IBatteryPackService.class);
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
         BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
 
         Config config = new Config();
-        config.setPackList(packs == null ? Collections.emptyList() : Arrays.asList(packs));
         Mockito.when(configService.selectDefaultConfig()).thenReturn(config);
+        Mockito.when(batteryPackService.selectBatteryPackListCache(null))
+                .thenReturn(packs == null ? Collections.emptyList() : Arrays.asList(packs));
 
         ReflectionTestUtils.setField(job, "configService", configService);
+        ReflectionTestUtils.setField(job, "batteryPackService", batteryPackService);
         ReflectionTestUtils.setField(job, "alarmLogService", alarmLogService);
         ReflectionTestUtils.setField(job, "batteryReportLogService", reportLogService);
         ReflectionTestUtils.setField(job, "isStart", false);

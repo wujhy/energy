@@ -39,6 +39,10 @@
         <result property="version"    column="version"    />
         <result property="remark"    column="remark"    />
         <result property="configData"    column="config_data"    />
+        <result property="extend1"    column="extend1"    />
+        <result property="extend2"    column="extend2"    />
+        <result property="extend3"    column="extend3"    />
+        <result property="extend4"    column="extend4"    />
         <result property="createTime"    column="create_time"    />
         <result property="updateTime"    column="update_time"    />
     </resultMap>
@@ -47,7 +51,7 @@
         select host_id, name, account, password, type, device_type, status, picture, address, lng, lat, contacts, phone,
                ip, ip_addr, sub_ip, net_ip, port, device_ip, device_port, need_report, report_ip, report_port, space_time,
                device_space_time, storage_time, num, mac, imei, model, version, remark, config_data, create_time, update_time,
-               clean_log_days
+               clean_log_days, extend1, extend2, extend3, extend4
         from dev_host limit 1
     </select>
 
@@ -88,6 +92,10 @@
             <if test="version != null">version = #{version},</if>
             <if test="remark != null">remark = #{remark},</if>
             <if test="configData != null">config_data = #{configData},</if>
+            <if test="extend1 != null">extend1 = #{extend1},</if>
+            <if test="extend2 != null">extend2 = #{extend2},</if>
+            <if test="extend3 != null">extend3 = #{extend3},</if>
+            <if test="extend4 != null">extend4 = #{extend4},</if>
             <if test="createTimeStr != null">create_time = #{createTimeStr},</if>
             update_time = (datetime(CURRENT_TIMESTAMP,'localtime'))
         </trim>

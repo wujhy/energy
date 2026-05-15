@@ -129,6 +129,11 @@ public class Host extends BaseEntity
 
     /** 组态配置 */
     private String configData;
+
+    private String extend1;
+    private String extend2;
+    private String extend3;
+    private String extend4;
     /** 创建时间 */
     private String createTimeStr;
 }

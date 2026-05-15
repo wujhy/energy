@@ -1,5 +1,6 @@
 package com.shanhe.project.device.config.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.google.common.collect.Lists;
 import com.shanhe.common.constant.Constants;
 import com.shanhe.common.exception.ServiceException;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -51,6 +53,44 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
     public List<BatteryPack> selectBatteryPackListConfigId(Integer isEnabled) {
         Long configId = Constants.DEFAULT_CONFIG_ID;
         return batteryPackMapper.selectBatteryPackListConfigId(configId, isEnabled);
+    }
+
+    @Override
+    public List<BatteryPack> selectBatteryPackListCache(Integer isEnabled) {
+        List<BatteryPack> list = new ArrayList<>();
+        for (String key : CacheUtils.getCacheKeys(packInfoCache.getCache())) {
+            Object object = CacheUtils.get(packInfoCache.getCache(), key);
+            if (!(object instanceof BatteryPack)) {
+                continue;
+            }
+            BatteryPack batteryPack = (BatteryPack) object;
+            if (isEnabled != null && !Objects.equals(batteryPack.getIsEnabled(), isEnabled)) {
+                continue;
+            }
+            list.add(copyPack(batteryPack));
+        }
+        if (!list.isEmpty()) {
+            list.sort(Comparator.comparing(BatteryPack::getPackNum, Comparator.nullsLast(Integer::compareTo)));
+            return list;
+        }
+        updateCache();
+        for (String key : CacheUtils.getCacheKeys(packInfoCache.getCache())) {
+            Object object = CacheUtils.get(packInfoCache.getCache(), key);
+            if (!(object instanceof BatteryPack)) {
+                continue;
+            }
+            BatteryPack batteryPack = (BatteryPack) object;
+            if (isEnabled != null && !Objects.equals(batteryPack.getIsEnabled(), isEnabled)) {
+                continue;
+            }
+            list.add(copyPack(batteryPack));
+        }
+        list.sort(Comparator.comparing(BatteryPack::getPackNum, Comparator.nullsLast(Integer::compareTo)));
+        return list;
+    }
+
+    private BatteryPack copyPack(BatteryPack batteryPack) {
+        return BeanUtil.copyProperties(batteryPack, BatteryPack.class);
     }
 
     @Override

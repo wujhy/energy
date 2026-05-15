@@ -2,6 +2,7 @@ package com.shanhe.project.scheduled;
 
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.service.*;
+import com.shanhe.project.device.opt.service.OptLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,7 +22,9 @@ import javax.annotation.Resource;
 public class CacheJob {
 
     @Resource
-    private IConfigService configService;
+    private IConfigAttributeService configAttributeService;
+    @Resource
+    private OptLogService optLogService;
     @Resource
     private IAlarmLogService alarmLogService;
     @Resource
@@ -33,7 +36,8 @@ public class CacheJob {
     public void configJob() {
         try {
             log.debug("更新设备缓存！");
-            configService.updateCache();
+            configAttributeService.updateCache();
+            optLogService.updateCache();
         } catch (Exception e) {
             log.error("更新设备缓存异常", e);
         }

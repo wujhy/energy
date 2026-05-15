@@ -29,6 +29,8 @@ public interface IBatteryPackService
      */
     List<BatteryPack> selectBatteryPackListConfigId(Integer isEnabled);
 
+    List<BatteryPack> selectBatteryPackListCache(Integer isEnabled);
+
     /**
      * 根据电池组编号获取设备信息
      * @param packNum 编号

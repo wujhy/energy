@@ -13,6 +13,7 @@ import com.shanhe.project.device.alarm.domain.AlarmLog;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.*;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
+import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IDevBatteryOptService;
 import com.shanhe.project.device.opt.cmd.CmdBatteryControlService;
 import com.shanhe.project.device.opt.domain.OptLog;
@@ -51,6 +52,8 @@ public class ControlBattery extends ControlBase {
     private ControlBatterySet controlBatterySet;
     @Resource
     private IAlarmLogService alarmLogService;
+    @Resource
+    private IBatteryPackService batteryPackService;
 
     /** 缓存结果 **/
     CacheKeyEnum cacheKeyEnum = CacheKeyEnum.RESULT;
@@ -291,8 +294,7 @@ public class ControlBattery extends ControlBase {
         }
 
         // 蓄电池组
-        BatteryPack batteryPack = config.getPackList().stream()
-                .filter(p -> Objects.equals(p.getPackNum(), devBatteryOpt.getPackNum())).findFirst().orElse(null);
+        BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(devBatteryOpt.getPackNum());
         if (batteryPack == null) {
             throw new ServiceException("电池组不存在，操作执行失败！");
         }

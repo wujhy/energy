@@ -2,6 +2,7 @@ package com.shanhe.project.device.host.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.DateUtils;
@@ -20,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -175,7 +178,28 @@ public class HostServiceImpl implements IHostService {
         this.updateHost(host);
     }
 
+    @Override
+    public void updateExtend(Map<String, Object> map) {
+        if (map == null || map.isEmpty()) {
+            return;
+        }
+        Host host = this.getDetail();
+        Map<String, Object> mapAll = StrUtil.isNotBlank(host.getExtend3())
+                ? JSON.parseObject(host.getExtend3())
+                : new HashMap<>();
+        mapAll.putAll(map);
+        host.setExtend3(JSON.toJSONString(mapAll));
+        hostMapper.updateHost(host);
+        this.updateCache();
+    }
 
+    @Override
+    public Map<String, Object> getExtend() {
+        Host host = this.getDetail();
+        return host != null && StrUtil.isNotBlank(host.getExtend3())
+                ? JSON.parseObject(host.getExtend3())
+                : null;
+    }
 
     @Override
     public Host updateCache() {

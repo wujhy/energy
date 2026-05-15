@@ -3,9 +3,10 @@ package com.shanhe.project.scheduled;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.device.config.service.IBatteryPackService;
-import com.shanhe.project.device.config.service.IConfigService;
+import com.shanhe.project.device.config.service.IConfigAttributeService;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.service.IHostService;
+import com.shanhe.project.device.opt.service.OptLogService;
 import com.shanhe.project.energy.capacity.service.PreBatteryGroupService;
 import com.shanhe.project.monitor.server.service.SystemService;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,9 @@ import javax.annotation.Resource;
 @Component
 public class CacheInit implements ApplicationRunner {
     @Resource
-    IConfigService configService;
+    IConfigAttributeService configAttributeService;
+    @Resource
+    OptLogService optLogService;
     @Resource
     IHostService hostService;
     @Resource
@@ -64,7 +67,8 @@ public class CacheInit implements ApplicationRunner {
 
     public void initConfig() {
         try {
-            configService.updateCache();
+            configAttributeService.updateCache();
+            optLogService.updateCache();
         } catch (Exception e) {
             log.error("初始化设备配置缓存异常：{}", e.getMessage());
         }

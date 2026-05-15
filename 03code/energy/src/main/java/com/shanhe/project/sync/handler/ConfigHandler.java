@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.project.device.config.domain.Config;
+import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IConfigService;
 import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.sync.common.ConfigUtil;
@@ -28,6 +29,8 @@ public class ConfigHandler {
     IConfigService configService;
     @Resource
     IHostService hostService;
+    @Resource
+    IBatteryPackService batteryPackService;
     @Resource
     private ClientReportService clientReportService;
 
@@ -73,7 +76,9 @@ public class ConfigHandler {
             if (!clientReportService.canSend()) {
                 throw new ServiceException("未与服务端建立连接");
             }
-            clientReportService.uploadDev(configService.getCache(), request.getImei());
+            Config config = configService.selectDefaultConfig();
+            config.setPackList(batteryPackService.selectBatteryPackListCache(null));
+            clientReportService.uploadDev(config, request.getImei());
         } catch (Exception e) {
             msg = String.format("主动同步设备异常：%s", e.getMessage());
             log.error(msg);

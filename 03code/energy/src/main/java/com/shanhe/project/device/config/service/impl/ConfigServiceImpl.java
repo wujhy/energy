@@ -1,11 +1,8 @@
 package com.shanhe.project.device.config.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.alibaba.fastjson.JSON;
 import com.shanhe.common.constant.Constants;
-import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.uuid.IdUtils;
-import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.DeviceTypeEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
@@ -14,25 +11,18 @@ import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IConfigAttributeService;
 import com.shanhe.project.device.config.service.IConfigService;
-import com.shanhe.project.device.opt.service.OptLogService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class ConfigServiceImpl implements IConfigService {
-
-    protected static Logger logger = LoggerFactory.getLogger(IConfigService.class);
 
     @Resource
     private IConfigAttributeService configAttributeService;
@@ -40,179 +30,100 @@ public class ConfigServiceImpl implements IConfigService {
     private IBatteryPackService batteryPackService;
     @Resource
     private IAlarmLogService alarmLogService;
-    @Resource
-    private OptLogService optLogService;
 
-    CacheKeyEnum configCache = CacheKeyEnum.CONFIG;
     private static final Config DEFAULT_CONFIG = buildDefaultConfig();
 
     @Override
     public Config selectDefaultConfig() {
-        Config config = copyDefaultConfig();
-        if (Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
-            config.setPackList(batteryPackService.selectBatteryPackListConfigId(null));
-        }
-        return config;
-    }
-
-    @Override
-    public Config getCache() {
-        try {
-            Config config = (Config) CacheUtils.get(configCache.getCache(), configCache.getKey());
-            return config == null ? this.selectDefaultConfig() : config;
-        } catch (Exception e) {
-            return this.selectDefaultConfig();
-        }
+        return copyDefaultConfig();
     }
 
     @Override
     public List<Config> selectConfigList() {
-        return wrapConfig(this.selectDefaultConfig());
-    }
-
-    @Override
-    public List<Config> reportConfigList() {
-        return wrapConfig(this.selectDefaultConfig());
+        Config config = copyDefaultConfig();
+        config.setPackList(batteryPackService.selectBatteryPackListCache(null));
+        return wrapConfig(config);
     }
 
     @Override
     public List<Config> screenConfigList() {
         Config config = copyDefaultConfig();
-        if (Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
-            List<BatteryPack> packList = new ArrayList<>();
-            for (BatteryPack batteryPack : batteryPackService.selectBatteryPackListConfigId(YesNoEnum.YES.getDictValue())) {
-                if (Objects.equals(batteryPack.getIsEnabled(), YesNoEnum.NO.getDictValue())) {
-                    continue;
-                }
-                batteryPack.setAlarm(alarmLogService.isBatteryAlarmByCache(batteryPack.getPackNum()));
-                packList.add(batteryPack);
+        List<BatteryPack> packList = new ArrayList<>();
+        for (BatteryPack batteryPack : batteryPackService.selectBatteryPackListCache(YesNoEnum.YES.getDictValue())) {
+            if (Objects.equals(batteryPack.getIsEnabled(), YesNoEnum.NO.getDictValue())) {
+                continue;
             }
-            config.setPackList(packList);
+            batteryPack.setAlarm(alarmLogService.isBatteryAlarmByCache(batteryPack.getPackNum()));
+            packList.add(batteryPack);
         }
+        config.setPackList(packList);
         config.setAlarm(alarmLogService.isBatteryAlarmByCache(null));
         return wrapConfig(config);
     }
 
     @Override
     public Config screenConfig() {
-        Config config = this.selectDefaultConfig();
+        Config config = copyDefaultConfig();
+        config.setPackList(batteryPackService.selectBatteryPackListCache(null));
         config.setAlarm(alarmLogService.isBatteryAlarmByCache(null));
         config.setAlarmNum(alarmLogService.batteryAlarmNum());
         return config;
     }
 
     @Override
-    public void updateCache() {
-        try {
-            Config config = this.selectDefaultConfig();
-            CacheUtils.put(configCache.getCache(), configCache.getKey(), config);
-            Set<String> oldKeys = CacheUtils.getCacheKeys(configCache.getCache());
-            for (String key : oldKeys) {
-                if (!Objects.equals(key, configCache.getKey())) {
-                    CacheUtils.remove(configCache.getCache(), key);
-                }
-            }
-        } catch (Exception e) {
-            logger.error("更新设备缓存失败", e);
-        }
-
-        try {
-            configAttributeService.updateCache();
-        } catch (Exception e) {
-            logger.error("更新设备属性缓存失败", e);
-        }
-
-        try {
-            optLogService.updateCache();
-        } catch (Exception e) {
-            logger.error("更新设备操作日志缓存失败", e);
-        }
-    }
-
-    @Override
-    public void updateExtend(Map<String, Object> map) {
-        Map<String, Object> mapAll = DEFAULT_CONFIG.getExtend3() != null && !DEFAULT_CONFIG.getExtend3().isEmpty()
-                ? JSON.parseObject(DEFAULT_CONFIG.getExtend3())
-                : new HashMap<>();
-        mapAll.putAll(map);
-        DEFAULT_CONFIG.setExtend3(JSON.toJSONString(mapAll));
-    }
-
-    @Override
-    public Map<String, Object> getExtend() {
-        return DEFAULT_CONFIG.getExtend3() != null && !DEFAULT_CONFIG.getExtend3().isEmpty()
-                ? JSON.parseObject(DEFAULT_CONFIG.getExtend3())
-                : null;
-    }
-
-    @Override
     public void updatePack(Config config) {
-        this.updatePack(config, true);
-    }
-
-    public void updatePack(Config config, boolean syncAttribute) {
         if (!Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
             return;
         }
         List<BatteryPack> oldPackList = batteryPackService.selectBatteryPackListConfigId(null);
-        List<Long> oldPackIds = oldPackList.stream().map(BatteryPack::getPackId).collect(Collectors.toList());
         List<BatteryPack> newPackList = config.getPackList();
 
+        this.deleteBatteryPacks(oldPackList, newPackList);
         if (newPackList == null || newPackList.isEmpty()) {
-            if (!oldPackList.isEmpty()) {
-                batteryPackService.deleteBatteryPackByBatPackIds(oldPackIds);
-                List<Integer> deletePackNums = new ArrayList<>();
-                oldPackList.forEach(oldPack -> {
-                    alarmLogService.alarmFix(oldPack.getPackNum(), false, null, null);
-                    deletePackNums.add(oldPack.getPackNum());
-                });
-
-                if (!deletePackNums.isEmpty()) {
-                    configAttributeService.deleteConfigAttributeByPackNums(deletePackNums);
-                }
-            }
             return;
         }
 
-        Set<Integer> deletePackNums = new HashSet<>();
-        List<Long> deletePackIds = new ArrayList<>();
-        for (BatteryPack oldPack : oldPackList) {
-            boolean needDel = true;
-            for (BatteryPack newPack : newPackList) {
-                if (Objects.equals(oldPack.getPackNum(), newPack.getPackNum())) {
-                    newPack.setPackId(oldPack.getPackId());
-                    needDel = false;
-                }
-            }
-            if (needDel) {
-                deletePackNums.add(oldPack.getPackNum());
-                deletePackIds.add(oldPack.getPackId());
-            }
-        }
-
-        batteryPackService.deleteBatteryPackByBatPackIds(deletePackIds);
-        if (!deletePackNums.isEmpty()) {
-            configAttributeService.deleteConfigAttributeByPackNums(new ArrayList<>(deletePackNums));
-            deletePackNums.forEach(packNum -> alarmLogService.alarmFix(packNum, false, null, null));
-        }
-
+        Map<Integer, BatteryPack> oldPackMap = oldPackList.stream()
+                .filter(batteryPack -> batteryPack.getPackNum() != null)
+                .collect(Collectors.toMap(BatteryPack::getPackNum, batteryPack -> batteryPack, (left, right) -> left, LinkedHashMap::new));
         for (BatteryPack batteryPack : newPackList) {
-            if (batteryPack.getPackId() == null || !oldPackIds.contains(batteryPack.getPackId())) {
-                batteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID);
+            if (batteryPack == null || batteryPack.getPackNum() == null) {
+                continue;
+            }
+            BatteryPack oldPack = oldPackMap.get(batteryPack.getPackNum());
+            batteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID);
+            if (oldPack == null) {
                 batteryPack.setPackId(IdUtils.getSnowflakeId());
                 batteryPackService.insertBatteryPack(batteryPack);
-                if (syncAttribute) {
-                    configAttributeService.insertByTemplateAttribute(batteryPack.getPackNum(), batteryPack.getBatSinModel());
-                }
+                configAttributeService.insertByTemplateAttribute(batteryPack.getPackNum(), batteryPack.getBatSinModel());
             } else {
+                batteryPack.setPackId(oldPack.getPackId());
                 batteryPackService.update(batteryPack);
             }
         }
     }
 
-    private void updateCache(Config config) {
-        CacheUtils.put(configCache.getCache(), configCache.getKey(), config);
-        configAttributeService.updateCache(YesNoEnum.YES.getDictValue());
+    private void deleteBatteryPacks(List<BatteryPack> oldPackList, List<BatteryPack> packList) {
+        if (oldPackList == null || oldPackList.isEmpty()) {
+            return;
+        }
+        List<Integer> packNums = packList == null ? new ArrayList<>() : packList.stream().map(BatteryPack::getPackNum).collect(Collectors.toList());
+        List<Long> deletePackIds = new ArrayList<>(oldPackList.size());
+        List<Integer> deletePackNums = new ArrayList<>(oldPackList.size());
+        for (BatteryPack oldPack : oldPackList) {
+            if (oldPack == null || oldPack.getPackNum() == null || packNums.contains(oldPack.getPackNum())) {
+                continue;
+            }
+            deletePackNums.add(oldPack.getPackNum());
+            deletePackIds.add(oldPack.getPackId());
+        }
+        if (!deletePackIds.isEmpty()) {
+            batteryPackService.deleteBatteryPackByBatPackIds(deletePackIds);
+        }
+        if (!deletePackNums.isEmpty()) {
+            configAttributeService.deleteConfigAttributeByPackNums(deletePackNums);
+            deletePackNums.forEach(packNum -> alarmLogService.alarmFix(packNum, false, null, null));
+        }
     }
 
     private List<Config> wrapConfig(Config config) {
