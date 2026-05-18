@@ -1,8 +1,6 @@
 package com.shanhe.project.device.opt.service.impl;
 
-import com.shanhe.common.constant.Constants;
 import com.shanhe.common.exception.ServiceException;
-import com.shanhe.framework.enums.BatteryCidEnum;
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
@@ -67,8 +65,6 @@ public class RestoreServiceImpl implements RestoreService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void restore(BatterySetVO batterySetVO) {
-        applyDefaultConfigId(batterySetVO);
-
         Config config = configService.selectDefaultConfig();
         if (config == null) {
             throw new ServiceException("设备不存在！");
@@ -117,15 +113,13 @@ public class RestoreServiceImpl implements RestoreService {
         balanced();
         buzzerStatus();
 
-        // 何工的主板恢复出厂指令
-        batterySetVO.setNeedDynResult(false);
-        controlBatterySet.doSet(batterySetVO, BatteryCidEnum._75);
+        // M460 source command 0x75/0xF5 restored factory defaults on the old board.
+        // energy now owns the local cleanup above and does not send the old aggregate frame.
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delPack(BatterySetVO batterySetVO) {
-        applyDefaultConfigId(batterySetVO);
         Config config = configService.selectDefaultConfig();
         if (config == null) {
             throw new RuntimeException("设备不存在！");
@@ -168,10 +162,6 @@ public class RestoreServiceImpl implements RestoreService {
         preBatteryGroupService.deleteByConfigId(batterySetVO.getPackNum());
         preBatteryGroupService.updateCache();
 
-    }
-
-    private void applyDefaultConfigId(BatterySetVO batterySetVO) {
-        batterySetVO.setConfigId(Constants.DEFAULT_CONFIG_ID);
     }
 
     private void buzzerStatus() {

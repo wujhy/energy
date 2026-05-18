@@ -1,27 +1,18 @@
 package com.shanhe.project.device.opt.service;
 
-import com.shanhe.common.constant.Constants;
-import com.shanhe.framework.comm.CommServer;
-import com.shanhe.framework.enums.BatteryCidEnum;
-import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.ItemCode;
-import com.shanhe.framework.enums.TcpCharEnum;
-import com.shanhe.framework.enums.TcpCidEnum;
-import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import com.shanhe.framework.consts.SysConst;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.device.config.domain.BatteryPack;
-import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.domain.ConfigAttribute;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IConfigAttributeService;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.service.IHostService;
-import com.shanhe.project.device.opt.cmd.DeviceModel;
 import com.shanhe.project.device.opt.vo.BatterySetVO;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import com.shanhe.project.monitor.server.service.SystemService;
@@ -47,8 +38,6 @@ import java.util.Map;
 public class ControlBatterySet extends ControlBase {
 
     protected static Logger logger = LoggerFactory.getLogger(ControlBatterySet.class);
-    /** 缓存结果 **/
-    CacheKeyEnum cacheKeyEnum = CacheKeyEnum.RESULT;
     @Resource
     private BatteryReportLogService batteryReportLogService;
     @Resource
@@ -67,8 +56,7 @@ public class ControlBatterySet extends ControlBase {
 
     public AjaxResult manualModelNum(BatterySetVO batterySetVO) {
         try {
-            applyDefaultConfigId(batterySetVO);
-            String channelName = resolveChannelName(batterySetVO);
+            String channelName = resolveChannelName(batterySetVO.getPackNum());
             BatteryCollectorCommandResult result = batteryCollectorCommandService.manualSetSubmoduleAddress(
                     channelName,
                     batterySetVO.getPackNum(),
@@ -83,8 +71,7 @@ public class ControlBatterySet extends ControlBase {
 
     public AjaxResult autoModelNum(BatterySetVO batterySetVO) {
         try {
-            applyDefaultConfigId(batterySetVO);
-            BatteryModeInfo modelResult = getModelResult(batterySetVO);
+            BatteryModeInfo modelResult = getModelResult(batterySetVO.getPackNum());
             if (modelResult != null && (modelResult.getMode() != 0 || modelResult.getStatus() != 0)) {
                 String mode = modelResult.getMode() == 1 ? "自动编号" : modelResult.getMode() == 6 ? "内阻测试" : modelResult.getMode() == 10 ? "连接条电阻测试" : "无";
                 return AjaxResult.error("正在进行" + mode + "，请勿进行其他操作");
@@ -96,7 +83,7 @@ public class ControlBatterySet extends ControlBase {
             if (batteryPack.getBatSinSize() == null || batteryPack.getBatSinModel() == null) {
                 return AjaxResult.error("电池组单体数量或规格未配置，自动编号失败！");
             }
-            String channelName = resolveChannelName(batterySetVO);
+            String channelName = resolveChannelName(batterySetVO.getPackNum());
             BatteryCollectorCommandResult result = batteryCollectorCommandService.autoSetSubmoduleAddress(
                     channelName,
                     batterySetVO.getPackNum(),
@@ -119,20 +106,17 @@ public class ControlBatterySet extends ControlBase {
     }
 
     public AjaxResult refreshModelNum(BatterySetVO batterySetVO) {
-        applyDefaultConfigId(batterySetVO);
-        return AjaxResult.success(getModelResult(batterySetVO));
+        return AjaxResult.success(getModelResult(batterySetVO.getPackNum()));
     }
 
     public AjaxResult clearModelNum(BatterySetVO batterySetVO) {
-        applyDefaultConfigId(batterySetVO);
         return clearModelNum(batterySetVO.getPackNum());
     }
 
     public AjaxResult resistance(BatterySetVO batterySetVO) {
         try {
-            applyDefaultConfigId(batterySetVO);
             int resistance = toResistanceCoefficient(batterySetVO.getResistance());
-            String channelName = resolveChannelName(batterySetVO);
+            String channelName = resolveChannelName(batterySetVO.getPackNum());
             int moduleAddress = batterySetVO.getModelNum() == null ? 0 : batterySetVO.getModelNum();
             BatteryCollectorCommandResult result = batteryCollectorCommandService.setInternalResistanceCoefficient(
                     channelName,
@@ -147,7 +131,6 @@ public class ControlBatterySet extends ControlBase {
     }
 
     public AjaxResult resistanceDefaultValue(BatterySetVO batterySetVO) {
-        applyDefaultConfigId(batterySetVO);
         ConfigAttribute configAttribute = configAttributeService.getBy(batterySetVO.getPackNum(), ItemCode.DTNZGD.getCode());
         if (configAttribute == null) {
             configAttribute = configAttributeService.getBy(batterySetVO.getPackNum(), ItemCode.DTNZGX.getCode());
@@ -159,13 +142,11 @@ public class ControlBatterySet extends ControlBase {
     }
 
     public AjaxResult resistanceValue(BatterySetVO batterySetVO) {
-        applyDefaultConfigId(batterySetVO);
         return AjaxResult.success(batteryReportLogService.resistanceValue(batterySetVO.getPackNum()));
     }
 
     public AjaxResult resistanceValueSet(BatterySetVO batterySetVO) {
         try {
-            applyDefaultConfigId(batterySetVO);
             updateResistanceStandValue(batterySetVO.getPackNum(), ItemCode.DTNZGD, batterySetVO.getResistanceStandValue());
             updateResistanceStandValue(batterySetVO.getPackNum(), ItemCode.DTNZGX, batterySetVO.getResistanceStandValue());
             configAttributeService.updateCache(1);
@@ -176,12 +157,13 @@ public class ControlBatterySet extends ControlBase {
     }
 
     public AjaxResult delGb(BatterySetVO batterySetVO) {
-        applyDefaultConfigId(batterySetVO);
-        return sendM460Command(batterySetVO, BatteryCidEnum._20);
+        // M460 source command: 0x20/0x2A, swollen voltage reference for a battery group.
+        // energy already collects gbvoltage/swollenVoltage from 600 module 01/81, but the
+        // threshold source is not confirmed. Keep this as an internal extension point.
+        return reservedM460Migration("delGb", "M460 0x20/0x2A swollen voltage reference");
     }
 
     public AjaxResult getBalanced(BatterySetVO batterySetVO) {
-        applyDefaultConfigId(batterySetVO);
         Map<String, Object> mapAll = hostService.getExtend();
         Map<String, Object> map = new HashMap<>();
         map.put("autoBalanced", mapAll != null && mapAll.get("autoBalanced") != null ? mapAll.get("autoBalanced") : 0);
@@ -192,7 +174,6 @@ public class ControlBatterySet extends ControlBase {
 
     public AjaxResult balanced(BatterySetVO batterySetVO) {
         try {
-            applyDefaultConfigId(batterySetVO);
             saveBalancedStatus(
                     batterySetVO.getAutoBalanced(),
                     batterySetVO.getManualBalanced());
@@ -204,9 +185,8 @@ public class ControlBatterySet extends ControlBase {
 
     public AjaxResult delPack(BatterySetVO batterySetVO) {
         try {
-            applyDefaultConfigId(batterySetVO);
             restoreService.delPack(batterySetVO);
-            String channelName = resolveChannelName(batterySetVO);
+            String channelName = resolveChannelName(batterySetVO.getPackNum());
             BatteryCollectorCommandResult result = batteryCollectorCommandService.clearBatteryGroupDebugData(
                     channelName,
                     batterySetVO.getPackNum(),
@@ -218,21 +198,21 @@ public class ControlBatterySet extends ControlBase {
     }
 
     public AjaxResult delHost(BatterySetVO batterySetVO) {
-        applyDefaultConfigId(batterySetVO);
-        batterySetVO.setNeedDynResult(false);
-        return sendM460Command(batterySetVO, BatteryCidEnum._79);
+        // M460 source command: 0x79/0xF9, clear host data. In energy this maps to local
+        // host reset and cache refresh instead of the old M460 aggregate protocol.
+        hostService.restore();
+        return AjaxResult.success();
     }
 
     public AjaxResult reset(BatterySetVO batterySetVO) {
-        applyDefaultConfigId(batterySetVO);
-        batterySetVO.setNeedDynResult(false);
-        batterySetVO.setParamNum("71");
-        batterySetVO.setParamValue("08");
-        return sendM460Command(batterySetVO, BatteryCidEnum._05);
+        // M460 source command: 0x05 system state, param 0x71=0x08 means device reset.
+        // energy has no confirmed safe whole-device reset implementation yet.
+        return reservedM460Migration("reset", "M460 0x05 system reset 0x71/0x08");
     }
 
     public AjaxResult restore(BatterySetVO batterySetVO) {
-        applyDefaultConfigId(batterySetVO);
+        // M460 source command: 0x75/0xF5 restore factory defaults. RestoreServiceImpl
+        // owns the energy-native local cleanup flow, so no M460 passthrough is sent here.
         restoreService.restore(batterySetVO);
         return AjaxResult.success();
     }
@@ -244,7 +224,6 @@ public class ControlBatterySet extends ControlBase {
 
     public AjaxResult buzzerStatus(BatterySetVO batterySetVO) {
         try {
-            applyDefaultConfigId(batterySetVO);
             saveBuzzerStatus(batterySetVO.getBuzzerStatus());
             return AjaxResult.success();
         } catch (IllegalArgumentException e) {
@@ -254,9 +233,8 @@ public class ControlBatterySet extends ControlBase {
 
     public AjaxResult correct(BatterySetVO batterySetVO) {
         try {
-            applyDefaultConfigId(batterySetVO);
             batterySetVO.setNeedDynResult(false);
-            String channelName = resolveChannelName(batterySetVO);
+            String channelName = resolveChannelName(batterySetVO.getPackNum());
             BatteryCollectorCommandResult result = batteryCollectorCommandService.setCalibrationParameter(
                     channelName,
                     batterySetVO.getPackNum(),
@@ -271,92 +249,16 @@ public class ControlBatterySet extends ControlBase {
         }
     }
 
-    /**
-     * 设置电池组告警参数
-     */
-    public AjaxResult doSet(BatterySetVO batterySetVO, BatteryCidEnum cidEnum) {
-        return sendM460Command(batterySetVO, cidEnum);
-    }
-
-    /**
-     * 发送旧 M460 聚合协议指令。后续 /battery/set 接口按能力逐项替换为本地能力或 600 模块端控制。
-     */
-    private AjaxResult sendM460Command(BatterySetVO batterySetVO, BatteryCidEnum cidEnum) {
-        applyDefaultConfigId(batterySetVO);
-        // 主机信息
-        Host host = super.getHost();
-        // 设备信息
-        Config config = super.getConfig();
-        // 协议内容
-        StringBuilder info = new StringBuilder();
-        // 指令头、默认地址、指令编码
-        info.append(TcpCharEnum.HEAD_53.getDictValue());
-        info.append("01").append(cidEnum.getDictValue());
-        // 响应动态指令
-        String dynCid;
-        switch (cidEnum) {
-            case _05:
-                batterySetVO.setNeedDynResult(false);
-                // 设置系统状态响应
-                dynCid = BatteryCidEnum._85.getDictValue();
-                // 长度
-                info.append("02");
-                // 参数号、参数值
-                info.append(batterySetVO.getParamNum());
-                info.append(batterySetVO.getParamValue());
-                break;
-            case _20:
-                // 清鼓包数据
-                dynCid = BatteryCidEnum._2A.getDictValue();
-                // 长度
-                info.append("01");
-                // 包序号
-                info.append(CodingUtil.integerToHexString(batterySetVO.getPackNum(), 2));
-                break;
-            case _75:
-                // 恢复出厂设置
-                dynCid = BatteryCidEnum._F5.getDictValue();
-                // 长度
-                info.append("00");
-                break;
-            case _79:
-                // 清主机数据
-                dynCid = BatteryCidEnum._F9.getDictValue();
-                // 长度
-                info.append("01").append("01");
-                break;
-            default:
-                return AjaxResult.error("指令异常！");
-        }
-        // 校验和
-        info.append(CodingUtil.energyCheckSum(info.substring(TcpCharEnum.HEAD_53.getDictValue().length())));
-        // 指令尾
-        info.append(TcpCharEnum.END_0D.getDictValue());
-
-        // 日志
-        logger.debug("下发指令：{}", info);
-
-        // 是否重复请求
-        String resultKey = "";
-        if (batterySetVO.getNeedDynResult()) {
-            resultKey = super.setControlStatus(config, batterySetVO.getPackNum(), dynCid, cacheKeyEnum);
-        }
-
-        // 下发指令
-        CommServer.returnCmd(DeviceModel.getCmd(host, config, info.toString(), TcpCidEnum._54.getDictValue(), dynCid));
-
-        if (batterySetVO.getNeedDynResult()) {
-            return super.getControlResult(resultKey, cacheKeyEnum);
-        } else {
-            return AjaxResult.success();
-        }
+    private AjaxResult reservedM460Migration(String action, String m460Command) {
+        logger.info("battery set action reserved for energy migration, action={}, source={}", action, m460Command);
+        return AjaxResult.success();
     }
 
     /**
      * 监听控制指令执行结果
      */
-    public BatteryModeInfo getModelResult(BatterySetVO batterySetVO) {
-        return batteryModeStatusService.get(batterySetVO.getPackNum());
+    public BatteryModeInfo getModelResult(Integer packNum) {
+        return batteryModeStatusService.get(packNum);
     }
 
     /**
@@ -402,14 +304,8 @@ public class ControlBatterySet extends ControlBase {
         hostService.updateExtend(mapAll);
     }
 
-    private void applyDefaultConfigId(BatterySetVO batterySetVO) {
-        if (batterySetVO != null) {
-            batterySetVO.setConfigId(Constants.DEFAULT_CONFIG_ID);
-        }
-    }
-
-    private String resolveChannelName(BatterySetVO batterySetVO) {
-        String channelName = batteryCollectorCommandService.resolveChannelName(null, batterySetVO.getPackNum());
+    private String resolveChannelName(Integer packNum) {
+        String channelName = batteryCollectorCommandService.resolveChannelName(null, packNum);
         if (channelName == null) {
             throw new IllegalArgumentException("未找到对应的蓄电池采集通道，操作执行失败！");
         }

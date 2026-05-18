@@ -161,11 +161,7 @@ public class ControlBattery extends ControlBase {
         String cmdStr, dynCid;
         switch (testEnum) {
             case _1:  //立即执行内阻测试
-
-                BatterySetVO batterySetVO = new BatterySetVO();
-                batterySetVO.setConfigId(opt.getConfigId());
-                batterySetVO.setPackNum(opt.getPackNum());
-                BatteryModeInfo modelResult = controlBatterySet.getModelResult(batterySetVO);
+                BatteryModeInfo modelResult = controlBatterySet.getModelResult(opt.getPackNum());
                 if (modelResult != null) {
                     if (modelResult.getMode() == 0 && modelResult.getStatus() == 0) {
                     } else {
