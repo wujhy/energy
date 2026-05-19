@@ -95,7 +95,7 @@ class ControlBatterySetTest {
     @Test
     void shouldResolveCollectorChannelByGroupWithoutMutatingConfigId() {
         BatteryCollectorCommandService commandService = Mockito.mock(BatteryCollectorCommandService.class);
-        Mockito.when(commandService.resolveChannelName(null, 1)).thenReturn("battery-group-1");
+        Mockito.when(commandService.resolveChannelName(1)).thenReturn("battery-group-1");
         Mockito.when(commandService.manualSetSubmoduleAddress("battery-group-1", 1, 8, 9, null))
                 .thenReturn(BatteryCollectorCommandResult.builder()
                         .success(true)
@@ -115,7 +115,7 @@ class ControlBatterySetTest {
 
         Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
         Assertions.assertNull(request.getConfigId());
-        Mockito.verify(commandService).resolveChannelName(null, 1);
+        Mockito.verify(commandService).resolveChannelName(1);
         Mockito.verify(commandService).manualSetSubmoduleAddress("battery-group-1", 1, 8, 9, null);
     }
 

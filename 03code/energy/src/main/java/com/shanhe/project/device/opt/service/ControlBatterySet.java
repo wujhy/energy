@@ -305,7 +305,7 @@ public class ControlBatterySet extends ControlBase {
     }
 
     private String resolveChannelName(Integer packNum) {
-        String channelName = batteryCollectorCommandService.resolveChannelName(null, packNum);
+        String channelName = batteryCollectorCommandService.resolveChannelName(packNum);
         if (channelName == null) {
             throw new IllegalArgumentException("未找到对应的蓄电池采集通道，操作执行失败！");
         }

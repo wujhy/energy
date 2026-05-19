@@ -267,7 +267,7 @@ class BatteryCollectorCommandServiceTest {
     }
 
     @Test
-    void shouldResolveChannelNameByBatteryGroupAndIgnoreConfigId() {
+    void shouldResolveChannelNameByBatteryGroup() {
         BatteryCollectorProperties properties = new BatteryCollectorProperties();
         BatteryCollectorChannelConfig first = new BatteryCollectorChannelConfig();
         first.setName("battery-rs485-1");
@@ -281,9 +281,24 @@ class BatteryCollectorCommandServiceTest {
         properties.getChannels().add(second);
         ReflectionTestUtils.setField(service, "properties", properties);
 
-        String channelName = service.resolveChannelName(20L, 2);
+        String channelName = service.resolveChannelName(2);
 
         Assertions.assertEquals("battery-rs485-2", channelName);
+    }
+
+    @Test
+    void shouldKeepLegacyResolveChannelNameSignatureCompatible() {
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        BatteryCollectorChannelConfig channel = new BatteryCollectorChannelConfig();
+        channel.setName("battery-rs485-1");
+        channel.setConfigId(10L);
+        channel.setBatteryGroup(1);
+        properties.getChannels().add(channel);
+        ReflectionTestUtils.setField(service, "properties", properties);
+
+        String channelName = service.resolveChannelName(99L, 1);
+
+        Assertions.assertEquals("battery-rs485-1", channelName);
     }
 
     @Test

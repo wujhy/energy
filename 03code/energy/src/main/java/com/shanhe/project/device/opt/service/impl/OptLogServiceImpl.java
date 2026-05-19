@@ -54,7 +54,7 @@ public class OptLogServiceImpl implements OptLogService {
         // 当前状态运行中，需要把旧记录运行中的置为超时
         if (result == null) {
             Object object = CacheUtils.get(logCache.getCache(),
-                    String.format(logCache.getKey(), optLog.getConfigId(), optLog.getPackNum(), optLog.getType()));
+                    String.format(logCache.getKey(), optLog.getPackNum(), optLog.getType()));
             if (object != null) {
                 update(((OptLog) object).getId(), 2, null);
             }
@@ -79,19 +79,19 @@ public class OptLogServiceImpl implements OptLogService {
     @Override
     public void insertBattery(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
         // 备电测试记录
-        this.batteryTest(Constants.DEFAULT_CONFIG_ID, packNum, packMap, oldInfo);
+        this.batteryTest(packNum, packMap, oldInfo);
 
         // 内阻测试记录
-        this.resistanceTest(Constants.DEFAULT_CONFIG_ID, packNum, packMap, oldInfo);
+        this.resistanceTest(packNum, packMap, oldInfo);
     }
 
-    private void batteryTest(Long configId, Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
+    private void batteryTest(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
         // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
         String batteryPackStatus = (String) packMap.get("batteryPackStatus");
         Integer type = getTestType(batteryPackStatus);
 
         // 缓存记录
-        String cacheKey = String.format(logCache.getKey(), configId, packNum, 1);
+        String cacheKey = String.format(logCache.getKey(), packNum, 1);
         Object object = CacheUtils.get(logCache.getCache(), cacheKey);
 
         // type == null 不需要记录，只需要结束
@@ -101,14 +101,14 @@ public class OptLogServiceImpl implements OptLogService {
 
             if (object == null) {
                 // 创建新纪录
-                this.create(configId, packNum, type, cacheKey);
+                this.create(packNum, type, cacheKey);
             } else {
                 // 缓存记录
                 OptLog oldOptLog = (OptLog) object;
                 if (!type.equals(oldOptLog.getType())) {
                     this.sotOptLog(object, cacheKey, oldInfo);
 
-                    this.create(configId, packNum, type, cacheKey);
+                    this.create(packNum, type, cacheKey);
                 } else {
                     insert(oldOptLog, cacheKey);
                 }
@@ -140,11 +140,11 @@ public class OptLogServiceImpl implements OptLogService {
         CacheUtils.put(logCache.getCache(), cacheKey, oldOptLog);
     }
 
-    private void create(Long configId, Integer packNum, Integer type, String cacheKey) {
+    private void create(Integer packNum, Integer type, String cacheKey) {
         // 创建新纪录
         OptLog optLog = new OptLog();
         optLog.setId(IdUtils.getSnowflakeId());
-        optLog.setConfigId(configId);
+        optLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
         optLog.setPackNum(packNum);
         optLog.setType(type);
 
@@ -205,23 +205,22 @@ public class OptLogServiceImpl implements OptLogService {
     /**
      * 运行类型日志
      *
-     * @param configId 设备配置id
      * @param packNum 电池包序号
      * @param packMap 电池组数据
      */
-    private void resistanceTest(Long configId, Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
+    private void resistanceTest(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
         // 0表示不在内阻测试、6表示正在内阻测试、7表示内阻测试正常结束、8表示内阻测试异常结束
         String resistanceTestStatus = (String) packMap.get("resistanceTestStatus");
 
         // 缓存记录
-        String cacheKey = String.format(logCache.getKey(), configId, packNum, 0);
+        String cacheKey = String.format(logCache.getKey(), packNum, 0);
         Object object = CacheUtils.get(logCache.getCache(), cacheKey);
         // 是否运行
         if (StrUtil.equals("6", resistanceTestStatus)) {
             // 记录不存在创建
             if (object == null) {
                 // 创建新纪录
-                this.create(configId, packNum, BatteryTestEnum._1.getDictValue(), cacheKey);
+                this.create(packNum, BatteryTestEnum._1.getDictValue(), cacheKey);
             } else {
                 // 缓存记录
                 OptLog oldOptLog = (OptLog) object;
@@ -246,35 +245,27 @@ public class OptLogServiceImpl implements OptLogService {
     @Override
     public List<OptLog> select(OptLog optLog) {
         List<OptLog> optLogList = optLogMapper.select(optLog);
-        Map<String, Double> batCapacityMap = new HashMap<>();
+        Map<Integer, Double> batCapacityMap = new HashMap<>();
         if (optLogList != null && !optLogList.isEmpty()) {
             for (OptLog log : optLogList) {
                 if (log.getContent() != null) {
                     log.setParams(JSON.parseObject(log.getContent(), Map.class));
                 }
-                // 使用configId和packNum组合作为缓存key
-                String cacheKey = generateCacheKey(log.getConfigId(), log.getPackNum());
-                if (cacheKey != null && batCapacityMap.containsKey(cacheKey)) {
-                    log.setBatCapacity(batCapacityMap.get(cacheKey));
+                Integer packNum = log.getPackNum();
+                if (packNum != null && batCapacityMap.containsKey(packNum)) {
+                    log.setBatCapacity(batCapacityMap.get(packNum));
                 } else {
-                    BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(log.getPackNum());
+                    BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
                     if (batteryPack != null) {
                         log.setBatCapacity(batteryPack.getBatCapacity());
-                        if (cacheKey != null) {
-                            batCapacityMap.put(cacheKey, batteryPack.getBatCapacity());
+                        if (packNum != null) {
+                            batCapacityMap.put(packNum, batteryPack.getBatCapacity());
                         }
                     }
                 }
             }
         }
         return optLogList;
-    }
-
-    private String generateCacheKey(Long configId, Integer packNum) {
-        if (configId == null || packNum == null) {
-            return null;
-        }
-        return configId + "_" + packNum;
     }
 
     @Override
@@ -303,7 +294,7 @@ public class OptLogServiceImpl implements OptLogService {
                 type = 0;
             }
             // 缓存
-            String key = String.format(logCache.getKey(), log.getConfigId(), log.getPackNum(), type);
+            String key = String.format(logCache.getKey(), log.getPackNum(), type);
             // 存在重复数据，时间排序靠后的完成掉（脏数据）
             Object object = CacheUtils.get(logCache.getCache(), key);
             if (object != null) {
@@ -333,7 +324,7 @@ public class OptLogServiceImpl implements OptLogService {
     @Override
     public OptLog selectNotFinishedCacheLog(Integer packNum, Integer type) {
         // 缓存记录
-        String cacheKey = String.format(logCache.getKey(), Constants.DEFAULT_CONFIG_ID, packNum, type);
+        String cacheKey = String.format(logCache.getKey(), packNum, type);
         Object object = CacheUtils.get(logCache.getCache(), cacheKey);
         if (object == null) {
             return null;
@@ -393,7 +384,7 @@ public class OptLogServiceImpl implements OptLogService {
             // 内阻测试
             keyType = 0;
         }
-        String cacheKey = String.format(logCache.getKey(), Constants.DEFAULT_CONFIG_ID, packNum, keyType);
+        String cacheKey = String.format(logCache.getKey(), packNum, keyType);
         OptLog log = (OptLog) CacheUtils.get(logCache.getCache(), cacheKey);
         if (log == null) {
             log = optLogMapper.getRunningOptLog(Constants.DEFAULT_CONFIG_ID, packNum, type);

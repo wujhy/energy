@@ -214,13 +214,12 @@ public class BatteryCollectorCommandService {
     }
 
     /**
-     * 按电池组解析独立采集通道名称，configId 仅作为旧签名兼容字段。
+     * 按电池组解析独立采集通道名称。
      *
-     * @param configId 旧业务设备ID，内部忽略
      * @param batteryGroup 电池组编号
      * @return 通道名称；无法唯一定位时返回null
      */
-    public String resolveChannelName(Long configId, Integer batteryGroup) {
+    public String resolveChannelName(Integer batteryGroup) {
         if (properties == null || properties.getChannels() == null || batteryGroup == null) {
             return null;
         }
@@ -238,6 +237,14 @@ public class BatteryCollectorCommandService {
             matchedByGroup = channel.getName();
         }
         return matchedByGroup;
+    }
+
+    /**
+     * 旧签名兼容入口，configId 不再参与独立采集通道定位。
+     */
+    @Deprecated
+    public String resolveChannelName(Long configId, Integer batteryGroup) {
+        return resolveChannelName(batteryGroup);
     }
 
     private boolean isBlank(String value) {

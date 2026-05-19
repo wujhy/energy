@@ -22,8 +22,8 @@ public enum CacheKeyEnum {
     ATTRIBUTE("device-attribute", "attribute:%s:%s:%s", "设备属性"),
     /* alarm.配置id.包编号.模块编号.属性编码 */
     ALARM("device-alarm", "alarm:%s:%s:%s:%s", "设备告警"),
-    /* log:configId:packNum:type */
-    OPT_LOG("device-log", "log:%s:%s:%s", "操作日志处理"),
+    /* log:packNum:type */
+    OPT_LOG("device-log", "log:%s:%s", "操作日志处理"),
     /* alarm.level */
     ALARM_LEVEL("sys-cache", "alarm:level", "告警等级"),
     STORAGE_TIME("data-storage-time", "storageTime:%s:%s", "数据最后存储时间"),

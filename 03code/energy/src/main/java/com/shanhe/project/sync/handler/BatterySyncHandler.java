@@ -96,9 +96,7 @@ public class BatterySyncHandler {
                 || batteryCollectorCommandService == null) {
             return null;
         }
-        String channelName = batteryCollectorCommandService.resolveChannelName(
-                batteryOpt.getConfigId(),
-                batteryOpt.getPackNum());
+        String channelName = batteryCollectorCommandService.resolveChannelName(batteryOpt.getPackNum());
         if (channelName == null || channelName.trim().isEmpty()) {
             log.warn("独立采集模块未找到匹配通道，回退旧蓄电池控制链路，configId={}, packNum={}",
                     batteryOpt.getConfigId(),

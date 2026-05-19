@@ -45,7 +45,7 @@ class BatterySyncHandlerTest {
         BatteryCollectorCommandService commandService = Mockito.mock(BatteryCollectorCommandService.class);
         ReflectionTestUtils.setField(handler, "controlBattery", controlBattery);
         ReflectionTestUtils.setField(handler, "batteryCollectorCommandService", commandService);
-        Mockito.when(commandService.resolveChannelName(10L, 1)).thenReturn("battery-rs485-1");
+        Mockito.when(commandService.resolveChannelName(1)).thenReturn("battery-rs485-1");
         Mockito.when(commandService.connectResistanceTest("battery-rs485-1", 1, null))
                 .thenReturn(BatteryCollectorCommandResult.builder()
                         .success(true)
@@ -68,7 +68,7 @@ class BatterySyncHandlerTest {
         BatteryCollectorCommandService commandService = Mockito.mock(BatteryCollectorCommandService.class);
         ReflectionTestUtils.setField(handler, "controlBattery", controlBattery);
         ReflectionTestUtils.setField(handler, "batteryCollectorCommandService", commandService);
-        Mockito.when(commandService.resolveChannelName(10L, 1)).thenReturn("battery-rs485-1");
+        Mockito.when(commandService.resolveChannelName(1)).thenReturn("battery-rs485-1");
         Mockito.when(controlBattery.toSendBatteryCmdToOat(Mockito.any(DevBatteryOpt.class)))
                 .thenReturn(AjaxResult.success());
 
