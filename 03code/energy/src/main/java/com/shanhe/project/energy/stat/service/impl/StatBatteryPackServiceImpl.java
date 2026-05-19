@@ -89,7 +89,6 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
     @Async
     @Override
     public void insertList(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         // 参数校验
         if (packMap == null || batteryList == null) {
             return;
@@ -99,7 +98,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         String resistanceTestStatus = (String) packMap.get("resistanceTestStatus");
         if (StrUtil.equals("6", resistanceTestStatus)) {
             // 记录迁移
-            insert(configId, packNum, packMap, batteryList);
+            insert(packNum, packMap, batteryList);
             return;
         }
 
@@ -118,14 +117,13 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         }
         if (ArrayUtils.contains(BATTERY_PACK_STATUS_ARR, batteryPackStatus)) {
             // 记录迁移
-            insert(configId, packNum, packMap, batteryList);
+            insert(packNum, packMap, batteryList);
         }
     }
 
     @Override
     public void deleteByConfigId(Integer packNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
-        statBatteryPackMapper.deleteByConfigId(configId, packNum);
+        statBatteryPackMapper.deleteByConfigId(Constants.DEFAULT_CONFIG_ID, packNum);
     }
 
     @Override
@@ -257,11 +255,10 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
     }
 
 
-    private void insert(Long configId, Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList) {
-        configId = Constants.DEFAULT_CONFIG_ID;
+    private void insert(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList) {
         StatBatteryPack statBatteryPack = new StatBatteryPack();
         statBatteryPack.setId(IdUtils.getSnowflakeId());
-        statBatteryPack.setConfigId(configId);
+        statBatteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID);
         statBatteryPack.setPackNum(packNum);
         statBatteryPack.setPackVoltage(getPackVoltage(packMap));
         statBatteryPack.setPackCurrent(packMap.get("packCurrent") == null ? null : Double.parseDouble((String) packMap.get("packCurrent")));
