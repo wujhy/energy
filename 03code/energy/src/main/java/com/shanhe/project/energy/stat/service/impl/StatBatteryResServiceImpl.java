@@ -55,7 +55,6 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
 
     @Override
     public Map<String, Object> getResistanceReport(Integer packNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         Map<String, Object> result = new HashMap<>();
 
         BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
@@ -76,7 +75,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         }
 
         // 每次测试内阻值
-        List<StatBatteryRes> statBatteryRes = statBatteryResMapper.selectList(configId, packNum, null);
+        List<StatBatteryRes> statBatteryRes = statBatteryResMapper.selectList(Constants.DEFAULT_CONFIG_ID, packNum, null);
 
         // 按时间分组的内阻测试数据
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -196,7 +195,6 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
     @Async
     @Override
     public void init(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList, BatteryReportLog oldInfo) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         if (null == oldInfo) {
             return;
         }
@@ -221,7 +219,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
             return;
         }
         // 结束内阻测试，生成内阻值
-        List<StatBatteryRes> statBatteryResList = generateStatBatteryRes(configId, packNum, batteryList);
+        List<StatBatteryRes> statBatteryResList = generateStatBatteryRes(packNum, batteryList);
 
         try {
             statBatteryResMapper.insertList(statBatteryResList);
@@ -232,27 +230,23 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
 
     @Override
     public Map<Integer, Integer> last(Integer packNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         // 每次测试内阻值
-        List<StatBatteryRes> statBatteryRes = statBatteryResMapper.selectList(configId, packNum, null);
+        List<StatBatteryRes> statBatteryRes = statBatteryResMapper.selectList(Constants.DEFAULT_CONFIG_ID, packNum, null);
         return getLatestResMap(statBatteryRes, new SimpleDateFormat("yyyy-MM-dd"));
     }
 
     @Override
     public List<StatBatteryRes> listResistance(Integer packNum, Integer batNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
-        return statBatteryResMapper.selectList(configId, packNum, batNum);
+        return statBatteryResMapper.selectList(Constants.DEFAULT_CONFIG_ID, packNum, batNum);
     }
 
     @Override
-    public void deleteByConfigId(Integer packNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
-        statBatteryResMapper.deleteByConfigId(configId, packNum);
+    public void deleteByPackNum(Integer packNum) {
+        statBatteryResMapper.deleteByConfigId(Constants.DEFAULT_CONFIG_ID, packNum);
     }
 
     @Override
     public void export(Integer packNum, String exportPath) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
         if (batteryPack == null) {
             return;
@@ -271,7 +265,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         }
 
         // 每次测试内阻值
-        List<StatBatteryRes> statBatteryRes = statBatteryResMapper.selectList(configId, packNum, null);
+        List<StatBatteryRes> statBatteryRes = statBatteryResMapper.selectList(Constants.DEFAULT_CONFIG_ID, packNum, null);
 
         // 按时间分组的内阻测试数据
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -326,11 +320,11 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
     /**
      * 生成内阻值
      */
-    private static List<StatBatteryRes> generateStatBatteryRes(Long configId, Integer packNum, List<BatteryMonitor> batteryList) {
+    private static List<StatBatteryRes> generateStatBatteryRes(Integer packNum, List<BatteryMonitor> batteryList) {
         List<StatBatteryRes> statBatteryResList = new ArrayList<>();
         for (BatteryMonitor batteryInfo : batteryList) {
             StatBatteryRes statBatteryRes = new StatBatteryRes();
-            statBatteryRes.setConfigId(configId);
+            statBatteryRes.setConfigId(Constants.DEFAULT_CONFIG_ID);
             statBatteryRes.setPackNum(packNum);
 
             statBatteryRes.setBatNum(batteryInfo.getBatNum());

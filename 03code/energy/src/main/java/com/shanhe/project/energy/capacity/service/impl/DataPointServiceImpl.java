@@ -28,12 +28,11 @@ public class DataPointServiceImpl implements DataPointService {
 
     @Override
     public List<DataPoint> findCurrentDataPoint(Integer packNum, Integer batNum, Date startTime, Date endTime) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String startDateTimeStr = startTime != null ? sdf.format(startTime) : null;
         String endDateTimeStr = endTime != null ? sdf.format(endTime) : null;
 
-        List<DataPoint> list = statBatteryBatMapper.selectDataPointList(configId, packNum, batNum, startDateTimeStr, endDateTimeStr);
+        List<DataPoint> list = statBatteryBatMapper.selectDataPointList(Constants.DEFAULT_CONFIG_ID, packNum, batNum, startDateTimeStr, endDateTimeStr);
         //转换数据
         if (list != null && list.size() > 2) {
             //移除第一个放电数据，放电时，电压会快速下跌，需做优化处理
@@ -44,9 +43,8 @@ public class DataPointServiceImpl implements DataPointService {
 
     @Override
     public Double getAvgCurrent(Integer packNum, Date startTime, Date endTime) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         StatBatteryBat param = new StatBatteryBat();
-        param.setConfigId(configId);
+        param.setConfigId(Constants.DEFAULT_CONFIG_ID);
         param.setPackNum(packNum);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 

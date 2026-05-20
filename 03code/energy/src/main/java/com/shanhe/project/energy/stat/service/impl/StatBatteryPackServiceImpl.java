@@ -122,7 +122,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
     }
 
     @Override
-    public void deleteByConfigId(Integer packNum) {
+    public void deleteByPackNum(Integer packNum) {
         statBatteryPackMapper.deleteByConfigId(Constants.DEFAULT_CONFIG_ID, packNum);
     }
 

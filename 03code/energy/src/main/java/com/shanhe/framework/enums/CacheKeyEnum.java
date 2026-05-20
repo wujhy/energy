@@ -48,7 +48,7 @@ public enum CacheKeyEnum {
     DEPLOY_STATUS("sys-cache", "deploy:status", "软件升级状态"),
     /* battery.设备ID.包编号 */
     BATTERY_PACK_INFO("device-battery", "battery:info:%s:%s", "蓄电池组数据"),
-    STAT_BATTERY_GROUP("stat-battery", "stat:battery:group:%s:%s", "电池组预估容量");
+    STAT_BATTERY_GROUP("stat-battery", "stat:battery:group:%s", "电池组预估容量");
 
     private final String cache;
     private final String key;

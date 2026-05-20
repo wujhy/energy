@@ -84,7 +84,7 @@ public class ConfigurationBatteryController extends BaseController {
      */
     @GetMapping("/clearPreBatteryGroup")
     public AjaxResult clearPreBatteryGroup(@RequestParam(required = false) Long configId, @RequestParam Integer packNum) {
-        preBatteryGroupService.deleteByConfigId(packNum);
+        preBatteryGroupService.deleteByPackNum(packNum);
         preBatteryGroupService.updateCache();
         return success();
     }

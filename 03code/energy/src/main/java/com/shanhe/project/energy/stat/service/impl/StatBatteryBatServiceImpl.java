@@ -49,7 +49,7 @@ public class StatBatteryBatServiceImpl implements IStatBatteryBatService {
     }
 
     @Override
-    public void deleteByConfigId(Integer packNum) {
+    public void deleteByPackNum(Integer packNum) {
         statBatteryBatMapper.deleteByConfigId(Constants.DEFAULT_CONFIG_ID, packNum);
     }
 

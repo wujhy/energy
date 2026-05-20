@@ -46,7 +46,6 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
 
     @Override
     public void init(Integer packNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
 
         // 获取单体数据
@@ -84,7 +83,7 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
         }
         devBatteryMonomerMapper.insertList(devBatteryMonomers);
 
-        clientReportService.uploadBatteryMonomer(configId, packNum, devBatteryMonomers, null);
+        clientReportService.uploadBatteryMonomer(Constants.DEFAULT_CONFIG_ID, packNum, devBatteryMonomers, null);
     }
 
     @Override
@@ -94,7 +93,6 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
 
     @Override
     public Double getMaxResistance(Integer packNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         // 查询所有单体数据
         BatteryReportLog packInfo = batteryReportLogService.lastCache(packNum);
         if (packInfo == null || null == packInfo.getBatteryList()) {

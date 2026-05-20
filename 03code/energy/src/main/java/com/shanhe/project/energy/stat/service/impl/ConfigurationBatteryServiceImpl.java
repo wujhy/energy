@@ -56,7 +56,6 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
 
     @Override
     public BatteryHealthReport getBatteryHealthReport(Integer packNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         BatteryHealthReport batteryHealthReport = new BatteryHealthReport();
         BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
         if (batteryPack == null) {
@@ -68,7 +67,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
 
         populateSohInfo(batteryHealthReport, preBatteryGroup);
 
-        Map<String, List<AlarmLog>> logMap = populateAlarmInfo(batteryHealthReport, configId, packNum);
+        Map<String, List<AlarmLog>> logMap = populateAlarmInfo(batteryHealthReport, packNum);
 
         BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(packNum);
         populateBackupDuration(batteryHealthReport, batteryReportLog);
@@ -88,7 +87,6 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
 
     @Override
     public Map<String, Object> getTempWarnLine(Integer packNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         Map<String, Object> packMap = new HashMap<>();
         ConfigAttribute wdgAttribute = configAttributeService.getCacheBy(packNum, ItemCode.DTDCWDG.getCode());
         if (wdgAttribute != null && wdgAttribute.getListLevel() != null) {
@@ -113,7 +111,6 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
 
     @Override
     public Map<String, Object> getResWarnLine(Integer packNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         Map<String, Object> packMap = new HashMap<>();
         ConfigAttribute dAttribute = configAttributeService.getCacheBy(packNum, ItemCode.DTNZGD.getCode());
         if (null == dAttribute) {
@@ -192,9 +189,9 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     }
 
     private Map<String, List<AlarmLog>> populateAlarmInfo(BatteryHealthReport batteryHealthReport,
-                                                          Long configId, Integer packNum) {
+                                                          Integer packNum) {
         AlarmLog params = new AlarmLog();
-        params.setConfigId(configId);
+        params.setConfigId(Constants.DEFAULT_CONFIG_ID);
         params.setPackNum(packNum);
         params.setExcludeItemCodes(Lists.newArrayList(ItemCode.TXZT.getCode()));
         List<AlarmLog> alarmLogs = alarmLogService.selectAlarmLogList(params);
@@ -222,7 +219,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     private String getAssessAdvice(BatteryHealthReport batteryHealthReport) {
         // SOH 不告警
         if (!Objects.equals(0, batteryHealthReport.getSohAlarm())) {
-            Double sohThreshold = getSohThreshold(batteryHealthReport.getConfigId(), batteryHealthReport.getPackNum());
+            Double sohThreshold = getSohThreshold(batteryHealthReport.getPackNum());
             if (batteryHealthReport.getSoh() >= sohThreshold) {
                 batteryHealthReport.setSohAlarm(2);
                 return "电池组状态良好，正常使用，实时监测。";
@@ -260,7 +257,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         return result.append("。").toString();
     }
 
-    private Double getSohThreshold(Long configId, Integer packNum) {
+    private Double getSohThreshold(Integer packNum) {
         ConfigAttribute sohAttribute = configAttributeService.getCacheBy(packNum, ItemCode.ZSOHDGJ.getCode());
         if (null == sohAttribute || null == sohAttribute.getListLevel() || sohAttribute.getListLevel().isEmpty()) {
             return 80.0;

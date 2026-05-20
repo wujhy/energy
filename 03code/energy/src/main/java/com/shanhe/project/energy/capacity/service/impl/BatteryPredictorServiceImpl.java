@@ -63,7 +63,6 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
     @Async
     @Override
     public void doTotalBatteryStep(Integer packNum, String batteryStatus, BatteryReportLog oldInfo) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         if (oldInfo == null) {
             return;
         }

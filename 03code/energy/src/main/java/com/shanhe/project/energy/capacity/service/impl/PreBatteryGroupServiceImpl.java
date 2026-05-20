@@ -23,10 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author zhoubin
- * @date 2025/10/10
- */
 @Service
 public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
 
@@ -51,7 +47,7 @@ public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
         groupVo.setStartTimeStr(sdf.format(groupVo.getStartTime()));
         groupVo.setEndTimeStr(sdf.format(groupVo.getEndTime()));
         preBatteryGroupMapper.insert(groupVo);
-        String key = String.format(cache.getKey(), groupVo.getConfigId(), groupVo.getPackNum());
+        String key = String.format(cache.getKey(), groupVo.getPackNum());
         CacheUtils.put(cache.getCache(), key, groupVo);
 
         clientReportService.uploadPreBatteryGroup(groupVo);
@@ -59,8 +55,7 @@ public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
 
     @Override
     public PreBatteryGroup lastCache(Integer packNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
-        String key = String.format(cache.getKey(), configId, packNum);
+        String key = String.format(cache.getKey(), packNum);
         Object log = CacheUtils.get(cache.getCache(), key);
         if (log == null) {
             return null;
@@ -76,9 +71,8 @@ public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
     }
 
     @Override
-    public void deleteByConfigId(Integer packNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
-        preBatteryGroupMapper.deleteByConfigId(configId, packNum);
+    public void deleteByPackNum(Integer packNum) {
+        preBatteryGroupMapper.deleteByConfigId(Constants.DEFAULT_CONFIG_ID, packNum);
     }
 
     @Override
@@ -97,10 +91,8 @@ public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
             }
 
             /* 缓存 */
-            String key = String.format(cache.getKey(), Constants.DEFAULT_CONFIG_ID, reportLog.getPackNum());
-            if (CacheUtils.get(cache.getCache(), key) == null) {
-                CacheUtils.put(cache.getCache(), key, reportLog);
-            }
+            String key = String.format(cache.getKey(), reportLog.getPackNum());
+            CacheUtils.put(cache.getCache(), key, reportLog);
             startKeys.add(key);
         }
 

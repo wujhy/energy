@@ -91,14 +91,14 @@ public class RestoreServiceImpl implements RestoreService {
         optLogService.updateCache();
 
         // 删除统计数据
-        statBatteryBatService.deleteByConfigId(null);
-        statBatteryPackService.deleteByConfigId(null);
+        statBatteryBatService.deleteByPackNum(null);
+        statBatteryPackService.deleteByPackNum(null);
 
         // 删除内阻统计数据
-        statBatteryResService.deleteByConfigId(null);
+        statBatteryResService.deleteByPackNum(null);
 
         // 删除预估容量
-        preBatteryGroupService.deleteByConfigId(null);
+        preBatteryGroupService.deleteByPackNum(null);
         preBatteryGroupService.updateCache();
 
         // 系统操作记录
@@ -152,14 +152,14 @@ public class RestoreServiceImpl implements RestoreService {
         optLogService.updateCache();
 
         // 删除统计数据
-        statBatteryBatService.deleteByConfigId(batterySetVO.getPackNum());
-        statBatteryPackService.deleteByConfigId(batterySetVO.getPackNum());
+        statBatteryBatService.deleteByPackNum(batterySetVO.getPackNum());
+        statBatteryPackService.deleteByPackNum(batterySetVO.getPackNum());
 
         // 删除内阻统计数据
-        statBatteryResService.deleteByConfigId(batterySetVO.getPackNum());
+        statBatteryResService.deleteByPackNum(batterySetVO.getPackNum());
 
         // 删除预估容量
-        preBatteryGroupService.deleteByConfigId(batterySetVO.getPackNum());
+        preBatteryGroupService.deleteByPackNum(batterySetVO.getPackNum());
         preBatteryGroupService.updateCache();
 
     }
