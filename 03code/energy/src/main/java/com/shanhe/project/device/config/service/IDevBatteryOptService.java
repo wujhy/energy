@@ -75,5 +75,5 @@ public interface IDevBatteryOptService {
      * @param configId 配置ID
      * @return 结果
      */
-    void deleteByConfigId(Integer packNum);
+    void deleteByPackNum(Integer packNum);
 }

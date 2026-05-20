@@ -59,10 +59,9 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
     @Async
     @Override
     public void insert(Integer packNum, Map<String, Object> packParam, List<BatteryMonitor> batteryList, boolean isInsert) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         // 直接新增
         BatteryReportLog batteryReportLog = new BatteryReportLog();
-        batteryReportLog.setConfigId(configId);
+        batteryReportLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
         batteryReportLog.setPackNum(packNum);
         batteryReportLog.setPackParam(packParam);
         batteryReportLog.setBatteryList(batteryList);
@@ -71,24 +70,23 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         if (isInsert) {
             MessageFactory.pushData(batteryReportLog);
         } else {
-            log.info("数据未达到存储间隔 {}:{}", configId, packNum);
+            log.info("数据未达到存储间隔:{}", packNum);
         }
 //        batteryReportLogMapper.insert(batteryReportLog);
 
         batteryReportLog.setPackData(JSON.toJSONString(packParam));
         batteryReportLog.setMonitorData(JSON.toJSONString(batteryList));
         // 缓存
-        String key = String.format(reportCache.getKey(), batteryReportLog.getConfigId(), batteryReportLog.getPackNum());
+        String key = String.format(reportCache.getKey(), batteryReportLog.getPackNum());
         CacheUtils.put(reportCache.getCache(), key, batteryReportLog);
     }
 
     @Override
     public BatteryReportLog selectLastHasAlarm(Integer packNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         // 先取缓存
         BatteryReportLog log = this.lastCache(packNum);
         if (log == null) {
-            log = batteryReportLogMapper.selectLast(configId, packNum);
+            log = batteryReportLogMapper.selectLast(packNum);
             if (log == null) {
                 return null;
             }
@@ -122,9 +120,7 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
 
     @Override
     public BatteryReportLog lastCache(Integer packNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
-        String key = String.format(reportCache.getKey(), configId, packNum);
-        Object log = CacheUtils.get(reportCache.getCache(), key);
+        Object log = CacheUtils.get(reportCache.getCache(), String.format(reportCache.getKey(), packNum));
         if (log == null) {
             return null;
         }
@@ -142,10 +138,9 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
 
     @Override
     public Long resistanceValue(Integer packNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
         BatteryReportLog log = this.lastCache(packNum);
         if (log == null) {
-            log = batteryReportLogMapper.selectLast(configId, packNum);
+            log = batteryReportLogMapper.selectLast(packNum);
             if (log == null) {
                 return 0L;
             }
@@ -207,7 +202,7 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
             }
 
             /* 缓存 */
-            String key = String.format(reportCache.getKey(), reportLog.getConfigId(), reportLog.getPackNum());
+            String key = String.format(reportCache.getKey(), reportLog.getPackNum());
             if (CacheUtils.get(reportCache.getCache(), key) == null) {
                 CacheUtils.put(reportCache.getCache(), key, reportLog);
             }
@@ -238,10 +233,9 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
             result.setConfigId(Constants.DEFAULT_CONFIG_ID);
             result.setAlarm(alarmLogService.isBatteryAlarmByCache(entity.getPackNum()));
 
-            String key = String.format(reportCache.getKey(), Constants.DEFAULT_CONFIG_ID, entity.getPackNum());
-            Object log = CacheUtils.get(reportCache.getCache(), key);
+            Object log = CacheUtils.get(reportCache.getCache(), String.format(reportCache.getKey(), entity.getPackNum()));
             if (log == null) {
-                log = batteryReportLogMapper.selectLast(Constants.DEFAULT_CONFIG_ID, entity.getPackNum());
+                log = batteryReportLogMapper.selectLast(entity.getPackNum());
             }
 
             if (log != null) {
@@ -259,9 +253,8 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
     }
 
     @Override
-    public void deleteByConfigId(Integer packNum) {
-        Long configId = Constants.DEFAULT_CONFIG_ID;
-        batteryReportLogMapper.deleteByConfigId(configId, packNum);
+    public void deleteByPackNum(Integer packNum) {
+        batteryReportLogMapper.deleteByConfigId(Constants.DEFAULT_CONFIG_ID, packNum);
     }
 
     @Override
@@ -366,7 +359,7 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
 
     /** 查询最新一条记录 */
     private BatteryReportLog selectLast(Integer packNum) {
-        BatteryReportLog log = batteryReportLogMapper.selectLast(Constants.DEFAULT_CONFIG_ID, packNum);
+        BatteryReportLog log = batteryReportLogMapper.selectLast(packNum);
         if (log == null) {
             return null;
         }

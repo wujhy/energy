@@ -22,11 +22,10 @@ public interface BatteryReportLogMapper {
     /**
      * 获取设备最新电池记录
      *
-     * @param configId 设备id
      * @param packNum 电池组编号
      * @return 电池列表
      */
-    BatteryReportLog selectLast(@Param("configId") Long configId, @Param("packNum") Integer packNum);
+    BatteryReportLog selectLast(@Param("packNum") Integer packNum);
 
     /**
      * 查电池历史

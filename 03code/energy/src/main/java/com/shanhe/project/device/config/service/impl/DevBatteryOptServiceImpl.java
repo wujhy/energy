@@ -86,7 +86,7 @@ public class DevBatteryOptServiceImpl implements IDevBatteryOptService {
     }
 
     @Override
-    public void deleteByConfigId(Integer packNum) {
+    public void deleteByPackNum(Integer packNum) {
         devBatteryOptMapper.deleteByConfigId(Constants.DEFAULT_CONFIG_ID, packNum);
     }
 

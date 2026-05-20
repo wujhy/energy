@@ -53,7 +53,7 @@ public class OptBatteryController extends BaseController {
      * 获取【蓄电池测试操作参数】详细信息
      */
     @GetMapping(value = "/info")
-    public AjaxResult getInfo(@RequestParam(required = false) Long configId,
+    public AjaxResult getInfo(@RequestParam(name = "configId", required = false) Long ignoredConfigId,
                               @RequestParam Integer packNum,
                               @RequestParam Integer testType) {
         return success(devBatteryOptService.selectDevBatteryOptByPackNum(packNum, testType));
@@ -65,7 +65,7 @@ public class OptBatteryController extends BaseController {
     @Log(title = "蓄电池测试操作", businessType = BusinessType.UPDATE)
     @PostMapping("/edit")
     public AjaxResult edit(@RequestBody DevBatteryOpt devBatteryOpt) {
-        applyDefaultConfigId(devBatteryOpt);
+        devBatteryOpt.setConfigId(Constants.DEFAULT_CONFIG_ID);
         devBatteryOpt.setIsSync(false);
         //发送指令到终端设备
         return controlBattery.toSendCmdToOat(devBatteryOpt);
@@ -76,7 +76,7 @@ public class OptBatteryController extends BaseController {
      */
     @PostMapping("/doCmdOptBatteryTest")
     public AjaxResult doCmdOptBatteryTest(@RequestBody DevBatteryOpt devBatteryOpt) {
-        applyDefaultConfigId(devBatteryOpt);
+        devBatteryOpt.setConfigId(Constants.DEFAULT_CONFIG_ID);
         BatteryTestEnum testEnum = BatteryTestEnum.find(devBatteryOpt.getTestType());
         OptLog opt = optLogService.getRunningOptLog(null, testEnum.getDictValue());
         if(opt!=null){
@@ -102,11 +102,7 @@ public class OptBatteryController extends BaseController {
     @PostMapping("/doCmdStopBattery")
     public AjaxResult doCmdStopBattery(@RequestBody DevBatteryOpt devBatteryOpt) {
         //发送指令到终端设备
-        applyDefaultConfigId(devBatteryOpt);
-        return controlBattery.toSendStopBatteryCmdToOat(devBatteryOpt);
-    }
-
-    private void applyDefaultConfigId(DevBatteryOpt devBatteryOpt) {
         devBatteryOpt.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        return controlBattery.toSendStopBatteryCmdToOat(devBatteryOpt);
     }
 }

@@ -66,9 +66,9 @@ class RestoreServiceImplTest {
 
         Mockito.verify(configService).selectDefaultConfig();
         Mockito.verify(batteryPackService).selectBatteryInfoByPackNum(2);
-        Mockito.verify(devBatteryOptService).deleteByConfigId(2);
+        Mockito.verify(devBatteryOptService).deleteByPackNum(2);
         Mockito.verify(alarmLogService).deleteBatteryAlarmLogByPackNum(2);
-        Mockito.verify(batteryReportLogService).deleteByConfigId(2);
+        Mockito.verify(batteryReportLogService).deleteByPackNum(2);
         Mockito.verify(optLogService).deleteByPackNum(2);
         Mockito.verify(statBatteryBatService).deleteByPackNum(2);
         Mockito.verify(statBatteryPackService).deleteByPackNum(2);

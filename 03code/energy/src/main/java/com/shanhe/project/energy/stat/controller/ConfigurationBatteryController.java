@@ -35,7 +35,7 @@ public class ConfigurationBatteryController extends BaseController {
      * 查询设备列表
      */
     @GetMapping("/listMonomer")
-    public AjaxResult list(@RequestParam(required = false) Long configId, @RequestParam Integer packNum) {
+    public AjaxResult list(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam Integer packNum) {
         List<DevBatteryMonomer> list = devBatteryMonomerService.selectList(packNum);
         return success(list);
     }
@@ -44,7 +44,7 @@ public class ConfigurationBatteryController extends BaseController {
      * 内阻警戒线
      */
     @GetMapping("/getResWarnLine")
-    public AjaxResult getResWarnLine(@RequestParam(required = false) Long configId, @RequestParam Integer packNum) {
+    public AjaxResult getResWarnLine(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam Integer packNum) {
         return success(configurationBatteryService.getResWarnLine(packNum));
     }
 
@@ -52,7 +52,7 @@ public class ConfigurationBatteryController extends BaseController {
      * 温度警戒线
      */
     @GetMapping("/getTempWarnLine")
-    public AjaxResult getTempWarnLine(@RequestParam(required = false) Long configId, @RequestParam Integer packNum) {
+    public AjaxResult getTempWarnLine(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam Integer packNum) {
         return success(configurationBatteryService.getTempWarnLine(packNum));
     }
 
@@ -60,7 +60,7 @@ public class ConfigurationBatteryController extends BaseController {
      * 健康报告
      */
     @GetMapping("/getBatteryHealthReport")
-    public AjaxResult getBatteryHealthReport(@RequestParam(required = false) Long configId, @RequestParam Integer packNum) {
+    public AjaxResult getBatteryHealthReport(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam Integer packNum) {
         return success(configurationBatteryService.getBatteryHealthReport(packNum));
     }
 
@@ -68,7 +68,7 @@ public class ConfigurationBatteryController extends BaseController {
      * 电池信息
      */
     @GetMapping("/getBatteryPack")
-    public AjaxResult getBatteryPack(@RequestParam(required = false) Long configId, @RequestParam Integer packNum) {
+    public AjaxResult getBatteryPack(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam Integer packNum) {
         return success(batteryPackService.selectBatteryInfoByPackNum(packNum));
     }
 
@@ -76,14 +76,14 @@ public class ConfigurationBatteryController extends BaseController {
      * 电池信息
      */
     @GetMapping("/getVoltageBalance")
-    public AjaxResult getVoltageBalance(@RequestParam(required = false) Long configId, @RequestParam Integer packNum) {
+    public AjaxResult getVoltageBalance(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam Integer packNum) {
         return success(batteryPackService.getVoltageBalance(packNum));
     }
     /**
      * 清除预估容量
      */
     @GetMapping("/clearPreBatteryGroup")
-    public AjaxResult clearPreBatteryGroup(@RequestParam(required = false) Long configId, @RequestParam Integer packNum) {
+    public AjaxResult clearPreBatteryGroup(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam Integer packNum) {
         preBatteryGroupService.deleteByPackNum(packNum);
         preBatteryGroupService.updateCache();
         return success();

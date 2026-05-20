@@ -116,7 +116,7 @@ public class AlarmLogController extends BaseController
 
     @GetMapping("/clear")
     @ResponseBody
-    public AjaxResult clear(@RequestParam(required = false) Long configId) {
+    public AjaxResult clear(@RequestParam(name = "configId", required = false) Long ignoredConfigId) {
         String[] configIdArr = Convert.toStrArray(String.valueOf(Constants.DEFAULT_CONFIG_ID));
         alarmLogService.deleteAlarmLogByConfigIds(configIdArr);
         alarmLogService.updateCache();

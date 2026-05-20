@@ -45,7 +45,7 @@ public class BatteryReportLogController extends BaseController
      */
     @GetMapping("/{configId}/{packNum}")
     @ResponseBody
-    public AjaxResult detailList(@PathVariable Long configId, @PathVariable Integer packNum)
+    public AjaxResult detailList(@PathVariable("configId") Long ignoredConfigId, @PathVariable Integer packNum)
     {
         BatteryReportLog log = batteryReportLogService.selectLastHasAlarm(packNum);
         if(log!=null){

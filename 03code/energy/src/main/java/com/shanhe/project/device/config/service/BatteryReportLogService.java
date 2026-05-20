@@ -83,7 +83,7 @@ public interface BatteryReportLogService {
      *
      * @param packNum 电池组编号；为空时删除默认设备全部历史
      */
-    void deleteByConfigId(Integer packNum);
+    void deleteByPackNum(Integer packNum);
 
     /**
      * 导出

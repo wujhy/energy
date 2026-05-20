@@ -73,7 +73,7 @@ public class RestoreServiceImpl implements RestoreService {
         // 内阻初装值
         devBatteryMonomerService.delete();
         // 电池操作记录
-        devBatteryOptService.deleteByConfigId(null);
+        devBatteryOptService.deleteByPackNum(null);
 
         // 删除属性
         configAttributeService.deleteDefaultDeviceAttributes();
@@ -83,7 +83,7 @@ public class RestoreServiceImpl implements RestoreService {
         alarmLogService.updateCache();
 
         // 删除历史记录
-        batteryReportLogService.deleteByConfigId(null);
+        batteryReportLogService.deleteByPackNum(null);
         batteryReportLogService.updateCache();
 
         // 删除操作日志
@@ -133,14 +133,14 @@ public class RestoreServiceImpl implements RestoreService {
         // 内阻初装值
         devBatteryMonomerService.deleteByPackId(batteryPack.getPackId());
         // 电池操作记录
-        devBatteryOptService.deleteByConfigId(batterySetVO.getPackNum());
+        devBatteryOptService.deleteByPackNum(batterySetVO.getPackNum());
 
         // 删除告警
         alarmLogService.deleteBatteryAlarmLogByPackNum(batterySetVO.getPackNum());
         alarmLogService.updateCache();
 
         // 删除历史记录
-        batteryReportLogService.deleteByConfigId(batterySetVO.getPackNum());
+        batteryReportLogService.deleteByPackNum(batterySetVO.getPackNum());
         batteryReportLogService.updateCache();
 
         // 删除600节模块端标准实时数据

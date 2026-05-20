@@ -1,6 +1,5 @@
 package com.shanhe.project.energy.stat.controller;
 
-import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.web.controller.BaseController;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.framework.web.page.TableDataInfo;
@@ -33,14 +32,14 @@ public class StatBatteryController extends BaseController {
 
     // 获取内阻报表
     @GetMapping("/getResistanceReport")
-    public AjaxResult getResistanceReport(@RequestParam(required = false) Long configId,
+    public AjaxResult getResistanceReport(@RequestParam(name = "configId", required = false) Long ignoredConfigId,
                                           @RequestParam Integer packNum) {
         return success(statBatteryResService.getResistanceReport(packNum));
     }
 
     // 获取内阻报表
     @GetMapping("/listResistance")
-    public AjaxResult listResistance(@RequestParam(required = false) Long configId,
+    public AjaxResult listResistance(@RequestParam(name = "configId", required = false) Long ignoredConfigId,
                                      @RequestParam Integer packNum,
                                      @RequestParam Integer batNum) {
         return success(statBatteryResService.listResistance(packNum, batNum));
@@ -49,22 +48,20 @@ public class StatBatteryController extends BaseController {
     // 组数据
     @PostMapping("/listPackStat")
     public TableDataInfo listPackStat(StatBatteryPack params) {
-        params.setConfigId(Constants.DEFAULT_CONFIG_ID);
         startPage();
         return getDataTable(statBatteryPackService.selectList(params));
     }
 
     // 单体数据
     @PostMapping("/listBatStat")
-    public TableDataInfo listPackStat(StatBatteryBat params) {
-        params.setConfigId(Constants.DEFAULT_CONFIG_ID);
+    public TableDataInfo listBatStat(StatBatteryBat params) {
         startPage();
         return getDataTable(statBatteryBatService.selectList(params));
     }
 
     // 单体数据
     @GetMapping("/updateMonomer")
-    public AjaxResult updateMonomer(@RequestParam(required = false) Long configId,
+    public AjaxResult updateMonomer(@RequestParam(name = "configId", required = false) Long ignoredConfigId,
                                     @RequestParam Integer packNum) {
         devBatteryMonomerService.init(packNum);
         return success();
@@ -76,7 +73,6 @@ public class StatBatteryController extends BaseController {
         if (SystemService.isWin()) {
             return error("WINDOWS 暂不支持");
         }
-        params.setConfigId(Constants.DEFAULT_CONFIG_ID);
         statBatteryPackService.export(params);
         return success();
     }

@@ -47,7 +47,7 @@ public class ScreenController extends BaseController {
      * 设备详情
      */
     @GetMapping("/configDetail")
-    public AjaxResult configDetail(@RequestParam(required = false) Long configId) {
+    public AjaxResult configDetail(@RequestParam(name = "configId", required = false) Long ignoredConfigId) {
         return success(screenService.config());
     }
 
@@ -55,7 +55,7 @@ public class ScreenController extends BaseController {
      * 设备属性列表
      */
     @GetMapping("/attribute")
-    public AjaxResult viewList(@RequestParam(required = false) Long configId, @RequestParam(required = false) Integer packNum, @RequestParam(required = false) Integer screen) {
+    public AjaxResult viewList(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam(required = false) Integer packNum, @RequestParam(required = false) Integer screen) {
         return success(screenService.attribute(packNum, screen));
     }
 
@@ -63,7 +63,7 @@ public class ScreenController extends BaseController {
      * 设备属性下拉列表
      */
     @GetMapping("/attributeSelect")
-    public AjaxResult selectList(@RequestParam(required = false) Long configId,
+    public AjaxResult selectList(@RequestParam(name = "configId", required = false) Long ignoredConfigId,
                                  @RequestParam(required = false) Integer packNum,
                                  @RequestParam(required = false) Integer screen,
                                  @RequestParam(required = false) Integer track) {

@@ -38,7 +38,7 @@
         select
         <include refid="Base_Column_List"/>
         from dev_battery_report_log
-        where config_id = #{configId} and pack_num = #{packNum}
+        where pack_num = #{packNum}
         order by id desc
         limit 1
     </select>

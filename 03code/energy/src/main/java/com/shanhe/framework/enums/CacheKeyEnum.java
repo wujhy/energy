@@ -29,8 +29,8 @@ public enum CacheKeyEnum {
     STORAGE_TIME("data-storage-time", "storageTime:%s:%s", "数据最后存储时间"),
     /* battery.配置id.包编号.模块编号 */
     BATTERY("device-battery", "battery:%s:%s:%s", "单体电池"),
-    /* battery.配置id.包编号 */
-    BATTERY_REPORT("device-battery-report", "battery:%s:%s", "蓄电池实时日志"),
+    /* battery.包编号 */
+    BATTERY_REPORT("device-battery-report", "battery:%s", "蓄电池实时日志"),
     /* comm:sticky */
     STICKY("comm-data", "comm:sticky", "粘包数据处理"),
     /* device:result:configId:packNum:C3 */

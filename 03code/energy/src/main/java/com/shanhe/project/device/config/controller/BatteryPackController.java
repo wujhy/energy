@@ -26,7 +26,7 @@ public class BatteryPackController extends BaseController {
      */
     @GetMapping("/list")
     @ResponseBody
-    public AjaxResult list(@RequestParam(required = false) Long configId,
+    public AjaxResult list(@RequestParam(name = "configId", required = false) Long ignoredConfigId,
                            @RequestParam(required = false) Integer isEnabled) {
         return success(batteryPackService.selectBatteryPackListConfigId(isEnabled));
     }
@@ -54,7 +54,7 @@ public class BatteryPackController extends BaseController {
     }
 
     @GetMapping("/detail/{configId}/{packNum}")
-    public AjaxResult detail(@PathVariable("configId") Long configId, @PathVariable("packNum") Integer packNum) {
+    public AjaxResult detail(@PathVariable("configId") Long ignoredConfigId, @PathVariable("packNum") Integer packNum) {
         return success(batteryPackService.selectBatteryInfoByPackNum(packNum));
     }
 
