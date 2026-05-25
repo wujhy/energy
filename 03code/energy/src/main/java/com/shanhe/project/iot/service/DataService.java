@@ -35,12 +35,10 @@ public class DataService {
 
     /**
      * 是否存储
-     * @param configId 配置ID
      * @param grouping 组合ID
      *                    1、开关量、模拟量：空
      *                    2、指令数据：指令编号
      *                    3、蓄电池数据：组编号
-     * @param isPack 是否是蓄电池组数据
      * @return true 存储，false 不存储
      */
     public boolean isInsert(String grouping) {

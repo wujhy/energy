@@ -56,23 +56,16 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
 
     @Override
     public List<BatteryPack> selectBatteryPackListCache(Integer isEnabled) {
-        List<BatteryPack> list = new ArrayList<>();
-        for (String key : CacheUtils.getCacheKeys(packInfoCache.getCache())) {
-            Object object = CacheUtils.get(packInfoCache.getCache(), key);
-            if (!(object instanceof BatteryPack)) {
-                continue;
-            }
-            BatteryPack batteryPack = (BatteryPack) object;
-            if (isEnabled != null && !Objects.equals(batteryPack.getIsEnabled(), isEnabled)) {
-                continue;
-            }
-            list.add(copyPack(batteryPack));
-        }
+        List<BatteryPack> list = collectFromCache(isEnabled);
         if (!list.isEmpty()) {
-            list.sort(Comparator.comparing(BatteryPack::getPackNum, Comparator.nullsLast(Integer::compareTo)));
             return list;
         }
         updateCache();
+        return collectFromCache(isEnabled);
+    }
+
+    private List<BatteryPack> collectFromCache(Integer isEnabled) {
+        List<BatteryPack> list = new ArrayList<>();
         for (String key : CacheUtils.getCacheKeys(packInfoCache.getCache())) {
             Object object = CacheUtils.get(packInfoCache.getCache(), key);
             if (!(object instanceof BatteryPack)) {

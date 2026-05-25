@@ -37,7 +37,6 @@ public interface ScreenService  {
     /**
      * 设备详情
      *
-     * @param configId 设备ID
      * @return 设备
      */
     Config config();
@@ -45,7 +44,6 @@ public interface ScreenService  {
     /**
      * 设备属性列表
      *
-     * @param configId 设备ID
      * @param packNum 包号
      * @param screen 是否显示
      * @return 设备属性
@@ -55,7 +53,6 @@ public interface ScreenService  {
     /**
      * 设备属性下拉列表
      *
-     * @param configId 设备ID
      * @param packNum 包号
      * @param screen 是否显示
      * @param track 是否显示

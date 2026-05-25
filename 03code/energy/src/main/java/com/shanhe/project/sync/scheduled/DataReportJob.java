@@ -2,7 +2,6 @@ package com.shanhe.project.sync.scheduled;
 
 import cn.hutool.core.util.StrUtil;
 import com.shanhe.common.constant.Constants;
-import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.enums.*;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
@@ -88,23 +87,6 @@ public class DataReportJob {
             // 退出上报状态
             isReport = false;
             logger.debug("上报平台数据，同步完成");
-        }
-    }
-
-    /**
-     * 主机告警
-     */
-    private void hostAlarm(Host host) {
-        try {
-            CacheKeyEnum alarmCache = CacheKeyEnum.ALARM;
-            AlarmLog alarmLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(),
-                    String.format(alarmCache.getKey(), host.getHostId(), null, null, HostAlarmItemEnum._1.getCode()));
-            if (alarmLog == null) {
-                return;
-            }
-            clientReportService.uploadAlarm(alarmLog, host.getImei());
-        } catch (Exception e) {
-            logger.error("上报平台主机告警数据，同步异常：{}", e.getMessage());
         }
     }
 

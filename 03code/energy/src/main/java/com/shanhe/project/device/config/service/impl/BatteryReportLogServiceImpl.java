@@ -72,7 +72,6 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         } else {
             log.info("数据未达到存储间隔:{}", packNum);
         }
-//        batteryReportLogMapper.insert(batteryReportLog);
 
         batteryReportLog.setPackData(JSON.toJSONString(packParam));
         batteryReportLog.setMonitorData(JSON.toJSONString(batteryList));

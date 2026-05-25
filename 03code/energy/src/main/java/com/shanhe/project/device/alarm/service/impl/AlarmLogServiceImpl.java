@@ -661,26 +661,9 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
                     alarmInfo.append("，当前值：");
                     alarmInfo.append(StrUtil.isNotBlank(alarmItemLevelVo.getDictName()) ? alarmItemLevelVo.getDictName() : value);
                 }
-//                alarmInfo.append("，当前值：");
-//                alarmInfo.append(StrUtil.isNotBlank(alarmItemLevelVo.getDictName()) ? alarmItemLevelVo.getDictName() : value);
-//                if (StrUtil.equals(value, "0") && StrUtil.isNotBlank(configAttribute.getVal0())) {
-//                    alarmInfo.append(configAttribute.getVal0());
-//                } else if (StrUtil.equals(value, "1") && StrUtil.isNotBlank(configAttribute.getVal1())) {
-//                    alarmInfo.append(configAttribute.getVal1());
-//                } else {
-//                    alarmInfo.append(value);
-//                }
                 break;
             case _2:
                 // 模拟量
-//                alarmInfo.append("(值：");
-//                if (alarmItemLevelVo.getHightValue() != null) {
-//                    alarmInfo.append("大于").append(alarmItemLevelVo.getHightValue()).append(getUnit(configAttribute));
-//                }
-//                if (alarmItemLevelVo.getLowValue() != null) {
-//                    alarmInfo.append("小于").append(alarmItemLevelVo.getLowValue()).append(getUnit(configAttribute));
-//                }
-//                alarmInfo.append(")");
                 alarmInfo.append("，当前值：").append(value).append(getUnit(configAttribute));
                 break;
             case _3:

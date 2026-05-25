@@ -693,7 +693,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 .responseCode(waitResponse ? BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.getResponseCode() : null)
                 .payload(payload)
                 .description(BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.getDescription())
-                .configId(pendingRequest.getConfigId())
                 .batteryGroup(pendingRequest.getBatteryGroup())
                 .mode(waitResponse ? pendingRequest.getMode() : null)
                 .autoAddressBatteryCount(pendingRequest.getAutoAddressBatteryCount())
