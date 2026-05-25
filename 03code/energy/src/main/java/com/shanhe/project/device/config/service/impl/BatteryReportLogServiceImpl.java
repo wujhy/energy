@@ -231,7 +231,7 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
             BatteryReportLogIndex result = new BatteryReportLogIndex();
             result.setPackNum(entity.getPackNum());
             result.setConfigId(Constants.DEFAULT_CONFIG_ID);
-            result.setAlarm(alarmLogService.isBatteryAlarmByCache(entity.getPackNum()));
+            result.setAlarm(alarmLogService.isAlarmByCache(entity.getPackNum()));
 
             Object log = CacheUtils.get(reportCache.getCache(), String.format(reportCache.getKey(), entity.getPackNum()));
             if (log == null) {

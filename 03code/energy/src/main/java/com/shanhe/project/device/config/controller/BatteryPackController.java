@@ -28,7 +28,7 @@ public class BatteryPackController extends BaseController {
     @ResponseBody
     public AjaxResult list(@RequestParam(name = "configId", required = false) Long ignoredConfigId,
                            @RequestParam(required = false) Integer isEnabled) {
-        return success(batteryPackService.selectBatteryPackListConfigId(isEnabled));
+        return success(batteryPackService.selectBatteryPackList(isEnabled));
     }
 
 

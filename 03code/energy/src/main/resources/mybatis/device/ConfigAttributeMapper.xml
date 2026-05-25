@@ -67,7 +67,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where config_id = 1 and status = 0
     </select>
 
-    <select id="selectByConfigId" parameterType="Long" resultMap="ConfigAttributeResult">
+    <select id="selectByDefaultConfigId" parameterType="Long" resultMap="ConfigAttributeResult">
         <include refid="selectConfigAttributeVo"/>
         where config_id = #{configId}
         order by sort

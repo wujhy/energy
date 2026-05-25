@@ -3,7 +3,6 @@ package com.shanhe.project.device.alarm.controller;
 import java.util.List;
 
 import com.shanhe.common.constant.Constants;
-import com.shanhe.common.utils.text.Convert;
 import com.shanhe.framework.aspectj.lang.annotation.Log;
 import com.shanhe.framework.enums.BusinessType;
 import com.shanhe.framework.web.controller.BaseController;
@@ -117,9 +116,7 @@ public class AlarmLogController extends BaseController
     @GetMapping("/clear")
     @ResponseBody
     public AjaxResult clear(@RequestParam(name = "configId", required = false) Long ignoredConfigId) {
-        String[] configIdArr = Convert.toStrArray(String.valueOf(Constants.DEFAULT_CONFIG_ID));
-        alarmLogService.deleteAlarmLogByConfigIds(configIdArr);
-        alarmLogService.updateCache();
+        alarmLogService.deleteDefaultDeviceAlarmLogs();
         return success();
     }
 

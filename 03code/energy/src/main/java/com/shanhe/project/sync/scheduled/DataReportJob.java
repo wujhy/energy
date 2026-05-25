@@ -2,6 +2,7 @@ package com.shanhe.project.sync.scheduled;
 
 import cn.hutool.core.util.StrUtil;
 import com.shanhe.common.constant.Constants;
+import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.enums.*;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
@@ -95,7 +96,9 @@ public class DataReportJob {
      */
     private void hostAlarm(Host host) {
         try {
-            AlarmLog alarmLog = alarmLogService.getByCache(host.getHostId(), null, null, HostAlarmItemEnum._1.getCode());
+            CacheKeyEnum alarmCache = CacheKeyEnum.ALARM;
+            AlarmLog alarmLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(),
+                    String.format(alarmCache.getKey(), host.getHostId(), null, null, HostAlarmItemEnum._1.getCode()));
             if (alarmLog == null) {
                 return;
             }
@@ -171,7 +174,7 @@ public class DataReportJob {
      */
     BatteryReportLog resolveBatteryReportLog(Integer packNum) {
         if (Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
-            BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(Constants.DEFAULT_CONFIG_ID, packNum);
+            BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
             if (isUsableBatteryReportLog(realtimeLog)) {
                 return realtimeLog;
             }

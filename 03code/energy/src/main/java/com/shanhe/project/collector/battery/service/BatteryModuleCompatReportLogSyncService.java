@@ -56,7 +56,7 @@ public class BatteryModuleCompatReportLogSyncService {
             return;
         }
         BatteryReportLog reportLog = adapterService.buildReportLog(
-                Constants.DEFAULT_CONFIG_ID, channelConfig.getBatteryGroup(), group, cells);
+                channelConfig.getBatteryGroup(), group, cells);
         if (reportLog == null) {
             return;
         }

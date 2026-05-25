@@ -177,7 +177,6 @@ public class BatterySyncHandler {
             log.debug("下发内阻初装值：{}", contentStr);
 
             JSONObject param = JSONObject.parseObject(contentStr);
-            Long configId =  param.getLong("devId");
             Integer packNum = param.getInteger("packNum");
 
             BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
@@ -189,7 +188,7 @@ public class BatterySyncHandler {
             if (devBatteryMonomers == null || devBatteryMonomers.isEmpty()) {
                 return new ResponseVo(request.getImei(), MethodEnum._47.getDictValue(), request.getBusinessId(), "未找到该电池初装值");
             }
-            clientReportService.uploadBatteryMonomer(configId, packNum, devBatteryMonomers, request.getImei());
+            clientReportService.uploadBatteryMonomer(packNum, devBatteryMonomers, request.getImei());
 
         } catch (Exception e) {
             msg = String.format("主动同步设备异常：%s", e.getMessage());

@@ -27,7 +27,7 @@ public interface IBatteryPackService
      * @param isEnabled 是否启用
      * @return 设备集合
      */
-    List<BatteryPack> selectBatteryPackListConfigId(Integer isEnabled);
+    List<BatteryPack> selectBatteryPackList(Integer isEnabled);
 
     List<BatteryPack> selectBatteryPackListCache(Integer isEnabled);
 
@@ -60,9 +60,7 @@ public interface IBatteryPackService
     void update(BatteryPack batteryPack);
 
     /**
-     * 批量删除电池组
-     * 
-     * @param configIds 需要删除的设备id
+     * 删除默认设备所有电池组
      */
     void deleteDefaultDevicePacks();
 

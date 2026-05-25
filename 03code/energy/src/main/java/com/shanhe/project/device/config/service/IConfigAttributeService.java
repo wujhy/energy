@@ -22,12 +22,11 @@ public interface IConfigAttributeService
     ConfigAttribute selectConfigAttributeByConfigAttrId(Long configAttrId);
 
     /**
-     * 查询设备属性列表
+     * 查询默认设备属性列表
      *
-     * @param configId 设备id
      * @return 设备属性集合
      */
-    List<ConfigAttribute> selectByConfigId();
+    List<ConfigAttribute> selectDefaultDeviceAttributes();
 
     /**
      * 查询设备属性列表
@@ -70,9 +69,8 @@ public interface IConfigAttributeService
     void insertBatchConfigAttribute(List<ConfigAttribute> configAttributeList);
 
     /**
-     * 按模板属性同步生成设备属性
+     * 按模板属性同步生成默认设备属性
      *
-     * @param configId 配置ID
      * @param packNum 电池组编号
      * @param model 电池规格型号
      */
@@ -116,9 +114,7 @@ public interface IConfigAttributeService
     void deleteConfigAttribute(ConfigAttribute configAttribute);
 
     /**
-     * 批量删除设备属性
-     *
-     * @param configIds 需要删除设备id
+     * 删除默认设备所有属性
      */
     void deleteDefaultDeviceAttributes();
 
@@ -137,9 +133,8 @@ public interface IConfigAttributeService
     void importAttribute(List<ConfigAttribute> attributeList);
 
     /**
-     * 获取属性
+     * 获取默认设备属性
      *
-     * @param configId 设备id
      * @param packNum 包编码
      * @param code 属性编码
      * @return 属性信息
@@ -147,9 +142,8 @@ public interface IConfigAttributeService
     ConfigAttribute getBy(Integer packNum, String code);
 
     /**
-     * 通过缓存获取属性
+     * 通过缓存获取默认设备属性
      *
-     * @param configId 设备id
      * @param packNum 包编码
      * @param code 属性编码
      * @return 属性信息
@@ -157,18 +151,16 @@ public interface IConfigAttributeService
     ConfigAttribute getCacheBy(Integer packNum, String code);
 
     /**
-     * 通过缓存获取属性
+     * 通过缓存获取默认设备属性
      *
-     * @param configId 设备id
      * @param code 属性编码
      * @return 属性信息
      */
     ConfigAttribute getCacheBy(String code);
 
     /**
-     * 通过缓存获取属性名
+     * 通过缓存获取默认设备属性名
      *
-     * @param configId 设备ID
      * @param packNum 包
      * @param code 属性编码
      * @return 名
@@ -181,9 +173,8 @@ public interface IConfigAttributeService
     void updateCache();
 
     /**
-     * 更新指定设备下
+     * 更新默认设备属性缓存
      *
-     * @param configId 设备id
      * @param isUpdate 是否更新
      */
     void updateCache(Integer isUpdate);

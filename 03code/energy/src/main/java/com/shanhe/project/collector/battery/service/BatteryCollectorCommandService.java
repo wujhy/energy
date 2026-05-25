@@ -239,14 +239,6 @@ public class BatteryCollectorCommandService {
         return matchedByGroup;
     }
 
-    /**
-     * 旧签名兼容入口，configId 不再参与独立采集通道定位。
-     */
-    @Deprecated
-    public String resolveChannelName(Long configId, Integer batteryGroup) {
-        return resolveChannelName(batteryGroup);
-    }
-
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
     }

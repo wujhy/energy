@@ -1,6 +1,7 @@
 package com.shanhe.project.collector.battery.service;
 
 import com.alibaba.fastjson.JSON;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
@@ -32,38 +33,35 @@ public class BatteryModuleReportLogAdapterService {
     /**
      * 构建兼容旧 BatteryReportLog 的实时数据对象。
      *
-     * @param configId 设备配置ID
      * @param packNum 电池组编号
      * @return 兼容旧实时上报结构的数据对象
      */
-    public BatteryReportLog buildReportLog(Long configId, Integer packNum) {
+    public BatteryReportLog buildReportLog(Integer packNum) {
         BatteryModuleGroupRealtime group = realtimeMapper.selectGroup(packNum);
         List<BatteryModuleCellRealtime> cells = realtimeMapper.selectCells(packNum);
-        return buildReportLog(configId, packNum, group, cells);
+        return buildReportLog(packNum, group, cells);
     }
 
     /**
      * 构建兼容旧 BatteryReportLog 的实时数据对象。
      *
-     * @param configId 设备配置ID
      * @param packNum 电池组编号
      * @param group 组实时数据
      * @param cells 单体实时数据
      * @return 兼容旧实时上报结构的数据对象
      */
-    public BatteryReportLog buildReportLog(Long configId,
-                                           Integer packNum,
+    public BatteryReportLog buildReportLog(Integer packNum,
                                            BatteryModuleGroupRealtime group,
                                            List<BatteryModuleCellRealtime> cells) {
         BatteryReportLog reportLog = new BatteryReportLog();
-        reportLog.setConfigId(configId);
+        reportLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
         reportLog.setPackNum(packNum);
         if (group != null) {
             reportLog.setCreateTime(group.getCreateTime());
         }
 
         Map<String, Object> packParam = toPackParam(group);
-        List<BatteryMonitor> batteryList = toBatteryList(configId, packNum, cells);
+        List<BatteryMonitor> batteryList = toBatteryList(packNum, cells);
         reportLog.setPackParam(packParam);
         reportLog.setBatteryList(batteryList);
         reportLog.setPackData(JSON.toJSONString(packParam));
@@ -135,13 +133,11 @@ public class BatteryModuleReportLogAdapterService {
     /**
      * 转换为旧 monitor_data 字段结构。
      *
-     * @param configId 设备配置ID
      * @param packNum 电池组编号
      * @param cells 单体实时数据
      * @return 旧 monitor_data 兼容列表
      */
-    public List<BatteryMonitor> toBatteryList(Long configId,
-                                              Integer packNum,
+    public List<BatteryMonitor> toBatteryList(Integer packNum,
                                               List<BatteryModuleCellRealtime> cells) {
         List<BatteryMonitor> result = new ArrayList<>();
         if (cells == null || cells.isEmpty()) {
@@ -152,7 +148,7 @@ public class BatteryModuleReportLogAdapterService {
                 continue;
             }
             BatteryMonitor monitor = new BatteryMonitor();
-            monitor.setConfigId(configId);
+            monitor.setConfigId(Constants.DEFAULT_CONFIG_ID);
             monitor.setPackNum(packNum);
             monitor.setBatNum(cell.getBatNum());
             monitor.setVoltage(cell.getVoltage());

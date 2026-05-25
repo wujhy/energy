@@ -2,6 +2,7 @@ package com.shanhe.project.sync.service;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.comm.tcp.client.TcpClient;
 import com.shanhe.framework.consts.SysConst;
@@ -214,7 +215,7 @@ public class ClientReportService {
     /**
      * 上报内阻初装
      */
-    public void uploadBatteryMonomer(Long configId, Integer packNum, List<DevBatteryMonomer> devBatteryMonomers, String imei) {
+    public void uploadBatteryMonomer(Integer packNum, List<DevBatteryMonomer> devBatteryMonomers, String imei) {
         if (StrUtil.isBlank(imei)) {
             imei = this.getImei();
         }
@@ -222,7 +223,7 @@ public class ClientReportService {
             return;
         }
         BatteryMonomerPackVo packVo = new BatteryMonomerPackVo();
-        packVo.setDevId(configId);
+        packVo.setDevId(Constants.DEFAULT_CONFIG_ID);
         packVo.setPackNum(packNum);
         List<BatteryMonomerBatVo> list = new ArrayList<>();
         devBatteryMonomers.forEach(monomer -> {

@@ -84,7 +84,7 @@ public class DataService {
         }
 
         Integer packNum = Integer.parseInt(grouping);
-        Integer alarmByCache = alarmLogService.isBatteryAlarmByCache(packNum);
+        Integer alarmByCache = alarmLogService.isAlarmByCache(packNum);
         // 1 不告警，0 告警
         if (alarmByCache == null || alarmByCache == 1) {
             return false;

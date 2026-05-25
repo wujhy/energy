@@ -34,12 +34,13 @@ public interface BatteryPackMapper {
 
 
     /**
-     * 查询蓄电池组列表
+     * 查询默认设备蓄电池组列表
      *
-     * @param configId 蓄电池组
+     * @param configId 默认设备ID
+     * @param isEnabled 是否启用
      * @return 蓄电池组集合
      */
-    List<BatteryPack> selectBatteryPackListConfigId(@Param("configId") Long configId, @Param("isEnabled") Integer isEnabled);
+    List<BatteryPack> selectBatteryPackListByConfigId(@Param("configId") Long configId, @Param("isEnabled") Integer isEnabled);
 
     /**
      * 导入蓄电池组

@@ -130,7 +130,7 @@ public class ControlBattery extends ControlBase {
         if (null == batteryReportLog.getPackParam()) {
             return AjaxResult.error("暂无上报数据", 0);
         }
-        AlarmLog alarmLog = alarmLogService.getBatteryByCache(opt.getPackNum(), null, ItemCode.TXZT.getCode());
+        AlarmLog alarmLog = alarmLogService.getByCache(opt.getPackNum(), null, ItemCode.TXZT.getCode());
         if (null != alarmLog) {
             if (ObjUtil.equals(YesNoEnum.NO.getDictValue(), alarmLog.getStatus())) {
                 return AjaxResult.error(alarmLog.getDataInfo(), 0);

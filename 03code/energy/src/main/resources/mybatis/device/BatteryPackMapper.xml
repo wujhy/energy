@@ -41,7 +41,7 @@
         battery.is_show_connect
     </sql>
 
-    <select id="selectBatteryPackListConfigId" resultMap="BatteryPackResult">
+    <select id="selectBatteryPackListByConfigId" resultMap="BatteryPackResult">
         select
         <include refid="selectBatteryPackVo"/>
         from dev_battery_pack battery

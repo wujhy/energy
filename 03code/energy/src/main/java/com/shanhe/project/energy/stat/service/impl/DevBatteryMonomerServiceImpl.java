@@ -83,7 +83,7 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
         }
         devBatteryMonomerMapper.insertList(devBatteryMonomers);
 
-        clientReportService.uploadBatteryMonomer(Constants.DEFAULT_CONFIG_ID, packNum, devBatteryMonomers, null);
+        clientReportService.uploadBatteryMonomer(packNum, devBatteryMonomers, null);
     }
 
     @Override

@@ -53,11 +53,11 @@ public class ConfigServiceImpl implements IConfigService {
             if (Objects.equals(batteryPack.getIsEnabled(), YesNoEnum.NO.getDictValue())) {
                 continue;
             }
-            batteryPack.setAlarm(alarmLogService.isBatteryAlarmByCache(batteryPack.getPackNum()));
+            batteryPack.setAlarm(alarmLogService.isAlarmByCache(batteryPack.getPackNum()));
             packList.add(batteryPack);
         }
         config.setPackList(packList);
-        config.setAlarm(alarmLogService.isBatteryAlarmByCache(null));
+        config.setAlarm(alarmLogService.isAlarmByCache(null));
         return wrapConfig(config);
     }
 
@@ -65,7 +65,7 @@ public class ConfigServiceImpl implements IConfigService {
     public Config screenConfig() {
         Config config = copyDefaultConfig();
         config.setPackList(batteryPackService.selectBatteryPackListCache(null));
-        config.setAlarm(alarmLogService.isBatteryAlarmByCache(null));
+        config.setAlarm(alarmLogService.isAlarmByCache(null));
         config.setAlarmNum(alarmLogService.batteryAlarmNum());
         return config;
     }
@@ -75,7 +75,7 @@ public class ConfigServiceImpl implements IConfigService {
         if (!Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
             return;
         }
-        List<BatteryPack> oldPackList = batteryPackService.selectBatteryPackListConfigId(null);
+        List<BatteryPack> oldPackList = batteryPackService.selectBatteryPackList(null);
         List<BatteryPack> newPackList = config.getPackList();
 
         this.deleteBatteryPacks(oldPackList, newPackList);

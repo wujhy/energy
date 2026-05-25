@@ -22,7 +22,6 @@ public interface IDevBatteryOptService {
     /**
      * 查询【蓄电池测试操作参数】
      *
-     * @param configId 蓄电池ID
      * @param packNum 蓄电池组编号
      * @param testType 测试类型1内阻测试2连接条测试，3容量测试，4浮充测试，5备电时长测试
      * @return 【蓄电池测试操作参数】
@@ -72,8 +71,7 @@ public interface IDevBatteryOptService {
     /**
      * 删除【蓄电池测试操作参数】信息
      *
-     * @param configId 配置ID
-     * @return 结果
+     * @param packNum 蓄电池组编号
      */
     void deleteByPackNum(Integer packNum);
 }

@@ -45,12 +45,12 @@ public interface ConfigAttributeMapper
     List<ConfigAttribute> configAttributeList();
 
     /**
-     * 查询设备属性列表
+     * 查询默认设备属性列表
      *
-     * @param configAttrId 设备id
+     * @param configId 设备id
      * @return 设备属性集合
      */
-    List<ConfigAttribute> selectByConfigId(Long configAttrId);
+    List<ConfigAttribute> selectByDefaultConfigId(Long configId);
 
     /**
      * 新增设备属性

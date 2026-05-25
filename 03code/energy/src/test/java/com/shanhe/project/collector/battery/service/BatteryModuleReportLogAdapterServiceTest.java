@@ -7,6 +7,8 @@ import com.shanhe.project.device.config.domain.BatteryReportLog;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.shanhe.common.constant.Constants;
+
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
@@ -34,10 +36,10 @@ class BatteryModuleReportLogAdapterServiceTest {
         group.setBatteryPackStatus(5);
         group.setBcapacity(99.9d);
 
-        BatteryReportLog reportLog = service.buildReportLog(10L, 1, group,
+        BatteryReportLog reportLog = service.buildReportLog(1, group,
                 Arrays.asList(cell(1, 2.10d, 100, 25.0d), cell(2, 2.30d, 120, 26.0d)));
 
-        Assertions.assertEquals(10L, reportLog.getConfigId());
+        Assertions.assertEquals(Constants.DEFAULT_CONFIG_ID, reportLog.getConfigId());
         Assertions.assertEquals(1, reportLog.getPackNum());
         Assertions.assertEquals(createTime, reportLog.getCreateTime());
         Assertions.assertEquals(2, reportLog.getBatteryList().size());
@@ -74,9 +76,9 @@ class BatteryModuleReportLogAdapterServiceTest {
 
     @Test
     void shouldBuildEmptyShapeWhenRealtimeDataMissing() {
-        BatteryReportLog reportLog = service.buildReportLog(10L, 1, null, null);
+        BatteryReportLog reportLog = service.buildReportLog(1, null, null);
 
-        Assertions.assertEquals(10L, reportLog.getConfigId());
+        Assertions.assertEquals(Constants.DEFAULT_CONFIG_ID, reportLog.getConfigId());
         Assertions.assertEquals(1, reportLog.getPackNum());
         Assertions.assertTrue(reportLog.getPackParam().isEmpty());
         Assertions.assertTrue(reportLog.getBatteryList().isEmpty());

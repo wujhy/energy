@@ -62,8 +62,8 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
     }
 
     @Override
-    public List<ConfigAttribute> selectByConfigId() {
-        return configAttributeMapper.selectByConfigId(Constants.DEFAULT_CONFIG_ID);
+    public List<ConfigAttribute> selectDefaultDeviceAttributes() {
+        return configAttributeMapper.selectByDefaultConfigId(Constants.DEFAULT_CONFIG_ID);
     }
 
     /**

@@ -125,7 +125,7 @@ public class AttributeHandler {
             String contentStr = JSONObject.toJSONString(request.getContent());
             log.debug("主动同步设备属性信息：{}", contentStr);
             JSONObject param = JSONObject.parseObject(contentStr);
-            List<ConfigAttribute> configAttributeList = configAttributeService.selectByConfigId();
+            List<ConfigAttribute> configAttributeList = configAttributeService.selectDefaultDeviceAttributes();
             if (configAttributeList != null && !configAttributeList.isEmpty()) {
                 for (ConfigAttribute configAttribute : configAttributeList) {
                     clientReportService.uploadAlarmConfigItem(configAttribute, request.getImei());

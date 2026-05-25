@@ -1,6 +1,5 @@
 package com.shanhe.project.collector.battery.service;
 
-import com.shanhe.common.constant.Constants;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
@@ -43,12 +42,12 @@ class BatteryModuleCompatReportLogSyncServiceTest {
         ReflectionTestUtils.setField(service, "adapterService", adapterService);
         ReflectionTestUtils.setField(service, "batteryReportLogService", reportLogService);
         ReflectionTestUtils.setField(service, "dataService", dataService);
-        Mockito.when(adapterService.buildReportLog(Mockito.eq(Constants.DEFAULT_CONFIG_ID), Mockito.eq(1), Mockito.any(), Mockito.any()))
+        Mockito.when(adapterService.buildReportLog(Mockito.eq(1), Mockito.any(), Mockito.any()))
                 .thenReturn(new BatteryReportLog());
 
         service.sync(channelConfig(), new BatteryModuleGroupRealtime(), Collections.emptyList());
 
-        Mockito.verify(adapterService).buildReportLog(Mockito.eq(Constants.DEFAULT_CONFIG_ID), Mockito.eq(1), Mockito.any(), Mockito.any());
+        Mockito.verify(adapterService).buildReportLog(Mockito.eq(1), Mockito.any(), Mockito.any());
         Mockito.verifyNoInteractions(dataService);
         Mockito.verifyNoInteractions(reportLogService);
     }
@@ -69,7 +68,7 @@ class BatteryModuleCompatReportLogSyncServiceTest {
         BatteryReportLog reportLog = new BatteryReportLog();
         reportLog.setPackParam(packParam);
         reportLog.setBatteryList(Collections.singletonList(monitor));
-        Mockito.when(adapterService.buildReportLog(Mockito.eq(Constants.DEFAULT_CONFIG_ID), Mockito.eq(1), Mockito.any(), Mockito.any()))
+        Mockito.when(adapterService.buildReportLog(Mockito.eq(1), Mockito.any(), Mockito.any()))
                 .thenReturn(reportLog);
         Mockito.when(dataService.isInsert("1")).thenReturn(true);
 

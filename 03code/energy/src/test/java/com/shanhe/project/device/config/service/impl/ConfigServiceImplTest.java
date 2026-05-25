@@ -29,7 +29,7 @@ class ConfigServiceImplTest {
         BatteryPack incomingNew = pack(888L, 2);
         incomingNew.setBatSinModel(9);
 
-        Mockito.when(batteryPackService.selectBatteryPackListConfigId(null)).thenReturn(Collections.singletonList(oldPack));
+        Mockito.when(batteryPackService.selectBatteryPackList(null)).thenReturn(Collections.singletonList(oldPack));
 
         ConfigServiceImpl service = new ConfigServiceImpl();
         ReflectionTestUtils.setField(service, "batteryPackService", batteryPackService);

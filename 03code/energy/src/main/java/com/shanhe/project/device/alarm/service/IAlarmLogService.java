@@ -17,14 +17,9 @@ import com.shanhe.project.device.config.domain.ConfigAttribute;
 public interface IAlarmLogService 
 {
     /**
-     * 通过缓存获取告警记录
+     * 通过缓存获取默认设备告警记录
      */
-    AlarmLog getByCache(Long configId, Integer packNum, Integer modelNum, String itemCode);
-
-    /**
-     * 通过默认蓄电池设备缓存获取告警记录
-     */
-    AlarmLog getBatteryByCache(Integer packNum, Integer modelNum, String itemCode);
+    AlarmLog getByCache(Integer packNum, Integer modelNum, String itemCode);
 
     /**
      * 查询设备历史记录
@@ -42,17 +37,9 @@ public interface IAlarmLogService
     Integer isAlarm();
 
     /**
-     * 查设备是否告警
-     *
-     * @param configId 设备主键
-     * @return 设备历史记录
+     * 默认设备是否告警
      */
-    Integer isAlarmByCache(Long configId, Integer packNum);
-
-    /**
-     * 默认蓄电池设备是否告警
-     */
-    Integer isBatteryAlarmByCache(Integer packNum);
+    Integer isAlarmByCache(Integer packNum);
 
     /**
      * 默认蓄电池设备告警记录数
@@ -115,7 +102,6 @@ public interface IAlarmLogService
     /**
      * 关闭告警
      *
-     * @param configId 配置id
      * @param packNum 包序号
      * @param isModel 是否模块属性
      * @param excludeModelNum 排除的单体电池序号
@@ -192,14 +178,7 @@ public interface IAlarmLogService
     int deleteAlarmLogByAlarmIds(String alarmIds);
 
     /**
-     * 删除设备历史记录
-     *
-     * @param configIds 设备id
-     */
-    void deleteAlarmLogByConfigIds(String[] configIds);
-
-    /**
-     * 删除默认蓄电池设备告警记录
+     * 删除默认设备告警记录
      */
     void deleteDefaultDeviceAlarmLogs();
 
@@ -216,9 +195,8 @@ public interface IAlarmLogService
     void updateCache();
 
     /**
-     * 查询告警缓存
+     * 查询默认设备告警缓存
      *
-     * @param configId 设备id
      * @param packNum 包序号
      * @return 告警缓存列表
      */
@@ -242,9 +220,8 @@ public interface IAlarmLogService
     void deleteALL();
 
     /**
-     * 删除设备历史记录信息
+     * 删除默认设备指定组告警记录
      *
-     * @param configId 设备id
      * @param packNum 包序号
      */
     void deleteBatteryAlarmLogByPackNum(Integer packNum);

@@ -50,8 +50,8 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
     }
 
     @Override
-    public List<BatteryPack> selectBatteryPackListConfigId(Integer isEnabled) {
-        return batteryPackMapper.selectBatteryPackListConfigId(Constants.DEFAULT_CONFIG_ID, isEnabled);
+    public List<BatteryPack> selectBatteryPackList(Integer isEnabled) {
+        return batteryPackMapper.selectBatteryPackListByConfigId(Constants.DEFAULT_CONFIG_ID, isEnabled);
     }
 
     @Override
@@ -234,7 +234,7 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         }
 
         batteryPack.setPackId(IdUtils.getSnowflakeId());
-        List<BatteryPack> batteryPacks = selectBatteryPackListConfigId(null);
+        List<BatteryPack> batteryPacks = selectBatteryPackList(null);
         if (batteryPacks.size() >= 4) {
             throw new ServiceException("最多支持4个蓄电池组！");
         }

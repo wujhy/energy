@@ -2,7 +2,6 @@ package com.shanhe.project.sync.scheduled;
 
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
-import com.shanhe.common.constant.Constants;
 import com.shanhe.project.device.config.domain.BatteryMonitor;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
@@ -41,7 +40,7 @@ class DataReportJobTest {
         BatteryReportLog realtimeLog = log("realtime");
         ReflectionTestUtils.setField(job, "batteryReportLogService", oldService);
         ReflectionTestUtils.setField(job, "batteryModuleReportLogAdapterService", adapterService);
-        Mockito.when(adapterService.buildReportLog(Constants.DEFAULT_CONFIG_ID, 1)).thenReturn(realtimeLog);
+        Mockito.when(adapterService.buildReportLog(1)).thenReturn(realtimeLog);
 
         BatteryReportLog result = job.resolveBatteryReportLog(1);
 
@@ -57,7 +56,7 @@ class DataReportJobTest {
         BatteryReportLog oldLog = log("old");
         ReflectionTestUtils.setField(job, "batteryReportLogService", oldService);
         ReflectionTestUtils.setField(job, "batteryModuleReportLogAdapterService", adapterService);
-        Mockito.when(adapterService.buildReportLog(Constants.DEFAULT_CONFIG_ID, 1)).thenReturn(new BatteryReportLog());
+        Mockito.when(adapterService.buildReportLog(1)).thenReturn(new BatteryReportLog());
         Mockito.when(oldService.lastCache(1)).thenReturn(oldLog);
 
         BatteryReportLog result = job.resolveBatteryReportLog(1);
@@ -75,7 +74,7 @@ class DataReportJobTest {
         BatteryReportLog oldLog = log("old");
         ReflectionTestUtils.setField(job, "batteryReportLogService", oldService);
         ReflectionTestUtils.setField(job, "batteryModuleReportLogAdapterService", adapterService);
-        Mockito.when(adapterService.buildReportLog(Constants.DEFAULT_CONFIG_ID, 1)).thenReturn(realtimeLog);
+        Mockito.when(adapterService.buildReportLog(1)).thenReturn(realtimeLog);
         Mockito.when(oldService.lastCache(1)).thenReturn(oldLog);
 
         BatteryReportLog result = job.resolveBatteryReportLog(1);

@@ -63,14 +63,9 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     CacheKeyEnum alarmCache = CacheKeyEnum.ALARM;
 
     @Override
-    public AlarmLog getByCache(Long configId, Integer packNum, Integer modelNum, String itemCode) {
+    public AlarmLog getByCache(Integer packNum, Integer modelNum, String itemCode) {
         return (AlarmLog) CacheUtils.get(alarmCache.getCache(),
-                String.format(alarmCache.getKey(), configId, packNum, modelNum, itemCode));
-    }
-
-    @Override
-    public AlarmLog getBatteryByCache(Integer packNum, Integer modelNum, String itemCode) {
-        return getByCache(Constants.DEFAULT_CONFIG_ID, packNum, modelNum, itemCode);
+                String.format(alarmCache.getKey(), Constants.DEFAULT_CONFIG_ID, packNum, modelNum, itemCode));
     }
 
     /**
@@ -93,13 +88,12 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     }
 
     @Override
-    public Integer isAlarmByCache(Long configId, Integer packNum) {
+    public Integer isAlarmByCache(Integer packNum) {
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
         Integer isAlarm = YesNoEnum.NO.getDictValue();
-        // 前缀
         String prefix = packNum != null ?
-                String.format("alarm:%s:%s", configId, packNum) :
-                String.format("alarm:%s", configId);
+                String.format("alarm:%s:%s", Constants.DEFAULT_CONFIG_ID, packNum) :
+                String.format("alarm:%s", Constants.DEFAULT_CONFIG_ID);
         for (String key : keys) {
             if (!StrUtil.startWith(key, prefix)) {
                 continue;
@@ -114,15 +108,10 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     }
 
     @Override
-    public Integer isBatteryAlarmByCache(Integer packNum) {
-        return isAlarmByCache(Constants.DEFAULT_CONFIG_ID, packNum);
-    }
-
-    private Long alarmNumByConfigId(Long configId) {
+    public Long batteryAlarmNum() {
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
         long num = 0L;
-        // 前缀
-        String prefix = String.format("alarm:%s", configId);
+        String prefix = String.format("alarm:%s", Constants.DEFAULT_CONFIG_ID);
         for (String key : keys) {
             if (!StrUtil.startWith(key, prefix)) {
                 continue;
@@ -133,11 +122,6 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
             }
         }
         return num;
-    }
-
-    @Override
-    public Long batteryAlarmNum() {
-        return alarmNumByConfigId(Constants.DEFAULT_CONFIG_ID);
     }
 
     @Override
@@ -862,15 +846,9 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     }
 
     @Override
-    public void deleteAlarmLogByConfigIds(String[] configIds) {
-        // 删除告警日志
-        alarmLogMapper.deleteAlarmLogByConfigIds(configIds);
-        this.updateCache();
-    }
-
-    @Override
     public void deleteDefaultDeviceAlarmLogs() {
-        deleteAlarmLogByConfigIds(new String[]{String.valueOf(Constants.DEFAULT_CONFIG_ID)});
+        alarmLogMapper.deleteAlarmLogByConfigIds(new String[]{String.valueOf(Constants.DEFAULT_CONFIG_ID)});
+        this.updateCache();
     }
 
     @Override
