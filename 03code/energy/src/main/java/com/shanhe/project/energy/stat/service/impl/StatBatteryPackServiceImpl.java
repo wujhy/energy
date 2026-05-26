@@ -10,7 +10,9 @@ import com.github.pagehelper.PageHelper;
 import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.file.FileUtils;
 import com.shanhe.common.utils.uuid.IdUtils;
+import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
+import com.shanhe.framework.enums.ResistanceTestStatusEnum;
 import com.shanhe.project.device.config.domain.BatteryMonitor;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.service.IBatteryPackService;
@@ -22,7 +24,6 @@ import com.shanhe.project.energy.stat.mapper.StatBatteryPackMapper;
 import com.shanhe.project.energy.stat.service.IStatBatteryBatService;
 import com.shanhe.project.energy.stat.service.IStatBatteryPackService;
 import com.shanhe.project.iot.data.MessageFactory;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -42,8 +43,6 @@ import java.util.stream.Collectors;
  */
 @Service
 public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
-    // 提取为静态常量，避免重复创建
-    private static final String[] BATTERY_PACK_STATUS_ARR = {"1", "3", "5", "6"};
 
     @Resource
     private StatBatteryPackMapper statBatteryPackMapper;
@@ -95,7 +94,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
 
         // 0表示不在内阻测试、6表示正在内阻测试、7表示内阻测试正常结束、8表示内阻测试异常结束
         String resistanceTestStatus = Objects.toString(packMap.get("resistanceTestStatus"), null);
-        if (StrUtil.equals("6", resistanceTestStatus)) {
+        if (ResistanceTestStatusEnum.isCode(resistanceTestStatus, ResistanceTestStatusEnum.TESTING)) {
             // 记录迁移
             insert(packNum, packMap, batteryList);
             return;
@@ -105,7 +104,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         String batteryPackStatus = Objects.toString(packMap.get("batteryPackStatus"), null);
 
         // 浮充状态只记录 2 小时
-        if (StrUtil.equals("6", batteryPackStatus)) {
+        if (BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
             OptLog optLog = optLogService.selectNotFinishedCacheLog(packNum, 1);
             if (optLog == null || optLog.getCreateTime() == null) {
                 return;
@@ -114,7 +113,10 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
                 return;
             }
         }
-        if (ArrayUtils.contains(BATTERY_PACK_STATUS_ARR, batteryPackStatus)) {
+        if (BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.CHARGE)
+                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.CAPACITY_TEST)
+                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.BACKUP)
+                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
             // 记录迁移
             insert(packNum, packMap, batteryList);
         }

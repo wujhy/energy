@@ -181,12 +181,11 @@ public class BatteryAlarmHandler {
 
             // 告警类型
             int status = CodingUtil.binaryToDecimal(ps.getString("status1").substring(0, 2));
-            if (status == 1) {
-                packStatus.put("commonly", ps);  //一般告警
-            } else if (status == 2) {
-                packStatus.put("abnormal", ps);  //异常报警
-            } else if (status == 3) {
-                packStatus.put("serious", ps);  //严重报警
+            switch (status) {
+                case 1: packStatus.put("commonly", ps); break;   //一般告警
+                case 2: packStatus.put("abnormal", ps); break;   //异常报警
+                case 3: packStatus.put("serious", ps); break;    //严重报警
+                default: break;
             }
         }
         batteryWarnInfo.setPackStatus(packStatus);
@@ -205,12 +204,11 @@ public class BatteryAlarmHandler {
 
                 // 告警类型
                 int status = CodingUtil.binaryToDecimal(ps.getString("status1").substring(0, 2));
-                if (status == 1) {
-                    batteryStatusOjb.put("commonly", ps);  //一般告警
-                } else if (status == 2) {
-                    batteryStatusOjb.put("abnormal", ps);  //异常报警
-                } else if (status == 3) {
-                    batteryStatusOjb.put("serious", ps);  //严重报警
+                switch (status) {
+                    case 1: batteryStatusOjb.put("commonly", ps); break;   //一般告警
+                    case 2: batteryStatusOjb.put("abnormal", ps); break;   //异常报警
+                    case 3: batteryStatusOjb.put("serious", ps); break;    //严重报警
+                    default: break;
                 }
             }
             packBatteryStatus.add(batteryStatusOjb);

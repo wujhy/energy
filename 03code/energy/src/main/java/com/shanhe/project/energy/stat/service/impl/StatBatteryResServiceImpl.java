@@ -2,6 +2,7 @@ package com.shanhe.project.energy.stat.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.shanhe.framework.enums.ResistanceTestStatusEnum;
 import com.alibaba.excel.EasyExcel;
 import com.google.common.collect.Lists;
 import com.shanhe.common.constant.Constants;
@@ -199,7 +200,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
 
         // 上一次不是内阻测试状态
         String resistanceTestStatus = Objects.toString(packParam.get("resistanceTestStatus"), null);
-        if (!StrUtil.equals("6", resistanceTestStatus)) {
+        if (!ResistanceTestStatusEnum.isCode(resistanceTestStatus, ResistanceTestStatusEnum.TESTING)) {
             return;
         }
 

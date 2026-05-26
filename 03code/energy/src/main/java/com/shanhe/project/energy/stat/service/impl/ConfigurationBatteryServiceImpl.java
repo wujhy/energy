@@ -3,6 +3,7 @@ package com.shanhe.project.energy.stat.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.google.common.collect.Lists;
 import com.shanhe.common.constant.Constants;
+import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.enums.YesNoEnum;
@@ -431,7 +432,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
 
         // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
         String batteryPackStatus = Objects.toString(oldInfo.getPackParam().get("batteryPackStatus"), null);
-        if (!StrUtil.equals("6", batteryPackStatus)) {
+        if (!BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
             return batteryPack.getVoltageRange();
         }
 

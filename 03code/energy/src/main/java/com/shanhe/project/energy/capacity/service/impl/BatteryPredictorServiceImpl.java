@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSON;
 import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.DateUtils;
 import com.shanhe.common.utils.StringUtils;
+import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.device.config.domain.BatteryMonitor;
 import com.shanhe.project.device.config.domain.BatteryPack;
@@ -74,7 +75,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
 
         // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
         String batteryPackStatus = Objects.toString(oldPackParam.get("batteryPackStatus"), null);
-        if (!StrUtil.equals("5", batteryPackStatus)) {
+        if (!BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.BACKUP)) {
             return;
         }
 

@@ -8,8 +8,10 @@ import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.text.Convert;
 import com.shanhe.common.utils.uuid.IdUtils;
+import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.framework.enums.CacheKeyEnum;
+import com.shanhe.framework.enums.ResistanceTestStatusEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
@@ -109,7 +111,6 @@ public class OptLogServiceImpl implements OptLogService {
     }
 
     private void batteryTest(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
-        // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
         String batteryPackStatus = Objects.toString(packMap.get("batteryPackStatus"), null);
         Integer type = getTestType(batteryPackStatus);
 
@@ -206,19 +207,18 @@ public class OptLogServiceImpl implements OptLogService {
      * 状态转换
      */
     private Integer getTestType(String batteryPackStatus) {
-        // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
         Integer testType = null;
 
-        if (StrUtil.equals("1", batteryPackStatus)) {
+        if (BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.CHARGE)) {
             testType = BatteryTestEnum._7.getDictValue();
 
-        } else if (StrUtil.equals("3", batteryPackStatus)) {
+        } else if (BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.CAPACITY_TEST)) {
             testType = BatteryTestEnum._3.getDictValue();
 
-        } else if (StrUtil.equals("5", batteryPackStatus)) {
+        } else if (BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.BACKUP)) {
             testType = BatteryTestEnum._5.getDictValue();
 
-        } else if (StrUtil.equals("6", batteryPackStatus)) {
+        } else if (BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
             testType = BatteryTestEnum._4.getDictValue();
         }
         return testType;
@@ -232,14 +232,13 @@ public class OptLogServiceImpl implements OptLogService {
      * @param packMap 电池组数据
      */
     private void resistanceTest(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
-        // 0表示不在内阻测试、6表示正在内阻测试、7表示内阻测试正常结束、8表示内阻测试异常结束
         String resistanceTestStatus = Objects.toString(packMap.get("resistanceTestStatus"), null);
 
         // 缓存记录
         String cacheKey = String.format(logCache.getKey(), packNum, 0);
         Object object = CacheUtils.get(logCache.getCache(), cacheKey);
         // 是否运行
-        if (StrUtil.equals("6", resistanceTestStatus)) {
+        if (ResistanceTestStatusEnum.isCode(resistanceTestStatus, ResistanceTestStatusEnum.TESTING)) {
             // 记录不存在创建
             if (object == null) {
                 // 创建新纪录

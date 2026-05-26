@@ -2,6 +2,7 @@ package com.shanhe.project.iot.battery;
 
 import cn.hutool.core.util.StrUtil;
 import com.shanhe.common.constant.Constants;
+import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.YesNoEnum;
@@ -256,7 +257,7 @@ public class BatteryPackHandler {
 
         // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
         String batteryPackStatus = Objects.toString(oldPackParam.get("batteryPackStatus"), null);
-        if (!StrUtil.equals("6", batteryPackStatus)) {
+        if (!BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
             return;
         }
 
@@ -411,7 +412,7 @@ public class BatteryPackHandler {
 
         // 放电
         if (packCurrent < 0) {
-            packMap.put("batteryPackStatus", "5");
+            packMap.put("batteryPackStatus", BatteryPackStatusEnum.BACKUP.getCode());
         }
         return packMap;
     }
