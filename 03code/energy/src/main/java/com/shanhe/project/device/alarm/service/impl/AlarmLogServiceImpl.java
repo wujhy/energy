@@ -379,27 +379,27 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         // 电池组告警
         if (itemCode.contains("dy")) {
             // 组电压
-            String voltage = (String) packData.get("batteryPackOuterVoltage");
+            String voltage = Objects.toString(packData.get("batteryPackOuterVoltage"), null);
             if (voltage != null && Double.parseDouble(voltage) != 0) {
                 return voltage;
             }
-            return (String) packData.get("packVoltage");
+            return Objects.toString(packData.get("packVoltage"), null);
         }
         if (itemCode.contains("dl")) {
             // 组电流
-            return (String) packData.get("packCurrent");
+            return Objects.toString(packData.get("packCurrent"), null);
         }
         if (itemCode.contains("wd")) {
             // 组温度
-            return (String) packData.get("environmentTemperature1");
+            return Objects.toString(packData.get("environmentTemperature1"), null);
         }
         if (itemCode.contains("soc")) {
             // soc
-            return (String) packData.get("batteryPackSoc");
+            return Objects.toString(packData.get("batteryPackSoc"), null);
         }
         if (itemCode.contains("soh")) {
             // soh
-            return (String) packData.get("batteryPackSoh");
+            return Objects.toString(packData.get("batteryPackSoh"), null);
         }
         return null;
     }

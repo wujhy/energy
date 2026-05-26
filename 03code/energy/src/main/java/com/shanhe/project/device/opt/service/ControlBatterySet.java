@@ -17,9 +17,8 @@ import com.shanhe.project.device.opt.vo.BatterySetVO;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import com.shanhe.project.monitor.server.service.SystemService;
 import com.shanhe.project.sync.domain.AlarmItemLevelVo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -34,10 +33,10 @@ import java.util.Map;
  * @author wjh
  * @since 2025/7/10
  */
+@Slf4j
 @Service
 public class ControlBatterySet extends ControlBase {
 
-    protected static Logger logger = LoggerFactory.getLogger(ControlBatterySet.class);
     @Resource
     private BatteryReportLogService batteryReportLogService;
     @Resource
@@ -364,7 +363,7 @@ public class ControlBatterySet extends ControlBase {
     }
 
     private AjaxResult reservedM460Migration(String action, String m460Command) {
-        logger.info("battery set action reserved for energy migration, action={}, source={}", action, m460Command);
+        log.info("battery set action reserved for energy migration, action={}, source={}", action, m460Command);
         return AjaxResult.success();
     }
 
@@ -386,7 +385,7 @@ public class ControlBatterySet extends ControlBase {
     private void updateResistanceStandValue(Integer packNum, ItemCode itemCode, Integer resistanceStandValue) {
         ConfigAttribute attribute = configAttributeService.getBy(packNum, itemCode.getCode());
         if (attribute == null) {
-            logger.info("电池组{}未配置{}，跳过内阻基准值更新", packNum, itemCode.getCode());
+            log.info("电池组{}未配置{}，跳过内阻基准值更新", packNum, itemCode.getCode());
             return;
         }
 

@@ -94,7 +94,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         }
 
         // 0表示不在内阻测试、6表示正在内阻测试、7表示内阻测试正常结束、8表示内阻测试异常结束
-        String resistanceTestStatus = (String) packMap.get("resistanceTestStatus");
+        String resistanceTestStatus = Objects.toString(packMap.get("resistanceTestStatus"), null);
         if (StrUtil.equals("6", resistanceTestStatus)) {
             // 记录迁移
             insert(packNum, packMap, batteryList);
@@ -102,7 +102,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         }
 
         // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
-        String batteryPackStatus = (String) packMap.get("batteryPackStatus");
+        String batteryPackStatus = Objects.toString(packMap.get("batteryPackStatus"), null);
 
         // 浮充状态只记录 2 小时
         if (StrUtil.equals("6", batteryPackStatus)) {
@@ -260,13 +260,13 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         statBatteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID);
         statBatteryPack.setPackNum(packNum);
         statBatteryPack.setPackVoltage(getPackVoltage(packMap));
-        statBatteryPack.setPackCurrent(packMap.get("packCurrent") == null ? null : Double.parseDouble((String) packMap.get("packCurrent")));
+        statBatteryPack.setPackCurrent(packMap.get("packCurrent") == null ? null : Double.parseDouble(String.valueOf(packMap.get("packCurrent"))));
 
-        statBatteryPack.setBatteryPackFloatCurrent(packMap.get("batteryPackFloatCurrent") == null ? null : Double.parseDouble((String) packMap.get("batteryPackFloatCurrent")));
-        statBatteryPack.setEnvironmentTemperature1(packMap.get("environmentTemperature1") == null ? null : Double.parseDouble((String) packMap.get("environmentTemperature1")));
-        statBatteryPack.setEnvironmentTemperature2(packMap.get("environmentTemperature2") == null ? null : Double.parseDouble((String) packMap.get("environmentTemperature2")));
-        statBatteryPack.setBcapacity(packMap.get("bcapacity") == null ? null : Double.parseDouble((String) packMap.get("bcapacity")));
-        statBatteryPack.setHydrogenConcentration(packMap.get("hydrogenConcentration") == null ? null : Double.parseDouble((String) packMap.get("hydrogenConcentration")));
+        statBatteryPack.setBatteryPackFloatCurrent(packMap.get("batteryPackFloatCurrent") == null ? null : Double.parseDouble(String.valueOf(packMap.get("batteryPackFloatCurrent"))));
+        statBatteryPack.setEnvironmentTemperature1(packMap.get("environmentTemperature1") == null ? null : Double.parseDouble(String.valueOf(packMap.get("environmentTemperature1"))));
+        statBatteryPack.setEnvironmentTemperature2(packMap.get("environmentTemperature2") == null ? null : Double.parseDouble(String.valueOf(packMap.get("environmentTemperature2"))));
+        statBatteryPack.setBcapacity(packMap.get("bcapacity") == null ? null : Double.parseDouble(String.valueOf(packMap.get("bcapacity"))));
+        statBatteryPack.setHydrogenConcentration(packMap.get("hydrogenConcentration") == null ? null : Double.parseDouble(String.valueOf(packMap.get("hydrogenConcentration"))));
 
         List<StatBatteryBat> statBatteries = batteryList.stream().map(StatBatteryBat::of).collect(Collectors.toList());
 
@@ -281,11 +281,11 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
      */
     private Double getPackVoltage( Map<String, Object> packMap) {
         // 组电压
-        String voltage = (String) packMap.get("batteryPackOuterVoltage");
+        String voltage = Objects.toString(packMap.get("batteryPackOuterVoltage"), null);
         if (voltage != null && Double.parseDouble(voltage) != 0) {
             return Double.parseDouble(voltage);
         }
-        voltage = (String) packMap.get("packVoltage");
+        voltage = Objects.toString(packMap.get("packVoltage"), null);
         if (voltage != null && Double.parseDouble(voltage) != 0) {
             return Double.parseDouble(voltage);
         }

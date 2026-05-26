@@ -8,8 +8,7 @@ import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.sync.service.ClientReportService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -24,11 +23,10 @@ import java.util.Objects;
  * @author wjh
  * @since 2026-05-25
  */
+@Slf4j
 @Component
 @EnableScheduling
 public class HeartbeatJob {
-
-    protected static Logger logger = LoggerFactory.getLogger(HeartbeatJob.class);
 
     @Resource
     private IHostService hostService;
@@ -45,13 +43,13 @@ public class HeartbeatJob {
                 return;
             }
             if (StrUtil.isBlank(host.getImei()) || !CommServer.isOpen()) {
-                logger.info("上报平台心跳，主机不在线不执行");
+                log.info("上报平台心跳，主机不在线不执行");
                 return;
             }
             if (!tcpClient.isOpen()) {
                 tcpClient.getChannel();
                 if (!tcpClient.isOpen()) {
-                    logger.info("上报平台心跳，通道未建立不执行");
+                    log.info("上报平台心跳，通道未建立不执行");
                     return;
                 }
             }
@@ -63,9 +61,9 @@ public class HeartbeatJob {
 
             clientReportService.heartbeat(host.getImei());
         } catch (Exception e) {
-            logger.error("上报平台心跳异常：{}", e.getMessage());
+            log.error("上报平台心跳异常：{}", e.getMessage());
         } finally {
-            logger.debug("上报平台心跳完成");
+            log.debug("上报平台心跳完成");
         }
     }
 
@@ -76,7 +74,7 @@ public class HeartbeatJob {
         }
         Host host = hostService.onlineHost();
         if (host == null) {
-            logger.debug("主机未初始化不执行注册");
+            log.debug("主机未初始化不执行注册");
             return;
         }
         clientReportService.join(host, host.getImei());

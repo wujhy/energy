@@ -5,8 +5,7 @@ import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import com.shanhe.framework.enums.TcpCidEnum;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.opt.cmd.DeviceModel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
@@ -15,10 +14,9 @@ import org.springframework.stereotype.Service;
  * @author wjh
  * @since 2025/7/10
  */
+@Slf4j
 @Service
 public class ControlSwitch extends ControlBase {
-
-    protected static Logger logger = LoggerFactory.getLogger(ControlSwitch.class);
 
     /**
      * 输出开关控制

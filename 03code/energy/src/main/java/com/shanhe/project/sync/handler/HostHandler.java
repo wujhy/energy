@@ -214,7 +214,8 @@ public class HostHandler {
             }
 
             // 缓存升级状态
-            Boolean hasDeploy = (Boolean) CacheUtils.get(CacheKeyEnum.DEPLOY_DOWNLOAD.getCache(), CacheKeyEnum.DEPLOY_DOWNLOAD.getKey());
+            Object deployObj = CacheUtils.get(CacheKeyEnum.DEPLOY_DOWNLOAD.getCache(), CacheKeyEnum.DEPLOY_DOWNLOAD.getKey());
+            Boolean hasDeploy = deployObj instanceof Boolean ? (Boolean) deployObj : null;
             if (hasDeploy != null && hasDeploy) {
                 throw new ServiceException("软件升级中，请稍后");
             }

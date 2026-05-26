@@ -8,8 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.framework.consts.SysConst;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,9 +28,9 @@ import com.shanhe.framework.web.domain.AjaxResult;
  * @author wjh
  * @since 2026-05-25
  */
+@Slf4j
 @Controller
 public class CommonController {
-    private static final Logger log = LoggerFactory.getLogger(CommonController.class);
 
     @Resource
     private ServerConfig serverConfig;

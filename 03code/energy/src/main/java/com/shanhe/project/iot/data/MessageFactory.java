@@ -10,9 +10,8 @@ import com.shanhe.project.energy.stat.domain.StatBatteryBat;
 import com.shanhe.project.energy.stat.domain.StatBatteryPack;
 import com.shanhe.project.energy.stat.mapper.StatBatteryBatMapper;
 import com.shanhe.project.energy.stat.mapper.StatBatteryPackMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -28,9 +27,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author wjh
  * @since 2026-05-25
  */
+@Slf4j
 public class MessageFactory {
-
-    private final static Logger logger = LoggerFactory.getLogger(MessageFactory.class);
 
     /**
      * 当下异常的时候，状态缓存时间，缓存时间为30秒
@@ -86,7 +84,7 @@ public class MessageFactory {
         if (dataQueue.size() < queueSize) {
             dataQueue.add(monitor);
         } else {
-            logger.error("数据处理队列已满，请稍后再试");
+            log.error("数据处理队列已满，请稍后再试");
         }
     }
 
@@ -105,7 +103,7 @@ public class MessageFactory {
         if (dataQueue.size() < queueSize) {
             dataQueue.addAll(monitors);
         } else {
-            logger.error("数据处理队列已满，请稍后再试");
+            log.error("数据处理队列已满，请稍后再试");
         }
     }
 
@@ -123,7 +121,7 @@ public class MessageFactory {
                         exceptionMsg = ((InvocationTargetException) e).getTargetException().getMessage();
                     }
                 }
-                logger.error("data error:--------starGainData--------" + exceptionMsg + "-------------------");
+                log.error("data error:--------starGainData--------" + exceptionMsg + "-------------------");
                 //睡眠1秒
                 try {
                     Thread.sleep(1000);
@@ -136,7 +134,7 @@ public class MessageFactory {
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }
-                logger.error("data system error:--------starGainData--------" + e + "-------------------");
+                log.error("data system error:--------starGainData--------" + e + "-------------------");
             }
         }
     }
@@ -199,7 +197,7 @@ public class MessageFactory {
                         batteryReportLogMapper.insertList(batteryPackInfos);
                     } catch (Exception e) {
                         // 处理或记录异常
-                        logger.error("插入电池数据异常",e);
+                        log.error("插入电池数据异常",e);
                     }
                 }
                 if (!statBatteryPacks.isEmpty()) {
@@ -207,7 +205,7 @@ public class MessageFactory {
                         statBatteryPackMapper.insertList(statBatteryPacks);
                     } catch (Exception e) {
                         // 处理或记录异常
-                        logger.error("插入统计电池数据异常",e);
+                        log.error("插入统计电池数据异常",e);
                     }
                 }
                 if (!statBatteryBats.isEmpty()) {
@@ -215,7 +213,7 @@ public class MessageFactory {
                         statBatteryBatMapper.insertList(statBatteryBats);
                     } catch (Exception e) {
                         // 处理或记录异常
-                        logger.error("插入统计电池单体数据异常",e);
+                        log.error("插入统计电池单体数据异常",e);
                     }
                 }
 

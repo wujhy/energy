@@ -187,7 +187,7 @@ public class BatteryPackHandler {
         CacheUtils.put(String.format(CacheKeyEnum.CONFIG_ONLINE.getKey(), deviceData.getC0(), deviceData.getC1(), deviceData.getC2()), date);
 
         // 获取旧状态并确保类型安全
-        String batteryPackStatus = (String) packMap.get("batteryPackStatus");
+        String batteryPackStatus = Objects.toString(packMap.get("batteryPackStatus"), null);
 
 
         BatteryReportLog oldInfo = null;
@@ -255,13 +255,13 @@ public class BatteryPackHandler {
         }
 
         // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
-        String batteryPackStatus = (String) oldPackParam.get("batteryPackStatus");
+        String batteryPackStatus = Objects.toString(oldPackParam.get("batteryPackStatus"), null);
         if (!StrUtil.equals("6", batteryPackStatus)) {
             return;
         }
 
         // 内阻测试未完成
-        String newBatteryPackStatus = (String) packMap.get("batteryPackStatus");
+        String newBatteryPackStatus = Objects.toString(packMap.get("batteryPackStatus"), null);
         // 如果状态未发生变化，则不需要处理
         if (StrUtil.equals(batteryPackStatus, newBatteryPackStatus)) {
             return;

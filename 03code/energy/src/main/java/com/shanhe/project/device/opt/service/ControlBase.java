@@ -9,8 +9,7 @@ import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.service.IConfigService;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.service.IHostService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import oshi.util.Util;
 
@@ -23,10 +22,9 @@ import java.util.Objects;
  * @author wjh
  * @since 2025/7/10
  */
+@Slf4j
 @Service
 public class ControlBase {
-
-    protected static Logger logger = LoggerFactory.getLogger(ControlBase.class);
 
     @Resource
     public IConfigService configService;

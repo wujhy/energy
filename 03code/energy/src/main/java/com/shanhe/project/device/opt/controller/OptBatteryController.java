@@ -13,8 +13,7 @@ import com.shanhe.project.device.config.service.IDevBatteryOptService;
 import com.shanhe.project.device.opt.domain.OptLog;
 import com.shanhe.project.device.opt.service.ControlBattery;
 import com.shanhe.project.device.opt.service.OptLogService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -26,10 +25,10 @@ import java.util.List;
  * @author wjh
  * @since 2025/4/21
  */
+@Slf4j
 @RestController
 @RequestMapping("/batteryOpt")
 public class OptBatteryController extends BaseController {
-    protected static Logger logger = LoggerFactory.getLogger(OptBatteryController.class);
     @Resource
     private IDevBatteryOptService devBatteryOptService;
     @Resource

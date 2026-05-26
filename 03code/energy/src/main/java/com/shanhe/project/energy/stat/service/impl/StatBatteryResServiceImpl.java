@@ -200,13 +200,13 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         }
 
         // 上一次不是内阻测试状态
-        String resistanceTestStatus = (String) packParam.get("resistanceTestStatus");
+        String resistanceTestStatus = Objects.toString(packParam.get("resistanceTestStatus"), null);
         if (!StrUtil.equals("6", resistanceTestStatus)) {
             return;
         }
 
         // 内阻测试未完成
-        String newResistanceTestStatus = (String) packMap.get("resistanceTestStatus");
+        String newResistanceTestStatus = Objects.toString(packMap.get("resistanceTestStatus"), null);
         if (StrUtil.equals(resistanceTestStatus, newResistanceTestStatus)) {
             return;
         }

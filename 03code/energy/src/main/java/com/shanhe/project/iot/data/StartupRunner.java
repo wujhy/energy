@@ -3,8 +3,7 @@ package com.shanhe.project.iot.data;
 import com.shanhe.project.device.config.mapper.BatteryReportLogMapper;
 import com.shanhe.project.energy.stat.mapper.StatBatteryBatMapper;
 import com.shanhe.project.energy.stat.mapper.StatBatteryPackMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -20,10 +19,10 @@ import java.util.concurrent.TimeUnit;
  * @author wjh
  * @since 2026-05-25
  */
+@Slf4j
 @Component
 public class StartupRunner implements ApplicationRunner {
 
-    private static final Logger log = LoggerFactory.getLogger(StartupRunner.class);
     private static final ThreadPoolExecutor threadPoolExecutor = getThreadPoolExecutor();
 
     @Resource

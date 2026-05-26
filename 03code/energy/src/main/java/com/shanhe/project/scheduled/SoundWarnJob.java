@@ -7,8 +7,7 @@ import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.device.opt.service.ControlSwitch;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
@@ -22,10 +21,10 @@ import java.util.Objects;
  * @author wjh
  * @since 2026-05-25
  */
+@Slf4j
 @Component
 @EnableScheduling
 public class SoundWarnJob {
-    protected static Logger logger = LoggerFactory.getLogger(SoundWarnJob.class);
     @Resource
     private IAlarmLogService alarmLogService;
     @Resource
@@ -71,7 +70,7 @@ public class SoundWarnJob {
             // 下发指令
             controlSwitch.doControlSwitch(portSoundWarn, isAlarm);
         } catch (Exception e) {
-            logger.error("声光告警异常：{}", e.getMessage(), e);
+            log.error("声光告警异常：{}", e.getMessage(), e);
         }
     }
 }

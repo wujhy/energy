@@ -4,8 +4,7 @@ import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.enums.DeviceTypeEnum;
 import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.service.IConfigService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -17,10 +16,9 @@ import java.util.Objects;
  * @author wjh
  * @since 2026-05-25
  */
+@Slf4j
 @Service
 public class DataUploadHandler {
-
-    protected static final Logger logger = LoggerFactory.getLogger(DataUploadHandler.class);
 
     @Resource
     private IConfigService configService;
@@ -42,7 +40,7 @@ public class DataUploadHandler {
             return;
         }
 
-        logger.debug("ignore legacy CM03N non-battery upload: type={}, port={}, channel={}, c3={}",
+        log.debug("ignore legacy CM03N non-battery upload: type={}, port={}, channel={}, c3={}",
                 deviceData.getC0(), deviceData.getC1(), deviceData.getC2(), deviceData.getC3());
     }
 }

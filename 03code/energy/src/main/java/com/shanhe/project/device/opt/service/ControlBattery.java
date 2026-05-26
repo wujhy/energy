@@ -20,8 +20,7 @@ import com.shanhe.project.device.opt.domain.OptLog;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import com.shanhe.project.sync.domain.AlarmItemLevelVo;
 import com.shanhe.project.sync.service.ClientReportService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import oshi.util.Util;
 
@@ -36,10 +35,9 @@ import java.util.Objects;
  * @author wjh
  * @since 2026-05-25
  */
+@Slf4j
 @Service
 public class ControlBattery extends ControlBase {
-
-    protected static Logger logger = LoggerFactory.getLogger(ControlBattery.class);
 
     @Resource
     private CmdBatteryControlService cmdBatteryControlService;
@@ -322,7 +320,7 @@ public class ControlBattery extends ControlBase {
         // 生成指令
         String cmdStr = cmdBatteryControlService.genCmd39(config, batteryPackNumber);
         if (StrUtil.isBlank(cmdStr)) {
-            logger.error("39获取屏蔽报警参数，生成指令失败！");
+            log.error("39获取屏蔽报警参数，生成指令失败！");
             return;
         }
         // 缓存
@@ -335,7 +333,7 @@ public class ControlBattery extends ControlBase {
         for (int level : alarmLevel) {
             cmdStr = cmdBatteryControlService.genCmd0B(config, batteryPackNumber, level);
             if (StrUtil.isBlank(cmdStr)) {
-                logger.error("0B读取电池组报警参数，生成指令失败！");
+                log.error("0B读取电池组报警参数，生成指令失败！");
                 continue;
             }
             // 下发指令
@@ -362,7 +360,7 @@ public class ControlBattery extends ControlBase {
     public void doUploadBattery(Config config) {
         String cmdStr = cmdBatteryControlService.genCmd06(config);
         if (StrUtil.isBlank(cmdStr)) {
-            logger.error("06屏蔽电池组报警参数，生成指令失败！");
+            log.error("06屏蔽电池组报警参数，生成指令失败！");
             return;
         }
         // 下发指令
@@ -377,7 +375,7 @@ public class ControlBattery extends ControlBase {
     public void doUploadSoftNum(Config config) {
         String cmdStr = cmdBatteryControlService.genCmd0E(config);
         if (StrUtil.isBlank(cmdStr)) {
-            logger.error("0E读取设备版本，生成指令失败！");
+            log.error("0E读取设备版本，生成指令失败！");
             return;
         }
         // 下发指令
@@ -400,25 +398,25 @@ public class ControlBattery extends ControlBase {
         // 为指定属性
         String paramNumber = ItemCode.getParamsNumber(configAttribute.getCode());
         if (paramNumber == null || paramNumber.isEmpty()) {
-            logger.info("{}【{}】参数编号不存在，无需下发指令！", configAttribute.getName(), configAttribute.getCode());
+            log.info("{}【{}】参数编号不存在，无需下发指令！", configAttribute.getName(), configAttribute.getCode());
             return;
         }
 
         // 若属性未开启、告警未配置，则下发告警屏蔽
         if (Objects.equals(configAttribute.getStatus(), YesNoEnum.NO.getDictValue())
                 || Objects.equals(configAttribute.getAlarmConfig(), YesNoEnum.NO.getDictValue())) {
-            logger.info("{}【{}】参数编号{}存在，下发屏蔽告警指令！", configAttribute.getName(), configAttribute.getCode(), paramNumber);
+            log.info("{}【{}】参数编号{}存在，下发屏蔽告警指令！", configAttribute.getName(), configAttribute.getCode(), paramNumber);
             this.updateParameterByAlarm(config, configAttribute, paramNumber, true);
             return;
         }
 
         // 告警解除屏蔽
-        logger.info("{}【{}】参数编号{}存在，下发解除屏蔽告警指令！", configAttribute.getName(), configAttribute.getCode(), paramNumber);
+        log.info("{}【{}】参数编号{}存在，下发解除屏蔽告警指令！", configAttribute.getName(), configAttribute.getCode(), paramNumber);
         this.updateParameterByAlarm(config, configAttribute, paramNumber, false);
 
         // 告警配置设置
         if (configAttribute.getListLevel() == null || configAttribute.getListLevel().isEmpty()) {
-            logger.info("{}【{}】告警等级配置不存在，无需下发告警参数指令！", configAttribute.getName(), configAttribute.getCode());
+            log.info("{}【{}】告警等级配置不存在，无需下发告警参数指令！", configAttribute.getName(), configAttribute.getCode());
             return;
         }
 
@@ -440,7 +438,7 @@ public class ControlBattery extends ControlBase {
         //指令组装
         String cmdStr = cmdBatteryControlService.genCmd0A(config, configAttribute.getPackNum(), 1, isShield ? 1 : 0, paramNumber);
         if (StrUtil.isBlank(cmdStr)) {
-            logger.error("0A屏蔽电池组报警参数，生成指令失败！");
+            log.error("0A屏蔽电池组报警参数，生成指令失败！");
             return;
         }
         // 下发指令
@@ -463,14 +461,14 @@ public class ControlBattery extends ControlBase {
         // 告警值
         Double value = minValue != null ? minValue : maxValue;
         if (value == null) {
-            logger.info("参数编号{}，告警等级{}，告警值不存在，无需下发配置！", paramNumber, level);
+            log.info("参数编号{}，告警等级{}，告警值不存在，无需下发配置！", paramNumber, level);
             return;
         }
 
         //指令组装
         String cmdStr = cmdBatteryControlService.genCmd03(config, packNum, level, paramNumber, value);
         if (StrUtil.isBlank(cmdStr)) {
-            logger.info("03设置电池组报警参数，生成指令失败！");
+            log.info("03设置电池组报警参数，生成指令失败！");
             return;
         }
         // 下发指令

@@ -6,8 +6,7 @@ import com.shanhe.common.utils.IpUtils;
 import com.shanhe.framework.consts.SysConst;
 import com.shanhe.framework.enums.IpAddrEnum;
 import com.shanhe.project.device.host.domain.Host;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,8 +21,8 @@ import java.util.*;
  * @author wjh
  * @since 2025/5/6
  */
+@Slf4j
 public class SystemService {
-    private static final Logger logger = LoggerFactory.getLogger(SystemService.class);
 
     /**
      * 更新本地IP
@@ -52,10 +51,10 @@ public class SystemService {
             command.append("ipv4.dns '8.8.8.8 8.8.4.4' ");
             // 设置为静态IP
             command.append("ipv4.method manual");
-            logger.info("更新本机IP指令 {}", command);
+            log.info("更新本机IP指令 {}", command);
             ProcessBuilder pb = new ProcessBuilder("bash", "-c", command.toString());
             process = pb.start();
-            logger.debug("更新本机IP指令结果 {} ：{}", process.waitFor(), command);
+            log.debug("更新本机IP指令结果 {} ：{}", process.waitFor(), command);
             if (process.waitFor() != 0) {
                 throw new ServiceException("更新本机IP失败！");
             }
@@ -66,7 +65,7 @@ public class SystemService {
             // 重启连接
             command.append("sudo nmcli connection down '").append(ipName).append("' && ");
             command.append("sudo nmcli connection up '").append(ipName).append("'");
-            logger.info("生效本机IP指令 {}", command);
+            log.info("生效本机IP指令 {}", command);
             asyncExeLocalCmd(null, new ProcessBuilder("bash", "-c", command.toString()));
         } catch (Exception e) {
             throw new ServiceException("更新本机IP失败！");
@@ -107,12 +106,12 @@ public class SystemService {
                     host.setMac(macAddress.toString());
                     //host.setNetIp(interfaceAddress.getBroadcast() != null ? interfaceAddress.getBroadcast().getHostAddress() : "");
                     host.setPort(SysConst.port);
-                    logger.info("获取IP成功：{}, {}, {}, {}, {}", host.getIp(), host.getSubIp(), host.getNetIp(), host.getPort(), host.getMac());
+                    log.info("获取IP成功：{}, {}, {}, {}, {}", host.getIp(), host.getSubIp(), host.getNetIp(), host.getPort(), host.getMac());
                     break;
                 }
             }
         } catch (Exception e) {
-            logger.error("获取IP异常：{}", e.getMessage());
+            log.error("获取IP异常：{}", e.getMessage());
         }
     }
 
@@ -140,7 +139,7 @@ public class SystemService {
                 String command = String.format("sudo date -s '%s-%s-%s %s'", date.substring(0, 4), date.substring(4, 6), date.substring(6, 8), time);
                 ProcessBuilder pb = new ProcessBuilder("bash", "-c", command);
                 process = pb.start();
-                logger.info("更新本机服务器时间 {} ：{}", process.waitFor(), command);
+                log.info("更新本机服务器时间 {} ：{}", process.waitFor(), command);
                 if (process.waitFor() != 0) {
                     throw new ServiceException("更新服务器时间失败！");
                 }
@@ -148,9 +147,9 @@ public class SystemService {
                 // 生效
                 pb = new ProcessBuilder("bash", "-c", "hwclock -w");
                 process = pb.start();
-                logger.info("更新本机硬件时间 {} ：{}", process.waitFor(), "hwclock -w");
+                log.info("更新本机硬件时间 {} ：{}", process.waitFor(), "hwclock -w");
             }
-            logger.info("syncServerTime---->{}", datetime);
+            log.info("syncServerTime---->{}", datetime);
         } catch (Exception e) {
             throw new ServiceException("执行脚本失败！");
         }
@@ -184,7 +183,7 @@ public class SystemService {
             String command = "echo 1 >/sys/class/gzpeite/user/watch_dog";
             ProcessBuilder pb = new ProcessBuilder("bash", "-c", command);
             Process process = pb.start();
-            logger.info("开启看门狗指令 {} ：{}", process.waitFor(), command);
+            log.info("开启看门狗指令 {} ：{}", process.waitFor(), command);
             if (process.waitFor() != 0) {
                 throw new ServiceException("开启看门狗失败！");
             }
@@ -222,7 +221,7 @@ public class SystemService {
             String command = "echo 0 >/sys/class/gzpeite/user/watch_dog";
             ProcessBuilder pb = new ProcessBuilder("bash", "-c", command);
             Process process = pb.start();
-            logger.info("关闭看门狗指令 {} ：{}", process.waitFor(), command);
+            log.info("关闭看门狗指令 {} ：{}", process.waitFor(), command);
             if (process.waitFor() != 0) {
                 throw new ServiceException("关闭看门狗失败！");
             }
