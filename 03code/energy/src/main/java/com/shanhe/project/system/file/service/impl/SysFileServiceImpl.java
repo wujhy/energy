@@ -63,8 +63,7 @@ public class SysFileServiceImpl implements ISysFileService {
                             break;
                         }
                     } catch (Exception e) {
-                        // 可根据需要记录日志或抛出异常
-//                        throw new RuntimeException("无法访问子目录: " + entry, e);
+                        // 忽略无法访问的子目录
                     }
                     sysLogFile.setIsSub(count);
                 }

@@ -2,7 +2,6 @@ package com.shanhe.project.sync.scheduled;
 
 import cn.hutool.core.util.StrUtil;
 import com.shanhe.common.constant.Constants;
-import com.shanhe.framework.enums.*;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.device.alarm.domain.AlarmLog;

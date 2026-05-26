@@ -23,10 +23,6 @@ public class HttpUtil {
 	public final static int CONN_TIMEOUT = 2000;
 	public final static int READ_TIMEOUT = 2000;
 
-	public static void main(String[] args) {
-
-	}
-
 	/**
 	 * HTTP GET
 	 * 

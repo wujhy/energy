@@ -104,7 +104,6 @@ public class SystemService {
                     }
 
                     host.setMac(macAddress.toString());
-                    //host.setNetIp(interfaceAddress.getBroadcast() != null ? interfaceAddress.getBroadcast().getHostAddress() : "");
                     host.setPort(SysConst.port);
                     log.info("获取IP成功：{}, {}, {}, {}, {}", host.getIp(), host.getSubIp(), host.getNetIp(), host.getPort(), host.getMac());
                     break;
@@ -256,8 +255,6 @@ public class SystemService {
                 return;
             }
             ProcessBuilder sh = new ProcessBuilder("/bin/bash", SysConst.getScriptFilePath(), "deploy");
-//            ProcessBuilder sh = new ProcessBuilder("systemctl reload energy.service");
-//            Runtime.getRuntime().exec("nohup /bin/bash -c '/opt/energy/energy.sh deploy' > /opt/energy/logs/sys-script.log 2>&1 &");
             asyncExeLocalCmd(new File("/opt/energy/logs/sys-script.log"), sh);
         } catch (Exception e) {
             throw new ServiceException("执行升级脚本失败！");
