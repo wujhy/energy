@@ -8,8 +8,7 @@ import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.sync.consts.MethodEnum;
 import com.shanhe.project.sync.domain.RequestVo;
 import com.shanhe.project.sync.domain.ResponseVo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -20,10 +19,9 @@ import javax.annotation.Resource;
  * @author wjh
  * @since 2025/5/23
  */
+@Slf4j
 @Service
 public class AlarmHandler {
-
-    private static final Logger log = LoggerFactory.getLogger(AlarmHandler.class);
 
     @Resource
     private IAlarmLogService alarmLogService;

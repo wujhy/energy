@@ -1,8 +1,7 @@
 package com.shanhe.common.utils;
 
 import com.shanhe.framework.consts.SysConst;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import com.alibaba.fastjson.JSONObject;
 import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.http.HttpUtils;
@@ -13,8 +12,8 @@ import com.shanhe.common.utils.http.HttpUtils;
  * @author wjh
  * @since 2024/12/17
  */
+@Slf4j
 public class AddressUtils {
-    private static final Logger log = LoggerFactory.getLogger(AddressUtils.class);
 
     // IP地址查询
     public static final String IP_URL = "http://whois.pconline.com.cn/ipJson.jsp";

@@ -5,8 +5,7 @@ import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import com.shanhe.framework.enums.CacheKeyEnum;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
@@ -15,10 +14,9 @@ import org.springframework.stereotype.Service;
  * @author wjh
  * @since 2025/6/6
  */
+@Slf4j
 @Service
 public class DataSwitchHandler {
-
-    protected static final Logger logger = LoggerFactory.getLogger(DataSwitchHandler.class);
 
     /**
      * 保留输出开关量响应，用于声光告警设备控制结果缓存。
@@ -33,11 +31,11 @@ public class DataSwitchHandler {
             String key = String.format(CacheKeyEnum.RESULT_CX.getKey(), deviceData.getC0(), deviceData.getC1(), deviceData.getC2(), deviceData.getC3());
             int resResult = CodingUtil.hexParseInt(deviceData.getInfo().substring(0, 2));
             if (resResult == 1) {
-                logger.error("响应设置输出开关量失败：key={}, result={}", key, resResult);
+                log.error("响应设置输出开关量失败：key={}, result={}", key, resResult);
             }
             CacheUtils.put(CacheKeyEnum.RESULT_CX.getCache(), key, resResult == 0 ? 0 : 1);
         } catch (Exception e) {
-            logger.error("响应设置输出开关量异常：imei={}, info={}", deviceData.getImei(), deviceData.getInfo());
+            log.error("响应设置输出开关量异常：imei={}, info={}", deviceData.getImei(), deviceData.getInfo());
         }
     }
 }

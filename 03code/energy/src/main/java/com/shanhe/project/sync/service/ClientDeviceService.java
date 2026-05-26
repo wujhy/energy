@@ -8,8 +8,7 @@ import com.shanhe.project.sync.consts.MethodEnum;
 import com.shanhe.project.sync.domain.RequestVo;
 import com.shanhe.project.sync.domain.ResponseVo;
 import com.shanhe.project.sync.handler.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -20,10 +19,9 @@ import javax.annotation.Resource;
  * @author wjh
  * @since 2025/4/28
  */
+@Slf4j
 @Service
 public class ClientDeviceService {
-
-    private static final Logger log = LoggerFactory.getLogger(ClientDeviceService.class);
 
     @Resource
     private IHostService hostService;

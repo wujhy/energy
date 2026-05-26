@@ -64,8 +64,7 @@ import org.apache.poi.xssf.usermodel.XSSFShape;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openxmlformats.schemas.drawingml.x2006.spreadsheetDrawing.CTMarker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import com.shanhe.common.exception.UtilException;
 import com.shanhe.common.utils.DateUtils;
 import com.shanhe.common.utils.StringUtils;
@@ -85,9 +84,9 @@ import com.shanhe.framework.web.domain.AjaxResult;
  *
  * @author ruoyi
  */
+@Slf4j
 public class ExcelUtil<T>
 {
-    private static final Logger log = LoggerFactory.getLogger(ExcelUtil.class);
 
     /** Excel sheet最大行数，默认65536 */
     public static final int SHEET_SIZE = 65536;

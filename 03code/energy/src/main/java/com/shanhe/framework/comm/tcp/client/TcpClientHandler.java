@@ -4,8 +4,7 @@ import com.shanhe.project.sync.domain.RequestVo;
 import com.shanhe.project.sync.service.ClientDeviceService;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 客户端通道解析
@@ -13,9 +12,8 @@ import org.slf4j.LoggerFactory;
  * @author wjh
  * @since 2025/7/19
  */
+@Slf4j
 public class TcpClientHandler extends SimpleChannelInboundHandler<Object> {
-
-	private static final Logger log = LoggerFactory.getLogger(TcpClientHandler.class);
 
 	/**
 	 * 注入实现类

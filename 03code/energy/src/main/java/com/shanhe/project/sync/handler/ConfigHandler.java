@@ -13,8 +13,7 @@ import com.shanhe.project.sync.domain.DeviceVo;
 import com.shanhe.project.sync.domain.RequestVo;
 import com.shanhe.project.sync.domain.ResponseVo;
 import com.shanhe.project.sync.service.ClientReportService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -25,10 +24,9 @@ import javax.annotation.Resource;
  * @author wjh
  * @since 2026-05-25
  */
+@Slf4j
 @Service
 public class ConfigHandler {
-
-    private static final Logger log = LoggerFactory.getLogger(ConfigHandler.class);
 
     @Resource
     IConfigService configService;

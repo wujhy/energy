@@ -18,8 +18,7 @@ import com.shanhe.project.energy.stat.service.IDevBatteryMonomerService;
 import com.shanhe.project.sync.consts.MethodEnum;
 import com.shanhe.project.sync.domain.*;
 import com.shanhe.project.sync.service.ClientReportService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -32,10 +31,9 @@ import java.util.Objects;
  * @author wjh
  * @since 2026-05-25
  */
+@Slf4j
 @Service
 public class BatterySyncHandler {
-
-    private static final Logger log = LoggerFactory.getLogger(BatterySyncHandler.class);
 
     @Resource
     private ControlBattery controlBattery;

@@ -16,8 +16,7 @@ import com.shanhe.project.sync.consts.MethodEnum;
 import com.shanhe.project.sync.domain.RequestVo;
 import com.shanhe.project.sync.domain.ResponseVo;
 import com.shanhe.project.sync.service.ClientReportService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -31,10 +30,9 @@ import java.util.Objects;
  * @author wjh
  * @since 2025/5/23
  */
+@Slf4j
 @Service
 public class HostHandler {
-
-    private static final Logger log = LoggerFactory.getLogger(HostHandler.class);
 
     @Resource
     private IHostService hostService;

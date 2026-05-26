@@ -27,7 +27,7 @@ public class Threads
         }
         catch (InterruptedException e)
         {
-            return;
+            Thread.currentThread().interrupt();
         }
     }
 
