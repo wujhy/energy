@@ -85,7 +85,7 @@ public class CodingUtil {
         }
 
         if (code == null) {
-            System.out.println("匹配不到对应的天气编码,用其他的  :4");
+            log.debug("匹配不到对应的天气编码,用其他的  :4");
 
             code = "4";
         }
@@ -408,8 +408,6 @@ public class CodingUtil {
 
             duration += frameCount * 20L;// 帧数*20
         }
-//		System.out.println("duration : "+duration/1000.0);
-//		System.out.println("四舍五入后的 :"+Math.round(duration/1000.0));
         //  向上取整用Math.ceil(1.21)  >>> 2.0
         //	向下取整用Math.floor(1.61) >>> 1.0
         //删除临时文件
@@ -570,7 +568,6 @@ public class CodingUtil {
     public static String bin2hex(String input) {
         StringBuilder sb = new StringBuilder();
         int len = input.length();
-        //System.out.println("原数据长度：" + (len / 8) + "字节");
 
         for (int i = 0; i < len / 4; i++){
             //每4个二进制位转换为1个十六进制位

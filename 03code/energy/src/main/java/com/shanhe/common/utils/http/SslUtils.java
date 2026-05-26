@@ -1,5 +1,7 @@
 package com.shanhe.common.utils.http;
 
+import lombok.extern.slf4j.Slf4j;
+
 import javax.net.ssl.*;
 import java.security.cert.X509Certificate;
 
@@ -9,6 +11,7 @@ import java.security.cert.X509Certificate;
  * @author wjh
  * @since 2025/11/13
  */
+@Slf4j
 public class SslUtils {
 	private static void trustAllHttpsCertificates() throws Exception {
 		TrustManager[] trustAllCerts = new TrustManager[1];
@@ -43,8 +46,7 @@ public class SslUtils {
 	 */
 	public static void ignoreSsl() throws Exception {
 		HostnameVerifier hv = (urlHostName, session) -> {
-			System.out.println("Warning: URL Host: " + urlHostName
-					+ " vs. " + session.getPeerHost());
+			log.warn("Warning: URL Host: {} vs. {}", urlHostName, session.getPeerHost());
 			return true;
 		};
 		trustAllHttpsCertificates();

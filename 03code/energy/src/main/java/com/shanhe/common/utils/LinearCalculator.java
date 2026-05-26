@@ -1,10 +1,12 @@
 package com.shanhe.common.utils;
 
 import cn.hutool.core.util.StrUtil;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 构造一元一次函数
  */
+@Slf4j
 public class LinearCalculator {
 
     /* 斜率 */
@@ -67,9 +69,9 @@ public class LinearCalculator {
     private double[] findIntersection(LinearCalculator other) {
         if (this.isParallelTo(other)) {
             if (this.isSameAs(other)) {
-                System.out.println("两条直线重合，有无限多交点");
+                log.debug("两条直线重合，有无限多交点");
             } else {
-                System.out.println("两条直线平行，无交点");
+                log.debug("两条直线平行，无交点");
             }
             return null;
         }
