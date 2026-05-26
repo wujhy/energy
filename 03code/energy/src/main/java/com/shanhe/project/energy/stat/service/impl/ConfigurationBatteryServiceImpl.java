@@ -1,6 +1,5 @@
 package com.shanhe.project.energy.stat.service.impl;
 
-import cn.hutool.core.util.StrUtil;
 import com.google.common.collect.Lists;
 import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.enums.BatteryPackStatusEnum;

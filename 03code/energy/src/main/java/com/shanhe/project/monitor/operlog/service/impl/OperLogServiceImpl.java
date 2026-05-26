@@ -1,6 +1,5 @@
 package com.shanhe.project.monitor.operlog.service.impl;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
