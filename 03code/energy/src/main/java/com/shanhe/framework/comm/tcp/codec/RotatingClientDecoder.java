@@ -6,8 +6,7 @@ import com.shanhe.project.sync.domain.RequestVo;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Base64;
 import java.util.List;
@@ -18,9 +17,8 @@ import java.util.List;
  * @author wjh
  * @since 2025/3/17
  */
+@Slf4j
 public class RotatingClientDecoder extends ByteToMessageDecoder {
-
-    private static final Logger logger = LoggerFactory.getLogger(RotatingClientDecoder.class);
     /** 字节长度 */
     public static final Integer HEAD_LENGTH = 50;
     public static final Integer MAX_LENGTH = 1024 * 1024;
@@ -60,12 +58,12 @@ public class RotatingClientDecoder extends ByteToMessageDecoder {
 
             // 解码
             String reqStr = CodingUtil.bytesToString(Base64.getMimeDecoder().decode(req),"UTF-8");
-            logger.debug("收到数据包解析成字符串:{}", reqStr);
+            log.debug("收到数据包解析成字符串:{}", reqStr);
 
             // 执行解码
             out.add(JSONObject.parseObject(reqStr, RequestVo.class));
         } catch (Exception e) {
-            logger.error("接收服务端消息异常：{}", e.getMessage());
+            log.error("接收服务端消息异常：{}", e.getMessage());
             // 出现异常时，清除数据
             in.clear();
         }

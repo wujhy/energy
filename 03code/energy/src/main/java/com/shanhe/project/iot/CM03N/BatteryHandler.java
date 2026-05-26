@@ -8,8 +8,7 @@ import com.shanhe.project.iot.battery.BatteryAlarmHandler;
 import com.shanhe.project.iot.battery.BatteryOptResHandler;
 import com.shanhe.project.iot.battery.BatteryPackHandler;
 import com.shanhe.project.iot.battery.BatteryParamsHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -20,9 +19,9 @@ import javax.annotation.Resource;
  * @author wjh
  * @since 2025/4/9
  */
+@Slf4j
 @Service
 public class BatteryHandler {
-    protected static Logger logger = LoggerFactory.getLogger(BatteryHandler.class);
 
     @Resource
     private BatteryParamsHandler batteryParamsHandler;
@@ -50,7 +49,7 @@ public class BatteryHandler {
         String cmdType = deviceData.getInfo().substring(12, 14);
         BatteryCidEnum batteryCidEnum = BatteryCidEnum.find(cmdType);
         // 响应内容
-        logger.info("{}：{} => {}", cmdType, batteryCidEnum.getDictLabel(), deviceData.getInfo());
+        log.info("{}：{} => {}", cmdType, batteryCidEnum.getDictLabel(), deviceData.getInfo());
         switch (batteryCidEnum){
             case _82:
                 //蓄电池实时数据

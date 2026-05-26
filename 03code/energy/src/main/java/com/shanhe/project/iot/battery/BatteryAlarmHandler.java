@@ -12,8 +12,7 @@ import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.iot.model.BatteryWarnInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -25,10 +24,9 @@ import java.util.*;
  * @author wjh
  * @since 2026-05-25
  */
+@Slf4j
 @Service
 public class BatteryAlarmHandler {
-
-    protected static Logger logger = LoggerFactory.getLogger(BatteryAlarmHandler.class);
 
     @Resource
     private IAlarmLogService alarmLogService;
@@ -69,7 +67,7 @@ public class BatteryAlarmHandler {
         BatteryWarnInfo warnInfo = toWarnDecoder(deviceData.getInfo());
         //响应结果
         if (warnInfo==null) {
-            logger.error("上传蓄电池报警数据出错！info={}", deviceData.getInfo());
+            log.error("上传蓄电池报警数据出错！info={}", deviceData.getInfo());
             return;
         }
 
@@ -345,7 +343,7 @@ public class BatteryAlarmHandler {
         BatteryWarnInfo batteryWarnInfo = toFailDecoder(deviceData.getInfo());
         //响应结果
         if (batteryWarnInfo == null) {
-            logger.error("上传蓄电池故障报警数据出错！info={}", deviceData.getInfo());
+            log.error("上传蓄电池故障报警数据出错！info={}", deviceData.getInfo());
             return;
         }
 

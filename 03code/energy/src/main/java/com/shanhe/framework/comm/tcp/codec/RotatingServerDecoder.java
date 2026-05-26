@@ -6,8 +6,7 @@ import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
@@ -17,9 +16,8 @@ import java.util.List;
  * @author wjh
  * @since 2025/3/17
  */
+@Slf4j
 public class RotatingServerDecoder extends ByteToMessageDecoder {
-
-    private static final Logger logger = LoggerFactory.getLogger(RotatingServerDecoder.class);
     /** 指令头字节长度 */
     public static final Integer HEAD_LENGTH = 13;
 
@@ -39,7 +37,7 @@ public class RotatingServerDecoder extends ByteToMessageDecoder {
             in.readBytes(req);
             // 定义收到数据的字符串
             String reqStr = CodingUtil.bytesToHexString(req).toUpperCase();
-            logger.info("收到数据包解析成字符串:{}", reqStr);
+            log.info("收到数据包解析成字符串:{}", reqStr);
             if (StrUtil.isBlank(reqStr)) {
                 return;
             }
@@ -47,7 +45,7 @@ public class RotatingServerDecoder extends ByteToMessageDecoder {
             // 执行解码
             CommServerDecoder.toDecode(reqStr, HEAD_LENGTH, out);
         } catch (Exception e) {
-            logger.error("解码异常", e);
+            log.error("解码异常", e);
         }
     }
 }

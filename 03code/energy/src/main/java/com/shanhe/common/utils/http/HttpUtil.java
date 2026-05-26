@@ -2,8 +2,7 @@ package com.shanhe.common.utils.http;
 
 import com.alibaba.fastjson2.JSON;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.net.*;
@@ -16,9 +15,8 @@ import java.util.Map;
  * @author wjh
  * @since 2025/7/19
  */
+@Slf4j
 public class HttpUtil {
-
-	private static final Logger logger = LoggerFactory.getLogger(HttpUtil.class);
 
 	public final static String SUCCESS = "200";
 	public final static String FAIL = "404";
@@ -75,13 +73,13 @@ public class HttpUtil {
 				flag.append(lines);
 			}
 		} catch (SocketTimeoutException s) {
-            logger.error("!!!连接或读操作超时!{}", urlStr);
+            log.error("!!!连接或读操作超时!{}", urlStr);
 		} catch (UnknownHostException unknown) {
-            logger.error("!!!无效的URL地址!{}", urlStr);
+            log.error("!!!无效的URL地址!{}", urlStr);
 		} catch (FileNotFoundException f) {
-            logger.error("!!!数据流异常!{}", urlStr);
+            log.error("!!!数据流异常!{}", urlStr);
 		} catch (Exception e) {
-            logger.error("!!!Http请求报错!{}：{}", urlStr, e.getMessage());
+            log.error("!!!Http请求报错!{}：{}", urlStr, e.getMessage());
 		}
 
 		return flag.toString();
@@ -153,11 +151,11 @@ public class HttpUtil {
 				}
 			}
 		} catch (MalformedURLException e) {
-            logger.error("!!!Http请求URL报错!{}参数 :{}", urlStr, JSON.toJSONString(params));
+            log.error("!!!Http请求URL报错!{}参数 :{}", urlStr, JSON.toJSONString(params));
 		} catch (IOException e) {
-            logger.error("!!!Http请求IO报错!{}参数 :{}", urlStr, JSON.toJSONString(params));
+            log.error("!!!Http请求IO报错!{}参数 :{}", urlStr, JSON.toJSONString(params));
 		} catch (Exception e) {
-            logger.error("!!!Http请求报错!{}参数 :{}，错误：{}", urlStr, JSON.toJSONString(params), e.getMessage());
+            log.error("!!!Http请求报错!{}参数 :{}，错误：{}", urlStr, JSON.toJSONString(params), e.getMessage());
 		} finally {
 			if (reader != null) {
 				try {
@@ -228,11 +226,11 @@ public class HttpUtil {
 				}
 			}
 		} catch (MalformedURLException e) {
-			System.out.println("!!!Http请求URL报错!" + urlStr+ "参数 :"+JSON.toJSONString(params));
+			log.warn("Http请求URL报错! {} 参数: {}", urlStr, JSON.toJSONString(params), e);
 		} catch (IOException e) {
-			System.out.println("!!!Http请求IO报错!" + urlStr+ "参数 :"+JSON.toJSONString(params));
+			log.warn("Http请求IO报错! {} 参数: {}", urlStr, JSON.toJSONString(params), e);
 		} catch (Exception e) {
-			System.out.println("!!!Http请求报错!" + urlStr+ "参数 :"+JSON.toJSONString(params));
+			log.warn("Http请求报错! {} 参数: {}", urlStr, JSON.toJSONString(params), e);
 		}
 
 		return result.toString();

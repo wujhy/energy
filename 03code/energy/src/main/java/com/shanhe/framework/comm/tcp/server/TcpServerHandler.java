@@ -10,8 +10,7 @@ import com.shanhe.project.iot.service.DeviceService;
 import io.netty.channel.*;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.util.Objects;
@@ -22,8 +21,8 @@ import java.util.Objects;
  * @author wjh
  * @since 2025/3/17
  */
+@Slf4j
 public class TcpServerHandler extends SimpleChannelInboundHandler<Object> {
-    private static final Logger logger = LoggerFactory.getLogger(TcpServerHandler.class);
 
     /** 设备注册通道 */
     private static Channel deviceChannel;
@@ -63,7 +62,7 @@ public class TcpServerHandler extends SimpleChannelInboundHandler<Object> {
                 // 通道及设备已经注册，接收处理所有指令
                 deviceService.tcpDevice(deviceData);
             } catch (Exception e){
-                logger.error("通道数据消费异常：{}", e.getMessage(), e);
+                log.error("通道数据消费异常：{}", e.getMessage(), e);
             }
         });
     }
@@ -103,7 +102,7 @@ public class TcpServerHandler extends SimpleChannelInboundHandler<Object> {
     public synchronized void offLine(Channel channel) {
         // 如果下线的是当前设备通道
         if (deviceChannel != null && Objects.equals(channel.hashCode(), deviceChannel.hashCode())) {
-            logger.debug("移除通道 imei --> {} --> 通道ID --> {}", deviceImei, channel.hashCode());
+            log.debug("移除通道 imei --> {} --> 通道ID --> {}", deviceImei, channel.hashCode());
 
             deviceImei = null;
             deviceChannel = null;
@@ -111,7 +110,7 @@ public class TcpServerHandler extends SimpleChannelInboundHandler<Object> {
                 channel.disconnect();
                 channel.close();
             } catch (Exception e) {
-                logger.error("移除通道异常：{}", e.getMessage());
+                log.error("移除通道异常：{}", e.getMessage());
             }
 
             // 更新资产不在线
@@ -130,16 +129,16 @@ public class TcpServerHandler extends SimpleChannelInboundHandler<Object> {
         } catch (Exception ignored) {}
 
         if (deviceChannel == null || !deviceChannel.isOpen()) {
-            logger.debug("尚未与设备建立连接，无法下发指令CMD：{}", cmd);
+            log.debug("尚未与设备建立连接，无法下发指令CMD：{}", cmd);
             return;
         }
         deviceChannel.writeAndFlush(cmd).addListeners((ChannelFutureListener) arg0 -> {
             if (arg0.isSuccess()) {
-                logger.info("下发指令成功 imei：{} CMD：{}", deviceImei, cmd);
+                log.info("下发指令成功 imei：{} CMD：{}", deviceImei, cmd);
             } else {
                 Throwable cause = arg0.cause();
                 if (cause != null) {
-                    logger.error("下发指令失败 imei：{} CMD：{}，原因：", deviceImei, cmd, cause);
+                    log.error("下发指令失败 imei：{} CMD：{}，原因：", deviceImei, cmd, cause);
                 }
             }
         });
@@ -170,7 +169,7 @@ public class TcpServerHandler extends SimpleChannelInboundHandler<Object> {
      */
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) {
-        logger.debug("数据读取完成，hashcode->{}", ctx.channel().hashCode());
+        log.debug("数据读取完成，hashcode->{}", ctx.channel().hashCode());
     }
 
     /**

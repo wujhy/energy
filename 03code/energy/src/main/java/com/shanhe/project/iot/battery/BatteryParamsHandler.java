@@ -13,8 +13,7 @@ import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.domain.ConfigAttribute;
 import com.shanhe.project.device.config.service.IConfigAttributeService;
 import com.shanhe.project.sync.domain.AlarmItemLevelVo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -28,9 +27,9 @@ import java.util.Objects;
  * @author wjh
  * @since 2026-05-25
  */
+@Slf4j
 @Service
 public class BatteryParamsHandler {
-    protected static Logger logger = LoggerFactory.getLogger(BatteryParamsHandler.class);
 
     @Resource
     private IConfigAttributeService configAttributeService;
@@ -44,7 +43,7 @@ public class BatteryParamsHandler {
     public void uploadBatteryParamsData(Config config, DeviceData deviceData) {
         BatteryParamsInfo paramsInfo = toDecodeData(deviceData.getInfo());
         if(paramsInfo==null){
-            logger.error("上传电池组报警参数响应结果出错！info={}", deviceData.getInfo());
+            log.error("上传电池组报警参数响应结果出错！info={}", deviceData.getInfo());
             return;
         }
         //解析参数
@@ -272,7 +271,7 @@ public class BatteryParamsHandler {
     private void synBatteryParamsData(Config config, BatteryParamsInfo paramsInfo) {
         if (StrUtil.equals(paramsInfo.getChargeOvercurrentAlarm(), "6553.5")
                 || StrUtil.equals(paramsInfo.getEnvironmentHighTemperatureAlarm(), "6553.5") ) {
-            logger.error("{}：{} 组告警参数异常 => {}", config.getName(), paramsInfo.getBatteryPackNumber(), JSONObject.toJSONString(paramsInfo));
+            log.error("{}：{} 组告警参数异常 => {}", config.getName(), paramsInfo.getBatteryPackNumber(), JSONObject.toJSONString(paramsInfo));
         }
         // 查设备包下所有属性列表
         ConfigAttribute query = new ConfigAttribute();
@@ -482,7 +481,7 @@ public class BatteryParamsHandler {
         // 缓存响应结果
         String key = String.format(CacheKeyEnum.RESULT_PACK_NUM.getKey(), deviceData.getC0(), deviceData.getC1(), deviceData.getC2(), deviceData.getC3(), packNum);
         if (result != 0) {
-            logger.error("key：{}，返回的结果：{}", key, result);
+            log.error("key：{}，返回的结果：{}", key, result);
         }
         CacheUtils.put(CacheKeyEnum.RESULT_PACK_NUM.getCache(), key, Objects.equals(result, 0) ? 0 : 1);
     }
@@ -527,7 +526,7 @@ public class BatteryParamsHandler {
         //应答结果
         String res = String.valueOf(CodingUtil.binaryToDecimal(binary9A.substring(0, 4)));
         if(StrUtil.equals(res, "1")) {
-            logger.error("上传电池组报警参数响应结果出错！devId:{}", deviceData.getImei());
+            log.error("上传电池组报警参数响应结果出错！devId:{}", deviceData.getImei());
             return ;
         }
 
@@ -577,13 +576,13 @@ public class BatteryParamsHandler {
             return;
         }
         if (msg.length() < itemCode.getEnd()) {
-            logger.error("Error processing alarm code {} : Message is null or too short", attribute.getCode());
+            log.error("Error processing alarm code {} : Message is null or too short", attribute.getCode());
             return;
         }
         try {
             sta = Integer.parseInt(msg.substring(itemCode.getStart(), itemCode.getEnd()));
         } catch (Exception e) {
-            logger.error("Error processing alarm code {} , {}", attribute.getCode(), e.getMessage());
+            log.error("Error processing alarm code {} , {}", attribute.getCode(), e.getMessage());
         }
 
         if (sta != null && Objects.equals(attribute.getStatus(), sta)) {

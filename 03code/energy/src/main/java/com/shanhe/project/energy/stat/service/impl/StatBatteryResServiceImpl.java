@@ -15,8 +15,7 @@ import com.shanhe.project.energy.stat.domain.StatBatteryRes;
 import com.shanhe.project.energy.stat.mapper.StatBatteryResMapper;
 import com.shanhe.project.energy.stat.service.IDevBatteryMonomerService;
 import com.shanhe.project.energy.stat.service.IStatBatteryResService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -32,10 +31,9 @@ import java.util.stream.Collectors;
  * @author wjh
  * @since 2026-05-25
  */
+@Slf4j
 @Service
 public class StatBatteryResServiceImpl implements IStatBatteryResService {
-
-    protected static Logger logger = LoggerFactory.getLogger(StatBatteryResServiceImpl.class);
 
     private final StatBatteryResMapper statBatteryResMapper;
     private final IDevBatteryMonomerService devBatteryMonomerService;
@@ -220,7 +218,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         try {
             statBatteryResMapper.insertList(statBatteryResList);
         } catch (Exception e) {
-            logger.error("插入数据异常", e);
+            log.error("插入数据异常", e);
         }
     }
 

@@ -67,9 +67,8 @@ public class PreBatteryGroup implements Cloneable, Serializable {
         try {
             return (PreBatteryGroup) preBatteryGroupInfo.clone();
         } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return new PreBatteryGroup();
     }
 
 }

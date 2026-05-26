@@ -11,7 +11,7 @@ import com.shanhe.framework.interceptor.BaseRepeatSubmitInterceptor;
 import com.shanhe.framework.interceptor.annotation.RepeatSubmit;
 
 /**
- * 判断请求url和数据是否和上一次相同， 
+ * 判断请求url和数据是否和上一次相同，
  * 如果和上次相同，则是重复提交表单。 有效时间为10秒内。
  *
  * @author ruoyi
@@ -78,10 +78,6 @@ public class SameUrlDataInterceptor extends BaseRepeatSubmitInterceptor
     {
         long time1 = nowMap.get(REPEAT_TIME) instanceof Number ? ((Number) nowMap.get(REPEAT_TIME)).longValue() : 0L;
         long time2 = preMap.get(REPEAT_TIME) instanceof Number ? ((Number) preMap.get(REPEAT_TIME)).longValue() : 0L;
-        if ((time1 - time2) < interval)
-        {
-            return true;
-        }
-        return false;
+        return (time1 - time2) < interval;
     }
 }

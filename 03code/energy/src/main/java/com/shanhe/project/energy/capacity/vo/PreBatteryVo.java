@@ -40,8 +40,7 @@ public class PreBatteryVo implements Cloneable {
         try {
             return (PreBatteryVo) preBatteryInfo.clone();
         } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return new PreBatteryVo();
     }
 }

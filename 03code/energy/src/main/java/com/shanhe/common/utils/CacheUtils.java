@@ -9,8 +9,7 @@ import com.shanhe.common.exception.ServiceException;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import com.shanhe.common.utils.spring.SpringUtils;
 
 /**
@@ -18,8 +17,8 @@ import com.shanhe.common.utils.spring.SpringUtils;
  *
  * @author ruoyi
  */
+@Slf4j
 public class CacheUtils {
-    private static final Logger logger = LoggerFactory.getLogger(CacheUtils.class);
 
     private static final CacheManager CACHE_MANAGER = SpringUtils.getBean(CacheManager.class);
 
@@ -109,7 +108,7 @@ public class CacheUtils {
         for (String key : keys) {
             remove(cacheName, key);
         }
-        logger.debug("清理缓存： {} => {}", cacheName, keys);
+        log.debug("清理缓存： {} => {}", cacheName, keys);
     }
 
     /**

@@ -16,8 +16,7 @@ import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.sync.domain.ConfigHistoryItemVo;
 import com.shanhe.project.sync.domain.ConfigHistoryVo;
 import com.shanhe.project.sync.service.ClientReportService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -31,11 +30,10 @@ import java.util.*;
  * @author wjh
  * @since 2025/5/17
  */
+@Slf4j
 @Component
 @EnableScheduling
 public class DataReportJob {
-
-    protected static Logger logger = LoggerFactory.getLogger(DataReportJob.class);
 
     @Resource
     private IHostService hostService;
@@ -62,7 +60,7 @@ public class DataReportJob {
             if (isReport || !clientReportService.canSend()) {
                 return;
             }
-            logger.debug("上报平台数据，开始同步");
+            log.debug("上报平台数据，开始同步");
             // 设置当前为上报状态
             isReport = true;
 
@@ -73,7 +71,7 @@ public class DataReportJob {
 
             // 主机连接状态、已注册
             if (StrUtil.isBlank(host.getImei())) {
-                logger.debug("上报平台数据，主机未在线不执行");
+                log.debug("上报平台数据，主机未在线不执行");
                 return;
             }
 
@@ -82,11 +80,11 @@ public class DataReportJob {
             // 上报蓄电池历史数据
             this.configPackHistory(host.getImei());
         } catch (Exception e) {
-            logger.error("上报平台数据，同步异常：{}", e.getMessage());
+            log.error("上报平台数据，同步异常：{}", e.getMessage());
         } finally {
             // 退出上报状态
             isReport = false;
-            logger.debug("上报平台数据，同步完成");
+            log.debug("上报平台数据，同步完成");
         }
     }
 
@@ -95,19 +93,19 @@ public class DataReportJob {
      */
     private void alarmReport(String imei) {
         try {
-            logger.debug("上报平台告警数据，开始同步");
+            log.debug("上报平台告警数据，开始同步");
             List<AlarmLog> alarmLogList = alarmLogService.cacheAlarmList();
             if (alarmLogList.isEmpty()) {
-                logger.debug("上报平台告警数据，无告警数据");
+                log.debug("上报平台告警数据，无告警数据");
                 return;
             }
             for (AlarmLog alarmLog : alarmLogList) {
                 clientReportService.uploadAlarm(alarmLog, imei);
             }
         } catch (Exception e) {
-            logger.error("上报平台告警数据，同步异常：{}", e.getMessage());
+            log.error("上报平台告警数据，同步异常：{}", e.getMessage());
         } finally {
-            logger.debug("上报平台告警数据，同步完成");
+            log.debug("上报平台告警数据，同步完成");
         }
     }
 

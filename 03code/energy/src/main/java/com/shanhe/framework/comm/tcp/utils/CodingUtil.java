@@ -3,8 +3,7 @@ package com.shanhe.framework.comm.tcp.utils;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.shanhe.common.exception.ServiceException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.math.BigDecimal;
@@ -27,9 +26,8 @@ import java.util.regex.Pattern;
  * @author wjh
  * @since 2025/7/19
  */
+@Slf4j
 public class CodingUtil {
-
-    private static final Logger logger = LoggerFactory.getLogger(CodingUtil.class);
 
     private static Map<String,String> weatherCodeList ;
 
@@ -688,7 +686,7 @@ public class CodingUtil {
         BigInteger bigInteger = new BigInteger(hexString, 16);
         // 检查是否在u16的范围内
         if (bigInteger.compareTo(BigInteger.ZERO) < 0 || bigInteger.compareTo(new BigInteger("FFFF", 16)) > 0) {
-            logger.info("值{}超出u16的范围", hexString);
+            log.info("值{}超出u16的范围", hexString);
             return 0;
         } else {
             // 使用BigInteger进行模运算确保值在u16的范围内，相当于 2^16
@@ -727,7 +725,7 @@ public class CodingUtil {
         BigInteger bigInteger = new BigInteger(hexString, 16);
         // 检查是否在u32的范围内
         if (bigInteger.compareTo(BigInteger.ZERO) < 0 || bigInteger.compareTo(new BigInteger("FFFFFFFF", 16)) > 0) {
-            logger.info("值{}超出u32的范围", hexString);
+            log.info("值{}超出u32的范围", hexString);
             return 0;
         } else {
             // 使用BigInteger进行模运算确保值在u32的范围内，相当于 2^32

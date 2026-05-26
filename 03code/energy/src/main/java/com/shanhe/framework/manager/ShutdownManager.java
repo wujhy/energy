@@ -2,8 +2,7 @@ package com.shanhe.framework.manager;
 
 import com.shanhe.common.utils.spring.SpringUtils;
 import net.sf.ehcache.CacheManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import javax.annotation.PreDestroy;
 
@@ -13,9 +12,9 @@ import javax.annotation.PreDestroy;
  * @author wjh
  * @since 2025/4/1
  */
+@Slf4j
 @Component
 public class ShutdownManager {
-    private static final Logger logger = LoggerFactory.getLogger(ShutdownManager.class);
 
     private static final CacheManager CACHE_MANAGER = SpringUtils.getBean(CacheManager.class);
 
@@ -28,10 +27,10 @@ public class ShutdownManager {
 
     private void shutdownAsyncManager() {
         try {
-            logger.debug("====关闭后台任务任务线程池====");
+            log.debug("====关闭后台任务任务线程池====");
             AsyncManager.me().shutdown();
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -40,10 +39,10 @@ public class ShutdownManager {
      */
     private void shutdownEhCacheManager() {
         try {
-            logger.debug("====关闭缓存====");
+            log.debug("====关闭缓存====");
             CACHE_MANAGER.shutdown();
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
     }
 }

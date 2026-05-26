@@ -5,8 +5,7 @@ import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.monitor.operlog.service.IOperLogService;
 import com.shanhe.project.monitor.server.service.SystemService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,11 +19,10 @@ import javax.annotation.Resource;
  * @author wjh
  * @since 2025/3/18
  */
+@Slf4j
 @Component
 @EnableScheduling
 public class CleanLogJob {
-
-    protected static Logger logger = LoggerFactory.getLogger(CleanLogJob.class);
 
     @Value("${job.cleanBatteryReportDays:3}")
     private Integer cleanBatteryReportDays;
@@ -46,30 +44,30 @@ public class CleanLogJob {
             Host host = hostService.getDetail();
             Integer cleanBattery = host.getCleanLogDays() != null ? host.getCleanLogDays() : cleanBatteryReportDays;
 
-            logger.info("删除电池历史记录异常：{}天前", cleanBattery);
+            log.info("删除电池历史记录异常：{}天前", cleanBattery);
             try {
                 batteryReportLogService.deleteByDays(cleanBattery);
             } catch (Exception e) {
-                logger.error("删除单体电池历史记录异常：{}", e.getMessage());
+                log.error("删除单体电池历史记录异常：{}", e.getMessage());
             }
 
-            logger.info("删除系统历史记录：{}个月前", cleanSysLogMonth);
+            log.info("删除系统历史记录：{}个月前", cleanSysLogMonth);
             try {
                 operLogService.deleteOperLog(cleanSysLogMonth);
             } catch (Exception e) {
-                logger.error("删除系统历史记录异常：{}", e.getMessage());
+                log.error("删除系统历史记录异常：{}", e.getMessage());
             }
 
             try {
                 //程序休眠后5秒后再执行
-                logger.info("----------------- vacuum run--------------------");
+                log.info("----------------- vacuum run--------------------");
                 operLogService.vacuum();
-                logger.info("----------------- vacuum end--------------------");
+                log.info("----------------- vacuum end--------------------");
             } catch (Exception e) {
-                logger.error("缩减数据空间：{}", e.getMessage());
+                log.error("缩减数据空间：{}", e.getMessage());
             }
         } catch (Exception e) {
-            logger.error("清理日志异常：{}", e.getMessage());
+            log.error("清理日志异常：{}", e.getMessage());
         } finally {
             // 打开看门狗
             SystemService.openWatchDog();

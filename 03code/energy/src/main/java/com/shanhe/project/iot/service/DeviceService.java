@@ -8,8 +8,7 @@ import com.shanhe.project.iot.CM03N.DataSwitchHandler;
 import com.shanhe.project.iot.CM03N.DataUploadHandler;
 import com.shanhe.project.iot.CM03N.DevResponseHandler;
 import com.shanhe.project.sync.service.ClientReportService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -20,9 +19,9 @@ import javax.annotation.Resource;
  * @author wjh
  * @since 2026-05-25
  */
+@Slf4j
 @Service
 public class DeviceService {
-    private static final Logger logger = LoggerFactory.getLogger(DeviceService.class);
 
     @Resource
     private DevResponseHandler devResponseHandler;
@@ -39,14 +38,14 @@ public class DeviceService {
      * @param deviceData 设备数据
      */
     public void tcpDeviceOnline(DeviceData deviceData) {
-        logger.debug("tcp device online event ignored, cid={}, imei={}", deviceData.getCid(), deviceData.getImei());
+        log.debug("tcp device online event ignored, cid={}, imei={}", deviceData.getCid(), deviceData.getImei());
     }
 
     /**
      * 处理设备离线事件
      */
     public void tcpDeviceOffline() {
-        logger.debug("tcp device offline event ignored");
+        log.debug("tcp device offline event ignored");
     }
 
     /**
@@ -67,7 +66,7 @@ public class DeviceService {
         this.prefilter(deviceData);
 
         TcpCidEnum cidEnum = TcpCidEnum.find(deviceData.getCid());
-        logger.debug("{}-{}-{}-{} => {}", deviceData.getC1(), deviceData.getC2(), deviceData.getC3(), deviceData.getCid(), cidEnum.getDictLabel(), deviceData.getInfo());
+        log.debug("{}-{}-{}-{} => {}", deviceData.getC1(), deviceData.getC2(), deviceData.getC3(), deviceData.getCid(), cidEnum.getDictLabel(), deviceData.getInfo());
         switch (cidEnum) {
             case _D1:
                 devResponseHandler.cmdD1(deviceData);
@@ -96,7 +95,7 @@ public class DeviceService {
                 devResponseHandler.cmdB0(deviceData);
                 break;
             default:
-                logger.info("指令错误：{}", deviceData.getCid());
+                log.info("指令错误：{}", deviceData.getCid());
                 break;
         }
 

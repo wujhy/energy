@@ -1,5 +1,6 @@
 package com.shanhe;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -12,12 +13,13 @@ import org.springframework.scheduling.annotation.EnableAsync;
  * @author wjh
  * @since 2024/12/17
  */
+@Slf4j
 @EnableCaching
 @EnableAsync
 @SpringBootApplication(exclude = { DataSourceAutoConfiguration.class })
 public class EnergyApplication {
     public static void main(String[] args) {
         SpringApplication.run(EnergyApplication.class, args);
-        System.out.println("====================================================================启动成功");
+        log.info("====================================================================启动成功");
     }
 }

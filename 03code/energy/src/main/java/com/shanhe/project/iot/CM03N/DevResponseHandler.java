@@ -5,8 +5,7 @@ import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import com.shanhe.framework.enums.CacheKeyEnum;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 
@@ -16,10 +15,9 @@ import org.springframework.stereotype.Service;
  * @author wjh
  * @since 2026-05-25
  */
+@Slf4j
 @Service
 public class DevResponseHandler {
-
-    protected static Logger logger = LoggerFactory.getLogger(DevResponseHandler.class);
 
     /**
      * 处理D1指令响应
@@ -56,11 +54,11 @@ public class DevResponseHandler {
             CacheUtils.remove(CacheKeyEnum.RESULT_CX.getCache(), key);
             CacheUtils.put(CacheKeyEnum.RESULT_CX.getCache(), key, result == 0 ? 0 : 1);
             if (result != 0) {
-                logger.info("imei：{} 返回结果{}：{}", deviceData.getImei(), key, result);
+                log.info("imei：{} 返回结果{}：{}", deviceData.getImei(), key, result);
             }
             return result;
         } catch (Exception e) {
-            logger.error("imei：{} 返回结果异常：{}", deviceData.getImei(), deviceData.getInfo());
+            log.error("imei：{} 返回结果异常：{}", deviceData.getImei(), deviceData.getInfo());
             return 1;
         }
     }
@@ -73,11 +71,11 @@ public class DevResponseHandler {
     public void cmdB0(DeviceData deviceData) {
         int resResult = this.responseResult(deviceData);
         if (1 == resResult) {
-            logger.error("B0：响应读取配置参数=> {}", deviceData.getInfo());
+            log.error("B0：响应读取配置参数=> {}", deviceData.getInfo());
             return;
         }
 
-        logger.debug("ignore static default config response, type={}, port={}, channel={}",
+        log.debug("ignore static default config response, type={}, port={}, channel={}",
                 deviceData.getC0(), deviceData.getC1(), deviceData.getC2());
     }
 }

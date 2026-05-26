@@ -7,8 +7,7 @@ import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
 import com.shanhe.project.device.host.service.IHostService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -19,10 +18,9 @@ import javax.annotation.Resource;
  * @author wjh
  * @since 2026-05-25
  */
+@Slf4j
 @Service
 public class CmdBatteryControlService {
-
-    protected static Logger logger = LoggerFactory.getLogger(CmdBatteryControlService.class);
 
     @Resource
     private IHostService hostService;
