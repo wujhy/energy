@@ -21,8 +21,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * @author zhoubin
- * @date 2025/8/14
+ * 电池单体配置信息服务实现类
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Service
 public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
@@ -35,6 +37,12 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
     @Resource
     private ClientReportService clientReportService;
 
+    /**
+     * 根据电池组编号查询单体列表
+     *
+     * @param packNum 电池组编号
+     * @return 单体数据列表
+     */
     @Override
     public List<DevBatteryMonomer> selectList(Integer packNum) {
         BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
@@ -44,6 +52,11 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
         return devBatteryMonomerMapper.selectList(batteryPack.getPackId());
     }
 
+    /**
+     * 根据电池组编号初始化单体数据
+     *
+     * @param packNum 电池组编号
+     */
     @Override
     public void init(Integer packNum) {
         BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
@@ -86,11 +99,20 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
         clientReportService.uploadBatteryMonomer(packNum, devBatteryMonomers, null);
     }
 
+    /**
+     * 删除所有单体数据
+     */
     @Override
     public void delete() {
         devBatteryMonomerMapper.delete();
     }
 
+    /**
+     * 获取电池组最大内阻变化率
+     *
+     * @param packNum 电池组编号
+     * @return 最大内阻变化率
+     */
     @Override
     public Double getMaxResistance(Integer packNum) {
         // 查询所有单体数据
@@ -134,11 +156,22 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
         return max == null ? 0.0 : max;
     }
 
+    /**
+     * 根据电池组ID删除单体数据
+     *
+     * @param packId 电池组ID
+     */
     @Override
     public void deleteByPackId(Long packId) {
         devBatteryMonomerMapper.deleteByPackId(packId);
     }
 
+    /**
+     * 根据电池组信息和子设备数据初始化单体
+     *
+     * @param batteryPack 电池组信息
+     * @param childDev 子设备单体数据
+     */
     @Override
     public void init(BatteryPack batteryPack, List<BatteryMonomerBatVo> childDev) {
         if (CollectionUtils.isEmpty(childDev)) {

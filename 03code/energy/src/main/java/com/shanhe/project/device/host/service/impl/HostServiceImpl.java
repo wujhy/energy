@@ -45,6 +45,11 @@ public class HostServiceImpl implements IHostService {
 
     CacheKeyEnum hostCache = CacheKeyEnum.HOST;
 
+    /**
+     * 获取主机详情
+     *
+     * @return 主机信息
+     */
     @Override
     public Host getDetail() {
         Object object = CacheUtils.get(hostCache.getCache(), hostCache.getKey());
@@ -54,6 +59,11 @@ public class HostServiceImpl implements IHostService {
         return (Host) object;
     }
 
+    /**
+     * 获取在线主机信息
+     *
+     * @return 主机信息，不在线返回null
+     */
     @Override
     public Host onlineHost() {
         Host host = this.getDetail();
@@ -63,6 +73,11 @@ public class HostServiceImpl implements IHostService {
         return host;
     }
 
+    /**
+     * 修改主机信息
+     *
+     * @param hostVO 主机信息
+     */
     @Override
     public void updateHost(Host hostVO) {
         Host host = this.getDetail();
@@ -83,6 +98,11 @@ public class HostServiceImpl implements IHostService {
         this.updateCache();
     }
 
+    /**
+     * 更新主机名称
+     *
+     * @param name 主机名称
+     */
     @Override
     public void updateName(String name) {
         Host host = this.getDetail();
@@ -91,6 +111,11 @@ public class HostServiceImpl implements IHostService {
         this.updateCache();
     }
 
+    /**
+     * 更新数据上报间隔时间
+     *
+     * @param spaceTime 间隔时间（秒）
+     */
     @Override
     public void updateSpaceTime(Integer spaceTime) {
         if (Objects.isNull(spaceTime)) {
@@ -107,6 +132,11 @@ public class HostServiceImpl implements IHostService {
         this.updateCache();
     }
 
+    /**
+     * 更新日志清理天数
+     *
+     * @param cleanLogDays 清理天数
+     */
     @Override
     public void updateCleanLogDays(Integer cleanLogDays) {
         Host host = this.getDetail();
@@ -115,6 +145,11 @@ public class HostServiceImpl implements IHostService {
         this.updateCache();
     }
 
+    /**
+     * 更新数据存储间隔时间
+     *
+     * @param storageTime 存储间隔时间
+     */
     @Override
     public void updateStorageTime(Integer storageTime) {
         Host host = this.getDetail();
@@ -123,6 +158,11 @@ public class HostServiceImpl implements IHostService {
         this.updateCache();
     }
 
+    /**
+     * 同步服务器时间
+     *
+     * @param datetime 时间字符串
+     */
     @Override
     public void syncServerTime(String datetime) {
         if (StrUtil.isNotBlank(datetime)) {
@@ -130,6 +170,11 @@ public class HostServiceImpl implements IHostService {
         }
     }
 
+    /**
+     * 更新主机上报IP配置
+     *
+     * @param update 主机信息
+     */
     @Override
     public void updateReportIp(Host update) {
         Host host = this.getDetail();
@@ -178,6 +223,11 @@ public class HostServiceImpl implements IHostService {
         this.updateHost(host);
     }
 
+    /**
+     * 更新主机扩展信息
+     *
+     * @param map 扩展信息
+     */
     @Override
     public void updateExtend(Map<String, Object> map) {
         if (map == null || map.isEmpty()) {
@@ -193,6 +243,11 @@ public class HostServiceImpl implements IHostService {
         this.updateCache();
     }
 
+    /**
+     * 获取主机扩展信息
+     *
+     * @return 扩展信息
+     */
     @Override
     public Map<String, Object> getExtend() {
         Host host = this.getDetail();
@@ -201,6 +256,11 @@ public class HostServiceImpl implements IHostService {
                 : null;
     }
 
+    /**
+     * 更新主机缓存
+     *
+     * @return 主机信息
+     */
     @Override
     public Host updateCache() {
         Host host = hostMapper.getDetail();
@@ -213,6 +273,9 @@ public class HostServiceImpl implements IHostService {
         return host;
     }
 
+    /**
+     * 恢复主机默认配置
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void restore() {

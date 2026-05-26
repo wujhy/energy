@@ -23,6 +23,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * 预测电池组服务实现类
+ *
+ * @author wjh
+ * @since 2026-05-25
+ */
 @Service
 public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
 
@@ -53,6 +59,12 @@ public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
         clientReportService.uploadPreBatteryGroup(groupVo);
     }
 
+    /**
+     * 获取电池组最新预测缓存
+     *
+     * @param packNum 电池组编号
+     * @return 预测电池组对象
+     */
     @Override
     public PreBatteryGroup lastCache(Integer packNum) {
         String key = String.format(cache.getKey(), packNum);
@@ -70,11 +82,19 @@ public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
         return result;
     }
 
+    /**
+     * 根据电池组编号删除预测数据
+     *
+     * @param packNum 电池组编号
+     */
     @Override
     public void deleteByPackNum(Integer packNum) {
         preBatteryGroupMapper.deleteByConfigId(Constants.DEFAULT_CONFIG_ID, packNum);
     }
 
+    /**
+     * 更新预测电池组缓存
+     */
     @Override
     public void updateCache() {
         // 旧缓存

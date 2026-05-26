@@ -18,8 +18,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * @author zhoubin
- * @date 2024/12/23
+ * 文件服务实现
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Service
 public class SysFileServiceImpl implements ISysFileService {

@@ -98,16 +98,31 @@ public class AlarmLevelServiceImpl implements AlarmLevelService {
         refreshCache();
     }
 
+    /**
+     * 获取所有告警级别映射（编码->对象）
+     *
+     * @return 告警级别映射
+     */
     @Override
     public Map<String, AlarmLevel> mapAll() {
         return selectAlarmLevelList(new AlarmLevel()).stream().collect(Collectors.toMap(AlarmLevel::getLevelCode, Function.identity(), (v1, v2) -> v2));
     }
 
+    /**
+     * 获取告警级别映射（编码->名称）
+     *
+     * @return 告警级别映射
+     */
     @Override
     public Map<String, String> map() {
         return selectAlarmLevelList(new AlarmLevel()).stream().collect(Collectors.toMap(AlarmLevel::getLevelCode, AlarmLevel::getLevelName, (v1, v2) -> v2));
     }
 
+    /**
+     * 刷新告警级别缓存
+     *
+     * @return 告警级别列表
+     */
     @Override
     public List<AlarmLevel> refreshCache() {
         List<AlarmLevel> alarmLevels = alarmLevelMapper.selectAlarmLevelList(new AlarmLevel());
@@ -118,6 +133,12 @@ public class AlarmLevelServiceImpl implements AlarmLevelService {
         return alarmLevels;
     }
 
+    /**
+     * 根据ID批量删除告警级别
+     *
+     * @param ids 告警级别ID字符串，逗号分隔
+     * @return 结果
+     */
     @Override
     public int deleteByIds(String ids) {
         String[] idArr = Convert.toStrArray(ids);

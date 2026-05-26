@@ -62,6 +62,14 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     // 缓存枚举
     CacheKeyEnum alarmCache = CacheKeyEnum.ALARM;
 
+    /**
+     * 从缓存获取告警记录
+     *
+     * @param packNum 电池组编号
+     * @param modelNum 模块编号
+     * @param itemCode 属性编码
+     * @return 告警记录
+     */
     @Override
     public AlarmLog getByCache(Integer packNum, Integer modelNum, String itemCode) {
         return (AlarmLog) CacheUtils.get(alarmCache.getCache(),
@@ -82,11 +90,22 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return alarm;
     }
 
+    /**
+     * 判断是否存在未处理告警
+     *
+     * @return 是否存在告警，1-存在，0-不存在
+     */
     @Override
     public Integer isAlarm() {
         return this.alarmNum() > 0 ? 1 : 0;
     }
 
+    /**
+     * 从缓存判断指定电池组是否存在未处理告警
+     *
+     * @param packNum 电池组编号，为null时查询所有
+     * @return 是否存在告警
+     */
     @Override
     public Integer isAlarmByCache(Integer packNum) {
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
@@ -107,6 +126,11 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return isAlarm;
     }
 
+    /**
+     * 获取蓄电池未处理告警数量
+     *
+     * @return 告警数量
+     */
     @Override
     public Long batteryAlarmNum() {
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
@@ -124,6 +148,11 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return num;
     }
 
+    /**
+     * 获取当前未处理告警数量
+     *
+     * @return 告警数量
+     */
     @Override
     public Long alarmNum() {
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
@@ -138,11 +167,21 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return num;
     }
 
+    /**
+     * 获取历史告警总数量
+     *
+     * @return 告警数量
+     */
     @Override
     public Long alarmAllNum() {
         return alarmLogMapper.alarmAllNum();
     }
 
+    /**
+     * 获取告警设备数量
+     *
+     * @return 告警设备数量
+     */
     @Override
     public Long alarmDeviceNum() {
         return alarmLogMapper.alarmDeviceNum();
@@ -164,6 +203,11 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return list;
     }
 
+    /**
+     * 获取缓存中所有告警记录
+     *
+     * @return 告警记录列表
+     */
     @Override
     public List<AlarmLog> cacheAlarmList() {
         List<AlarmLog> alarmLogList = new ArrayList<>();
@@ -190,6 +234,15 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         }
     }
 
+    /**
+     * 蓄电池告警处理
+     *
+     * @param config 设备配置
+     * @param packNum 电池组编号
+     * @param modelNum 模块编号
+     * @param warnParam 告警参数
+     * @param batteryReportLog 上报日志
+     */
     @Override
     public void alarmBattery(Config config, Integer packNum, Integer modelNum, Map<String, String> warnParam, BatteryReportLog batteryReportLog) {
         if (batteryReportLog == null) {
@@ -384,6 +437,14 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return null;
     }
 
+    /**
+     * 蓄电池告警值校验
+     *
+     * @param config 设备配置
+     * @param packNum 电池组编号
+     * @param modelNum 模块编号
+     * @param warnParam 告警参数
+     */
     @Override
     public void alarmBatteryValue(Config config, Integer packNum, Integer modelNum, Map<String, String> warnParam) {
         for (String keyParam : warnParam.keySet()) {
@@ -397,6 +458,14 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         }
     }
 
+    /**
+     * 修复指定电池组的告警记录
+     *
+     * @param packNum 电池组编号
+     * @param isModel 是否为单体告警
+     * @param excludeModelNum 排除的模块编号列表
+     * @param includeItemCode 包含的属性编码列表
+     */
     @Override
     public void alarmFix(Integer packNum, Boolean isModel, List<Integer> excludeModelNum, List<String> includeItemCode) {
         // 查设备组下还在告警的记录
@@ -426,11 +495,25 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         }
     }
 
+    /**
+     * 校验属性告警
+     *
+     * @param configAttribute 设备属性
+     * @param value 属性值
+     */
     @Override
     public void alarmValid(ConfigAttribute configAttribute, String value) {
         this.alarmValid(configAttribute, null, value, null);
     }
 
+    /**
+     * 校验属性告警
+     *
+     * @param configAttribute 设备属性
+     * @param modelNum 模块编号
+     * @param value 属性值
+     * @param type 设备类型
+     */
     @Override
     public void alarmValid(ConfigAttribute configAttribute, Integer modelNum, String value, Integer type) {
         // 取缓存告警记录
@@ -694,6 +777,12 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return "";
     }
 
+    /**
+     * 判断指定属性是否存在未处理告警
+     *
+     * @param attribute 设备属性
+     * @return 是否存在告警
+     */
     @Override
     public Integer isAlarm(ConfigAttribute attribute) {
         String key = String.format(alarmCache.getKey(), attribute.getConfigId(), attribute.getPackNum(), null, attribute.getCode());
@@ -701,6 +790,11 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return cacheLog != null && Objects.equals(cacheLog.getStatus(), YesNoEnum.NO.getDictValue()) ? YesNoEnum.YES.getDictValue() : YesNoEnum.NO.getDictValue();
     }
 
+    /**
+     * 关闭指定属性的告警日志
+     *
+     * @param attribute 设备属性
+     */
     @Override
     public void closeAlarmLog(ConfigAttribute attribute) {
         String key = String.format(alarmCache.getKey(), attribute.getConfigId(), attribute.getPackNum(), null, attribute.getCode());
@@ -712,6 +806,9 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         }
     }
 
+    /**
+     * 关闭默认设备所有告警日志
+     */
     @Override
     public void closeDefaultDeviceAlarmLog() {
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
@@ -782,6 +879,12 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return alarmLogMapper.updateAlarmLog(alarmLog);
     }
 
+    /**
+     * 屏蔽告警日志
+     *
+     * @param shiedAlarm 屏蔽告警参数
+     * @return 结果
+     */
     @Override
     public int shiedAlarmLog(AlarmLog shiedAlarm) {
         AlarmLog alarmLog = alarmLogMapper.selectAlarmLogByAlarmId(shiedAlarm.getAlarmId());
@@ -828,12 +931,20 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return 1;
     }
 
+    /**
+     * 删除默认设备所有告警日志
+     */
     @Override
     public void deleteDefaultDeviceAlarmLogs() {
         alarmLogMapper.deleteAlarmLogByConfigIds(new String[]{String.valueOf(Constants.DEFAULT_CONFIG_ID)});
         this.updateCache();
     }
 
+    /**
+     * 根据告警ID删除告警日志
+     *
+     * @param alarmId 告警主键
+     */
     @Override
     public void deleteAlarmLogByAlarmId(Long alarmId) {
         if (alarmId == null) {
@@ -849,6 +960,9 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         alarmLogMapper.deleteAlarmLogByAlarmId(alarmLog.getAlarmId());
     }
 
+    /**
+     * 更新告警缓存
+     */
     @Override
     public void updateCache() {
         List<String> startKeys = new ArrayList<>();
@@ -877,6 +991,12 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         }
     }
 
+    /**
+     * 从缓存获取指定电池组的告警记录列表
+     *
+     * @param packNum 电池组编号，为null时查询所有
+     * @return 告警记录列表
+     */
     @Override
     public List<AlarmLog> selectBatteryAlarmLogListCache(Integer packNum) {
         // 前缀
@@ -894,6 +1014,12 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return alarmLogs;
     }
 
+    /**
+     * 获取当前属性编码是否存在未处理告警
+     *
+     * @param itemCode 属性编码
+     * @return 是否存在告警，1-存在，0-不存在
+     */
     @Override
     public Long getCurrentIsAlarm(String itemCode) {
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
@@ -913,18 +1039,31 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return 0L;
     }
 
+    /**
+     * 删除所有告警日志并清空缓存
+     */
     @Override
     public void deleteALL() {
         alarmLogMapper.deleteALL();
         CacheUtils.removeAll(alarmCache.getCache());
     }
 
+    /**
+     * 删除指定电池组的告警日志
+     *
+     * @param packNum 电池组编号
+     */
     @Override
     public void deleteBatteryAlarmLogByPackNum(Integer packNum) {
         alarmLogMapper.deleteAlarmLogByConfigIdPackNum(Constants.DEFAULT_CONFIG_ID, packNum);
     }
 
 
+    /**
+     * 导出告警数据到Excel
+     *
+     * @param alarmLog 查询条件
+     */
     @Override
     public void export(AlarmLog alarmLog) {
         List<AlarmLog> list = selectAlarmLogList(alarmLog);

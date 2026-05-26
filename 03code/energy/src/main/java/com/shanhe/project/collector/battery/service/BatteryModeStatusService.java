@@ -42,6 +42,12 @@ public class BatteryModeStatusService {
 
     private CacheAccessor cacheAccessor = new CacheUtilsAccessor();
 
+    /**
+     * 获取当前蓄电池测试/维护工作模式状态。
+     *
+     * @param packNum 电池组编号
+     * @return 工作模式信息，缓存未命中时返回空闲状态
+     */
     public BatteryModeInfo get(Integer packNum) {
         Object result = cacheAccessor.get(cacheKeyEnum.getCache(), key());
         if (result instanceof BatteryModeInfo) {
@@ -50,6 +56,11 @@ public class BatteryModeStatusService {
         return idle(packNum);
     }
 
+    /**
+     * 清除指定电池组的工作模式缓存。
+     *
+     * @param packNum 电池组编号，为 null 时无条件清除
+     */
     public void clear(Integer packNum) {
         String key = key();
         if (packNum == null) {
@@ -65,6 +76,13 @@ public class BatteryModeStatusService {
         }
     }
 
+    /**
+     * 标记指定电池组进入测试/维护运行状态。
+     *
+     * @param packNum 电池组编号
+     * @param mode 工作模式类型
+     * @param address 目标模块地址
+     */
     public void markRunning(Integer packNum, int mode, Integer address) {
         BatteryModeInfo batteryModeInfo = new BatteryModeInfo();
         batteryModeInfo.setPackNum(packNum);
@@ -75,6 +93,14 @@ public class BatteryModeStatusService {
         cacheAccessor.put(cacheKeyEnum.getCache(), key(), batteryModeInfo);
     }
 
+    /**
+     * 标记指定电池组测试/维护已停止。
+     *
+     * @param packNum 电池组编号
+     * @param mode 工作模式类型
+     * @param address 目标模块地址
+     * @param success 是否成功
+     */
     public void markStopped(Integer packNum, int mode, Integer address, boolean success) {
         BatteryModeInfo previous = getStored();
         BatteryModeInfo batteryModeInfo = new BatteryModeInfo();
@@ -97,6 +123,11 @@ public class BatteryModeStatusService {
         cacheAccessor.put(cacheKeyEnum.getCache(), key(), batteryModeInfo);
     }
 
+    /**
+     * 从旧 M460 协议同步工作模式状态到缓存。
+     *
+     * @param batteryModeInfo M460 下发的工作模式信息
+     */
     public void putFromM460(BatteryModeInfo batteryModeInfo) {
         if (batteryModeInfo == null) {
             return;
@@ -108,7 +139,7 @@ public class BatteryModeStatusService {
                 batteryModeInfo.setLastPackNum(oldBatteryModeInfo.getLastPackNum());
                 batteryModeInfo.setLastMode(oldBatteryModeInfo.getLastMode());
                 batteryModeInfo.setLastAddress(oldBatteryModeInfo.getAddress());
-                // 旧 M460 内阻测试启动后，短时间可能回无测试，页面仍沿用上一轮进行中状态。
+                // 旧 M460 内阻测试启动后，短时间可能回复MODE_IDLE，页面仍沿用上一轮进行中状态
                 if (Objects.equals(oldBatteryModeInfo.getAddress(), 1)
                         && Objects.equals(batteryModeInfo.getMode(), MODE_IDLE)) {
                     batteryModeInfo.setResult(oldBatteryModeInfo.getResult());
@@ -120,6 +151,11 @@ public class BatteryModeStatusService {
         cacheAccessor.put(cacheKeyEnum.getCache(), key, batteryModeInfo);
     }
 
+    /**
+     * 获取工作模式缓存 key。
+     *
+     * @return 缓存 key
+     */
     public String key() {
         return MODE_STATUS_KEY;
     }

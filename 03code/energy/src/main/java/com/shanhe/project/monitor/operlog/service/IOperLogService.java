@@ -5,8 +5,9 @@ import com.shanhe.project.monitor.operlog.domain.OperLog;
 
 /**
  * 操作日志 服务层
- * 
- * @author ruoyi
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 public interface IOperLogService
 {

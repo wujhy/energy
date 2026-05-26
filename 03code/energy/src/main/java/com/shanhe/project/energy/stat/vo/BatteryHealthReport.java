@@ -6,8 +6,10 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * @author zhoubin
- * @date 2025/9/26
+ * 电池健康报告
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Data
 public class BatteryHealthReport implements Serializable {

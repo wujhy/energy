@@ -16,8 +16,10 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * @author zhoubin
- * @date 2025/8/14
+ * 电池配置控制器
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @RestController
 @RequestMapping("/configuration/battery")

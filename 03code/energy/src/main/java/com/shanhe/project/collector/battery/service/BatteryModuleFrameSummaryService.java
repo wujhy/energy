@@ -46,6 +46,7 @@ public class BatteryModuleFrameSummaryService {
         boolean success = true;
         if (protocolCode.isStatusResponse()) {
             if (payload.length > 0) {
+                // 无符号字节转换，0表示成功，非0为错误码
                 responseFlag = payload[0] & 0xFF;
                 success = responseFlag == 0;
             } else {

@@ -11,8 +11,8 @@ import java.util.List;
 /**
  * 电池单体配置信息Service接口
  *
- * @author zhoubin
- * @date 2025-07-16
+ * @author wjh
+ * @since 2026-05-25
  */
 public interface IDevBatteryMonomerService {
     /**

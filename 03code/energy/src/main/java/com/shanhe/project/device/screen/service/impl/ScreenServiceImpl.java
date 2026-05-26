@@ -38,6 +38,11 @@ public class ScreenServiceImpl implements ScreenService {
     @Resource
     private BatteryReportLogService batteryReportLogService;
 
+    /**
+     * 获取首页主数据
+     *
+     * @return 首页数据
+     */
     @Override
     public Index main() {
         Index index = new Index();
@@ -61,21 +66,43 @@ public class ScreenServiceImpl implements ScreenService {
         return index;
     }
 
+    /**
+     * 获取主机信息
+     *
+     * @return 主机信息
+     */
     @Override
     public Host host() {
         return hostService.getDetail();
     }
 
+    /**
+     * 获取大屏设备配置列表
+     *
+     * @return 设备配置列表
+     */
     @Override
     public List<Config> configList() {
         return configService.screenConfigList();
     }
 
+    /**
+     * 获取大屏设备配置
+     *
+     * @return 设备配置
+     */
     @Override
     public Config config() {
         return configService.screenConfig();
     }
 
+    /**
+     * 获取大屏设备属性列表
+     *
+     * @param packNum 电池组编号
+     * @param screen 大屏显示标志
+     * @return 属性列表
+     */
     @Override
     public List<ConfigAttributeVO> attribute(Integer packNum, Integer screen) {
         ConfigAttribute configAttribute = new ConfigAttribute();
@@ -86,6 +113,14 @@ public class ScreenServiceImpl implements ScreenService {
         return configAttributeService.viewList(configAttribute);
     }
 
+    /**
+     * 获取大屏设备属性选择列表
+     *
+     * @param packNum 电池组编号
+     * @param screen 大屏显示标志
+     * @param track 跟踪标志
+     * @return 属性列表
+     */
     @Override
     public List<ConfigAttributeListVO> attributeSelect(Integer packNum, Integer screen, Integer track) {
         ConfigAttribute configAttribute = new ConfigAttribute();
@@ -97,11 +132,21 @@ public class ScreenServiceImpl implements ScreenService {
         return configAttributeService.selectList(configAttribute);
     }
 
+    /**
+     * 获取电池组列表索引
+     *
+     * @return 电池组索引列表
+     */
     @Override
     public List<BatteryReportLogIndex> batteryList() {
         return batteryReportLogService.batteryList();
     }
 
+    /**
+     * 获取告警数量
+     *
+     * @return 告警数量
+     */
     @Override
     public Long alarmCount() {
         return alarmLogService.alarmNum();

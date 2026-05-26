@@ -13,8 +13,9 @@ import com.shanhe.project.monitor.operlog.mapper.OperLogMapper;
 
 /**
  * 操作日志 服务层处理
- * 
- * @author ruoyi
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Slf4j
 @Service
@@ -79,16 +80,30 @@ public class OperLogServiceImpl implements IOperLogService
         operLogMapper.cleanOperLog();
     }
 
+    /**
+     * 删除指定月份之前的操作日志
+     *
+     * @param month 月份数
+     */
     @Override
     public void deleteOperLog(Integer month) {
         operLogMapper.deleteOperLog(month);
     }
 
+    /**
+     * 压缩数据库空间
+     */
     @Override
     public void vacuum() {
         operLogMapper.vacuum();
     }
 
+    /**
+     * 执行SQL语句
+     *
+     * @param sql SQL语句
+     * @return 执行结果
+     */
     @Override
     public String executeSql(String sql) {
         operLogMapper.executeSql(sql);
@@ -111,6 +126,9 @@ public class OperLogServiceImpl implements IOperLogService
         SQL_LIST.add("VACUUM;");
     }
 
+    /**
+     * 执行初始化SQL脚本列表
+     */
     @Override
     public void initSql() {
         for (String sql : SQL_LIST) {

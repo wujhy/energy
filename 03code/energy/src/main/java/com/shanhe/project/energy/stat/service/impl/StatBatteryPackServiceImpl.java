@@ -38,8 +38,8 @@ import java.util.stream.Collectors;
 /**
  * 电池组统计Service业务层处理
  *
- * @author zhoubin
- * @date 2025-07-15
+ * @author wjh
+ * @since 2026-05-25
  */
 @Service
 public class StatBatteryPackServiceImpl implements IStatBatteryPackService {

@@ -9,8 +9,8 @@ import lombok.EqualsAndHashCode;
 /**
  * 单体电池统计对象 stat_battery
  *
- * @author zhoubin
- * @date 2025-07-15
+ * @author wjh
+ * @since 2026-05-25
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

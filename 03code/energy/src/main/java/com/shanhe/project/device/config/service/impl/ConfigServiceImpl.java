@@ -21,6 +21,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * 设备配置Service业务层处理
+ *
+ * @author wjh
+ * @since 2026-05-25
+ */
 @Service
 public class ConfigServiceImpl implements IConfigService {
 
@@ -33,11 +39,21 @@ public class ConfigServiceImpl implements IConfigService {
 
     private static final Config DEFAULT_CONFIG = buildDefaultConfig();
 
+    /**
+     * 查询默认设备配置
+     *
+     * @return 设备配置
+     */
     @Override
     public Config selectDefaultConfig() {
         return copyDefaultConfig();
     }
 
+    /**
+     * 查询设备配置列表
+     *
+     * @return 设备配置列表
+     */
     @Override
     public List<Config> selectConfigList() {
         Config config = copyDefaultConfig();
@@ -45,6 +61,11 @@ public class ConfigServiceImpl implements IConfigService {
         return wrapConfig(config);
     }
 
+    /**
+     * 查询大屏设备配置列表（含告警状态）
+     *
+     * @return 设备配置列表
+     */
     @Override
     public List<Config> screenConfigList() {
         Config config = copyDefaultConfig();
@@ -61,6 +82,11 @@ public class ConfigServiceImpl implements IConfigService {
         return wrapConfig(config);
     }
 
+    /**
+     * 查询大屏设备配置（含告警数量）
+     *
+     * @return 设备配置
+     */
     @Override
     public Config screenConfig() {
         Config config = copyDefaultConfig();
@@ -70,6 +96,11 @@ public class ConfigServiceImpl implements IConfigService {
         return config;
     }
 
+    /**
+     * 更新设备电池组配置
+     *
+     * @param config 设备配置
+     */
     @Override
     public void updatePack(Config config) {
         if (!Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {

@@ -15,8 +15,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author zhoubin
- * @date 2024/11/19
+ * 启动运行器，初始化线程池并启动数据处理任务。
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Component
 public class StartupRunner implements ApplicationRunner {

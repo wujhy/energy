@@ -6,6 +6,9 @@ import java.util.Date;
 
 /**
  * 电池预测单体信息
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Data
 public class PreBatteryVo implements Cloneable {

@@ -6,8 +6,10 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 
 /**
- * 电池设备处理
- * @author Administrator
+ * 电池单体内阻VO
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Data
 @Accessors(chain = true)

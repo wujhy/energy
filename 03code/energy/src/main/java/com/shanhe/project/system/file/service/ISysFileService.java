@@ -7,9 +7,10 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * 文件
+ * 文件 服务层
  *
- * @author zhoubin
+ * @author wjh
+ * @since 2026-05-25
  */
 public interface ISysFileService {
 

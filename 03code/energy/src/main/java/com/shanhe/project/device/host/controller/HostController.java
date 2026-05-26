@@ -32,12 +32,18 @@ public class HostController extends BaseController
     @Resource
     private IHostService hostService;
 
+    /**
+     * 获取主机详情
+     */
     @GetMapping("/detail")
     public AjaxResult detail() {
         Host host = hostService.getDetail();
         return success(host);
     }
 
+    /**
+     * 修改主机信息
+     */
     @Log(title = "修改主机", businessType = BusinessType.UPDATE)
     @PostMapping("/edit")
     @ResponseBody
@@ -46,6 +52,9 @@ public class HostController extends BaseController
         return success();
     }
 
+    /**
+     * 更新设备上报间隔时间
+     */
     @Log(title = "更新设备上报间隔时间", businessType = BusinessType.UPDATE)
     @GetMapping("/spaceTime/{spaceTime}")
     @ResponseBody
@@ -54,6 +63,9 @@ public class HostController extends BaseController
         return success();
     }
 
+    /**
+     * 更新设备数据存储间隔时间
+     */
     @Log(title = "更新设备数据存储间隔时间", businessType = BusinessType.UPDATE)
     @GetMapping("/storageTime/{storageTime}")
     @ResponseBody
@@ -62,6 +74,9 @@ public class HostController extends BaseController
         return success();
     }
 
+    /**
+     * 更新设备数据删除时间
+     */
     @Log(title = "更新设备数据删除时间", businessType = BusinessType.UPDATE)
     @GetMapping("/cleanLogDays/{cleanLogDays}")
     @ResponseBody
@@ -70,6 +85,9 @@ public class HostController extends BaseController
         return success();
     }
 
+    /**
+     * 更新主机服务IP
+     */
     @Log(title = "更新主机服务IP", businessType = BusinessType.UPDATE)
     @PostMapping("/editReportIp")
     @ResponseBody
@@ -110,6 +128,9 @@ public class HostController extends BaseController
         }
     }
 
+    /**
+     * 软件升级
+     */
     @Log(title = "软件升级", businessType = BusinessType.UPDATE)
     @GetMapping("/deploy")
     @ResponseBody

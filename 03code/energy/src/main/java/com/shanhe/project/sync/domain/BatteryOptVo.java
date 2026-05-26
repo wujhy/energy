@@ -9,6 +9,9 @@ import java.util.Date;
 
 /**
  * 电池操作VO
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Data
 @Accessors(chain = true)

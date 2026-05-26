@@ -6,6 +6,12 @@ import com.shanhe.project.energy.capacity.vo.DataPoint;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 滤波处理器，提供移动平均等数据滤波功能。
+ *
+ * @author wjh
+ * @since 2026-05-25
+ */
 public class FilterProcessor {
 
     /**

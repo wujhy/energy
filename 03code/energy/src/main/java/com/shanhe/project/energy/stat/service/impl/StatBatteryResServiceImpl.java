@@ -33,8 +33,8 @@ import java.util.stream.Collectors;
 /**
  * 单体内阻变化统计（内阻测试后）Service业务层处理
  *
- * @author zhoubin
- * @date 2025-07-21
+ * @author wjh
+ * @since 2026-05-25
  */
 @Service
 public class StatBatteryResServiceImpl implements IStatBatteryResService {

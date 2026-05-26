@@ -25,8 +25,8 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * 数据处理工程量
  *
- * @author zhoubin
- * @date 2024/11/18
+ * @author wjh
+ * @since 2026-05-25
  */
 public class MessageFactory {
 

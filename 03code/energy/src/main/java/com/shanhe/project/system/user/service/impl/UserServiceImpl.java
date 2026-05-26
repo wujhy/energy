@@ -23,16 +23,32 @@ public class UserServiceImpl implements IUserService {
     @Resource
     private UserMapper userMapper;
 
+    /**
+     * 查询用户列表
+     *
+     * @return 用户列表
+     */
     @Override
     public List<User> selectUserList() {
         return userMapper.selectUserList();
     }
 
+    /**
+     * 根据用户ID查询用户
+     *
+     * @param userId 用户ID
+     * @return 用户对象
+     */
     @Override
     public User selectUserById(Long userId) {
         return userMapper.selectUserById(userId);
     }
 
+    /**
+     * 重置用户密码
+     *
+     * @param user 用户对象
+     */
     @Override
     public void resetUserPwd(User user) {
         user.setSalt(this.randomSalt());
@@ -40,6 +56,13 @@ public class UserServiceImpl implements IUserService {
         userMapper.updateUser(user);
     }
 
+    /**
+     * 验证用户密码是否匹配
+     *
+     * @param user 用户对象
+     * @param newPassword 待验证密码
+     * @return 是否匹配
+     */
     @Override
     public boolean matches(User user, String newPassword) {
         return StrUtil.equals(user.getPassword(), this.encryptPassword(user.getLoginName(), newPassword, user.getSalt()));

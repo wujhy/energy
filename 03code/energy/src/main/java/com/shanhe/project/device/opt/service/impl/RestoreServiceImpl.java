@@ -23,8 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 
 /**
- * @author zhoubin
- * @date 2025/10/14
+ * 复位服务实现
+ *
+ * @author wjh
+ * @since 2025/10/14
  */
 @Service
 public class RestoreServiceImpl implements RestoreService {
@@ -62,6 +64,11 @@ public class RestoreServiceImpl implements RestoreService {
     @Resource
     private BatteryModuleRealtimeMapper batteryModuleRealtimeMapper;
 
+    /**
+     * 恢复出厂设置
+     *
+     * @param batterySetVO 设置参数
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void restore(BatterySetVO batterySetVO) {
@@ -117,6 +124,11 @@ public class RestoreServiceImpl implements RestoreService {
         // energy now owns the local cleanup above and does not send the old aggregate frame.
     }
 
+    /**
+     * 删除电池组数据
+     *
+     * @param batterySetVO 设置参数
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delPack(BatterySetVO batterySetVO) {

@@ -5,8 +5,10 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * @author zhoubin
- * @date 2025/12/2
+ * 升级SQL
+ *
+ * @author wjh
+ * @since 2025/12/2
  */
 @Data
 public class UpgradeSql implements Serializable {

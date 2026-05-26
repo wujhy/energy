@@ -56,6 +56,14 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
 
     CacheKeyEnum reportCache = CacheKeyEnum.BATTERY_REPORT;
 
+    /**
+     * 异步插入蓄电池上报日志
+     *
+     * @param packNum 电池组编号
+     * @param packParam 电池组参数
+     * @param batteryList 单体电池数据
+     * @param isInsert 是否入库
+     */
     @Async
     @Override
     public void insert(Integer packNum, Map<String, Object> packParam, List<BatteryMonitor> batteryList, boolean isInsert) {
@@ -80,6 +88,12 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         CacheUtils.put(reportCache.getCache(), key, batteryReportLog);
     }
 
+    /**
+     * 查询最新一条上报记录（含告警信息）
+     *
+     * @param packNum 电池组编号
+     * @return 上报日志
+     */
     @Override
     public BatteryReportLog selectLastHasAlarm(Integer packNum) {
         // 先取缓存
@@ -117,6 +131,12 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         return log;
     }
 
+    /**
+     * 从缓存获取最新上报记录
+     *
+     * @param packNum 电池组编号
+     * @return 上报日志
+     */
     @Override
     public BatteryReportLog lastCache(Integer packNum) {
         Object log = CacheUtils.get(reportCache.getCache(), String.format(reportCache.getKey(), packNum));
@@ -135,6 +155,12 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         return result;
     }
 
+    /**
+     * 计算电池组平均内阻值
+     *
+     * @param packNum 电池组编号
+     * @return 平均内阻值
+     */
     @Override
     public Long resistanceValue(Integer packNum) {
         BatteryReportLog log = this.lastCache(packNum);
@@ -161,6 +187,12 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         return Math.round(resistanceValue / batteryList.size());
     }
 
+    /**
+     * 查询上报日志列表
+     *
+     * @param batteryReportLog 查询条件
+     * @return 上报日志列表
+     */
     @Override
     public List<BatteryReportLog> selectBatteryReportLog(BatteryReportLog batteryReportLog) {
         List<BatteryReportLog> list = batteryReportLogMapper.selectBatteryReportLog(batteryReportLog);
@@ -175,16 +207,30 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         return list;
     }
 
+    /**
+     * 根据ID批量删除上报日志
+     *
+     * @param ids 日志ID字符串，逗号分隔
+     * @return 结果
+     */
     @Override
     public int deleteByIds(String ids) {
         return batteryReportLogMapper.deleteByIds(Convert.toStrArray(ids));
     }
 
+    /**
+     * 删除指定天数之前的上报日志
+     *
+     * @param dayNum 天数
+     */
     @Override
     public void deleteByDays(Integer dayNum) {
         batteryReportLogMapper.deleteByDays(dayNum);
     }
 
+    /**
+     * 更新上报日志缓存
+     */
     @Override
     public void updateCache() {
         // 旧缓存
@@ -216,6 +262,11 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         }
     }
 
+    /**
+     * 获取电池组列表索引（含最新数据和告警状态）
+     *
+     * @return 电池组索引列表
+     */
     @Override
     public List<BatteryReportLogIndex> batteryList() {
         List<BatteryPack> batteryPacks = batteryPackMapper.selectAllBattery();
@@ -251,11 +302,21 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         return list;
     }
 
+    /**
+     * 删除指定电池组的上报日志
+     *
+     * @param packNum 电池组编号
+     */
     @Override
     public void deleteByPackNum(Integer packNum) {
         batteryReportLogMapper.deleteByConfigId(Constants.DEFAULT_CONFIG_ID, packNum);
     }
 
+    /**
+     * 导出上报日志到Excel
+     *
+     * @param params 查询条件
+     */
     @Override
     public void export(BatteryReportLog params) {
         params.setConfigId(Constants.DEFAULT_CONFIG_ID);

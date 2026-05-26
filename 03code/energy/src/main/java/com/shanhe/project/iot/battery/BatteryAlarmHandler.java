@@ -21,6 +21,9 @@ import java.util.*;
 
 /**
  * 电池报警记录数据
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Service
 public class BatteryAlarmHandler {

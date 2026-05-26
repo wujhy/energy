@@ -15,6 +15,9 @@ import javax.annotation.Resource;
 
 /**
  * 生成蓄电池控制指令
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Service
 public class CmdBatteryControlService {

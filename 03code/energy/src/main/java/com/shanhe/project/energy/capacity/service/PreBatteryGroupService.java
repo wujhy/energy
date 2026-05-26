@@ -2,6 +2,12 @@ package com.shanhe.project.energy.capacity.service;
 
 import com.shanhe.project.energy.capacity.vo.PreBatteryGroup;
 
+/**
+ * 预测电池组服务接口
+ *
+ * @author wjh
+ * @since 2026-05-25
+ */
 public interface PreBatteryGroupService {
     /**
      * 插入记录

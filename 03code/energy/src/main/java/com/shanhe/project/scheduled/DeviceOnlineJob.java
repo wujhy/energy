@@ -27,6 +27,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 设备在线检测任务
+ *
+ * @author wjh
+ * @since 2026-05-25
+ */
 @Slf4j
 @Component
 @EnableScheduling

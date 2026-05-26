@@ -25,8 +25,9 @@ import com.shanhe.framework.web.domain.AjaxResult;
 
 /**
  * 通用请求处理
- * 
- * @author ruoyi
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Controller
 public class CommonController {

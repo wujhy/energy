@@ -7,8 +7,10 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * @author zhoubin
- * @date 2024/12/23
+ * 系统日志文件对象
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Data
 public class SysLogFile implements Serializable {

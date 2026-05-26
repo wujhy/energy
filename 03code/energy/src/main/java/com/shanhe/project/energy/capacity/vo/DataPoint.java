@@ -8,7 +8,8 @@ import java.util.Date;
 /**
  * 测试数据点
  *
- * @author xuxw
+ * @author wjh
+ * @since 2026-05-25
  */
 @Data
 public class DataPoint implements Serializable {

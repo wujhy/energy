@@ -7,8 +7,10 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 电池设备处理
- * @author Administrator
+ * 电池组内阻数据包VO
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Data
 @Accessors(chain = true)

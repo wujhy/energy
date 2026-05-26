@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 /**
  * 电池单体配置信息对象 dev_battery_monomer
  *
- * @author zhoubin
- * @date 2025-07-16
+ * @author wjh
+ * @since 2026-05-25
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

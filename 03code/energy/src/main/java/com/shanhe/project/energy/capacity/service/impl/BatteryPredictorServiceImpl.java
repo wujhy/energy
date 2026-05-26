@@ -39,8 +39,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 蓄电池预测服务类
- * @author xuxw
+ * 蓄电池预测服务实现类
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Service
 public class BatteryPredictorServiceImpl implements BatteryPredictorService {

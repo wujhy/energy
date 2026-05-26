@@ -8,8 +8,8 @@ import lombok.EqualsAndHashCode;
 /**
  * 单体内阻变化统计（内阻测试后）对象 stat_battery_res
  *
- * @author zhoubin
- * @date 2025-07-21
+ * @author wjh
+ * @since 2026-05-25
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

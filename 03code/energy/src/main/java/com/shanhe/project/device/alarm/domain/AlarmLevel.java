@@ -4,6 +4,12 @@ import com.shanhe.framework.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * 告警级别
+ *
+ * @author wjh
+ * @since 2026-05-25
+ */
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class AlarmLevel extends BaseEntity {

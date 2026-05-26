@@ -22,6 +22,15 @@ import java.util.TimerTask;
 @Slf4j
 public class DeployTask {
 
+    /**
+     * 创建软件升级下载异步任务。
+     *
+     * @param request 原始请求
+     * @param softVersion 目标软件版本
+     * @param url 下载地址
+     * @param clientReportService 上报服务
+     * @return 升级任务
+     */
     public static TimerTask deploy(RequestVo request, String softVersion, String url, ClientReportService clientReportService) {
         // 下载文件进度 10 / 100
         final double[] downloadFileProgress = { 0.1D };

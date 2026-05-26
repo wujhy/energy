@@ -13,8 +13,8 @@ import java.util.List;
 /**
  * 单体电池统计Mapper接口
  *
- * @author zhoubin
- * @date 2025-07-15
+ * @author wjh
+ * @since 2026-05-25
  */
 @Mapper
 public interface StatBatteryBatMapper {

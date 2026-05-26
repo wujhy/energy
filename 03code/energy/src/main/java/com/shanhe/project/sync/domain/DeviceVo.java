@@ -9,6 +9,9 @@ import java.util.List;
 
 /**
  * 设备接口信息
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Data
 @Accessors(chain = true)

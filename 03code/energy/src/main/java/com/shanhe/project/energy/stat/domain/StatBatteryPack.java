@@ -9,8 +9,8 @@ import java.util.List;
 /**
  * 电池组统计对象 stat_battery_pack
  *
- * @author zhoubin
- * @date 2025-07-15
+ * @author wjh
+ * @since 2026-05-25
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

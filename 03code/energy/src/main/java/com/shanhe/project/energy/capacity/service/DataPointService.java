@@ -9,7 +9,8 @@ import java.util.List;
 /**
  * 数据采集点
  *
- * @author xuxw
+ * @author wjh
+ * @since 2026-05-25
  */
 public interface DataPointService {
     /**

@@ -32,6 +32,9 @@ import java.util.*;
 
 /**
  * 蓄电池数据处理类
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Slf4j
 @Service
@@ -98,6 +101,7 @@ public class BatteryPackHandler {
         }
 
         // 解析单体电池
+        // 起始偏移：电池组固定字段占124字节
         int index82 = 124;
         switch (serviceType) {
             case "1":  //铅酸电池采集主机
@@ -148,7 +152,7 @@ public class BatteryPackHandler {
                 //放电时长
                 packMap.put("disChargeDuration", String.valueOf(CodingUtil.hexStringToInteger(info.substring(150, 154))));
 
-                //电池组部分信息长度
+                // 服务类型4: 电池组固定字段占89字节(×2 hex字符)
                 index82 = 89 * 2;
                 // 单体电池个数
                 int num = Integer.parseInt(CodingUtil.hexStringToString(dataStr.substring(12, 14)));

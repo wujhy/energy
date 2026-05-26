@@ -13,8 +13,10 @@ import javax.annotation.Resource;
 import java.util.Date;
 
 /**
- * @author zhoubin
- * @date 2025/9/22
+ * 数据服务，处理告警存储等业务逻辑。
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Service
 public class DataService {

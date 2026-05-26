@@ -33,11 +33,17 @@ public class BatteryCollectorCommandController extends BaseController {
     @Resource
     private BatteryCollectorService collectorService;
 
+    /**
+     * 查询采集通道运行状态快照。
+     */
     @GetMapping("/status")
     public AjaxResult status() {
         return success(collectorService.getChannelSnapshots());
     }
 
+    /**
+     * 重置模块地址缓存，强制下一轮全量发现。
+     */
     @Log(title = "蓄电池模块地址缓存重置", businessType = BusinessType.UPDATE)
     @PostMapping("/moduleAddressCache/reset")
     public AjaxResult resetModuleAddressCache(@RequestBody ResetModuleAddressCacheRequest request) {
@@ -45,6 +51,9 @@ public class BatteryCollectorCommandController extends BaseController {
         return success(collectorService.resetModuleAddressCache(channelName));
     }
 
+    /**
+     * 980 聚合命令兼容入口，映射到 600 模块端控制命令。
+     */
     @Log(title = "蓄电池980聚合命令兼容入口", businessType = BusinessType.UPDATE)
     @PostMapping("/execute")
     public AjaxResult execute(@RequestBody ExecuteRequest request) {
@@ -62,6 +71,9 @@ public class BatteryCollectorCommandController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 单体内阻测试。
+     */
     @Log(title = "蓄电池单体内阻测试", businessType = BusinessType.UPDATE)
     @PostMapping("/singleResistanceTest")
     public AjaxResult singleResistanceTest(@RequestBody SingleResistanceTestRequest request) {
@@ -75,6 +87,9 @@ public class BatteryCollectorCommandController extends BaseController {
                 request.getTimeoutMs()));
     }
 
+    /**
+     * 手动设置模块地址。
+     */
     @Log(title = "蓄电池模块手动编号", businessType = BusinessType.UPDATE)
     @PostMapping("/manualModuleAddress")
     public AjaxResult manualModuleAddress(@RequestBody ManualModuleAddressRequest request) {
@@ -95,6 +110,9 @@ public class BatteryCollectorCommandController extends BaseController {
                 request.getTimeoutMs()));
     }
 
+    /**
+     * 连接条电阻测试。
+     */
     @Log(title = "蓄电池连接条电阻测试", businessType = BusinessType.UPDATE)
     @PostMapping("/connectResistanceTest")
     public AjaxResult connectResistanceTest(@RequestBody ConnectResistanceTestRequest request) {

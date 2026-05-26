@@ -12,20 +12,39 @@ import org.springframework.stereotype.Service;
 
 /**
  * 设备响应处理服务。
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Service
 public class DevResponseHandler {
 
     protected static Logger logger = LoggerFactory.getLogger(DevResponseHandler.class);
 
+    /**
+     * 处理D1指令响应
+     *
+     * @param deviceData 设备数据
+     */
     public void cmdD1(DeviceData deviceData) {
         this.responseResult(deviceData);
     }
 
+    /**
+     * 处理D2指令响应
+     *
+     * @param deviceData 设备数据
+     */
     public void cmdD2(DeviceData deviceData) {
         this.responseResult(deviceData);
     }
 
+    /**
+     * 处理通用响应结果
+     *
+     * @param deviceData 设备数据
+     * @return 响应结果码，0表示成功
+     */
     public int responseResult(DeviceData deviceData){
         if (StrUtil.isBlank(deviceData.getImei()) || StrUtil.isBlank(deviceData.getInfo())) {
             return 1;
@@ -46,6 +65,11 @@ public class DevResponseHandler {
         }
     }
 
+    /**
+     * 处理B0指令（读取配置参数）响应
+     *
+     * @param deviceData 设备数据
+     */
     public void cmdB0(DeviceData deviceData) {
         int resResult = this.responseResult(deviceData);
         if (1 == resResult) {

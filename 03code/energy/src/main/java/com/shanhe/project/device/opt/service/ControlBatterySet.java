@@ -54,6 +54,12 @@ public class ControlBatterySet extends ControlBase {
     @Resource
     private IBatteryPackService batteryPackService;
 
+    /**
+     * 手动编号
+     *
+     * @param batterySetVO 设置参数
+     * @return 操作结果
+     */
     public AjaxResult manualModelNum(BatterySetVO batterySetVO) {
         try {
             String channelName = resolveChannelName(batterySetVO.getPackNum());
@@ -69,6 +75,12 @@ public class ControlBatterySet extends ControlBase {
         }
     }
 
+    /**
+     * 自动编号
+     *
+     * @param batterySetVO 设置参数
+     * @return 操作结果
+     */
     public AjaxResult autoModelNum(BatterySetVO batterySetVO) {
         try {
             BatteryModeInfo modelResult = getModelResult(batterySetVO.getPackNum());
@@ -96,6 +108,12 @@ public class ControlBatterySet extends ControlBase {
         }
     }
 
+    /**
+     * 获取电池版本号
+     *
+     * @param batterySetVO 设置参数
+     * @return 版本号
+     */
     public AjaxResult batteryVersion(BatterySetVO batterySetVO) {
         Host host = hostService.getDetail();
         String version = firstNonBlank(
@@ -105,14 +123,32 @@ public class ControlBatterySet extends ControlBase {
         return AjaxResult.success(version == null ? "" : version);
     }
 
+    /**
+     * 刷新编号状态
+     *
+     * @param batterySetVO 设置参数
+     * @return 编号状态
+     */
     public AjaxResult refreshModelNum(BatterySetVO batterySetVO) {
         return AjaxResult.success(getModelResult(batterySetVO.getPackNum()));
     }
 
+    /**
+     * 清除编号数据
+     *
+     * @param batterySetVO 设置参数
+     * @return 操作结果
+     */
     public AjaxResult clearModelNum(BatterySetVO batterySetVO) {
         return clearModelNum(batterySetVO.getPackNum());
     }
 
+    /**
+     * 设置内阻系数
+     *
+     * @param batterySetVO 设置参数
+     * @return 操作结果
+     */
     public AjaxResult resistance(BatterySetVO batterySetVO) {
         try {
             int resistance = toResistanceCoefficient(batterySetVO.getResistance());
@@ -130,6 +166,12 @@ public class ControlBatterySet extends ControlBase {
         }
     }
 
+    /**
+     * 获取内阻基准默认值
+     *
+     * @param batterySetVO 设置参数
+     * @return 基准值
+     */
     public AjaxResult resistanceDefaultValue(BatterySetVO batterySetVO) {
         ConfigAttribute configAttribute = configAttributeService.getBy(batterySetVO.getPackNum(), ItemCode.DTNZGD.getCode());
         if (configAttribute == null) {
@@ -141,10 +183,22 @@ public class ControlBatterySet extends ControlBase {
         return AjaxResult.success(configAttribute.getListLevel().get(0).getStandValue());
     }
 
+    /**
+     * 获取内阻基准值
+     *
+     * @param batterySetVO 设置参数
+     * @return 基准值
+     */
     public AjaxResult resistanceValue(BatterySetVO batterySetVO) {
         return AjaxResult.success(batteryReportLogService.resistanceValue(batterySetVO.getPackNum()));
     }
 
+    /**
+     * 设置内阻基准值
+     *
+     * @param batterySetVO 设置参数
+     * @return 操作结果
+     */
     public AjaxResult resistanceValueSet(BatterySetVO batterySetVO) {
         try {
             updateResistanceStandValue(batterySetVO.getPackNum(), ItemCode.DTNZGD, batterySetVO.getResistanceStandValue());
@@ -156,6 +210,12 @@ public class ControlBatterySet extends ControlBase {
         }
     }
 
+    /**
+     * 清除鼓包数据
+     *
+     * @param batterySetVO 设置参数
+     * @return 操作结果
+     */
     public AjaxResult delGb(BatterySetVO batterySetVO) {
         // M460 source command: 0x20/0x2A, swollen voltage reference for a battery group.
         // energy already collects gbvoltage/swollenVoltage from 600 module 01/81, but the
@@ -163,6 +223,12 @@ public class ControlBatterySet extends ControlBase {
         return reservedM460Migration("delGb", "M460 0x20/0x2A swollen voltage reference");
     }
 
+    /**
+     * 获取均衡状态
+     *
+     * @param batterySetVO 设置参数
+     * @return 均衡状态
+     */
     public AjaxResult getBalanced(BatterySetVO batterySetVO) {
         Map<String, Object> mapAll = hostService.getExtend();
         Map<String, Object> map = new HashMap<>();
@@ -172,6 +238,12 @@ public class ControlBatterySet extends ControlBase {
         return AjaxResult.success(map);
     }
 
+    /**
+     * 设置均衡状态
+     *
+     * @param batterySetVO 设置参数
+     * @return 操作结果
+     */
     public AjaxResult balanced(BatterySetVO batterySetVO) {
         try {
             saveBalancedStatus(
@@ -183,6 +255,12 @@ public class ControlBatterySet extends ControlBase {
         }
     }
 
+    /**
+     * 清除电池组数据
+     *
+     * @param batterySetVO 设置参数
+     * @return 操作结果
+     */
     public AjaxResult delPack(BatterySetVO batterySetVO) {
         try {
             restoreService.delPack(batterySetVO);
@@ -197,6 +275,12 @@ public class ControlBatterySet extends ControlBase {
         }
     }
 
+    /**
+     * 清除主机数据
+     *
+     * @param batterySetVO 设置参数
+     * @return 操作结果
+     */
     public AjaxResult delHost(BatterySetVO batterySetVO) {
         // M460 source command: 0x79/0xF9, clear host data. In energy this maps to local
         // host reset and cache refresh instead of the old M460 aggregate protocol.
@@ -204,12 +288,24 @@ public class ControlBatterySet extends ControlBase {
         return AjaxResult.success();
     }
 
+    /**
+     * 设备复位
+     *
+     * @param batterySetVO 设置参数
+     * @return 操作结果
+     */
     public AjaxResult reset(BatterySetVO batterySetVO) {
         // M460 source command: 0x05 system state, param 0x71=0x08 means device reset.
         // energy has no confirmed safe whole-device reset implementation yet.
         return reservedM460Migration("reset", "M460 0x05 system reset 0x71/0x08");
     }
 
+    /**
+     * 恢复出厂设置
+     *
+     * @param batterySetVO 设置参数
+     * @return 操作结果
+     */
     public AjaxResult restore(BatterySetVO batterySetVO) {
         // M460 source command: 0x75/0xF5 restore factory defaults. RestoreServiceImpl
         // owns the energy-native local cleanup flow, so no M460 passthrough is sent here.
@@ -217,11 +313,23 @@ public class ControlBatterySet extends ControlBase {
         return AjaxResult.success();
     }
 
+    /**
+     * 时间同步
+     *
+     * @param batterySetVO 设置参数
+     * @return 操作结果
+     */
     public AjaxResult syncTime(BatterySetVO batterySetVO) {
         SystemService.syncServerTime(batterySetVO.getDatetime());
         return AjaxResult.success();
     }
 
+    /**
+     * 设置蜂鸣器状态
+     *
+     * @param batterySetVO 设置参数
+     * @return 操作结果
+     */
     public AjaxResult buzzerStatus(BatterySetVO batterySetVO) {
         try {
             saveBuzzerStatus(batterySetVO.getBuzzerStatus());
@@ -231,6 +339,12 @@ public class ControlBatterySet extends ControlBase {
         }
     }
 
+    /**
+     * 电池数据校正
+     *
+     * @param batterySetVO 设置参数
+     * @return 操作结果
+     */
     public AjaxResult correct(BatterySetVO batterySetVO) {
         try {
             batterySetVO.setNeedDynResult(false);
@@ -289,6 +403,12 @@ public class ControlBatterySet extends ControlBase {
         configAttributeService.updateConfigAttributeAlarm(attribute);
     }
 
+    /**
+     * 保存均衡状态
+     *
+     * @param autoBalanced 自动均衡状态
+     * @param manualBalanced 手动均衡状态
+     */
     public void saveBalancedStatus(Integer autoBalanced, Integer manualBalanced) {
         Map<String, Object> mapAll = hostService.getExtend();
         mapAll = mapAll == null ? new HashMap<>() : mapAll;
@@ -297,6 +417,11 @@ public class ControlBatterySet extends ControlBase {
         hostService.updateExtend(mapAll);
     }
 
+    /**
+     * 保存蜂鸣器状态
+     *
+     * @param buzzerStatus 蜂鸣器状态
+     */
     public void saveBuzzerStatus(Integer buzzerStatus) {
         Map<String, Object> mapAll = hostService.getExtend();
         mapAll = mapAll == null ? new HashMap<>() : mapAll;

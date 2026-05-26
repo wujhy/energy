@@ -5,7 +5,9 @@ import com.shanhe.project.device.config.domain.BatteryReportLog;
 
 /**
  * 蓄电池预测服务类
- * @author xuxw
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 public interface BatteryPredictorService {
 

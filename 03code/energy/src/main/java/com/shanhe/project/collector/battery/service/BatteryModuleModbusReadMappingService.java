@@ -89,6 +89,7 @@ public class BatteryModuleModbusReadMappingService {
     private int resolveRegister(ModbusReadSnapshot snapshot, int address) {
         if (isCellAddress(address, CELL_VOLTAGE_START)) {
             BatteryModuleCellRealtime cell = snapshot.getCell(cellIndex(address, CELL_VOLTAGE_START));
+            // 电压×1000编码(mV分辨率)，与SH 980文档一致
             return scale(cell == null ? null : cell.getVoltage(), 1000d);
         }
         if (isCellAddress(address, CELL_RESISTANCE_START)) {
@@ -97,6 +98,7 @@ public class BatteryModuleModbusReadMappingService {
         }
         if (isCellAddress(address, CELL_TEMPERATURE_START)) {
             BatteryModuleCellRealtime cell = snapshot.getCell(cellIndex(address, CELL_TEMPERATURE_START));
+            // 温度+50°C偏移编码，与600模块协议一致
             return scaleWithOffset(cell == null ? null : cell.getTemperature(), 50d, 10d);
         }
         if (isCellAddress(address, CELL_SWOLLEN_VOLTAGE_START)) {

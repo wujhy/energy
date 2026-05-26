@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 /**
  * 重启浏览器
  *
- * @author xuxw
+ * @author wjh
  * @since 2025/9/11
  */
 @Component

@@ -19,6 +19,9 @@ import java.util.Objects;
 
 /**
  * 声光告警
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Component
 @EnableScheduling

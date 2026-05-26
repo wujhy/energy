@@ -6,7 +6,10 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 
 /**
- * 告警项
+ * 主机信息VO
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Data
 @Accessors(chain = true)

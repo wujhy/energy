@@ -16,6 +16,9 @@ import java.util.Objects;
 
 /**
  * 电池组操作响应信息
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Service
 public class BatteryOptResHandler {

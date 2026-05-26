@@ -20,6 +20,12 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.List;
 
+/**
+ * 设备配置同步处理器，负责设备信息的同步、删除和上报
+ *
+ * @author wjh
+ * @since 2026-05-25
+ */
 @Service
 public class ConfigHandler {
 
@@ -34,6 +40,12 @@ public class ConfigHandler {
     @Resource
     private ClientReportService clientReportService;
 
+    /**
+     * 同步设备信息
+     *
+     * @param request 请求信息
+     * @return 响应结果
+     */
     public ResponseVo synDev(RequestVo request) {
         String msg = null;
         try {
@@ -58,6 +70,12 @@ public class ConfigHandler {
         return new ResponseVo(request.getImei(), MethodEnum._6.getDictValue(), request.getBusinessId(), msg);
     }
 
+    /**
+     * 删除设备
+     *
+     * @param request 请求信息
+     * @return 响应结果
+     */
     public ResponseVo delDev(RequestVo request) {
         String msg = null;
         try {
@@ -70,6 +88,12 @@ public class ConfigHandler {
         return new ResponseVo(request.getImei(), MethodEnum._8.getDictValue(), request.getBusinessId(), msg);
     }
 
+    /**
+     * 主动上报设备配置信息
+     *
+     * @param request 请求信息
+     * @return 响应结果
+     */
     public ResponseVo reportSynDev(RequestVo request) {
         String msg = null;
         try {

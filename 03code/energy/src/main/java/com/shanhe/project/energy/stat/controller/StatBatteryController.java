@@ -15,8 +15,10 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 
 /**
- * @author zhoubin
- * @date 2025/8/14
+ * 电池统计控制器
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @RestController
 @RequestMapping("/stat/battery")
@@ -30,14 +32,27 @@ public class StatBatteryController extends BaseController {
     @Resource
     private IDevBatteryMonomerService devBatteryMonomerService;
 
-    // 获取内阻报表
+    /**
+     * 获取内阻报表
+     *
+     * @param ignoredConfigId 配置ID（忽略）
+     * @param packNum 电池组编号
+     * @return 内阻报表数据
+     */
     @GetMapping("/getResistanceReport")
     public AjaxResult getResistanceReport(@RequestParam(name = "configId", required = false) Long ignoredConfigId,
                                           @RequestParam Integer packNum) {
         return success(statBatteryResService.getResistanceReport(packNum));
     }
 
-    // 获取内阻报表
+    /**
+     * 获取单体内阻列表
+     *
+     * @param ignoredConfigId 配置ID（忽略）
+     * @param packNum 电池组编号
+     * @param batNum 电池编号
+     * @return 内阻列表数据
+     */
     @GetMapping("/listResistance")
     public AjaxResult listResistance(@RequestParam(name = "configId", required = false) Long ignoredConfigId,
                                      @RequestParam Integer packNum,
@@ -45,21 +60,37 @@ public class StatBatteryController extends BaseController {
         return success(statBatteryResService.listResistance(packNum, batNum));
     }
 
-    // 组数据
+    /**
+     * 查询电池组统计数据
+     *
+     * @param params 查询参数
+     * @return 分页数据
+     */
     @PostMapping("/listPackStat")
     public TableDataInfo listPackStat(StatBatteryPack params) {
         startPage();
         return getDataTable(statBatteryPackService.selectList(params));
     }
 
-    // 单体数据
+    /**
+     * 查询单体电池统计数据
+     *
+     * @param params 查询参数
+     * @return 分页数据
+     */
     @PostMapping("/listBatStat")
     public TableDataInfo listBatStat(StatBatteryBat params) {
         startPage();
         return getDataTable(statBatteryBatService.selectList(params));
     }
 
-    // 单体数据
+    /**
+     * 更新单体电池数据
+     *
+     * @param ignoredConfigId 配置ID（忽略）
+     * @param packNum 电池组编号
+     * @return 操作结果
+     */
     @GetMapping("/updateMonomer")
     public AjaxResult updateMonomer(@RequestParam(name = "configId", required = false) Long ignoredConfigId,
                                     @RequestParam Integer packNum) {
@@ -67,7 +98,12 @@ public class StatBatteryController extends BaseController {
         return success();
     }
 
-    // 单体数据
+    /**
+     * 导出电池组统计数据
+     *
+     * @param params 导出参数
+     * @return 操作结果
+     */
     @PostMapping("/export")
     public AjaxResult export(StatBatteryPack params) {
         if (SystemService.isWin()) {
@@ -77,7 +113,12 @@ public class StatBatteryController extends BaseController {
         return success();
     }
 
-    // 单体数据
+    /**
+     * 导出内阻统计数据
+     *
+     * @param params 导出参数
+     * @return 操作结果
+     */
     @PostMapping("/exportResistance")
     public AjaxResult exportResistance(StatBatteryPack params) {
         if (SystemService.isWin()) {

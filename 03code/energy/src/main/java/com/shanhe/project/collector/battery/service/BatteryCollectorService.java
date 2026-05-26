@@ -639,6 +639,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             }
             return pendingRequest.getRequestAddress() != GROUP_MODULE_ADDRESS || (payload[0] & 0xFF) == START_SET_ADDRESS;
         }
+        // payload[0]==0 表示模块应答成功
         return payload.length > 0 && (payload[0] & 0xFF) == 0;
     }
 
@@ -701,6 +702,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     }
 
     private byte[] firstAutoSetAddressCellPayload(int batterySpecification) {
+        // 电压×10编码(分辨率0.1V)，拆为大端两字节
         int startVoltage = batterySpecificationToVoltage(batterySpecification) * 10;
         return new byte[]{
                 (byte) ((startVoltage >> 8) & 0xFF),

@@ -8,6 +8,9 @@ import java.util.List;
 
 /**
  * 告警项
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Data
 @Accessors(chain = true)

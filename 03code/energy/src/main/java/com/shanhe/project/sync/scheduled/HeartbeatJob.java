@@ -20,6 +20,9 @@ import java.util.Objects;
 
 /**
  * JSON/TCP 上报平台心跳定时任务。
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Component
 @EnableScheduling

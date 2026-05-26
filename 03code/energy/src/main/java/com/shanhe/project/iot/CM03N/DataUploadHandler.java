@@ -12,7 +12,10 @@ import javax.annotation.Resource;
 import java.util.Objects;
 
 /**
- * CM03N data upload handler.
+ * CM03N数据上传处理器。
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Service
 public class DataUploadHandler {

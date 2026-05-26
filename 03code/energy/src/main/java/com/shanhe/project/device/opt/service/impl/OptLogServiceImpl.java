@@ -39,6 +39,14 @@ public class OptLogServiceImpl implements OptLogService {
 
     CacheKeyEnum logCache = CacheKeyEnum.OPT_LOG;
 
+    /**
+     * 插入操作日志
+     *
+     * @param packNum 电池组编号
+     * @param type 操作类型
+     * @param result 操作结果
+     * @return 日志ID
+     */
     @Override
     public Long insert(Integer packNum, Integer type, Integer result) {
         OptLog optLog = new OptLog();
@@ -62,6 +70,13 @@ public class OptLogServiceImpl implements OptLogService {
         return optLog.getId();
     }
 
+    /**
+     * 插入操作日志
+     *
+     * @param params 操作参数
+     * @param result 操作结果
+     * @return 日志ID
+     */
     @Override
     public Long insert(Map<String, Object> params, Integer result) {
         OptLog optLog = new OptLog();
@@ -75,6 +90,13 @@ public class OptLogServiceImpl implements OptLogService {
         return optLog.getId();
     }
 
+    /**
+     * 异步插入电池测试操作日志
+     *
+     * @param packNum 电池组编号
+     * @param packMap 电池组数据
+     * @param oldInfo 旧上报记录
+     */
     @Async
     @Override
     public void insertBattery(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
@@ -231,6 +253,13 @@ public class OptLogServiceImpl implements OptLogService {
         }
     }
 
+    /**
+     * 更新操作日志
+     *
+     * @param id 日志ID
+     * @param result 操作结果
+     * @param updateTime 更新时间
+     */
     @Override
     public void update(Long id, Integer result, Date updateTime) {
         if (updateTime == null) {
@@ -242,6 +271,12 @@ public class OptLogServiceImpl implements OptLogService {
         optLogMapper.update(id, result, updateTimeStr);
     }
 
+    /**
+     * 查询操作日志列表
+     *
+     * @param optLog 查询条件
+     * @return 操作日志列表
+     */
     @Override
     public List<OptLog> select(OptLog optLog) {
         List<OptLog> optLogList = optLogMapper.select(optLog);
@@ -268,16 +303,28 @@ public class OptLogServiceImpl implements OptLogService {
         return optLogList;
     }
 
+    /**
+     * 根据ID批量删除操作日志
+     *
+     * @param ids 日志ID字符串，逗号分隔
+     * @return 结果
+     */
     @Override
     public int deleteByIds(String ids) {
         return optLogMapper.deleteByIds(Convert.toStrArray(ids));
     }
 
+    /**
+     * 删除默认设备操作日志
+     */
     @Override
     public void deleteDefaultDeviceLogs() {
         optLogMapper.deleteByConfigIds(Convert.toStrArray(String.valueOf(Constants.DEFAULT_CONFIG_ID)));
     }
 
+    /**
+     * 更新操作日志缓存
+     */
     @Override
     public void updateCache() {
         // 旧缓存
@@ -321,6 +368,13 @@ public class OptLogServiceImpl implements OptLogService {
         }
     }
 
+    /**
+     * 从缓存获取未完成的操作日志
+     *
+     * @param packNum 电池组编号
+     * @param type 操作类型
+     * @return 操作日志
+     */
     @Override
     public OptLog selectNotFinishedCacheLog(Integer packNum, Integer type) {
         // 缓存记录
@@ -332,11 +386,25 @@ public class OptLogServiceImpl implements OptLogService {
         return (OptLog) object;
     }
 
+    /**
+     * 获取运行中的操作日志
+     *
+     * @param packNum 电池组编号
+     * @param type 操作类型
+     * @return 操作日志
+     */
     @Override
     public OptLog getRunningOptLog(Integer packNum, Integer type) {
         return optLogMapper.getRunningOptLog(Constants.DEFAULT_CONFIG_ID, packNum, type);
     }
 
+    /**
+     * 统计操作日志数量
+     *
+     * @param packNum 电池组编号
+     * @param types 操作类型列表
+     * @return 日志数量
+     */
     @Override
     public Integer count(Integer packNum, List<Integer> types) {
         Integer count = optLogMapper.count(Constants.DEFAULT_CONFIG_ID, packNum, types);
@@ -346,6 +414,15 @@ public class OptLogServiceImpl implements OptLogService {
         return 0;
     }
 
+    /**
+     * 更新电池容量信息
+     *
+     * @param optId 操作日志ID
+     * @param dischargeCapacity 放电容量
+     * @param bcapacity 电池容量
+     * @param current 电流
+     * @param endTime 结束时间
+     */
     @Override
     public void updateBatteryBcapacity(Long optId, Double dischargeCapacity, Double bcapacity, Double current, Date endTime) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -354,16 +431,33 @@ public class OptLogServiceImpl implements OptLogService {
         optLogMapper.updateBattery(optId, dischargeCapacity, bcapacity, current, endTimeStr);
     }
 
+    /**
+     * 获取指定类型的最新操作日志
+     *
+     * @param packNum 电池组编号
+     * @param type 操作类型
+     * @return 操作日志
+     */
     @Override
     public OptLog lastType(Integer packNum, int type) {
         return optLogMapper.lastByType(Constants.DEFAULT_CONFIG_ID, packNum, type);
     }
 
+    /**
+     * 删除指定电池组的操作日志
+     *
+     * @param packNum 电池组编号
+     */
     @Override
     public void deleteByPackNum(Integer packNum) {
         optLogMapper.deleteByConfigIdPackNum(Constants.DEFAULT_CONFIG_ID, packNum);
     }
 
+    /**
+     * 关闭指定电池组的操作日志
+     *
+     * @param packNum 电池组编号
+     */
     @Override
     public void closeOptLog(Integer packNum) {
         Set<String> oldKeys = CacheUtils.getCacheKeys(logCache.getCache());
@@ -376,6 +470,12 @@ public class OptLogServiceImpl implements OptLogService {
         }
     }
 
+    /**
+     * 停止测试
+     *
+     * @param packNum 电池组编号
+     * @param type 操作类型
+     */
     @Override
     public void doStopTest(Integer packNum, Integer type) {
         // 缓存记录

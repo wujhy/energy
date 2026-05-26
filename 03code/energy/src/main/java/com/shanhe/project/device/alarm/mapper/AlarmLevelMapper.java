@@ -5,6 +5,12 @@ import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
 
+/**
+ * 告警级别Mapper接口
+ *
+ * @author wjh
+ * @since 2026-05-25
+ */
 @Mapper
 public interface AlarmLevelMapper {
     /**

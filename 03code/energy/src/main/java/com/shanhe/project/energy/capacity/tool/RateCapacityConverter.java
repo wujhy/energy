@@ -7,6 +7,9 @@ import java.util.Map;
 
 /**
  * 转换器
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 public class RateCapacityConverter {
     // 铅酸电池典型Peukert常数

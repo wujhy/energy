@@ -10,8 +10,8 @@ import java.util.List;
 /**
  * 蓄电池组Mapper接口
  *
- * @author zhoubin
- * &#064;date  2024-08-29
+ * @author wjh
+ * @since 2024-08-29
  */
 @Mapper
 public interface BatteryPackMapper {

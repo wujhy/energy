@@ -8,6 +8,9 @@ import java.util.Map;
 
 /**
  * 电池预测组信息
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Data
 public class PreBatteryGroup implements Cloneable, Serializable {

@@ -7,7 +7,8 @@ import org.apache.ibatis.annotations.Param;
 /**
  * 组容量
  *
- * @author xuxw
+ * @author wjh
+ * @since 2026-05-25
  */
 @Mapper
 public interface PreBatteryGroupMapper {

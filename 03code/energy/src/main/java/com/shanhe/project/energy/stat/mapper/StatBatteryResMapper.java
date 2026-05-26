@@ -10,8 +10,8 @@ import java.util.List;
 /**
  * 单体内阻变化统计（内阻测试后）Mapper接口
  *
- * @author zhoubin
- * @date 2025-07-21
+ * @author wjh
+ * @since 2026-05-25
  */
 @Mapper
 public interface StatBatteryResMapper {

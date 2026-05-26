@@ -32,6 +32,9 @@ import java.util.Objects;
 
 /**
  * 设备控制类
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Service
 public class ControlBattery extends ControlBase {

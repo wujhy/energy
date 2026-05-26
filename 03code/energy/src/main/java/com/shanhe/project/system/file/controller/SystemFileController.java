@@ -16,8 +16,10 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * @author zhoubin
- * @date 2025/10/20
+ * 文件管理控制器
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Controller
 @RequestMapping("/file")

@@ -2,7 +2,12 @@ package com.shanhe.project.energy.stat.vo;
 
 import lombok.Data;
 
-// 修改为public类，以便其他包可以访问
+/**
+ * 评估因素
+ *
+ * @author wjh
+ * @since 2026-05-25
+ */
 @Data
 public class EvaluationFactors {
     // 名称

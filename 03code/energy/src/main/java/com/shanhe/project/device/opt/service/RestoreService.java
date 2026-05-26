@@ -3,8 +3,10 @@ package com.shanhe.project.device.opt.service;
 import com.shanhe.project.device.opt.vo.BatterySetVO;
 
 /**
- * @author zhoubin
- * @date 2025/10/14
+ * 复位服务
+ *
+ * @author wjh
+ * @since 2025/10/14
  */
 public interface RestoreService {
     /**

@@ -79,10 +79,29 @@ public class BatteryCollectorCommandService {
         return mapped(commandDefinition, channelName, moduleCommand, queueModuleCommand(channelName, moduleCommand));
     }
 
+    /**
+     * 执行单体内阻测试命令。
+     *
+     * @param channelName 通道名称
+     * @param batteryGroup 电池组编号
+     * @param batteryNumber 单体编号
+     * @param timeoutMs 超时时间
+     * @return 命令结果
+     */
     public BatteryCollectorCommandResult singleInternalResistanceTest(String channelName, int batteryGroup, int batteryNumber, Long timeoutMs) {
         return execute(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST, channelName, timeoutMs, batteryGroup, batteryNumber);
     }
 
+    /**
+     * 手动设置模块地址。
+     *
+     * @param channelName 通道名称
+     * @param batteryGroup 电池组编号
+     * @param moduleAddress 当前模块地址
+     * @param newModuleAddress 新模块地址
+     * @param timeoutMs 超时时间
+     * @return 命令结果
+     */
     public BatteryCollectorCommandResult manualSetSubmoduleAddress(String channelName,
                                                                    int batteryGroup,
                                                                    int moduleAddress,
@@ -106,10 +125,26 @@ public class BatteryCollectorCommandService {
                 queueModuleCommand(channelName, moduleCommand));
     }
 
+    /**
+     * 执行连接条电阻测试命令。
+     *
+     * @param channelName 通道名称
+     * @param batteryGroup 电池组编号
+     * @param timeoutMs 超时时间
+     * @return 命令结果
+     */
     public BatteryCollectorCommandResult connectResistanceTest(String channelName, int batteryGroup, Long timeoutMs) {
         return execute(BatteryAggregateCommandDefinition.CONNECT_RESISTANCE_TEST, channelName, timeoutMs, batteryGroup);
     }
 
+    /**
+     * 清除电池组调试数据。
+     *
+     * @param channelName 通道名称
+     * @param batteryGroup 电池组编号
+     * @param timeoutMs 超时时间
+     * @return 命令结果
+     */
     public BatteryCollectorCommandResult clearBatteryGroupDebugData(String channelName,
                                                                     int batteryGroup,
                                                                     Long timeoutMs) {
@@ -129,6 +164,16 @@ public class BatteryCollectorCommandService {
                 queueModuleCommand(channelName, moduleCommand));
     }
 
+    /**
+     * 执行自动编号命令。
+     *
+     * @param channelName 通道名称
+     * @param batteryGroup 电池组编号
+     * @param batteryCount 单体数量
+     * @param batterySpecification 电池规格（2V/12V）
+     * @param timeoutMs 超时时间
+     * @return 命令结果
+     */
     public BatteryCollectorCommandResult autoSetSubmoduleAddress(String channelName,
                                                                  int batteryGroup,
                                                                  int batteryCount,
@@ -156,6 +201,16 @@ public class BatteryCollectorCommandService {
                 queueModuleCommand(channelName, moduleCommand));
     }
 
+    /**
+     * 设置内阻系数。
+     *
+     * @param channelName 通道名称
+     * @param batteryGroup 电池组编号
+     * @param moduleAddress 模块地址
+     * @param coefficient 内阻系数
+     * @param timeoutMs 超时时间
+     * @return 命令结果
+     */
     public BatteryCollectorCommandResult setInternalResistanceCoefficient(String channelName,
                                                                           int batteryGroup,
                                                                           int moduleAddress,
@@ -181,6 +236,18 @@ public class BatteryCollectorCommandService {
                 queueModuleCommand(channelName, moduleCommand));
     }
 
+    /**
+     * 设置校准维护参数。
+     *
+     * @param channelName 通道名称
+     * @param batteryGroup 电池组编号
+     * @param moduleAddress 模块地址
+     * @param dataType 数据类型
+     * @param dataStatus 数据状态
+     * @param dataInfo 数据信息
+     * @param timeoutMs 超时时间
+     * @return 命令结果
+     */
     public BatteryCollectorCommandResult setCalibrationParameter(String channelName,
                                                                  int batteryGroup,
                                                                  int moduleAddress,
@@ -336,6 +403,7 @@ public class BatteryCollectorCommandService {
     }
 
     private int[] resistanceCoefficientToM460FloatBytes(int coefficient) {
+        // 16位无符号整数最大值，对应MCU端两字节寄存器
         if (coefficient < 0 || coefficient > 65535) {
             throw new IllegalArgumentException("内阻系数必须在0到65535之间");
         }
@@ -373,6 +441,7 @@ public class BatteryCollectorCommandService {
         batterySpecificationToVoltage(batterySpecification);
     }
 
+    // 电池规格: 2=2V单体, 8=12V(6节串联)
     private int batterySpecificationToVoltage(int batterySpecification) {
         switch (batterySpecification) {
             case 2:

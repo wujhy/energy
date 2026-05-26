@@ -16,6 +16,9 @@ import javax.annotation.Resource;
 
 /**
  * 设备消息处理服务。
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Service
 public class DeviceService {
@@ -30,14 +33,27 @@ public class DeviceService {
     @Resource
     private ClientReportService clientReportService;
 
+    /**
+     * 处理设备上线事件
+     *
+     * @param deviceData 设备数据
+     */
     public void tcpDeviceOnline(DeviceData deviceData) {
         logger.debug("tcp device online event ignored, cid={}, imei={}", deviceData.getCid(), deviceData.getImei());
     }
 
+    /**
+     * 处理设备离线事件
+     */
     public void tcpDeviceOffline() {
         logger.debug("tcp device offline event ignored");
     }
 
+    /**
+     * 处理设备上报数据
+     *
+     * @param deviceData 设备数据
+     */
     public void tcpDevice(DeviceData deviceData) {
         if (StrUtil.equals(deviceData.getCid(), TcpCidEnum._80.getDictValue())) {
             CommServer.returnCmd("00");

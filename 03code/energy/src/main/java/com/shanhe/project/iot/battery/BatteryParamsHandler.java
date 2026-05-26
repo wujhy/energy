@@ -24,6 +24,9 @@ import java.util.Objects;
 
 /**
  * 上传电池组报警参数
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Service
 public class BatteryParamsHandler {
@@ -541,6 +544,7 @@ public class BatteryParamsHandler {
         }
 
         //1111111111111111001111000011000011001100000011000000111100110000
+        // 每字节hex转binary后反转bit序，协议采用小端bit序表示报警使能位
         String paramFirStr = info.substring(2, 18);
         StringBuilder b1 = new StringBuilder();
         b1.append(new StringBuffer(CodingUtil.hexString2binaryString(paramFirStr.substring(0, 2))).reverse());

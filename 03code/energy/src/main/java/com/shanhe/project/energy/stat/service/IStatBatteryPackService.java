@@ -10,8 +10,8 @@ import java.util.Map;
 /**
  * 电池组统计Service接口
  *
- * @author zhoubin
- * @date 2025-07-15
+ * @author wjh
+ * @since 2026-05-25
  */
 public interface IStatBatteryPackService {
     /**

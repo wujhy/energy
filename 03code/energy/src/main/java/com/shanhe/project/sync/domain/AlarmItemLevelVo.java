@@ -7,6 +7,9 @@ import java.io.Serializable;
 
 /**
  * 告警级别
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Data
 @Accessors(chain = true)

@@ -33,8 +33,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * @author zhoubin
- * @date 2025/9/26
+ * 电池配置服务实现类
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Slf4j
 @Service

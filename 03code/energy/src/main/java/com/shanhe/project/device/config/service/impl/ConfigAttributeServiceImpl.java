@@ -61,6 +61,11 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         return configAttributeMapper.selectConfigAttributeByConfigAttrId(configAttrId);
     }
 
+    /**
+     * 查询默认设备属性列表
+     *
+     * @return 设备属性列表
+     */
     @Override
     public List<ConfigAttribute> selectDefaultDeviceAttributes() {
         return configAttributeMapper.selectByDefaultConfigId(Constants.DEFAULT_CONFIG_ID);
@@ -78,6 +83,12 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         return configAttributeMapper.selectConfigAttributeList(configAttribute);
     }
 
+    /**
+     * 查询设备属性视图列表（含告警状态）
+     *
+     * @param configAttribute 查询条件
+     * @return 设备属性视图列表
+     */
     @Override
     public List<ConfigAttributeVO> viewList(ConfigAttribute configAttribute) {
         List<ConfigAttribute> list = configAttributeMapper.selectConfigAttributeList(configAttribute);
@@ -98,12 +109,25 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         }).collect(Collectors.toList());
     }
 
+    /**
+     * 查询设备属性列表VO
+     *
+     * @param configAttribute 查询条件
+     * @return 设备属性列表
+     */
     @Override
     public List<ConfigAttributeListVO> selectList(ConfigAttribute configAttribute) {
         List<ConfigAttribute> list = configAttributeMapper.selectConfigAttributeList(configAttribute);
         return BeanUtil.copyToList(list, ConfigAttributeListVO.class);
     }
 
+    /**
+     * 新增设备属性
+     *
+     * @param configAttribute 设备属性
+     * @param isValid 是否校验名称编码唯一性
+     * @return 结果
+     */
     @Override
     public int insertConfigAttribute(ConfigAttribute configAttribute, boolean isValid)
     {
@@ -118,16 +142,33 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         return configAttributeMapper.insertConfigAttribute(configAttribute);
     }
 
+    /**
+     * 批量新增设备属性
+     *
+     * @param configAttributeList 设备属性列表
+     */
     @Override
     public void insertBatchConfigAttribute(List<ConfigAttribute> configAttributeList) {
         configAttributeMapper.insertBatchConfigAttribute(configAttributeList);
     }
 
+    /**
+     * 根据模板属性插入设备属性
+     *
+     * @param packNum 电池组编号
+     * @param model 单体规格型号
+     */
     @Override
     public void insertByTemplateAttribute(Integer packNum, Integer model) {
         configAttributeMapper.insertByTemplateAttribute(Constants.DEFAULT_CONFIG_ID, packNum, model);
     }
 
+    /**
+     * 修改设备属性
+     *
+     * @param configAttributeVO 设备属性
+     * @return 结果
+     */
     @Override
     public int updateConfigAttribute(ConfigAttribute configAttributeVO)
     {
@@ -168,6 +209,11 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         return 1;
     }
 
+    /**
+     * 同步更新设备属性（服务端同步）
+     *
+     * @param configAttribute 设备属性
+     */
     @Override
     public void updateConfigAttributeBySyn(ConfigAttribute configAttribute) {
         // 更新属性
@@ -176,6 +222,11 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         this.updateCache(configAttribute.getConfigAttrId(), true, false);
     }
 
+    /**
+     * 更新设备属性告警配置
+     *
+     * @param configAttribute 设备属性
+     */
     @Override
     public void updateConfigAttributeAlarm(ConfigAttribute configAttribute)
     {
@@ -196,6 +247,11 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         return configAttributeMapper.deleteConfigAttributeByConfigAttrIds(Convert.toStrArray(configAttrIds));
     }
 
+    /**
+     * 删除单个设备属性
+     *
+     * @param attribute 设备属性
+     */
     @Override
     public void deleteConfigAttribute(ConfigAttribute attribute)
     {
@@ -203,43 +259,86 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         configAttributeMapper.deleteConfigAttributeByConfigAttrId(attribute.getConfigAttrId());
     }
 
+    /**
+     * 删除默认设备所有属性
+     */
     @Override
     public void deleteDefaultDeviceAttributes() {
         configAttributeMapper.deleteConfigAttributeByConfigIds(new String[]{String.valueOf(Constants.DEFAULT_CONFIG_ID)});
     }
 
+    /**
+     * 根据电池组编号批量删除属性
+     *
+     * @param packNums 电池组编号列表
+     */
     @Override
     public void deleteConfigAttributeByPackNums(List<Integer> packNums) {
         configAttributeMapper.deleteConfigAttributeByPackNums(Constants.DEFAULT_CONFIG_ID, packNums);
     }
 
+    /**
+     * 导入设备属性
+     *
+     * @param attributeList 设备属性列表
+     */
     @Override
     public void importAttribute(List<ConfigAttribute> attributeList) {
         configAttributeMapper.importAttribute(attributeList);
     }
 
+    /**
+     * 根据电池组编号和属性编码查询属性
+     *
+     * @param packNum 电池组编号
+     * @param code 属性编码
+     * @return 设备属性
+     */
     @Override
     public ConfigAttribute getBy(Integer packNum, String code) {
         return configAttributeMapper.getBy(Constants.DEFAULT_CONFIG_ID, packNum, code);
     }
 
+    /**
+     * 从缓存获取设备属性
+     *
+     * @param packNum 电池组编号
+     * @param code 属性编码
+     * @return 设备属性
+     */
     @Override
     public ConfigAttribute getCacheBy(Integer packNum, String code) {
         String key = String.format(attributeCache.getKey(), Constants.DEFAULT_CONFIG_ID, packNum, code);
         return (ConfigAttribute) CacheUtils.get(attributeCache.getCache(), key);
     }
 
+    /**
+     * 从缓存获取默认设备属性
+     *
+     * @param code 属性编码
+     * @return 设备属性
+     */
     @Override
     public ConfigAttribute getCacheBy(String code) {
         return this.getCacheBy(null, code);
     }
 
+    /**
+     * 从缓存获取属性名称
+     *
+     * @param packNum 电池组编号
+     * @param code 属性编码
+     * @return 属性名称
+     */
     @Override
     public String getNameByCache(Integer packNum, String code) {
         ConfigAttribute configAttribute = this.getCacheBy(packNum, code);
         return configAttribute != null ? configAttribute.getName() : null;
     }
 
+    /**
+     * 更新设备属性缓存
+     */
     @Override
     public void updateCache() {
         // 属性键
@@ -262,6 +361,11 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         }
     }
 
+    /**
+     * 更新设备属性缓存
+     *
+     * @param isUpdate 是否更新，1-更新，0-删除
+     */
     @Override
     public void updateCache(Integer isUpdate) {
         ConfigAttribute configAttribute = new ConfigAttribute();
@@ -278,6 +382,11 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         }
     }
 
+    /**
+     * 获取缓存中所有设备属性列表
+     *
+     * @return 设备属性列表
+     */
     @Override
     public List<ConfigAttribute> cacheAttributeList() {
         List<ConfigAttribute> configList = new ArrayList<>();

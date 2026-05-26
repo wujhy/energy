@@ -3,8 +3,10 @@ package com.shanhe.project.system.user.domain;
 import lombok.Data;
 
 /**
- * @author zhoubin
- * @date 2025/9/17
+ * 登录请求对象
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Data
 public class LoginVo {

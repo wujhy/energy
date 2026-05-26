@@ -15,7 +15,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author Administrator
+ * 数据采集点服务实现类
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 @Service
 public class DataPointServiceImpl implements DataPointService {

@@ -5,8 +5,10 @@ import com.shanhe.project.energy.stat.vo.BatteryHealthReport;
 import java.util.Map;
 
 /**
- * @author zhoubin
- * @date 2025/9/26
+ * 电池配置服务接口
+ *
+ * @author wjh
+ * @since 2026-05-25
  */
 public interface IConfigurationBatteryService {
 
