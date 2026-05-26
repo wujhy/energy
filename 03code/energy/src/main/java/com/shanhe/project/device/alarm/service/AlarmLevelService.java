@@ -43,10 +43,25 @@ public interface AlarmLevelService {
      */
     void updateAlarmLevel(AlarmLevel alarmLevel);
 
+    /**
+     * 查询所有告警等级映射
+     *
+     * @return 告警等级Map
+     */
     Map<String, AlarmLevel> mapAll();
 
+    /**
+     * 获取告警等级缓存映射
+     *
+     * @return 告警等级Map
+     */
     Map<String, String> map();
 
+    /**
+     * 刷新告警等级缓存
+     *
+     * @return 告警等级列表
+     */
     List<AlarmLevel> refreshCache();
 
     /**

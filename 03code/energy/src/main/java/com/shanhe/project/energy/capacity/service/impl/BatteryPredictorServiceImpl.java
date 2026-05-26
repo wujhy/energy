@@ -37,6 +37,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 蓄电池预测服务实现类
@@ -74,7 +75,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         }
 
         // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
-        String batteryPackStatus = (String) oldPackParam.get("batteryPackStatus");
+        String batteryPackStatus = Objects.toString(oldPackParam.get("batteryPackStatus"), null);
         if (!StrUtil.equals("5", batteryPackStatus)) {
             return;
         }

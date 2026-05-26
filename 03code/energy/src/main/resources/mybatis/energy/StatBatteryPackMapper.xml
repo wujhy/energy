@@ -17,6 +17,7 @@
                 hydrogen_concentration as hydrogenConcentration
     </sql>
 
+    <!-- 查询电池包统计列表 -->
     <select id="selectList" parameterType="com.shanhe.project.energy.stat.domain.StatBatteryPack"
             resultType="com.shanhe.project.energy.stat.domain.StatBatteryPack">
         select
@@ -43,6 +44,7 @@
         order by create_time ${isAsc}
     </select>
 
+    <!-- 新增单条电池包统计 -->
     <insert id="insertOne">
         insert into stat_battery_pack (create_time,
                                        config_id,
@@ -67,6 +69,7 @@
     </insert>
 
 
+    <!-- 批量新增电池包统计 -->
     <insert id="insertList" parameterType="com.shanhe.project.energy.stat.domain.StatBatteryPack">
         insert into stat_battery_pack (
         id,
@@ -98,6 +101,7 @@
         </foreach>
     </insert>
 
+    <!-- 按配置ID删除电池包统计 -->
     <delete id="deleteByConfigId">
         delete
         from stat_battery_pack
@@ -107,6 +111,7 @@
         </if>
     </delete>
 
+    <!-- 查询平均电流 -->
     <select id="getAvgCurrent" resultType="java.lang.Double">
         select
         avg(t.pack_current) as current
@@ -131,6 +136,7 @@
         </where>
     </select>
 
+    <!-- 查询电池包统计数量 -->
     <select id="selectCount" parameterType="com.shanhe.project.energy.stat.domain.StatBatteryPack"
             resultType="java.lang.Long">
         select count()

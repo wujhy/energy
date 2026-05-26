@@ -36,6 +36,7 @@
     </sql>
 
 
+    <!-- 新增预试电池组记录 -->
     <insert id="insert">
         insert into pre_battery_group(id, config_id, pack_num, a_capacity, spec, min_voltage_num, start_time, end_time,
                                       current, b_capacity, back_up_duration, static_time, map_battery_data, soh)
@@ -43,6 +44,7 @@
                 #{current}, #{bcapacity}, #{backUpDuration}, #{staticTimeStr}, #{mapBatteryData}, #{soh})
     </insert>
 
+    <!-- 查询最新预试记录 -->
     <select id="selectLast" resultMap="PreBatteryGroupResult">
         select
         <include refid="selectDevAlarmConfigLevelVo"/>
@@ -53,6 +55,7 @@
         limit 1
     </select>
 
+    <!-- 按配置ID删除预试记录 -->
     <delete id="deleteByConfigId">
         delete from pre_battery_group where config_id = #{configId}
         <if test="packNum != null">

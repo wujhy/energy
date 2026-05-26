@@ -29,6 +29,7 @@
         from dev_alarm_level
     </sql>
 
+    <!-- 查询告警级别列表 -->
     <select id="selectAlarmLevelList" parameterType="com.shanhe.project.device.alarm.domain.AlarmLevel"
             resultType="com.shanhe.project.device.alarm.domain.AlarmLevel">
         <include refid="selectAlarmLevelVo"/>
@@ -43,12 +44,14 @@
         order by sort
     </select>
 
+    <!-- 按ID查询告警级别 -->
     <select id="selectAlarmLevelById" parameterType="Long"
             resultType="com.shanhe.project.device.alarm.domain.AlarmLevel">
         <include refid="selectAlarmLevelVo"/>
         where id = #{id}
     </select>
 
+    <!-- 插入告警级别 -->
     <insert id="insertAlarmLevel" parameterType="com.shanhe.project.device.alarm.domain.AlarmLevel">
         insert into dev_alarm_level (id,
                                  level_code,
@@ -91,6 +94,7 @@
                 datetime(CURRENT_TIMESTAMP,'localtime'))
     </insert>
 
+    <!-- 更新告警级别 -->
     <update id="updateAlarmLevel" parameterType="com.shanhe.project.device.alarm.domain.AlarmLevel">
         update dev_alarm_level
         set
@@ -152,6 +156,7 @@
         where id = #{id}
     </update>
 
+    <!-- 删除告警级别 -->
     <delete id="deleteById" parameterType="Long">
         delete from dev_alarm_level where id = #{id}
     </delete>

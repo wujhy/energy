@@ -20,6 +20,7 @@
                 create_time as createTime
     </sql>
 
+    <!-- 查询单体内阻列表 -->
     <select id="selectList" parameterType="com.shanhe.project.energy.stat.domain.DevBatteryMonomer"
             resultType="com.shanhe.project.energy.stat.domain.DevBatteryMonomer">
         select
@@ -28,6 +29,7 @@
         where pack_id = #{packId}
     </select>
 
+    <!-- 批量新增单体内阻 -->
     <insert id="insertList" >
         insert into dev_battery_monomer (
         pack_id ,
@@ -45,10 +47,12 @@
         </foreach>
     </insert>
 
+    <!-- 按包ID删除单体内阻 -->
     <delete id="deleteByPackId">
         delete from dev_battery_monomer where pack_id = #{packId}
     </delete>
 
+    <!-- 清空单体内阻表 -->
     <delete id="delete">
         delete from dev_battery_monomer
     </delete>

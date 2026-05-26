@@ -48,6 +48,11 @@ public interface OperLogMapper
      */
     public void cleanOperLog();
 
+    /**
+     * 删除指定月数之前的操作日志
+     *
+     * @param month 月数
+     */
     void deleteOperLog(Integer month);
 
     /**
@@ -55,5 +60,10 @@ public interface OperLogMapper
      */
     public void vacuum();
 
+    /**
+     * 执行SQL语句
+     *
+     * @param sql SQL语句
+     */
     void executeSql(@Param("sql") String sql);
 }

@@ -29,6 +29,7 @@
         from dev_alarm_log l
     </sql>
 
+    <!-- 查询告警日志列表 -->
     <select id="selectAlarmLogList" parameterType="com.shanhe.project.device.alarm.domain.AlarmLog" resultMap="AlarmLogResult">
         <include refid="selectAlarmLogVo"/>
         <where>
@@ -75,6 +76,7 @@
         order by l.status desc, l.alarm_id desc
     </select>
 
+    <!-- 查询所有告警日志 -->
     <select id="allAlarmLog" parameterType="com.shanhe.project.device.alarm.domain.AlarmLog" resultMap="AlarmLogResult">
         select
             l.alarm_id, l.config_id, l.pack_num, l.model_num, l.item_code, l.alarm_level, l.data_info, l.status, l.shied, l.shied_time, l.duration, l.remark, l.create_time, l.update_time
@@ -82,19 +84,23 @@
         WHERE l.status = 1 or (strftime('%Y-%m-%d %H:%M:%S', l.shied_time) &gt;= strftime('%Y-%m-%d %H:%M:%S', datetime(CURRENT_TIMESTAMP,'localtime'))) order by l.alarm_id desc
     </select>
 
+    <!-- 根据告警ID查询 -->
     <select id="selectAlarmLogByAlarmId" parameterType="Long" resultMap="AlarmLogResult">
         <include refid="selectAlarmLogVo"/>
         where l.alarm_id = #{alarmId}
     </select>
 
+    <!-- 查询告警设备数量 -->
     <select id="alarmDeviceNum" resultType="Long">
         select case when exists (select 1 from dev_alarm_log l where l.status = 1 and l.config_id = 1) then 1 else 0 end
     </select>
 
+    <!-- 查询全部告警数量 -->
     <select id="alarmAllNum" resultType="Long">
         select count(0) from dev_alarm_log l where l.status = 1 and l.config_id = 1
     </select>
 
+    <!-- 查询告警数量 -->
     <select id="alarmNum" parameterType="com.shanhe.project.device.alarm.domain.AlarmLog" resultType="Long">
         select count(0) from dev_alarm_log l
         <where>
@@ -131,6 +137,7 @@
         </where>
     </select>
 
+    <!-- 插入告警日志 -->
     <insert id="insertAlarmLog" parameterType="com.shanhe.project.device.alarm.domain.AlarmLog">
         insert into dev_alarm_log
         <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -159,6 +166,7 @@
         </trim>
     </insert>
 
+    <!-- 更新告警日志 -->
     <update id="updateAlarmLog" parameterType="com.shanhe.project.device.alarm.domain.AlarmLog">
         update dev_alarm_log
         <trim prefix="SET">
@@ -174,6 +182,7 @@
         where alarm_id = #{alarmId}
     </update>
 
+    <!-- 按配置ID批量删除 -->
     <delete id="deleteAlarmLogByConfigIds" parameterType="String">
         delete from dev_alarm_log where config_id in
         <foreach item="configId" collection="array" open="(" separator="," close=")">
@@ -181,10 +190,12 @@
         </foreach>
     </delete>
 
+    <!-- 根据告警ID删除 -->
     <delete id="deleteAlarmLogByAlarmId" parameterType="Long">
         delete from dev_alarm_log where alarm_id = #{alarmId}
     </delete>
 
+    <!-- 批量删除告警日志 -->
     <delete id="deleteAlarmLogByAlarmIds" parameterType="String">
         delete from dev_alarm_log where alarm_id in
         <foreach item="alarmId" collection="array" open="(" separator="," close=")">
@@ -192,6 +203,7 @@
         </foreach>
     </delete>
 
+    <!-- 条件清空告警日志 -->
     <delete id="clear">
         delete from dev_alarm_log
         <where>
@@ -201,10 +213,12 @@
         </where>
     </delete>
 
+    <!-- 删除所有告警日志 -->
     <delete id="deleteAll" parameterType="Long">
         delete from dev_alarm_log
     </delete>
 
+    <!-- 按配置和组号删除 -->
     <delete id="deleteAlarmLogByConfigIdPackNum">
         delete
         from dev_alarm_log

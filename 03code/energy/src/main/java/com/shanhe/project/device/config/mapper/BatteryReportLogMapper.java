@@ -17,6 +17,11 @@ public interface BatteryReportLogMapper {
      * 插入记录
      */
     void insert(BatteryReportLog batteryReportLog);
+    /**
+     * 批量插入上报日志
+     *
+     * @param list 上报日志列表
+     */
     void insertList(List<BatteryReportLog> list);
 
     /**

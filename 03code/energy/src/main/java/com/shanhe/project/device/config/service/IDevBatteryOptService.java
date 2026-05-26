@@ -43,6 +43,12 @@ public interface IDevBatteryOptService {
      */
     void insertDevBatteryOpt(DevBatteryOpt devBatteryOpt);
 
+    /**
+     * 批量插入蓄电池测试参数
+     *
+     * @param devBatteryOpts 测试参数列表
+     * @return 结果
+     */
     int insertDevBatteryOptList(List<DevBatteryOpt> devBatteryOpts);
 
     /**

@@ -4,6 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.shanhe.project.collector.battery.mapper.BatteryModuleFrameLogMapper">
 
+    <!-- 新增模块帧日志记录 -->
     <insert id="insertOne" parameterType="com.shanhe.project.collector.battery.model.BatteryModuleFrameLog">
         insert into battery_module_frame_log (
             create_time,

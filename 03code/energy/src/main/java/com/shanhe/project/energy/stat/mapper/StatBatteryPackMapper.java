@@ -31,6 +31,11 @@ public interface StatBatteryPackMapper {
 
     void insertOne(StatBatteryPack statBatteryPack);
 
+    /**
+     * 批量插入电池组统计数据
+     *
+     * @param statBatteryPack 统计数据列表
+     */
     void insertList(@Param("list") List<StatBatteryPack> statBatteryPack);
 
     /**
@@ -40,18 +45,18 @@ public interface StatBatteryPackMapper {
      */
     void deleteByConfigId(@Param("configId") Long configId, @Param("packNum") Integer packNum);
     /**
-     * 获取平均电流
+     * 查询电池组平均电流
      *
-     * @param param
-     * @return
+     * @param param 查询条件
+     * @return 平均电流
      */
     Double getAvgCurrent(StatBatteryBat param);
 
     /**
-     * 获取数量
+     * 查询统计数据条数
      *
-     * @param params
-     * @return
+     * @param params 查询条件
+     * @return 条数
      */
     Long selectCount(StatBatteryPack params);
 }

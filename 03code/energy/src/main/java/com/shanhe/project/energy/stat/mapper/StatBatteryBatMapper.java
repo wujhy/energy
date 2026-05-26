@@ -47,6 +47,16 @@ public interface StatBatteryBatMapper {
      */
     void deleteByConfigId(@Param("configId") Long configId, @Param("packNum") Integer packNum);
 
+    /**
+     * 查询单体数据点列表
+     *
+     * @param configId 配置ID
+     * @param packNum 电池组编号
+     * @param batNum 单体编号
+     * @param startDateTime 开始时间
+     * @param endDateTime 结束时间
+     * @return 数据点列表
+     */
     List<DataPoint> selectDataPointList(@Param("configId") Long configId, @Param("packNum") Integer packNum,
                                         @Param("batNum") Integer batNum,
                                         @Param("startDateTime") String startDateTime, @Param("endDateTime") String endDateTime);

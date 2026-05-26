@@ -57,7 +57,8 @@ public class SoundWarnJob {
                 return;
             }
 
-            Integer cacheAlarm = (Integer) CacheUtils.get(warnCache.getCache(), warnCache.getKey());
+            Object cacheObj = CacheUtils.get(warnCache.getCache(), warnCache.getKey());
+            Integer cacheAlarm = cacheObj instanceof Integer ? (Integer) cacheObj : null;
             Integer isAlarm = alarmLogService.isAlarm();
             // 数据相同，避免重复下发指令
             if (Objects.equals(cacheAlarm, isAlarm)) {

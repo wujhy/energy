@@ -135,5 +135,13 @@ public interface ConfigAttributeMapper
      */
     void importAttribute(List<ConfigAttribute> attributeList);
 
+    /**
+     * 根据配置ID、电池组编号和属性编码查询
+     *
+     * @param configId 配置ID
+     * @param packNum 电池组编号
+     * @param code 属性编码
+     * @return 配置属性
+     */
     ConfigAttribute getBy(@Param("configId") Long configId, @Param("packNum") Integer packNum, @Param("code") String code);
 }

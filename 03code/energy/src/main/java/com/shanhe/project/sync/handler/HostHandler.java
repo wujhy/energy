@@ -54,7 +54,7 @@ public class HostHandler {
             throw new ServiceException("token不能为空");
         }
         if (!Objects.equals(request.getValidType(), YesNoEnum.YES.getDictValue())) {
-            if (!StrUtil.equals(request.getToken(), (String) CacheUtils.get(tokenCache.getCache(), tokenCache.getKey()))) {
+            if (!StrUtil.equals(request.getToken(), Objects.toString(CacheUtils.get(tokenCache.getCache(), tokenCache.getKey()), null))) {
                 throw new ServiceException("token验证失败");
             }
         }

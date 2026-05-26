@@ -20,6 +20,7 @@
                 bat_num as batNum ,
                 resistance as resistance
     </sql>
+    <!-- 查询内阻统计列表 -->
     <select id="selectList" parameterType="com.shanhe.project.energy.stat.domain.StatBatteryRes"
             resultType="com.shanhe.project.energy.stat.domain.StatBatteryRes">
         select
@@ -39,6 +40,7 @@
         order by create_time desc
     </select>
 
+    <!-- 批量新增内阻统计 -->
     <insert id="insertList">
         insert into stat_battery_res (
         create_time ,
@@ -58,6 +60,7 @@
         </foreach>
     </insert>
 
+    <!-- 按配置ID删除内阻统计 -->
     <delete id="deleteByConfigId">
         delete from stat_battery_res where config_id = #{configId}
         <if test="packNum != null">

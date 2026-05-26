@@ -41,6 +41,7 @@
         battery.is_show_connect
     </sql>
 
+    <!-- 根据配置ID查询电池组列表 -->
     <select id="selectBatteryPackListByConfigId" resultMap="BatteryPackResult">
         select
         <include refid="selectBatteryPackVo"/>
@@ -56,6 +57,7 @@
         order by battery.pack_num
     </select>
 
+    <!-- 根据电池组编号查询电池组信息 -->
     <select id="selectBatteryInfoByPackNum" resultMap="BatteryPackResult">
         select
         <include refid="selectBatteryPackVo"/>
@@ -63,6 +65,7 @@
         where config_id = #{configId} and pack_num = #{packNum} order by create_time desc limit 1
     </select>
 
+    <!-- 新增电池组 -->
     <insert id="insertBatteryPack" parameterType="com.shanhe.project.device.config.domain.BatteryPack">
         insert into dev_battery_pack
         <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -153,6 +156,7 @@
         </trim>
     </insert>
 
+    <!-- 批量导入电池组(INSERT OR REPLACE) -->
     <insert id="importBatteryPack" parameterType="com.shanhe.project.device.config.domain.BatteryPack">
         INSERT OR REPLACE INTO dev_battery_pack (
         pack_id,
@@ -192,6 +196,7 @@
         </foreach>
     </insert>
 
+    <!-- 更新电池组 -->
     <update id="update" parameterType="com.shanhe.project.device.config.domain.BatteryPack">
         update dev_battery_pack SET
         <if test="batBrand != null and batBrand != ''">
@@ -231,6 +236,7 @@
         where pack_id = #{packId}
     </update>
 
+    <!-- 根据电池组主键查询 -->
     <select id="selectBatteryPackByPackId" parameterType="Long" resultMap="BatteryPackResult">
         select
         <include refid="selectBatteryPackVo"/>
@@ -238,6 +244,7 @@
         where battery.pack_id = #{packId}
     </select>
 
+    <!-- 根据配置ID批量查询电池组 -->
     <select id="selectBatteryPackByConfigIds" resultMap="BatteryPackResult">
         select
         <include refid="selectBatteryPackVo"/>
@@ -248,6 +255,7 @@
         </foreach>
     </select>
 
+    <!-- 按条件查询电池组列表 -->
     <select id="selectBatteryPackList" parameterType="com.shanhe.project.device.config.domain.BatteryPack"
             resultMap="BatteryPackResult">
         select
@@ -284,6 +292,7 @@
         </where>
     </select>
 
+    <!-- 查询所有电池组 -->
     <select id="selectAllBattery" parameterType="com.shanhe.project.device.config.domain.BatteryPack"
             resultMap="BatteryPackResult">
         select
@@ -291,6 +300,7 @@
         from dev_battery_pack battery
     </select>
 
+    <!-- 根据配置ID批量删除电池组 -->
     <delete id="deleteByConfigIds">
         delete from dev_battery_pack where config_id in
         <foreach item="configId" collection="configIds" open="(" separator="," close=")">
@@ -298,6 +308,7 @@
         </foreach>
     </delete>
 
+    <!-- 根据电池组ID批量删除 -->
     <delete id="deleteBatteryPackByBatPackIds">
         delete from dev_battery_pack where pack_id in
         <foreach item="packId" collection="packIds" open="(" separator="," close=")">
@@ -305,6 +316,7 @@
         </foreach>
     </delete>
 
+    <!-- 根据电池组ID批量查询 -->
     <select id="selectBatteryPackByPackIds" resultMap="BatteryPackResult">
         select
         <include refid="selectBatteryPackVo"/>
@@ -315,6 +327,7 @@
         </foreach>
     </select>
 
+    <!-- 获取电池组最大单体数量 -->
     <select id="getBatteryMaxNumber" resultType="java.lang.Integer">
         select bat_sin_size
         from dev_battery_pack battery

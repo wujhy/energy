@@ -9,6 +9,7 @@ import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 服务端解码
@@ -34,7 +35,7 @@ public class CommServerDecoder {
         int dataLen;
         try {
             // 存在粘包数据，先拼接数据
-            String stickyBag = (String) CacheUtils.get(stickyCache.getCache(), stickyCache.getKey());
+            String stickyBag = Objects.toString(CacheUtils.get(stickyCache.getCache(), stickyCache.getKey()), null);
             if (StrUtil.isNotBlank(stickyBag)) {
                 CacheUtils.remove(stickyCache.getCache(), stickyCache.getKey());
                 reqStr = stickyBag + reqStr;

@@ -31,5 +31,8 @@ public interface HostMapper
      */
     void delete();
 
+    /**
+     * 插入主机信息
+     */
     void inset();
 }

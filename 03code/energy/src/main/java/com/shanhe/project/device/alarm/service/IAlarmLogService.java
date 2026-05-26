@@ -217,6 +217,9 @@ public interface IAlarmLogService
      */
     void export(AlarmLog alarmLog);
 
+    /**
+     * 删除所有告警日志
+     */
     void deleteALL();
 
     /**

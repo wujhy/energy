@@ -150,7 +150,7 @@ public class ControlBattery extends ControlBase {
 
             // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
             Map<String, Object> packParam = batteryReportLog.getPackParam();
-            String batteryPackStatus = packParam != null ? (String) packParam.get("batteryPackStatus") : null;
+            String batteryPackStatus = packParam != null ? Objects.toString(packParam.get("batteryPackStatus"), null) : null;
             if (!StrUtil.equals("6", batteryPackStatus)) {
                 return AjaxResult.error("电池组处于非空闲状态，不允许测试！", 0);
             }
@@ -253,7 +253,7 @@ public class ControlBattery extends ControlBase {
             }
 
             // 当前不在内阻测试状态
-            String resistanceTestStatus = (String) batteryReportLog.getPackParam().get("resistanceTestStatus");
+            String resistanceTestStatus = Objects.toString(batteryReportLog.getPackParam().get("resistanceTestStatus"), null);
             if (!StrUtil.equals("6", resistanceTestStatus)) {
                 optLogService.doStopTest(opt.getPackNum(), BatteryTestEnum._1.getDictValue());
                 return AjaxResult.success();

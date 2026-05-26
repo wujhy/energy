@@ -16,6 +16,7 @@
                 bcapacity as bcapacity
     </sql>
 
+    <!-- 按包ID查询单体统计 -->
     <select id="selectListByPackIds" resultType="com.shanhe.project.energy.stat.domain.StatBatteryBat">
         select
         <include refid="selectStatBatteryVo"/>
@@ -40,6 +41,7 @@
         </where>
     </select>
 
+    <!-- 批量新增单体统计 -->
     <insert id="insertList" parameterType="com.shanhe.project.energy.stat.domain.StatBatteryBat">
         insert into stat_battery_bat (
         pack_id ,
@@ -67,6 +69,7 @@
         </foreach>
     </insert>
 
+    <!-- 查询单体统计列表 -->
     <select id="selectList" resultType="com.shanhe.project.energy.stat.domain.StatBatteryBat">
         select
         <include refid="selectStatBatteryVo"/>
@@ -95,6 +98,7 @@
         order by create_time ${isAsc}
     </select>
 
+    <!-- 查询单体数据点列表 -->
     <select id="selectDataPointList" resultType="com.shanhe.project.energy.capacity.vo.DataPoint">
         select
         <include refid="selectStatBatteryVo"/>
@@ -122,6 +126,7 @@
         order by create_time asc
     </select>
 
+    <!-- 按配置ID删除单体统计 -->
     <delete id="deleteByConfigId">
         delete from stat_battery_bat where config_id = #{configId}
         <if test="packNum != null">

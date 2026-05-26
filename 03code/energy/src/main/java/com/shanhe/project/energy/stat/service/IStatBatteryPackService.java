@@ -17,6 +17,7 @@ public interface IStatBatteryPackService {
     /**
      * 查询电池组统计列表
      *
+     * @param statBatteryPack 查询条件
      * @return 电池组统计集合
      */
     List<StatBatteryPack> selectList(StatBatteryPack statBatteryPack);
@@ -24,6 +25,9 @@ public interface IStatBatteryPackService {
     /**
      * 新增电池组统计
      *
+     * @param packNum 电池组编号
+     * @param packMap 电池组参数
+     * @param batteryList 单体数据
      */
     void insertList(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList);
 

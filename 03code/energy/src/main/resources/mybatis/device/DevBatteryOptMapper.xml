@@ -21,6 +21,7 @@
         update_time as updateTime
     </sql>
 
+    <!-- 查询电池测试列表 -->
     <select id="selectDevBatteryOptList" parameterType="com.shanhe.project.device.config.domain.DevBatteryOpt"
             resultType="com.shanhe.project.device.config.domain.DevBatteryOpt">
         select
@@ -63,6 +64,7 @@
         </where>
     </select>
 
+    <!-- 按ID查询测试配置 -->
     <select id="selectDevBatteryOptByOptId" parameterType="Long"
         resultType="com.shanhe.project.device.config.domain.DevBatteryOpt">
         select
@@ -71,6 +73,7 @@
         where opt_id = #{optId}
     </select>
 
+    <!-- 插入电池测试配置 -->
     <insert id="insertDevBatteryOpt" parameterType="com.shanhe.project.device.config.domain.DevBatteryOpt">
         insert into dev_battery_opt
         <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -155,6 +158,7 @@
         </trim>
     </insert>
 
+    <!-- 批量插入测试配置 -->
     <insert id="insertDevBatteryOptList" >
         insert into dev_battery_opt (
             opt_id ,
@@ -193,6 +197,7 @@
 
     </insert>
 
+    <!-- 更新电池测试配置 -->
     <update id="updateDevBatteryOpt" parameterType="com.shanhe.project.device.config.domain.DevBatteryOpt">
         update dev_battery_opt
         <trim prefix="SET" suffixOverrides=",">
@@ -234,10 +239,12 @@
         where opt_id = #{optId}
     </update>
 
+    <!-- 按ID删除测试配置 -->
     <delete id="deleteDevBatteryOptByOptId" parameterType="Long">
         delete from dev_battery_opt where opt_id = #{optId}
     </delete>
 
+    <!-- 批量删除测试配置 -->
     <delete id="deleteDevBatteryOptByOptIds" parameterType="String">
         delete from dev_battery_opt where opt_id in
         <foreach item="optId" collection="optIds" open="(" separator="," close=")">
@@ -245,6 +252,7 @@
         </foreach>
     </delete>
 
+    <!-- 按配置ID删除 -->
     <delete id="deleteByConfigId">
         delete from dev_battery_opt where config_id = #{configId}
         <if test="packNum != null">

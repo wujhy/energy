@@ -110,7 +110,7 @@ public class OptLogServiceImpl implements OptLogService {
 
     private void batteryTest(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
         // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
-        String batteryPackStatus = (String) packMap.get("batteryPackStatus");
+        String batteryPackStatus = Objects.toString(packMap.get("batteryPackStatus"), null);
         Integer type = getTestType(batteryPackStatus);
 
         // 缓存记录
@@ -233,7 +233,7 @@ public class OptLogServiceImpl implements OptLogService {
      */
     private void resistanceTest(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
         // 0表示不在内阻测试、6表示正在内阻测试、7表示内阻测试正常结束、8表示内阻测试异常结束
-        String resistanceTestStatus = (String) packMap.get("resistanceTestStatus");
+        String resistanceTestStatus = Objects.toString(packMap.get("resistanceTestStatus"), null);
 
         // 缓存记录
         String cacheKey = String.format(logCache.getKey(), packNum, 0);

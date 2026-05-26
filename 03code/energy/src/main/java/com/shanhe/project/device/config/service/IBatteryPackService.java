@@ -28,6 +28,12 @@ public interface IBatteryPackService
      */
     List<BatteryPack> selectBatteryPackList(Integer isEnabled);
 
+    /**
+     * 从缓存查询电池组列表
+     *
+     * @param isEnabled 是否启用
+     * @return 电池组列表
+     */
     List<BatteryPack> selectBatteryPackListCache(Integer isEnabled);
 
     /**

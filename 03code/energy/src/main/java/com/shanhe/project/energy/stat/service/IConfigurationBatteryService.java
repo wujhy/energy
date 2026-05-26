@@ -14,16 +14,25 @@ public interface IConfigurationBatteryService {
 
     /**
      * 获取健康报告
+     *
+     * @param packNum 电池组编号
+     * @return 健康报告
      */
     BatteryHealthReport getBatteryHealthReport(Integer packNum);
 
     /**
      * 获取温度报警线
+     *
+     * @param packNum 电池组编号
+     * @return 温度告警线
      */
     Map<String, Object> getTempWarnLine(Integer packNum);
 
     /**
      * 获取内阻报警线
+     *
+     * @param packNum 电池组编号
+     * @return 内阻告警线
      */
     Map<String, Object> getResWarnLine(Integer packNum);
 }

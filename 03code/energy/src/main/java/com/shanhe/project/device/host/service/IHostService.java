@@ -56,11 +56,15 @@ public interface IHostService
 
     /**
      * 修改主机数据删除时间
+     *
+     * @param cleanLogDays 日志清理天数
      */
     void updateCleanLogDays(Integer cleanLogDays);
 
     /**
      * 同步服务器时间
+     *
+     * @param datetime 服务器时间
      */
     void syncServerTime(String datetime);
 
@@ -71,8 +75,18 @@ public interface IHostService
      */
     void updateReportIp(Host host);
 
+    /**
+     * 更新主机扩展信息
+     *
+     * @param map 扩展信息
+     */
     void updateExtend(Map<String, Object> map);
 
+    /**
+     * 获取主机扩展信息
+     *
+     * @return 扩展信息Map
+     */
     Map<String, Object> getExtend();
 
     /**

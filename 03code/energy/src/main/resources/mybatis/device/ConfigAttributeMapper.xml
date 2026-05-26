@@ -41,6 +41,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                prot_value, val0, val1, is_linear, min_orig_range, min_target_range, max_orig_range, max_target_range, spk, spb, level_list from dev_config_attribute
     </sql>
 
+    <!-- 查询配置属性列表 -->
     <select id="selectConfigAttributeList" parameterType="com.shanhe.project.device.config.domain.ConfigAttribute" resultMap="ConfigAttributeResult">
         <include refid="selectConfigAttributeVo"/>
         <where>  
@@ -62,22 +63,26 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by status, sort
     </select>
 
+    <!-- 查询默认配置属性 -->
     <select id="configAttributeList" resultMap="ConfigAttributeResult">
         <include refid="selectConfigAttributeVo"/>
         where config_id = 1 and status = 0
     </select>
 
+    <!-- 按配置ID查询 -->
     <select id="selectByDefaultConfigId" parameterType="Long" resultMap="ConfigAttributeResult">
         <include refid="selectConfigAttributeVo"/>
         where config_id = #{configId}
         order by sort
     </select>
 
+    <!-- 按属性ID查询 -->
     <select id="selectConfigAttributeByConfigAttrId" parameterType="Long" resultMap="ConfigAttributeResult">
         <include refid="selectConfigAttributeVo"/>
         where config_attr_id = #{configAttrId}
     </select>
 
+    <!-- 校验属性名称唯一 -->
     <select id="hasName" parameterType="com.shanhe.project.device.config.domain.ConfigAttribute" resultType="Long">
         SELECT count(0) FROM dev_config_attribute
         WHERE (name = #{name} OR code = #{code}) AND config_id = #{configId}
@@ -85,6 +90,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <if test="configAttrId != null "> and config_attr_id != #{configAttrId}</if>
     </select>
 
+    <!-- 插入配置属性 -->
     <insert id="insertConfigAttribute" parameterType="com.shanhe.project.device.config.domain.ConfigAttribute">
         insert into dev_config_attribute
         <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -153,6 +159,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
          </trim>
     </insert>
 
+    <!-- 批量插入配置属性 -->
     <insert id="insertBatchConfigAttribute">
         insert into dev_config_attribute
         (config_attr_id, config_id, pack_num, code, name, value, unit, point, type, sort, track, list_display, screen_display, pack, status, alarm, alarm_config,
@@ -164,6 +171,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </insert>
 
+    <!-- 从模板导入属性 -->
     <insert id="insertByTemplateAttribute">
         insert into dev_config_attribute
         (config_id, pack_num, code, name, unit, point, type, sort, track, list_display, screen_display, pack, status, alarm_config,
@@ -176,6 +184,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by sort
     </insert>
 
+    <!-- 导入配置属性 -->
     <insert id="importAttribute">
         INSERT OR REPLACE INTO dev_config_attribute
         (config_attr_id, config_id, pack_num, code, name, value, unit, point, type, sort, track, list_display, screen_display, pack, status, alarm, alarm_config, remark, create_time)
@@ -185,6 +194,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </insert>
 
+    <!-- 更新配置属性 -->
     <update id="updateConfigAttribute" parameterType="com.shanhe.project.device.config.domain.ConfigAttribute">
         update dev_config_attribute
         <trim prefix="SET" suffixOverrides=",">
@@ -220,6 +230,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where config_attr_id = #{configAttrId}
     </update>
 
+    <!-- 更新属性值和告警 -->
     <update id="updateBy" parameterType="String">
         update dev_config_attribute
         <trim prefix="SET" suffixOverrides=",">
@@ -229,10 +240,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where config_attr_id = #{configAttrId}
     </update>
 
+    <!-- 按属性ID删除 -->
     <delete id="deleteConfigAttributeByConfigAttrId" parameterType="Long">
         delete from dev_config_attribute where config_attr_id = #{configAttrId}
     </delete>
 
+    <!-- 批量删除配置属性 -->
     <delete id="deleteConfigAttributeByConfigAttrIds" parameterType="String">
         delete from dev_config_attribute where config_attr_id in 
         <foreach item="configAttrId" collection="array" open="(" separator="," close=")">
@@ -240,6 +253,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </delete>
 
+    <!-- 按配置ID批量删除 -->
     <delete id="deleteConfigAttributeByConfigIds" parameterType="String">
         delete from dev_config_attribute where config_id in
         <foreach item="configId" collection="array" open="(" separator="," close=")">
@@ -247,6 +261,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </delete>
 
+    <!-- 按组号批量删除 -->
     <delete id="deleteConfigAttributeByPackNums" parameterType="String">
         delete from dev_config_attribute where config_id = #{configId} and pack_num in
         <foreach item="packNum" collection="packNums" open="(" separator="," close=")">
@@ -254,6 +269,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </delete>
 
+    <!-- 按编码和配置ID查询 -->
     <select id="getBy" resultMap="ConfigAttributeResult">
         <include refid="selectConfigAttributeVo"/>
         WHERE code = #{code} AND config_id = #{configId}

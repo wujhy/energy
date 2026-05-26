@@ -18,6 +18,7 @@
         id,config_id,pack_num,pack_data,monitor_data,extend_data,create_time
     </sql>
 
+    <!-- 插入电池上报日志 -->
     <insert id="insert">
         insert into dev_battery_report_log
         (config_id,pack_num,pack_data,monitor_data,extend_data,create_time)
@@ -25,6 +26,7 @@
             (#{configId},#{packNum},#{packData},#{monitorData},#{extendData},datetime(CURRENT_TIMESTAMP,'localtime'))
     </insert>
 
+    <!-- 批量插入上报日志 -->
     <insert id="insertList">
         insert into dev_battery_report_log
         (config_id,pack_num,pack_data,monitor_data,extend_data,create_time)
@@ -34,6 +36,7 @@
         </foreach>
     </insert>
 
+    <!-- 查询最新上报日志 -->
     <select id="selectLast" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
@@ -43,6 +46,7 @@
         limit 1
     </select>
 
+    <!-- 查询上报日志列表 -->
     <select id="selectBatteryReportLog" parameterType="com.shanhe.project.device.config.domain.BatteryReportLog" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
@@ -60,6 +64,7 @@
         order by id desc
     </select>
 
+    <!-- 批量删除上报日志 -->
     <delete id="deleteByIds">
         delete from dev_battery_report_log where id in
         <foreach item="id" collection="ids" open="(" separator="," close=")">
@@ -67,10 +72,12 @@
         </foreach>
     </delete>
 
+    <!-- 按天数删除日志 -->
     <delete id="deleteByDays" parameterType="Integer">
         delete from dev_battery_report_log where create_time &lt;= DATE('now', '-${dayNum} day', 'localtime')
     </delete>
 
+    <!-- 按配置ID删除 -->
     <delete id="deleteByConfigId">
         delete from dev_battery_report_log where config_id = #{configId}
         <if test="packNum != null ">
@@ -78,6 +85,7 @@
         </if>
     </delete>
 
+    <!-- 统计上报日志数量 -->
     <select id="selectCount" resultType="java.lang.Long">
         select
         count()

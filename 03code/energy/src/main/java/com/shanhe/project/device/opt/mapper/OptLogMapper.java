@@ -59,10 +59,12 @@ public interface OptLogMapper {
                        @Param("current") Double current, @Param("endTimeStr") String endTimeStr);
 
     /**
-     * 查询设备是否在执行
-     * @param configId
-     * @param type
-     * @return
+     * 查询正在运行的操作日志
+     *
+     * @param configId 配置ID
+     * @param packNum 电池组编号
+     * @param type 测试类型
+     * @return 操作日志
      */
     OptLog getRunningOptLog(@Param("configId") Long configId, @Param("packNum") Integer packNum, @Param("type") Integer type);
 
@@ -76,5 +78,11 @@ public interface OptLogMapper {
      */
     OptLog lastByType(@Param("configId") Long configId, @Param("packNum") Integer packNum, @Param("type") Integer type);
 
+    /**
+     * 根据配置ID和电池组编号删除操作日志
+     *
+     * @param configId 配置ID
+     * @param packNum 电池组编号
+     */
     void deleteByConfigIdPackNum(@Param("configId") Long configId, @Param("packNum") Integer packNum);
 }

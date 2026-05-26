@@ -207,7 +207,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
                                         BatteryReportLog batteryReportLog) {
         try {
             if (batteryReportLog != null && batteryReportLog.getPackParam() != null) {
-                String backupDurationStr = (String) batteryReportLog.getPackParam().get("backupDuration");
+                String backupDurationStr = Objects.toString(batteryReportLog.getPackParam().get("backupDuration"), null);
                 if (backupDurationStr != null) {
                     batteryHealthReport.setBackupDuration(Integer.parseInt(backupDurationStr));
                 }
@@ -430,7 +430,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         }
 
         // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
-        String batteryPackStatus = (String) oldInfo.getPackParam().get("batteryPackStatus");
+        String batteryPackStatus = Objects.toString(oldInfo.getPackParam().get("batteryPackStatus"), null);
         if (!StrUtil.equals("6", batteryPackStatus)) {
             return batteryPack.getVoltageRange();
         }

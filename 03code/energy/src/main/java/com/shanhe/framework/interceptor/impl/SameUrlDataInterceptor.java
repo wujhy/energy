@@ -2,6 +2,7 @@ package com.shanhe.framework.interceptor.impl;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import org.springframework.stereotype.Component;
@@ -65,9 +66,9 @@ public class SameUrlDataInterceptor extends BaseRepeatSubmitInterceptor
      */
     private boolean compareParams(Map<String, Object> nowMap, Map<String, Object> preMap)
     {
-        String nowParams = (String) nowMap.get(REPEAT_PARAMS);
-        String preParams = (String) preMap.get(REPEAT_PARAMS);
-        return nowParams.equals(preParams);
+        String nowParams = Objects.toString(nowMap.get(REPEAT_PARAMS), null);
+        String preParams = Objects.toString(preMap.get(REPEAT_PARAMS), null);
+        return Objects.equals(nowParams, preParams);
     }
 
     /**
@@ -75,8 +76,8 @@ public class SameUrlDataInterceptor extends BaseRepeatSubmitInterceptor
      */
     private boolean compareTime(Map<String, Object> nowMap, Map<String, Object> preMap, int interval)
     {
-        long time1 = (Long) nowMap.get(REPEAT_TIME);
-        long time2 = (Long) preMap.get(REPEAT_TIME);
+        long time1 = nowMap.get(REPEAT_TIME) instanceof Number ? ((Number) nowMap.get(REPEAT_TIME)).longValue() : 0L;
+        long time2 = preMap.get(REPEAT_TIME) instanceof Number ? ((Number) preMap.get(REPEAT_TIME)).longValue() : 0L;
         if ((time1 - time2) < interval)
         {
             return true;

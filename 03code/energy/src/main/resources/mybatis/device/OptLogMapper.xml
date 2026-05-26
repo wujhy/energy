@@ -22,11 +22,13 @@
         id,config_id,pack_num,type,content,result,create_time,update_time,bcapacity,current,discharge_capacity
     </sql>
 
+    <!-- 插入操作日志 -->
     <insert id="insert">
         insert into dev_opt_log (id,config_id,pack_num,type,content,result,create_time)
         values (#{id},#{configId},#{packNum},#{type},#{content},#{result},#{createTimeStr})
     </insert>
 
+    <!-- 更新操作结果 -->
     <update id="update">
         update dev_opt_log
         set result      = #{result},
@@ -34,6 +36,7 @@
         where id = #{id}
     </update>
 
+    <!-- 查询操作日志列表 -->
     <select id="select" parameterType="com.shanhe.project.device.opt.domain.OptLog" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
@@ -53,6 +56,7 @@
         order by id desc
     </select>
 
+    <!-- 批量删除操作日志 -->
     <delete id="deleteByIds">
         delete from dev_opt_log where id in
         <foreach item="id" collection="ids" open="(" separator="," close=")">
@@ -60,6 +64,7 @@
         </foreach>
     </delete>
 
+    <!-- 按配置ID删除 -->
     <delete id="deleteByConfigIds">
         delete from dev_opt_log where config_id in
         <foreach item="id" collection="configIds" open="(" separator="," close=")">
@@ -67,12 +72,14 @@
         </foreach>
     </delete>
 
+    <!-- 查询运行中日志 -->
     <select id="findRunningList" parameterType="com.shanhe.project.device.opt.domain.OptLog" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
         from dev_opt_log where result is null order by create_time desc
     </select>
 
+    <!-- 更新电池参数 -->
     <update id="updateBattery">
         update dev_opt_log
         set
@@ -90,6 +97,7 @@
     </update>
 
 
+    <!-- 获取运行中日志 -->
     <select id="getRunningOptLog" parameterType="com.shanhe.project.device.opt.domain.OptLog" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
@@ -101,6 +109,7 @@
         limit 1
     </select>
 
+    <!-- 统计操作日志数量 -->
     <select id="count" resultType="java.lang.Integer">
         select count(1) from dev_opt_log
         <where>
@@ -119,6 +128,7 @@
         </where>
     </select>
 
+    <!-- 查询最近操作日志 -->
     <select id="lastByType" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
@@ -130,6 +140,7 @@
         limit 1
     </select>
 
+    <!-- 按配置和组号删除 -->
     <delete id="deleteByConfigIdPackNum">
         delete from dev_opt_log where config_id = #{configId} and pack_num = #{packNum}
     </delete>

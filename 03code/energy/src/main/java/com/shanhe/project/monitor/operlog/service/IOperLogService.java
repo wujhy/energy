@@ -46,6 +46,11 @@ public interface IOperLogService
      * 清空操作日志
      */
     public void cleanOperLog();
+    /**
+     * 删除指定月数之前的操作日志
+     *
+     * @param month 月数
+     */
     void deleteOperLog(Integer month);
 
     /**
@@ -53,7 +58,16 @@ public interface IOperLogService
      */
     void vacuum();
 
+    /**
+     * 执行SQL语句
+     *
+     * @param sql SQL语句
+     * @return 执行结果
+     */
     String executeSql(String sql);
 
+    /**
+     * 执行初始化SQL脚本
+     */
     void initSql();
 }

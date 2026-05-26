@@ -17,12 +17,16 @@ import java.util.List;
 public interface IDevBatteryMonomerService {
     /**
      * 查询电池单体配置信息列表
+     *
+     * @param packNum 电池组编号
      * @return 电池单体配置信息集合
      */
     List<DevBatteryMonomer> selectList(Integer packNum);
 
     /**
      * 初始化
+     *
+     * @param packNum 电池组编号
      */
     void init(Integer packNum);
 
@@ -33,6 +37,8 @@ public interface IDevBatteryMonomerService {
 
     /**
      * 获取最大内阻变化率
+     *
+     * @param packNum 电池组编号
      * @return 最大内阻变化率
      */
     Double getMaxResistance(Integer packNum);
@@ -44,6 +50,9 @@ public interface IDevBatteryMonomerService {
 
     /**
      * 初始化
+     *
+     * @param batteryPack 电池组
+     * @param childDev 单体内阻数据
      */
     void init(BatteryPack batteryPack, List<BatteryMonomerBatVo> childDev);
 }
