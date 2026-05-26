@@ -547,14 +547,14 @@ public class BatteryParamsHandler {
         // 每字节hex转binary后反转bit序，协议采用小端bit序表示报警使能位
         String paramFirStr = info.substring(2, 18);
         StringBuilder b1 = new StringBuilder();
-        b1.append(new StringBuffer(CodingUtil.hexString2binaryString(paramFirStr.substring(0, 2))).reverse());
-        b1.append(new StringBuffer(CodingUtil.hexString2binaryString(paramFirStr.substring(2, 4))).reverse());
-        b1.append(new StringBuffer(CodingUtil.hexString2binaryString(paramFirStr.substring(4, 6))).reverse());
-        b1.append(new StringBuffer(CodingUtil.hexString2binaryString(paramFirStr.substring(6, 8))).reverse());
-        b1.append(new StringBuffer(CodingUtil.hexString2binaryString(paramFirStr.substring(8, 10))).reverse());
-        b1.append(new StringBuffer(CodingUtil.hexString2binaryString(paramFirStr.substring(10, 12))).reverse());
-        b1.append(new StringBuffer(CodingUtil.hexString2binaryString(paramFirStr.substring(12, 14))).reverse());
-        b1.append(new StringBuffer(CodingUtil.hexString2binaryString(paramFirStr.substring(14, 16))).reverse());
+        b1.append(new StringBuilder(CodingUtil.hexString2binaryString(paramFirStr.substring(0, 2))).reverse());
+        b1.append(new StringBuilder(CodingUtil.hexString2binaryString(paramFirStr.substring(2, 4))).reverse());
+        b1.append(new StringBuilder(CodingUtil.hexString2binaryString(paramFirStr.substring(4, 6))).reverse());
+        b1.append(new StringBuilder(CodingUtil.hexString2binaryString(paramFirStr.substring(6, 8))).reverse());
+        b1.append(new StringBuilder(CodingUtil.hexString2binaryString(paramFirStr.substring(8, 10))).reverse());
+        b1.append(new StringBuilder(CodingUtil.hexString2binaryString(paramFirStr.substring(10, 12))).reverse());
+        b1.append(new StringBuilder(CodingUtil.hexString2binaryString(paramFirStr.substring(12, 14))).reverse());
+        b1.append(new StringBuilder(CodingUtil.hexString2binaryString(paramFirStr.substring(14, 16))).reverse());
 
         //处理一般告警参数，传递上来的数据就是一般告警数据
         for (ConfigAttribute attribute : attributeList) {

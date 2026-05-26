@@ -23,8 +23,6 @@ import com.shanhe.project.energy.stat.service.IStatBatteryPackService;
 import com.shanhe.project.energy.stat.service.IStatBatteryResService;
 import com.shanhe.project.iot.service.DataService;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -39,7 +37,6 @@ import java.util.*;
 @Slf4j
 @Service
 public class BatteryPackHandler {
-    protected static Logger logger = LoggerFactory.getLogger(BatteryPackHandler.class);
 
     @Resource
     private IBatteryPackService batteryPackService;
@@ -74,7 +71,7 @@ public class BatteryPackHandler {
         String binary = CodingUtil.hexString2binaryString(info.substring(0, 2));
         String res = String.valueOf(CodingUtil.binaryToDecimal(binary.substring(0, 1)));
         if (StrUtil.equals(res, "1")) {
-            logger.error("上传蓄电池实时数据出错！ {}:{}", config.getConfigId(), deviceData.getInfo());
+            log.error("上传蓄电池实时数据出错！ {}:{}", config.getConfigId(), deviceData.getInfo());
             return;
         }
 
@@ -89,14 +86,14 @@ public class BatteryPackHandler {
 
         BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
         if (batteryPack == null) {
-            logger.error("上传蓄电池实时数据出错！未找到该电池组 {}:{}", config.getConfigId(), packNum);
+            log.error("上传蓄电池实时数据出错！未找到该电池组 {}:{}", config.getConfigId(), packNum);
             return;
         }
 
         // 解析电池组参数
         Map<String, Object> packMap = this.getBatteryPackInfo(info);
         if (packMap == null) {
-            logger.error("上传蓄电池实时数据出错！电池组：{}，info={}", packNum, deviceData.getInfo());
+            log.error("上传蓄电池实时数据出错！电池组：{}，info={}", packNum, deviceData.getInfo());
             return;
         }
 

@@ -437,8 +437,6 @@ public class BatteryAlarmHandler {
         }
 
         BatteryWarnInfo batteryWarnInfo = new BatteryWarnInfo();
-        //设备型号
-        //String.valueOf(CodingUtil.binaryToDecimal(binary8D.substring(1, 5)));
         //电池组编号
         batteryWarnInfo.setBatteryPackNumber(CodingUtil.binaryToDecimal(binary8D.substring(5, 8)));
         //第二位单体电池报警数量

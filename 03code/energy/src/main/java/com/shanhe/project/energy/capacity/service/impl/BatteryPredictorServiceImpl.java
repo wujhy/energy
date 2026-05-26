@@ -563,9 +563,6 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         }
         double bcapacity;
         bcapacity = (totalSecond * current * -1) / 3600;
-        // 预估容量 / 额定容量 = 放电倍率 * 耗费总时间 / (0.1 * 10 * 3600)
-//        bcapacity = (aCapacity * crate * totalSecond) / (0.1 * 10 * 3600);
-//        bcapacity = Math.abs(bcapacity);
         bcapacity = StringUtils.formatToDouble(bcapacity, 1);
         //转换到0.1C
         bcapacity = RateCapacityConverter.convertTo01C(bcapacity,crate);
@@ -573,7 +570,6 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         bcapacity = Math.round(bcapacity);
         // 剩余容量不能大于额定容量
         return Math.min(bcapacity, aCapacity);
-//        return bcapacity;
     }
 
 }
