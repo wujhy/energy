@@ -19,6 +19,7 @@ import com.shanhe.project.sync.common.AttributeUtil;
 import com.shanhe.project.sync.common.ConfigUtil;
 import com.shanhe.project.sync.consts.MethodEnum;
 import com.shanhe.project.sync.domain.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -30,6 +31,7 @@ import java.util.*;
  * @author wjh
  * @since 2025/5/19
  */
+@Slf4j
 @Service
 public class ClientReportService {
     @Resource
@@ -94,7 +96,9 @@ public class ClientReportService {
             hostVo.setSoftNum(SysConst.version);
             hostVo.setVersion(host.getVersion());
             tcpClient.sendMsg(new RequestVo(imei, MethodEnum._1.getDictValue(), hostVo).toJsonString());
-        } catch (Exception ignored) { }
+        } catch (Exception e) {
+            log.warn("设备注册失败: {}", e.getMessage());
+        }
     }
 
     /**

@@ -2,15 +2,10 @@ package com.shanhe.project.device.alarm.domain;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.shanhe.framework.aspectj.lang.annotation.Excel;
-import com.shanhe.framework.web.domain.BaseEntity;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 
 /**
  * 设备历史记录对象 dev_alarm_log

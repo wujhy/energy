@@ -6,7 +6,6 @@ import com.shanhe.project.energy.stat.domain.StatBatteryBat;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import java.util.Date;
 import java.util.List;
 
 

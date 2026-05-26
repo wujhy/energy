@@ -451,10 +451,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return pendingRequest;
     }
 
-    private void sendCommand(BatteryCollectorChannelState state, BatteryDeviceProtocolCode pollingCommand) {
-        sendCommand(state, pollingCommand, state.getConfig().getDeviceAddress());
-    }
-
     private void sendCommand(BatteryCollectorChannelState state, BatteryDeviceProtocolCode pollingCommand, int address) {
         byte[] payload = new byte[0];
         BatteryCollectorFrame request = frameCodec.buildRequest(

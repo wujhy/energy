@@ -3,6 +3,7 @@ package com.shanhe.project.monitor.operlog.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.shanhe.common.exception.ServiceException;
 import com.shanhe.project.monitor.operlog.service.IOperLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,6 +107,11 @@ public class OperLogServiceImpl implements IOperLogService
      */
     @Override
     public String executeSql(String sql) {
+        // 只允许执行预定义的SQL语句，防止SQL注入
+        boolean allowed = SQL_LIST.stream().anyMatch(s -> s.trim().equalsIgnoreCase(sql.trim()));
+        if (!allowed) {
+            throw new ServiceException("不允许执行非预定义SQL语句");
+        }
         operLogMapper.executeSql(sql);
         return "";
     }

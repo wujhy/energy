@@ -38,7 +38,7 @@ public class OptLog extends BaseEntity {
     /**
      * 内容参数
      */
-    private Map params;
+    private Map<String, Object> params;
     /**
      * 操作结果
      */

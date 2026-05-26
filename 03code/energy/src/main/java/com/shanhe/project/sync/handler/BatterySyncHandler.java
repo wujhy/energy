@@ -74,7 +74,8 @@ public class BatterySyncHandler {
                 AjaxResult collectorResult = tryCollectorCommand(batteryOpt);
                 if (collectorResult != null) {
                     if (!Objects.equals(collectorResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value())) {
-                        msg = collectorResult.get(AjaxResult.MSG_TAG).toString();
+                        Object collectorMsg = collectorResult.get(AjaxResult.MSG_TAG);
+                        msg = collectorMsg != null ? collectorMsg.toString() : "采集命令执行失败";
                     }
                     return new ResponseVo(request.getImei(), MethodEnum._43.getDictValue(), request.getBusinessId(), msg);
                 }
@@ -82,7 +83,8 @@ public class BatterySyncHandler {
             }
             // 失败
             if (!Objects.equals(ajaxResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value())) {
-                msg = ajaxResult.get(AjaxResult.MSG_TAG).toString();
+                Object ajaxMsg = ajaxResult.get(AjaxResult.MSG_TAG);
+                msg = ajaxMsg != null ? ajaxMsg.toString() : "命令执行失败";
             }
         } catch (Exception e) {
             msg = String.format("同步设备信息异常：%s", e.getMessage());

@@ -135,8 +135,11 @@ public class DataReportJob {
 
             // 蓄电池组参数
             List<ConfigHistoryItemVo> items = new ArrayList<>();
-            for (String key : log.getPackParam().keySet()) {
-                items.add(new ConfigHistoryItemVo(key, String.valueOf(log.getPackParam().get(key))));
+            Map<String, Object> packParam = log.getPackParam();
+            if (packParam != null) {
+                for (String key : packParam.keySet()) {
+                    items.add(new ConfigHistoryItemVo(key, String.valueOf(packParam.get(key))));
+                }
             }
             history.setListData(items);
 

@@ -556,29 +556,6 @@ public class BatteryParamsHandler {
         b1.append(new StringBuffer(CodingUtil.hexString2binaryString(paramFirStr.substring(12, 14))).reverse());
         b1.append(new StringBuffer(CodingUtil.hexString2binaryString(paramFirStr.substring(14, 16))).reverse());
 
-        /*
-         String paramSedStr = info.substring(18, 34);
-        StringBuffer b2 = new StringBuffer();
-        b2.append(new StringBuffer(CodingUtil.hexString2binaryString(paramSedStr.substring(0,2))).reverse());
-        b2.append(new StringBuffer(CodingUtil.hexString2binaryString(paramSedStr.substring(2,4))).reverse());
-        b2.append(new StringBuffer(CodingUtil.hexString2binaryString(paramSedStr.substring(4,6))).reverse());
-        b2.append(new StringBuffer(CodingUtil.hexString2binaryString(paramSedStr.substring(6,8))).reverse());
-        b2.append(new StringBuffer(CodingUtil.hexString2binaryString(paramSedStr.substring(8,10))).reverse());
-        b2.append(new StringBuffer(CodingUtil.hexString2binaryString(paramSedStr.substring(10,12))).reverse());
-        b2.append(new StringBuffer(CodingUtil.hexString2binaryString(paramSedStr.substring(12,14))).reverse());
-        b2.append(new StringBuffer(CodingUtil.hexString2binaryString(paramSedStr.substring(14,16))).reverse());
-
-         String paramThirdStr = info.substring(34, 50);
-        StringBuffer b3 = new StringBuffer();
-        b3.append(new StringBuffer(CodingUtil.hexString2binaryString(paramThirdStr.substring(0,2))).reverse());
-        b3.append(new StringBuffer(CodingUtil.hexString2binaryString(paramThirdStr.substring(2,4))).reverse());
-        b3.append(new StringBuffer(CodingUtil.hexString2binaryString(paramThirdStr.substring(4,6))).reverse());
-        b3.append(new StringBuffer(CodingUtil.hexString2binaryString(paramThirdStr.substring(6,8))).reverse());
-        b3.append(new StringBuffer(CodingUtil.hexString2binaryString(paramThirdStr.substring(8,10))).reverse());
-        b3.append(new StringBuffer(CodingUtil.hexString2binaryString(paramThirdStr.substring(10,12))).reverse());
-        b3.append(new StringBuffer(CodingUtil.hexString2binaryString(paramThirdStr.substring(12,14))).reverse());
-        b3.append(new StringBuffer(CodingUtil.hexString2binaryString(paramThirdStr.substring(14,16))).reverse());
-        */
         //处理一般告警参数，传递上来的数据就是一般告警数据
         for (ConfigAttribute attribute : attributeList) {
             this.doUpdateAlarmData(attribute, b1.toString());

@@ -4,7 +4,6 @@ import com.shanhe.common.exception.ServiceException;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.enums.CacheKeyEnum;
-import com.shanhe.framework.enums.ConnectionStatusEnum;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.device.config.domain.Config;
 import com.shanhe.project.device.config.service.IConfigService;

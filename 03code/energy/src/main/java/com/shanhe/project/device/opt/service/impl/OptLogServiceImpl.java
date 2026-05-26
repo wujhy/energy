@@ -3,6 +3,7 @@ package com.shanhe.project.device.opt.service.impl;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.text.Convert;
@@ -284,7 +285,7 @@ public class OptLogServiceImpl implements OptLogService {
         if (optLogList != null && !optLogList.isEmpty()) {
             for (OptLog log : optLogList) {
                 if (log.getContent() != null) {
-                    log.setParams(JSON.parseObject(log.getContent(), Map.class));
+                    log.setParams(JSON.parseObject(log.getContent(), new TypeReference<Map<String, Object>>() {}));
                 }
                 Integer packNum = log.getPackNum();
                 if (packNum != null && batCapacityMap.containsKey(packNum)) {

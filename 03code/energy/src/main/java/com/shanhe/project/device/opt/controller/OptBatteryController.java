@@ -84,7 +84,8 @@ public class OptBatteryController extends BaseController {
         }
         // 发送指令到终端设备
         AjaxResult result = controlBattery.toSendBatteryCmdToOat(devBatteryOpt);
-        if ("0".equals(result.get("code").toString())) {
+        Object code = result.get("code");
+        if (code != null && "0".equals(code.toString())) {
             //立即执行内阻测试，默认设置第一个电池在测试,后续异步实时查询结果更新结果内容
             if(testEnum == BatteryTestEnum._1){
                 batteryModeStatusService.markRunning(

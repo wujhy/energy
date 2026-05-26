@@ -1,7 +1,6 @@
 package com.shanhe.project.device.config.service;
 
 import com.shanhe.project.device.config.domain.BatteryPack;
-import com.shanhe.project.device.config.domain.Config;
 
 import java.util.List;
 

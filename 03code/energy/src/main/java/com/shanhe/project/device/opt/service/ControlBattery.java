@@ -17,7 +17,6 @@ import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IDevBatteryOptService;
 import com.shanhe.project.device.opt.cmd.CmdBatteryControlService;
 import com.shanhe.project.device.opt.domain.OptLog;
-import com.shanhe.project.device.opt.vo.BatterySetVO;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import com.shanhe.project.sync.domain.AlarmItemLevelVo;
 import com.shanhe.project.sync.service.ClientReportService;
@@ -28,6 +27,7 @@ import oshi.util.Util;
 
 import javax.annotation.Resource;
 import java.util.Date;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -151,7 +151,8 @@ public class ControlBattery extends ControlBase {
         } else {
 
             // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
-            String batteryPackStatus = (String) batteryReportLog.getPackParam().get("batteryPackStatus");
+            Map<String, Object> packParam = batteryReportLog.getPackParam();
+            String batteryPackStatus = packParam != null ? (String) packParam.get("batteryPackStatus") : null;
             if (!StrUtil.equals("6", batteryPackStatus)) {
                 return AjaxResult.error("电池组处于非空闲状态，不允许测试！", 0);
             }

@@ -116,10 +116,6 @@ public class MessageFactory {
                 //开始推送日志
                 // monitor 为上锁标志
                 doStartLog(maxCount, dataQueue, lastPushTime,datas);
-//                try {
-//                    Thread.sleep(1000);
-//                } catch (InterruptedException ex) {
-//                }
             } catch (Exception e) {
                 String exceptionMsg = e.getMessage();
                 if (e instanceof InvocationTargetException) {
@@ -132,6 +128,7 @@ public class MessageFactory {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
                 }
             } catch (Throwable e){
                 try {
@@ -163,12 +160,6 @@ public class MessageFactory {
             // 推送日志信息
             push(datas);
             pushTime.set(currentTimeMillis);
-
-//        } else if (size == 0) {
-//            Monitor data = queue.take();
-//            datas.add(data);
-//            // 推送日志信息
-//            push(datas);
         } else {
             // 等待100毫秒
             Thread.sleep(100);

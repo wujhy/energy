@@ -3,7 +3,6 @@ package com.shanhe.project.energy.stat.service.impl;
 import com.shanhe.project.device.config.domain.BatteryMonitor;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
-import com.shanhe.common.constant.Constants;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.energy.stat.domain.DevBatteryMonomer;

@@ -3,7 +3,6 @@ package com.shanhe.project.scheduled;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.enums.CacheKeyEnum;
-import com.shanhe.framework.enums.ConnectionStatusEnum;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.service.IHostService;

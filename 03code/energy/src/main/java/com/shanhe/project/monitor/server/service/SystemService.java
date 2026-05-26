@@ -56,7 +56,7 @@ public class SystemService {
             ProcessBuilder pb = new ProcessBuilder("bash", "-c", command.toString());
             process = pb.start();
             logger.debug("更新本机IP指令结果 {} ：{}", process.waitFor(), command);
-            if (!Objects.equals(process.waitFor(), 0)) {
+            if (process.waitFor() != 0) {
                 throw new ServiceException("更新本机IP失败！");
             }
 
@@ -124,6 +124,10 @@ public class SystemService {
     public static void syncServerTime(String datetime) {
         // 先更新本机服务时间
         try {
+            // 校验格式：仅允许14位纯数字，防止命令注入
+            if (datetime == null || !datetime.matches("\\d{14}")) {
+                throw new ServiceException("时间格式错误，需要yyyyMMddHHmmss");
+            }
             String date = datetime.substring(0,8);
             String time = datetime.substring(8,10) + ":" + datetime.substring(10,12) + ":" + datetime.substring(12,14);
 
@@ -137,7 +141,7 @@ public class SystemService {
                 ProcessBuilder pb = new ProcessBuilder("bash", "-c", command);
                 process = pb.start();
                 logger.info("更新本机服务器时间 {} ：{}", process.waitFor(), command);
-                if (!Objects.equals(process.waitFor(), 0)) {
+                if (process.waitFor() != 0) {
                     throw new ServiceException("更新服务器时间失败！");
                 }
 
@@ -181,7 +185,7 @@ public class SystemService {
             ProcessBuilder pb = new ProcessBuilder("bash", "-c", command);
             Process process = pb.start();
             logger.info("开启看门狗指令 {} ：{}", process.waitFor(), command);
-            if (!Objects.equals(process.waitFor(), 0)) {
+            if (process.waitFor() != 0) {
                 throw new ServiceException("开启看门狗失败！");
             }
         } catch (Exception e) {
@@ -199,7 +203,7 @@ public class SystemService {
             }
             ProcessBuilder pb = new ProcessBuilder("bash", "-c", "echo 2 >/sys/class/gzpeite/user/watch_dog");
             Process process = pb.start();
-            if (!Objects.equals(process.waitFor(), 0)) {
+            if (process.waitFor() != 0) {
                 throw new ServiceException("喂狗失败！");
             }
         } catch (Exception e) {
@@ -219,7 +223,7 @@ public class SystemService {
             ProcessBuilder pb = new ProcessBuilder("bash", "-c", command);
             Process process = pb.start();
             logger.info("关闭看门狗指令 {} ：{}", process.waitFor(), command);
-            if (!Objects.equals(process.waitFor(), 0)) {
+            if (process.waitFor() != 0) {
                 throw new ServiceException("关闭看门狗失败！");
             }
         } catch (Exception e) {
