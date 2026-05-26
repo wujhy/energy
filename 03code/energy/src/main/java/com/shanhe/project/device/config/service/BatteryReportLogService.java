@@ -16,6 +16,11 @@ import java.util.Map;
 public interface BatteryReportLogService {
     /**
      * 插入记录
+     *
+     * @param packNum 电池组编号
+     * @param packParam 电池组参数
+     * @param batteryList 单体电池列表
+     * @param isInsert 是否新增
      */
     void insert(Integer packNum, Map<String, Object> packParam, List<BatteryMonitor> batteryList, boolean isInsert);
 

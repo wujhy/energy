@@ -43,7 +43,9 @@ public class AlarmLevel extends BaseEntity {
      * 发送短信
      */
     private Integer sendSmsOnAlert;
+    /** 短信重发间隔（秒） */
     private Integer smsResendInterval;
+    /** 短信重发次数 */
     private Integer smsResendTimes;
     /**
      * 解除发送短信
@@ -58,14 +60,18 @@ public class AlarmLevel extends BaseEntity {
      * 解除发送Email
      */
     private Integer sendEmailOnClear;
+    /** 邮件重发间隔（秒） */
     private Integer emailResendInterval;
+    /** 邮件重发次数 */
     private Integer emailResendTimes;
 
     /**
      * 拨打电话
      */
     private Integer callOnAlert;
+    /** 电话重拨间隔（秒） */
     private Integer callResendInterval;
+    /** 电话重拨次数 */
     private Integer callResendTimes;
 
     /**

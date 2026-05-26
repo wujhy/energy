@@ -338,14 +338,14 @@ public class ReflectUtils
     @SuppressWarnings("unchecked")
     public static <T> Class<T> getClassGenricType(final Class clazz)
     {
-        return getClassGenricType(clazz, 0);
+        return (Class<T>) getClassGenricType(clazz, 0);
     }
 
     /**
      * 通过反射, 获得Class定义中声明的父类的泛型参数的类型.
      * 如无法找到, 返回Object.class.
      */
-    public static Class getClassGenricType(final Class clazz, final int index)
+    public static Class<?> getClassGenricType(final Class<?> clazz, final int index)
     {
         Type genType = clazz.getGenericSuperclass();
 
@@ -368,7 +368,7 @@ public class ReflectUtils
             return Object.class;
         }
 
-        return (Class) params[index];
+        return (Class<?>) params[index];
     }
 
     public static Class<?> getUserClass(Object instance)
@@ -377,7 +377,7 @@ public class ReflectUtils
         {
             throw new RuntimeException("Instance must not be null");
         }
-        Class clazz = instance.getClass();
+        Class<?> clazz = instance.getClass();
         if (clazz.getName().contains(CGLIB_CLASS_SEPARATOR))
         {
             Class<?> superClass = clazz.getSuperclass();

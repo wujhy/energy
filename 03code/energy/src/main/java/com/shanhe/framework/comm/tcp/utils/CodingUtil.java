@@ -29,9 +29,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class CodingUtil {
 
-    private static Map<String,String> weatherCodeList ;
-
-    private static Map<String,String> countryCodeWithTimeZoneList ;
+    private static volatile Map<String,String> weatherCodeList;
     /**
      *  根据天气描述获取天气编码
      */

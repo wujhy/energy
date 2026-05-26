@@ -16,6 +16,8 @@ import java.util.List;
 @Data
 @Accessors(chain = true)
 public class DeviceVo implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     /**
      * 设备主键ID
      */

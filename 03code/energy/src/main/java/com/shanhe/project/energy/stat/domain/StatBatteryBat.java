@@ -17,40 +17,37 @@ import lombok.EqualsAndHashCode;
 public class StatBatteryBat extends MonitorData {
     private static final long serialVersionUID = 1L;
 
+    /** 主键 */
     private Long id;
 
-    // 电池组数据包ID
+    /** 设备ID */
     private Long configId;
 
-    // 电池组数据包ID
+    /** 电池组数据包ID */
     private Long packId;
 
-    // 蓄电池组编号，1,2,3,4
+    /** 蓄电池组编号，1,2,3,4 */
     private Integer packNum;
 
-    // 单体电池编号
+    /** 单体电池编号 */
     private Integer batNum;
 
-    // 电压值（ 2 字节）单位：V
+    /** 电压值 单位：V */
     private Double voltage;
 
-    // 内阻值（ 2 字节）单位：uΩ
+    /** 内阻值 单位：uΩ */
     private Integer resistance;
 
-    // 温度值（ 2 字节）单位：℃
+    /** 温度值 单位：℃ */
     private Double temperature;
 
-    // 电池核容值  （ 2 字节，1 位小数，单位 AH）
+    /** 电池核容值 单位：AH */
     private Double bcapacity;
 
-
-    /**
-     * 采集时间记录时间点，秒
-     */
+    /** 采集时间记录时间点，秒 */
     private int timeInSeconds;
 
-
-
+    /** 排序方式 */
     private String isAsc = "desc";
 
     public static StatBatteryBat of(BatteryMonitor batteryInfo) {

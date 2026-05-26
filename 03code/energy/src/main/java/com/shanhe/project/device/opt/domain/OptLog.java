@@ -53,7 +53,7 @@ public class OptLog extends BaseEntity {
      */
     private Double bcapacity;
 
-    // 放电容量
+    /** 放电容量 */
     private Double dischargeCapacity;
 
     /**
@@ -66,9 +66,9 @@ public class OptLog extends BaseEntity {
 
 
     ///////////////////////////////////////// 缓存
-    // 是否保存
+    /** 是否保存 */
     private boolean isSave = false;
-    // 次数
+    /** 次数 */
     private int count = 0;
 
 

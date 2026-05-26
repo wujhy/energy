@@ -16,6 +16,8 @@ import java.io.Serializable;
 @Data
 @Accessors(chain = true)
 public class RequestVo implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     /** 时间戳 **/
     private Long timestamp;
     /** 设备ID **/

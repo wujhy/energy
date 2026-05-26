@@ -13,31 +13,31 @@ import javax.validation.constraints.NotNull;
  */
 @Data
 public class BatterySetVO {
-    /* 设备ID */
+    /** 设备ID */
     public interface cmd{}
-    /* 设备ID及包序号 */
+    /** 设备ID及包序号 */
     public interface cmd1{}
-    /* 手动设置子模块ID */
+    /** 手动设置子模块ID */
     public interface cmd08{}
-    /* 配置电池组 */
+    /** 配置电池组 */
     public interface cmd09{}
-    /* 自动设置子模块ID */
+    /** 自动设置子模块ID */
     public interface cmd18{}
-    /* 内阻系数 */
+    /** 内阻系数 */
     public interface cmd19{}
-    /* 内阻基准值 */
+    /** 内阻基准值 */
     public interface cmd119{}
-    /* 清鼓包值 */
+    /** 清鼓包值 */
     public interface cmd20{}
-    /* 日期设置 */
+    /** 日期设置 */
     public interface cmd37{}
-    /* 均衡设置 */
+    /** 均衡设置 */
     public interface cmd38{}
-    /* 清组数据 */
+    /** 清组数据 */
     public interface cmd78{}
-    /* 蜂鸣器 */
+    /** 蜂鸣器 */
     public interface cmd39{}
-    /* 电池校正 */
+    /** 电池校正 */
     public interface cmd76{}
 
     /** 需要异步等待响应 */

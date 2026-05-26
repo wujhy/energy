@@ -56,8 +56,9 @@ public class FilterProcessor {
             return new ArrayList<>();
         }
         List<DataPoint> filteredData = new ArrayList<>();
-        DataPoint point = null;
+        DataPoint point;
         for (int i = 0; i < data.size(); i++) {
+            point = data.get(i);
             List<Double> windowValues = new ArrayList<>();
 
             // 收集窗口内的值

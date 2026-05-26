@@ -15,6 +15,7 @@ import java.util.List;
 @Data
 @Accessors(chain = true)
 public class AlarmItemVo implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     /**
      * 告警项ID

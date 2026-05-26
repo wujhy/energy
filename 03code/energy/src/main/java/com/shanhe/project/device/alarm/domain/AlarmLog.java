@@ -23,6 +23,7 @@ public class AlarmLog extends BaseEntity
     private Long alarmId;
     /** 设备id */
     private Long configId;
+    /** 设备名称 */
     @Excel(name = "设备名称")
     private String configName;
     /** 设备类型 */
@@ -49,7 +50,9 @@ public class AlarmLog extends BaseEntity
     private Integer shied;
     /** 屏蔽时间 */
     private Date shiedTime;
+    /** 屏蔽时间字符串 */
     private String shiedTimeStr;
+    /** 处理备注 */
     @Excel(name = "处理备注")
     private String remark;
 
@@ -61,6 +64,6 @@ public class AlarmLog extends BaseEntity
     List<String> excludeItemCodes;
 
 
-    // 导出路径
+    /** 导出路径 */
     private String exportPath;
 }

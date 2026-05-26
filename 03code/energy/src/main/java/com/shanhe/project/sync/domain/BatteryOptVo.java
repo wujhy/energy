@@ -16,6 +16,7 @@ import java.util.Date;
 @Data
 @Accessors(chain = true)
 public class BatteryOptVo implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     /** 立即执行 */
     private Integer isNow;

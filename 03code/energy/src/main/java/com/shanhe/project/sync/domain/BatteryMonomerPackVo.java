@@ -15,6 +15,7 @@ import java.util.List;
 @Data
 @Accessors(chain = true)
 public class BatteryMonomerPackVo implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     /**
      * 设备ID

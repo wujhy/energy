@@ -15,6 +15,8 @@ import java.util.Date;
 @Data
 @Accessors(chain = true)
 public class BatteryVo implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     /**
      * 蓄电池组ID
      */

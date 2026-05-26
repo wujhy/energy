@@ -50,6 +50,9 @@ public interface OptLogService {
 
     /**
      * 查询操作日志
+     *
+     * @param optLog 查询条件
+     * @return 操作日志列表
      */
     List<OptLog> select(OptLog optLog);
 
@@ -83,36 +86,61 @@ public interface OptLogService {
 
     /**
      * 查询设备是否正在执行测试操作
+     *
+     * @param packNum 组序号
+     * @param type 操作类型
+     * @return 正在执行的操作日志
      */
     OptLog getRunningOptLog(Integer packNum, Integer type);
 
     /**
      * 统计操作日志
+     *
+     * @param packNum 组序号
+     * @param types 操作类型列表
+     * @return 统计数量
      */
     Integer count(Integer packNum, List<Integer> types);
 
     /**
      * 更新最后一次放电记录的 预估容量、放电电流
+     *
+     * @param optId 操作记录ID
+     * @param dischargeCapacity 放电容量
+     * @param bcapacity 预估容量
+     * @param current 放电电流
+     * @param endTime 结束时间
      */
     void updateBatteryBcapacity(Long optId, Double dischargeCapacity, Double bcapacity, Double current, Date endTime);
 
     /**
      * 获取最后一次操作记录
+     *
+     * @param packNum 组序号
+     * @param type 操作类型
+     * @return 最后一次操作记录
      */
     OptLog lastType(Integer packNum, int type);
 
     /**
      * 删除组操作记录
+     *
+     * @param packNum 组序号
      */
     void deleteByPackNum(Integer packNum);
 
     /**
      * 关闭组操作记录
+     *
+     * @param packNum 组序号
      */
     void closeOptLog(Integer packNum);
 
     /**
      * 停止测试
+     *
+     * @param packNum 组序号
+     * @param type 操作类型
      */
     void doStopTest(Integer packNum, Integer type);
 }

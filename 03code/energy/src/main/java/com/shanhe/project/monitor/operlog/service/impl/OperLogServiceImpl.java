@@ -1,6 +1,8 @@
 package com.shanhe.project.monitor.operlog.service.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.shanhe.common.exception.ServiceException;
@@ -116,21 +118,20 @@ public class OperLogServiceImpl implements IOperLogService
         return "";
     }
 
-    private static final List<String> SQL_LIST = new ArrayList<>();
-    static {
-        SQL_LIST.add("DELETE FROM dev_battery_report_log;");
-        SQL_LIST.add("DELETE FROM dev_alarm_log;");
-        SQL_LIST.add("DELETE FROM dev_battery_opt;");
-        SQL_LIST.add("DELETE FROM dev_battery_opt_log;");
-        SQL_LIST.add("DELETE FROM dev_opt_log;");
-        SQL_LIST.add("DELETE FROM dev_patrol;");
-        SQL_LIST.add("DELETE FROM sys_oper_log;");
-        SQL_LIST.add("delete from stat_battery_bat;");
-        SQL_LIST.add("delete from stat_battery_pack;");
-        SQL_LIST.add("delete from stat_battery_res;");
-        SQL_LIST.add("delete from pre_battery_group;");
-        SQL_LIST.add("VACUUM;");
-    }
+    private static final List<String> SQL_LIST = Collections.unmodifiableList(Arrays.asList(
+            "DELETE FROM dev_battery_report_log;",
+            "DELETE FROM dev_alarm_log;",
+            "DELETE FROM dev_battery_opt;",
+            "DELETE FROM dev_battery_opt_log;",
+            "DELETE FROM dev_opt_log;",
+            "DELETE FROM dev_patrol;",
+            "DELETE FROM sys_oper_log;",
+            "delete from stat_battery_bat;",
+            "delete from stat_battery_pack;",
+            "delete from stat_battery_res;",
+            "delete from pre_battery_group;",
+            "VACUUM;"
+    ));
 
     /**
      * 执行初始化SQL脚本列表

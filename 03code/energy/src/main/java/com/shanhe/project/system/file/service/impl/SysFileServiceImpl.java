@@ -62,8 +62,7 @@ public class SysFileServiceImpl implements ISysFileService {
                             count++;
                             break;
                         }
-                    } catch (Exception e) {
-                        // 忽略无法访问的子目录
+                    } catch (Exception ignored) {
                     }
                     sysLogFile.setIsSub(count);
                 }

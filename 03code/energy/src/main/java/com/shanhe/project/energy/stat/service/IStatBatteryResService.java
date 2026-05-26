@@ -27,7 +27,9 @@ public interface IStatBatteryResService {
     /**
      * 初始化
      *
-     * @param packNum 电池组信息
+     * @param packNum 电池组编号
+     * @param packMap 电池组参数
+     * @param batteryList 单体电池列表
      * @param oldInfo 旧数据
      */
     void init(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList, BatteryReportLog oldInfo);

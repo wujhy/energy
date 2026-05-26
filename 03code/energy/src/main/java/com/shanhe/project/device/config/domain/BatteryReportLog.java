@@ -33,11 +33,13 @@ public class BatteryReportLog extends MonitorData {
      * 包参数
      */
     private String packData;
+    /** 包参数（JSON） */
     private Map<String, Object> packParam;
     /**
      * 单体参数
      */
     private String monitorData;
+    /** 单体电池列表 */
     private List<BatteryMonitor> batteryList;
     /**
      * 扩展记录
@@ -54,6 +56,6 @@ public class BatteryReportLog extends MonitorData {
 
 
 
-    // 导出路径
+    /** 导出路径 */
     private String exportPath;
 }

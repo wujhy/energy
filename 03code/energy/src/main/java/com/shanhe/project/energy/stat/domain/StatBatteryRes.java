@@ -21,16 +21,16 @@ public class StatBatteryRes extends BaseEntity {
 
     @JsonFormat(pattern = "yyyy-MM-dd")
 
-    // 设备ID
+    /** 设备ID */
     private Long configId;
 
-    // 蓄电池组编号，1,2,3,4
+    /** 蓄电池组编号，1,2,3,4 */
     private Integer packNum;
 
-    // 单体电池编号
+    /** 单体电池编号 */
     private Integer batNum;
 
-    // 内阻值（  2 字节）单位：uΩ
+    /** 内阻值 单位：uΩ */
     private Integer resistance;
 
 }

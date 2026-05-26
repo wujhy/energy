@@ -13,6 +13,7 @@ import java.util.List;
  */
 @Data
 public class BatteryHealthReport implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private Long configId;
     // 蓄电池组编号

@@ -104,17 +104,22 @@ public class Host extends BaseEntity
     @Excel(name = "子接口总数目")
     private String num;
 
+    /** MAC地址 */
     @Excel(name = "MAC地址")
     private String mac;
 
+    /** 设备IMEI */
     @Excel(name = "设备IMEI")
     private String imei;
 
+    /** 设备型号 */
     @Excel(name = "设备型号")
     private String model;
 
+    /** 设备版本号 */
     @Excel(name = "设备版本号")
     private String version;
+    /** 软件版本号 */
     private String softVersion;
 
     /** 数据上报间隔时间 */
@@ -130,9 +135,13 @@ public class Host extends BaseEntity
     /** 组态配置 */
     private String configData;
 
+    /** 扩展字段1 */
     private String extend1;
+    /** 扩展字段2 */
     private String extend2;
+    /** 扩展字段3 */
     private String extend3;
+    /** 扩展字段4 */
     private String extend4;
     /** 创建时间 */
     private String createTimeStr;

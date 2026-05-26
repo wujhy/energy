@@ -98,7 +98,7 @@ public class BatteryPack extends BaseEntity {
     /** 是否告警 0-是，1-否 */
     private Integer alarm;
 
-    // 投产时间
+    /** 投产时间 */
     private String productionTime;
 
     /**

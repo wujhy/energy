@@ -20,6 +20,8 @@ public interface StatBatteryPackMapper {
     /**
      * 查询电池组统计列表
      *
+     * @param statBatteryPack 查询条件
+     * @return 电池组统计列表
      */
     List<StatBatteryPack> selectList(StatBatteryPack statBatteryPack);
 

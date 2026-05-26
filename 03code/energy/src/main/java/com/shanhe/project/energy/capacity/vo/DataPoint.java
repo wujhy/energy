@@ -13,6 +13,8 @@ import java.util.Date;
  */
 @Data
 public class DataPoint implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     /**
      * 电压
      */
