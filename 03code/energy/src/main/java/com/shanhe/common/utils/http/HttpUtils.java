@@ -68,7 +68,7 @@ public class HttpUtils
         try
         {
             String urlNameString = StringUtils.isNotBlank(param) ? url + "?" + param : url;
-            log.info("sendGet - {}", urlNameString);
+            log.info("发送GET请求 - {}", urlNameString);
             URL realUrl = new URL(urlNameString);
             URLConnection connection = realUrl.openConnection();
             connection.setRequestProperty("accept", "*/*");
@@ -81,7 +81,7 @@ public class HttpUtils
             {
                 result.append(line);
             }
-            log.info("recv - {}", result);
+            log.info("接收响应 - {}", result);
         }
         catch (ConnectException e)
         {
@@ -130,7 +130,7 @@ public class HttpUtils
         StringBuilder result = new StringBuilder();
         try
         {
-            log.info("sendPost - {}", url);
+            log.info("发送POST请求 - {}", url);
             URL realUrl = new URL(url);
             URLConnection conn = realUrl.openConnection();
             conn.setRequestProperty("accept", "*/*");
@@ -149,7 +149,7 @@ public class HttpUtils
             {
                 result.append(line);
             }
-            log.info("recv - {}", result);
+            log.info("接收响应 - {}", result);
         }
         catch (ConnectException e)
         {
@@ -194,7 +194,7 @@ public class HttpUtils
         String urlNameString = url + "?" + param;
         try
         {
-            log.info("sendSSLPost - {}", urlNameString);
+            log.info("发送SSL POST请求 - {}", urlNameString);
             SSLContext sc = SSLContext.getInstance("SSL");
             sc.init(null, new TrustManager[] { new TrustAnyTrustManager() }, new java.security.SecureRandom());
             URL console = new URL(urlNameString);
@@ -220,7 +220,7 @@ public class HttpUtils
                     result.append(new String(ret.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8));
                 }
             }
-            log.info("recv - {}", result);
+            log.info("接收响应 - {}", result);
             conn.disconnect();
             br.close();
         }

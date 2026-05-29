@@ -85,9 +85,6 @@
                 and strftime('%Y-%m-%d %H:%M:%S', pack.create_time) &lt;= strftime('%Y-%m-%d %H:%M:%S',
                 #{params.endTime})
             </if>
-            <if test=" configId != null ">
-                and config_id = #{configId}
-            </if>
             <if test=" packNum != null ">
                 and pack_num = #{packNum}
             </if>
@@ -126,9 +123,9 @@
         order by create_time asc
     </select>
 
-    <!-- 按配置ID删除单体统计 -->
-    <delete id="deleteByConfigId">
-        delete from stat_battery_bat where config_id = #{configId}
+    <!-- 按默认设备和电池组删除单体统计 -->
+    <delete id="deleteByPackNum">
+        delete from stat_battery_bat where config_id = 1
         <if test="packNum != null">
             and pack_num = #{packNum}
         </if>

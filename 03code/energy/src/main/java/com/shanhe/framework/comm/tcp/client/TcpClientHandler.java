@@ -27,7 +27,7 @@ public class TcpClientHandler extends SimpleChannelInboundHandler<Object> {
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) {
 		// 通道建立时
-		log.debug("TcpClientHandler.channelActive");
+		log.debug("TCP客户端通道已激活");
 		ctx.flush();
 	}
 

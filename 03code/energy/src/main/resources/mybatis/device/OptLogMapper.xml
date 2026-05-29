@@ -64,12 +64,9 @@
         </foreach>
     </delete>
 
-    <!-- 按配置ID删除 -->
-    <delete id="deleteByConfigIds">
-        delete from dev_opt_log where config_id in
-        <foreach item="id" collection="configIds" open="(" separator="," close=")">
-            #{id}
-        </foreach>
+    <!-- 删除默认设备操作日志 -->
+    <delete id="deleteDefaultDeviceLogs">
+        delete from dev_opt_log where config_id = 1
     </delete>
 
     <!-- 查询运行中日志 -->
@@ -102,7 +99,7 @@
         select
         <include refid="Base_Column_List"/>
         from dev_opt_log
-        where type = #{type} and config_id = #{configId} and result is null
+        where type = #{type} and config_id = 1 and result is null
         <if test="packNum != null">
             and pack_num = #{packNum}
         </if>
@@ -113,9 +110,7 @@
     <select id="count" resultType="java.lang.Integer">
         select count(1) from dev_opt_log
         <where>
-            <if test="configId != null ">
-                and config_id = #{configId}
-            </if>
+            and config_id = 1
             <if test="packNum != null ">
                 and pack_num = #{packNum}
             </if>
@@ -134,14 +129,14 @@
         <include refid="Base_Column_List"/>
         from dev_opt_log
         where type = #{type}
-        and config_id = #{configId}
+        and config_id = 1
         and pack_num = #{packNum}
         order by id desc
         limit 1
     </select>
 
-    <!-- 按配置和组号删除 -->
-    <delete id="deleteByConfigIdPackNum">
-        delete from dev_opt_log where config_id = #{configId} and pack_num = #{packNum}
+    <!-- 按默认设备和组号删除 -->
+    <delete id="deleteByPackNum">
+        delete from dev_opt_log where config_id = 1 and pack_num = #{packNum}
     </delete>
 </mapper>

@@ -75,7 +75,7 @@ public class DevResponseHandler {
             return;
         }
 
-        log.debug("ignore static default config response, type={}, port={}, channel={}",
+        log.debug("忽略静态默认配置响应, 类型={}, 端口={}, 通道={}",
                 deviceData.getC0(), deviceData.getC1(), deviceData.getC2());
     }
 }

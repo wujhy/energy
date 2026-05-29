@@ -21,10 +21,10 @@ public interface PreBatteryGroupMapper {
     /**
      * 查询最新的组容量信息
      */
-    PreBatteryGroup selectLast(@Param("configId") Long configId, @Param("packNum") Integer packNum);
+    PreBatteryGroup selectLast(@Param("packNum") Integer packNum);
 
     /**
-     * 根据设备id删除组容量信息
+     * 根据电池组编号删除组容量信息
      */
-    void deleteByConfigId(@Param("configId") Long configId, @Param("packNum") Integer packNum);
+    void deleteByPackNum(@Param("packNum") Integer packNum);
 }

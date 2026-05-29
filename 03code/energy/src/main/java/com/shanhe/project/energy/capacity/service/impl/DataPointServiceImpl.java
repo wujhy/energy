@@ -35,7 +35,7 @@ public class DataPointServiceImpl implements DataPointService {
         String startDateTimeStr = startTime != null ? sdf.format(startTime) : null;
         String endDateTimeStr = endTime != null ? sdf.format(endTime) : null;
 
-        List<DataPoint> list = statBatteryBatMapper.selectDataPointList(Constants.DEFAULT_CONFIG_ID, packNum, batNum, startDateTimeStr, endDateTimeStr);
+        List<DataPoint> list = statBatteryBatMapper.selectDataPointList(packNum, batNum, startDateTimeStr, endDateTimeStr);
         //转换数据
         if (list != null && list.size() > 2) {
             //移除第一个放电数据，放电时，电压会快速下跌，需做优化处理

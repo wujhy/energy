@@ -46,7 +46,7 @@ public class SslUtils {
 	 */
 	public static void ignoreSsl() throws Exception {
 		HostnameVerifier hv = (urlHostName, session) -> {
-			log.warn("Warning: URL Host: {} vs. {}", urlHostName, session.getPeerHost());
+			log.warn("URL主机名不匹配: {} vs. {}", urlHostName, session.getPeerHost());
 			return true;
 		};
 		trustAllHttpsCertificates();

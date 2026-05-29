@@ -36,7 +36,7 @@ public class CodingUtil {
     public static String getWeatherCode(String weatherDes) {
         if(weatherCodeList == null) {
             //0——晴? 1——阴?? 2——雨? 3——雪
-            weatherCodeList = new HashMap<>();
+            weatherCodeList = new HashMap<>(64);
             weatherCodeList.put("晴",	"0");
             weatherCodeList.put("多云",	"0");
             weatherCodeList.put("阴",	"1");
@@ -587,7 +587,7 @@ public class CodingUtil {
 
         // 确保字符串长度为8个字符（4个字节）
         if (hex.length() != 8) {
-            throw new IllegalArgumentException("Hex string must be 8 characters long for a float");
+            throw new IllegalArgumentException("十六进制字符串长度必须为8个字符（表示浮点数）");
         }
 
         // 将十六进制字符串解析为整数
@@ -607,7 +607,7 @@ public class CodingUtil {
         hexString = hexString.replace("0x", "").replace("0X", "");
         // 确保字符串长度为8个字符（4个字节）
         if (hexString.length() != 8) {
-            throw new IllegalArgumentException("Hex string must be 8 characters long for a float");
+            throw new IllegalArgumentException("十六进制字符串长度必须为8个字符（表示浮点数）");
         }
 
         // 将16进制字符串转换为字节数组
@@ -630,7 +630,7 @@ public class CodingUtil {
         hexString = hexString.replace("0x", "").replace("0X", "");
         // 确保字符串长度为8个字符（4个字节）
         if (hexString.length() != 8) {
-            throw new IllegalArgumentException("Hex string must be 8 characters long for a float");
+            throw new IllegalArgumentException("十六进制字符串长度必须为8个字符（表示浮点数）");
         }
 
         // 将16进制字符串转换为字节数组
@@ -654,7 +654,7 @@ public class CodingUtil {
 
         // 确保字符串长度为8个字符（4个字节）
         if (hexString.length() != 8) {
-            throw new IllegalArgumentException("Hex string must be 8 characters long for a 32-bit value");
+            throw new IllegalArgumentException("十六进制字符串长度必须为8个字符（表示32位值）");
         }
 
         try {
@@ -667,7 +667,7 @@ public class CodingUtil {
             // 四舍五入转换为整数
             return Math.round(floatValue);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid hex string: " + hexString, e);
+            throw new IllegalArgumentException("无效的十六进制字符串: " + hexString, e);
         }
     }
 
@@ -825,9 +825,11 @@ public class CodingUtil {
             binary = binary.substring(binary.length() - 8);
         } else if (binary.length() < 8) {
             int len = 8 - binary.length();
-            for (int i = 0; i < len ; i++) {
-                binary = "0" + binary;
+            StringBuilder padding = new StringBuilder(len);
+            for (int i = 0; i < len; i++) {
+                padding.append('0');
             }
+            binary = padding.append(binary).toString();
         }
 
         return bin2hex(binary);

@@ -50,16 +50,16 @@ public class FlywayConfig {
             // 执行迁移记录
             flyway.migrate();
         } catch (FlywayException e) {
-            log.error("flyway init error", e);
+            log.error("Flyway数据库迁移初始化失败", e);
             try {
                 // 修复迁移失败记录
                 flyway.repair();
-                log.info("flyway repair success!");
+                log.info("Flyway迁移记录修复成功");
                 // 重新执行迁移记录
                 flyway.migrate();
-                log.info("flyway again init success!");
+                log.info("Flyway重新迁移成功");
             } catch (Exception ex) {
-                log.error("flyway again init error:{}", ex.getMessage());
+                log.error("Flyway重新迁移失败:{}", ex.getMessage());
             }
         }
     }

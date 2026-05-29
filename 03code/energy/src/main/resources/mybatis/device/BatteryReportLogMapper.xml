@@ -77,9 +77,9 @@
         delete from dev_battery_report_log where create_time &lt;= DATE('now', '-${dayNum} day', 'localtime')
     </delete>
 
-    <!-- 按配置ID删除 -->
-    <delete id="deleteByConfigId">
-        delete from dev_battery_report_log where config_id = #{configId}
+    <!-- 按默认设备和电池组删除 -->
+    <delete id="deleteByPackNum">
+        delete from dev_battery_report_log where config_id = 1
         <if test="packNum != null ">
             and pack_num = #{packNum}
         </if>

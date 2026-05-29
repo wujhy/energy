@@ -148,7 +148,7 @@ public class SystemService {
                 process = pb.start();
                 log.info("更新本机硬件时间 {} ：{}", process.waitFor(), "hwclock -w");
             }
-            log.info("syncServerTime---->{}", datetime);
+            log.info("同步服务器时间---->{}", datetime);
         } catch (Exception e) {
             throw new ServiceException("执行脚本失败！");
         }

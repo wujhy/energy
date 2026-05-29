@@ -129,7 +129,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
     public static UUID fromString(String name) {
         String[] components = name.split("-");
         if (components.length != 5) {
-            throw new IllegalArgumentException("Invalid UUID string: " + name);
+            throw new IllegalArgumentException("无效的UUID字符串: " + name);
         }
         for (int i = 0; i < 5; i++) {
             components[i] = "0x" + components[i];
@@ -417,7 +417,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
      */
     private void checkTimeBase() {
         if (version() != 1) {
-            throw new UnsupportedOperationException("Not a time-based UUID");
+            throw new UnsupportedOperationException("非基于时间的UUID");
         }
     }
 

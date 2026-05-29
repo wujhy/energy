@@ -41,15 +41,13 @@
         battery.is_show_connect
     </sql>
 
-    <!-- 根据配置ID查询电池组列表 -->
-    <select id="selectBatteryPackListByConfigId" resultMap="BatteryPackResult">
+    <!-- 查询默认设备电池组列表 -->
+    <select id="selectDefaultDeviceBatteryPackList" resultMap="BatteryPackResult">
         select
         <include refid="selectBatteryPackVo"/>
         from dev_battery_pack battery
         <where>
-            <if test="configId != null ">
-                and battery.config_id = #{configId}
-            </if>
+            and battery.config_id = 1
             <if test="isEnabled != null ">
                 and battery.is_enabled = #{isEnabled}
             </if>
@@ -62,7 +60,7 @@
         select
         <include refid="selectBatteryPackVo"/>
         from dev_battery_pack battery
-        where config_id = #{configId} and pack_num = #{packNum} order by create_time desc limit 1
+        where config_id = 1 and pack_num = #{packNum} order by create_time desc limit 1
     </select>
 
     <!-- 新增电池组 -->
@@ -300,12 +298,9 @@
         from dev_battery_pack battery
     </select>
 
-    <!-- 根据配置ID批量删除电池组 -->
-    <delete id="deleteByConfigIds">
-        delete from dev_battery_pack where config_id in
-        <foreach item="configId" collection="configIds" open="(" separator="," close=")">
-            #{configId}
-        </foreach>
+    <!-- 删除默认设备电池组 -->
+    <delete id="deleteDefaultDevicePacks">
+        delete from dev_battery_pack where config_id = 1
     </delete>
 
     <!-- 根据电池组ID批量删除 -->
@@ -332,9 +327,7 @@
         select bat_sin_size
         from dev_battery_pack battery
         <where>
-            <if test=" configId != null ">
-                battery.config_id = #{configId}
-            </if>
+            battery.config_id = 1
             <if test=" packNum != null ">
                 and battery.pack_num = #{packNum}
             </if>

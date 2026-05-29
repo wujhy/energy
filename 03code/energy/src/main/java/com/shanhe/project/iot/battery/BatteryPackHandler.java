@@ -311,7 +311,7 @@ public class BatteryPackHandler {
             log.error("指令长度不足 120 {}", info);
             return null;
         }
-        Map<String, Object> packMap = new HashMap<>();
+        Map<String, Object> packMap = new HashMap<>(16);
         //电池组组压
         int packVoltage = this.negative(CodingUtil.hexStringToInteger(info.substring(2, 6)));
         packMap.put("packVoltage", CodingUtil.decimal(packVoltage, "#.0", 10));

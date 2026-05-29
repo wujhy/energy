@@ -68,7 +68,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
      */
     @Override
     public List<ConfigAttribute> selectDefaultDeviceAttributes() {
-        return configAttributeMapper.selectByDefaultConfigId(Constants.DEFAULT_CONFIG_ID);
+        return configAttributeMapper.selectDefaultDeviceAttributes();
     }
 
     /**
@@ -160,7 +160,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
      */
     @Override
     public void insertByTemplateAttribute(Integer packNum, Integer model) {
-        configAttributeMapper.insertByTemplateAttribute(Constants.DEFAULT_CONFIG_ID, packNum, model);
+        configAttributeMapper.insertByTemplateAttribute(packNum, model);
     }
 
     /**
@@ -255,7 +255,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
     @Override
     public void deleteConfigAttribute(ConfigAttribute attribute)
     {
-        CacheUtils.remove(attributeCache.getCache(), String.format(attributeCache.getKey(), attribute.getConfigId(), attribute.getPackNum(), attribute.getCode()));
+        CacheUtils.remove(attributeCache.getCache(), String.format(attributeCache.getKey(), attribute.getPackNum(), attribute.getCode()));
         configAttributeMapper.deleteConfigAttributeByConfigAttrId(attribute.getConfigAttrId());
     }
 
@@ -264,7 +264,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
      */
     @Override
     public void deleteDefaultDeviceAttributes() {
-        configAttributeMapper.deleteConfigAttributeByConfigIds(new String[]{String.valueOf(Constants.DEFAULT_CONFIG_ID)});
+        configAttributeMapper.deleteDefaultDeviceAttributes();
     }
 
     /**
@@ -274,7 +274,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
      */
     @Override
     public void deleteConfigAttributeByPackNums(List<Integer> packNums) {
-        configAttributeMapper.deleteConfigAttributeByPackNums(Constants.DEFAULT_CONFIG_ID, packNums);
+        configAttributeMapper.deleteConfigAttributeByPackNums(packNums);
     }
 
     /**
@@ -296,7 +296,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
      */
     @Override
     public ConfigAttribute getBy(Integer packNum, String code) {
-        return configAttributeMapper.getBy(Constants.DEFAULT_CONFIG_ID, packNum, code);
+        return configAttributeMapper.getBy(packNum, code);
     }
 
     /**
@@ -308,7 +308,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
      */
     @Override
     public ConfigAttribute getCacheBy(Integer packNum, String code) {
-        String key = String.format(attributeCache.getKey(), Constants.DEFAULT_CONFIG_ID, packNum, code);
+        String key = String.format(attributeCache.getKey(), packNum, code);
         return (ConfigAttribute) CacheUtils.get(attributeCache.getCache(), key);
     }
 
@@ -348,7 +348,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         // 所有启用的配置属性
         List<ConfigAttribute> list = configAttributeMapper.configAttributeList();
         for (ConfigAttribute attribute : list) {
-            String key = String.format(attributeCache.getKey(), attribute.getConfigId(), attribute.getPackNum(), attribute.getCode());
+            String key = String.format(attributeCache.getKey(), attribute.getPackNum(), attribute.getCode());
             CacheUtils.put(attributeCache.getCache(), key, attribute);
             startKeys.add(key);
         }
@@ -373,7 +373,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         configAttribute.setStatus(YesNoEnum.YES.getDictValue());
         List<ConfigAttribute> list = this.selectConfigAttributeList(configAttribute);
         for (ConfigAttribute attribute : list) {
-            String key = String.format(attributeCache.getKey(), attribute.getConfigId(), attribute.getPackNum(), attribute.getCode());
+            String key = String.format(attributeCache.getKey(), attribute.getPackNum(), attribute.getCode());
             if (Objects.equals(isUpdate, YesNoEnum.YES.getDictValue())) {
                 CacheUtils.put(attributeCache.getCache(), key, attribute);
             } else {
@@ -403,7 +403,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
     private void updateCache(Long configAttrId, boolean needUpdate, boolean needReport) {
         // 更新缓存
         ConfigAttribute attribute = configAttributeMapper.selectConfigAttributeByConfigAttrId(configAttrId);
-        String key = String.format(attributeCache.getKey(), attribute.getConfigId(), attribute.getPackNum(), attribute.getCode());
+        String key = String.format(attributeCache.getKey(), attribute.getPackNum(), attribute.getCode());
         if (Objects.equals(attribute.getStatus(), YesNoEnum.YES.getDictValue())) {
             CacheUtils.put(attributeCache.getCache(), key, attribute);
         } else {

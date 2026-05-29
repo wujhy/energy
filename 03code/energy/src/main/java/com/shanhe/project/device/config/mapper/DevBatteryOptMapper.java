@@ -71,8 +71,8 @@ public interface DevBatteryOptMapper {
     int deleteDevBatteryOptByOptIds(@Param("optIds") List<Long> optIds);
 
     /**
-     * 根据配置ID删除
-     * @param configId 配置ID
+     * 根据电池组编号删除
+     * @param packNum 电池组编号
      */
-    void deleteByConfigId(@Param("configId") Long configId, @Param("packNum") Integer packNum);
+    void deleteByPackNum(@Param("packNum") Integer packNum);
 }

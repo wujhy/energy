@@ -26,21 +26,19 @@ public interface BatteryPackMapper {
 
     /**
      * 根据电池组编号获取设备信息
-     * @param configId 配置id
      * @param packNum 编号
      * @return 电池组
      */
-    BatteryPack selectBatteryInfoByPackNum(@Param("configId") Long configId, @Param("packNum") Integer packNum);
+    BatteryPack selectBatteryInfoByPackNum(@Param("packNum") Integer packNum);
 
 
     /**
      * 查询默认设备蓄电池组列表
      *
-     * @param configId 默认设备ID
      * @param isEnabled 是否启用
      * @return 蓄电池组集合
      */
-    List<BatteryPack> selectBatteryPackListByConfigId(@Param("configId") Long configId, @Param("isEnabled") Integer isEnabled);
+    List<BatteryPack> selectDefaultDeviceBatteryPackList(@Param("isEnabled") Integer isEnabled);
 
     /**
      * 导入蓄电池组
@@ -66,11 +64,9 @@ public interface BatteryPackMapper {
     void update(BatteryPack batteryPack);
 
     /**
-     * 根据配置ID批量删除电池组
-     *
-     * @param configIds 配置ID数组
+     * 删除默认设备电池组
      */
-    void deleteByConfigIds(@Param("configIds") String[] configIds);
+    void deleteDefaultDevicePacks();
 
     /**
      * 根据电池组ID批量删除
@@ -113,9 +109,8 @@ public interface BatteryPackMapper {
     /**
      * 获取电池组最大单体数量
      *
-     * @param configId 配置ID
      * @param packNum 电池组编号
      * @return 最大单体数量
      */
-    Integer getBatteryMaxNumber(@Param("configId") Long configId, @Param("packNum") Integer packNum);
+    Integer getBatteryMaxNumber(@Param("packNum") Integer packNum);
 }

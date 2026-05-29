@@ -49,15 +49,15 @@
         select
         <include refid="selectDevAlarmConfigLevelVo"/>
         from pre_battery_group
-        where config_id = #{configId}
+        where config_id = 1
         and pack_num = #{packNum}
         order by start_time desc
         limit 1
     </select>
 
-    <!-- 按配置ID删除预试记录 -->
-    <delete id="deleteByConfigId">
-        delete from pre_battery_group where config_id = #{configId}
+    <!-- 按默认设备和电池组删除预试记录 -->
+    <delete id="deleteByPackNum">
+        delete from pre_battery_group where config_id = 1
         <if test="packNum != null">
             and pack_num = #{packNum}
         </if>

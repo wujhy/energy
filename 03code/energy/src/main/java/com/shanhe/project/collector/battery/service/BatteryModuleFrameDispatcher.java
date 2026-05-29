@@ -41,7 +41,7 @@ public class BatteryModuleFrameDispatcher {
     public void dispatch(BatteryCollectorChannelConfig channelConfig, BatteryCollectorFrame frame) {
         BatteryModuleFrameSummary summary = summaryService.summarize(frame);
         if (summary != null) {
-            log.debug("battery module frame, channel={}, code={}, known={}, success={}, moduleAddress={}, len={}",
+            log.debug("蓄电池模块帧, 通道={}, 编码={}, 已知={}, 成功={}, 模块地址={}, 长度={}",
                     channelConfig == null ? null : channelConfig.getName(),
                     formatCode(frame, summary),
                     summary.isKnown(),

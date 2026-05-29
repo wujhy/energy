@@ -50,7 +50,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
 
     @Override
     public Map<String, Object> getResistanceReport(Integer packNum) {
-        Map<String, Object> result = new HashMap<>();
+        Map<String, Object> result = new HashMap<>(16);
 
         BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
         if (batteryPack == null) {
@@ -70,7 +70,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         }
 
         // 每次测试内阻值
-        List<StatBatteryRes> statBatteryRes = statBatteryResMapper.selectList(Constants.DEFAULT_CONFIG_ID, packNum, null);
+        List<StatBatteryRes> statBatteryRes = statBatteryResMapper.selectList(packNum, null);
 
         // 按时间分组的内阻测试数据
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -123,7 +123,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         List<Map<String, Object>> data = new ArrayList<>();
         for (int i = 1; i <= batSinSize; i++) {
             Integer baseResistance = baseValueMap.get(i);
-            Map<String, Object> row = new HashMap<>();
+            Map<String, Object> row = new HashMap<>(16);
 
             // 序号
             row.put("index", i);
@@ -139,7 +139,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
             row.put("resistanceRatio", getResistanceRatio(latestResistance, baseResistance));
 
             // 各时间点的内阻值
-            Map<String, Integer> resList = resByBatNumMap.getOrDefault(i, new HashMap<>());
+            Map<String, Integer> resList = resByBatNumMap.getOrDefault(i, new HashMap<>(8));
 
             for (String testDate : time) {
                 Integer resistance = resList.get(testDate);
@@ -158,7 +158,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
     private Map<Integer, Integer> getBaseValueMap(Integer packNum) {
         List<DevBatteryMonomer> devBatteryMonomers = devBatteryMonomerService.selectList(packNum);
         if (devBatteryMonomers == null || devBatteryMonomers.isEmpty()) {
-            return new HashMap<>();
+            return new HashMap<>(0);
         }
 
         // 按单体编号分组的基准值
@@ -171,7 +171,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
      */
     private static Map<Integer, Integer> getLatestResMap(List<StatBatteryRes> statBatteryRes, SimpleDateFormat dateFormat) {
         if (statBatteryRes == null || statBatteryRes.isEmpty()) {
-            return new HashMap<>();
+            return new HashMap<>(0);
         }
 
         // 获取最新的内阻测试记录（每个单体）
@@ -226,18 +226,18 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
     @Override
     public Map<Integer, Integer> last(Integer packNum) {
         // 每次测试内阻值
-        List<StatBatteryRes> statBatteryRes = statBatteryResMapper.selectList(Constants.DEFAULT_CONFIG_ID, packNum, null);
+        List<StatBatteryRes> statBatteryRes = statBatteryResMapper.selectList(packNum, null);
         return getLatestResMap(statBatteryRes, new SimpleDateFormat("yyyy-MM-dd"));
     }
 
     @Override
     public List<StatBatteryRes> listResistance(Integer packNum, Integer batNum) {
-        return statBatteryResMapper.selectList(Constants.DEFAULT_CONFIG_ID, packNum, batNum);
+        return statBatteryResMapper.selectList(packNum, batNum);
     }
 
     @Override
     public void deleteByPackNum(Integer packNum) {
-        statBatteryResMapper.deleteByConfigId(Constants.DEFAULT_CONFIG_ID, packNum);
+        statBatteryResMapper.deleteByPackNum(packNum);
     }
 
     @Override
@@ -260,7 +260,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         }
 
         // 每次测试内阻值
-        List<StatBatteryRes> statBatteryRes = statBatteryResMapper.selectList(Constants.DEFAULT_CONFIG_ID, packNum, null);
+        List<StatBatteryRes> statBatteryRes = statBatteryResMapper.selectList(packNum, null);
 
         // 按时间分组的内阻测试数据
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");

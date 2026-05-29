@@ -58,7 +58,7 @@ public class DeviceOnlineJob {
     @Scheduled(cron = "${job.deviceOnline}")
     public void cmdDevice() {
         try {
-            log.debug("sync battery pack online status start");
+            log.debug("同步电池组在线状态开始");
             if (isStart) {
                 Long currentTime = System.currentTimeMillis();
                 if (Math.abs(currentTime - SERVER_START_TIME) <= STARTUP_CHECK_DELAY) {
@@ -70,7 +70,7 @@ public class DeviceOnlineJob {
             Config config = configService.selectDefaultConfig();
             List<BatteryPack> packList = batteryPackService.selectBatteryPackListCache(null);
             if (packList == null || packList.isEmpty()) {
-                log.debug("sync battery pack online status skipped, no battery pack");
+                log.debug("同步电池组在线状态跳过，无电池组配置");
                 return;
             }
 
@@ -87,7 +87,7 @@ public class DeviceOnlineJob {
                 Integer packNum = batteryPack.getPackNum();
                 String key = String.format(CacheKeyEnum.BATTERY_ONLINE.getKey(), packNum);
                 Object object = CacheUtils.get(CacheKeyEnum.BATTERY_ONLINE.getCache(), key);
-                log.info("sync battery pack online status, packNum={}, key={}, lastReportTime={}",
+                log.info("同步电池组在线状态, 电池组={}, 缓存键={}, 最后上报时间={}",
                         packNum, key, object);
 
                 if (object == null) {
@@ -99,7 +99,7 @@ public class DeviceOnlineJob {
                 int num = DateUtils.differentMillsByMillisecond(lastDate, nowDate);
                 if (num > maxOffline) {
                     syncBatteryOfflineAlarm(config, packNum, true);
-                    log.info("sync battery pack online status, packNum={} offline, lastReportMinutes={}, maxOffline={}",
+                    log.info("同步电池组在线状态, 电池组={} 离线, 最后上报分钟数={}, 最大离线分钟数={}",
                             packNum, num, maxOffline);
                     CacheUtils.remove(CacheKeyEnum.BATTERY_ONLINE.getCache(), key);
                     continue;
@@ -109,16 +109,16 @@ public class DeviceOnlineJob {
                 syncBatteryOfflineAlarm(config, packNum, false);
             }
         } catch (Exception e) {
-            log.error("sync battery pack online status failed: {}", e.getMessage(), e);
+            log.error("同步电池组在线状态失败: {}", e.getMessage(), e);
         } finally {
-            log.debug("sync battery pack online status finished");
+            log.debug("同步电池组在线状态完成");
         }
     }
 
     private void handleMissingOnlineCache(Config config, Integer packNum) {
         int offlineNum = offlineBatteryPackNumMap.getOrDefault(packNum, 0);
         if (offlineNum > maxOffline) {
-            log.info("sync battery pack online status, packNum={} offline, missCount={}", packNum, offlineNum);
+            log.info("同步电池组在线状态, 电池组={} 离线, 缺失次数={}", packNum, offlineNum);
             syncBatteryOfflineAlarm(config, packNum, true);
             offlineBatteryPackNumMap.put(packNum, 0);
             return;

@@ -21,8 +21,10 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -40,7 +42,8 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
     /**
      * 轮询外后处理线程池，避免兼容历史和告警上下文占用采集轮询线程。
      */
-    private final ExecutorService postProcessExecutor = Executors.newFixedThreadPool(2, postProcessThreadFactory());
+    private final ExecutorService postProcessExecutor = new ThreadPoolExecutor(2, 2,
+            0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), postProcessThreadFactory());
 
     /**
      * 采集模块配置。
@@ -123,7 +126,7 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
                 calculateIfEnabled(channelConfig, null);
             }
         } catch (Exception e) {
-            log.warn("save battery module realtime failed, channel={}, type={}",
+            log.warn("保存蓄电池模块实时数据失败, 通道={}, 类型={}",
                     channelConfig == null ? null : channelConfig.getName(),
                     data.getType(),
                     e);
@@ -158,7 +161,7 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
                 submitPostProcess(channelConfig, context, calculation);
             }
         } catch (Exception e) {
-            log.warn("flush battery module realtime batch failed, channel={}, batch={}",
+            log.warn("刷新蓄电池模块实时数据批次失败, 通道={}, 批次={}",
                     channelConfig == null ? null : channelConfig.getName(),
                     context.getPollBatchNo(),
                     e);
@@ -219,7 +222,7 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
                         resolveCalculationStaleThresholdMs());
             }
         } catch (Exception e) {
-            log.warn("calculate battery module group failed, channel={}, group={}",
+            log.warn("计算蓄电池模块组数据失败, 通道={}, 电池组={}",
                     channelConfig.getName(),
                     channelConfig.getBatteryGroup(),
                     e);
@@ -237,7 +240,7 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
             BatteryModuleAlarmContext alarmContext = alarmAdaptService.buildContext(calculation, context.getCells());
             context.setAlarmContext(alarmContext);
         } catch (Exception e) {
-            log.warn("adapt battery module alarm context failed, channel={}, group={}",
+            log.warn("适配蓄电池模块告警上下文失败, 通道={}, 电池组={}",
                     channelConfig == null ? null : channelConfig.getName(),
                     channelConfig == null ? null : channelConfig.getBatteryGroup(),
                     e);
@@ -256,7 +259,7 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
         try {
             compatReportLogSyncService.sync(channelConfig, calculation, context.getCells());
         } catch (Exception e) {
-            log.warn("sync battery module compat report log failed, channel={}, group={}",
+            log.warn("同步蓄电池模块兼容报告日志失败, 通道={}, 电池组={}",
                     channelConfig == null ? null : channelConfig.getName(),
                     channelConfig == null ? null : channelConfig.getBatteryGroup(),
                     e);

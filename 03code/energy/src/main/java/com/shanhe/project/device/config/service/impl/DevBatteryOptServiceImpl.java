@@ -139,7 +139,7 @@ public class DevBatteryOptServiceImpl implements IDevBatteryOptService {
      */
     @Override
     public void deleteByPackNum(Integer packNum) {
-        devBatteryOptMapper.deleteByConfigId(Constants.DEFAULT_CONFIG_ID, packNum);
+        devBatteryOptMapper.deleteByPackNum(packNum);
     }
 
 }

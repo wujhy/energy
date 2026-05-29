@@ -56,11 +56,11 @@ public interface BatteryReportLogMapper {
     void deleteByDays(Integer dayNum);
 
     /**
-     * 删除设备告警记录
+     * 删除指定电池组的上报日志
      *
-     * @param configId 设备id
+     * @param packNum 电池组编号
      */
-    void deleteByConfigId(@Param("configId") Long configId, @Param("packNum") Integer packNum);
+    void deleteByPackNum(@Param("packNum") Integer packNum);
 
     /**
      * 计数

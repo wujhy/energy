@@ -40,11 +40,9 @@ public interface OptLogMapper {
     int deleteByIds(String[] ids);
 
     /**
-     * 删除历史记录
-     *
-     * @param configIds 设备ID
+     * 删除默认设备历史记录
      */
-    void deleteByConfigIds(String[] configIds);
+    void deleteDefaultDeviceLogs();
 
     /**
      * 查询运行中的操作日志
@@ -61,28 +59,26 @@ public interface OptLogMapper {
     /**
      * 查询正在运行的操作日志
      *
-     * @param configId 配置ID
      * @param packNum 电池组编号
      * @param type 测试类型
      * @return 操作日志
      */
-    OptLog getRunningOptLog(@Param("configId") Long configId, @Param("packNum") Integer packNum, @Param("type") Integer type);
+    OptLog getRunningOptLog(@Param("packNum") Integer packNum, @Param("type") Integer type);
 
     /**
      * 查询设备操作日志数量
      */
-    Integer count(@Param("configId") Long configId, @Param("packNum") Integer packNum, @Param("types") List<Integer> types);
+    Integer count(@Param("packNum") Integer packNum, @Param("types") List<Integer> types);
 
     /**
      * 获取指定类型的最后操作日志
      */
-    OptLog lastByType(@Param("configId") Long configId, @Param("packNum") Integer packNum, @Param("type") Integer type);
+    OptLog lastByType(@Param("packNum") Integer packNum, @Param("type") Integer type);
 
     /**
-     * 根据配置ID和电池组编号删除操作日志
+     * 根据电池组编号删除操作日志
      *
-     * @param configId 配置ID
      * @param packNum 电池组编号
      */
-    void deleteByConfigIdPackNum(@Param("configId") Long configId, @Param("packNum") Integer packNum);
+    void deleteByPackNum(@Param("packNum") Integer packNum);
 }

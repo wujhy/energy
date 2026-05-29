@@ -182,12 +182,9 @@
         where alarm_id = #{alarmId}
     </update>
 
-    <!-- 按配置ID批量删除 -->
-    <delete id="deleteAlarmLogByConfigIds" parameterType="String">
-        delete from dev_alarm_log where config_id in
-        <foreach item="configId" collection="array" open="(" separator="," close=")">
-            #{configId}
-        </foreach>
+    <!-- 删除默认设备告警日志 -->
+    <delete id="deleteDefaultDeviceAlarmLogs">
+        delete from dev_alarm_log where config_id = 1
     </delete>
 
     <!-- 根据告警ID删除 -->
@@ -218,11 +215,11 @@
         delete from dev_alarm_log
     </delete>
 
-    <!-- 按配置和组号删除 -->
-    <delete id="deleteAlarmLogByConfigIdPackNum">
+    <!-- 按默认设备和组号删除 -->
+    <delete id="deleteBatteryAlarmLogByPackNum">
         delete
         from dev_alarm_log
-        where config_id = #{configId}
+        where config_id = 1
           and pack_num = #{packNum}
     </delete>
 </mapper>

@@ -63,7 +63,7 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
      */
     @Override
     public List<BatteryPack> selectBatteryPackList(Integer isEnabled) {
-        return batteryPackMapper.selectBatteryPackListByConfigId(Constants.DEFAULT_CONFIG_ID, isEnabled);
+        return batteryPackMapper.selectDefaultDeviceBatteryPackList(isEnabled);
     }
 
     /**
@@ -111,12 +111,12 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
      */
     @Override
     public BatteryPack selectBatteryInfoByPackNum(Integer packNum) {
-        String key = String.format(packInfoCache.getKey(), Constants.DEFAULT_CONFIG_ID, packNum);
+        String key = String.format(packInfoCache.getKey(), packNum);
         Object log = CacheUtils.get(packInfoCache.getCache(), key);
         if (log != null) {
             return (BatteryPack) log;
         }
-        BatteryPack batteryPack = batteryPackMapper.selectBatteryInfoByPackNum(Constants.DEFAULT_CONFIG_ID, packNum);
+        BatteryPack batteryPack = batteryPackMapper.selectBatteryInfoByPackNum(packNum);
         if (batteryPack != null) {
             CacheUtils.put(packInfoCache.getCache(), key, batteryPack);
         }
@@ -142,7 +142,7 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         }
         batteryPackMapper.insertBatteryPack(batteryPack);
 
-        String key = String.format(packInfoCache.getKey(), Constants.DEFAULT_CONFIG_ID, batteryPack.getPackNum());
+        String key = String.format(packInfoCache.getKey(), batteryPack.getPackNum());
         CacheUtils.put(packInfoCache.getCache(), key, batteryPack);
     }
 
@@ -156,7 +156,7 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         list.forEach(batteryPack -> batteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID));
         batteryPackMapper.importBatteryPack(list);
         for (BatteryPack batteryPack : list) {
-            String key = String.format(packInfoCache.getKey(), Constants.DEFAULT_CONFIG_ID, batteryPack.getPackNum());
+            String key = String.format(packInfoCache.getKey(), batteryPack.getPackNum());
             CacheUtils.put(packInfoCache.getCache(), key, batteryPack);
         }
     }
@@ -171,7 +171,7 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         batteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID);
         batteryPackMapper.update(batteryPack);
 
-        String key = String.format(packInfoCache.getKey(), Constants.DEFAULT_CONFIG_ID, batteryPack.getPackNum());
+        String key = String.format(packInfoCache.getKey(), batteryPack.getPackNum());
         CacheUtils.put(packInfoCache.getCache(), key, batteryPack);
     }
 
@@ -180,7 +180,7 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
      */
     @Override
     public void deleteDefaultDevicePacks() {
-        batteryPackMapper.deleteByConfigIds(new String[]{String.valueOf(Constants.DEFAULT_CONFIG_ID)});
+        batteryPackMapper.deleteDefaultDevicePacks();
     }
 
     /**
@@ -209,7 +209,7 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         List<BatteryPack> list = batteryPackMapper.selectAllBattery();
         for (BatteryPack attribute : list) {
             attribute.setConfigId(Constants.DEFAULT_CONFIG_ID);
-            String key = String.format(packInfoCache.getKey(), Constants.DEFAULT_CONFIG_ID, attribute.getPackNum());
+            String key = String.format(packInfoCache.getKey(), attribute.getPackNum());
             CacheUtils.put(packInfoCache.getCache(), key, attribute);
             startKeys.add(key);
         }
@@ -321,6 +321,6 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
      */
     @Override
     public Integer getBatteryMaxNumber(Integer packNum) {
-        return batteryPackMapper.getBatteryMaxNumber(Constants.DEFAULT_CONFIG_ID, packNum);
+        return batteryPackMapper.getBatteryMaxNumber(packNum);
     }
 }

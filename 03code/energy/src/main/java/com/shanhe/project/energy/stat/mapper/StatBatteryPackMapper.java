@@ -43,9 +43,9 @@ public interface StatBatteryPackMapper {
     /**
      * 删除电池组统计
      *
-     * @param configId 配置ID
+     * @param packNum 电池组编号
      */
-    void deleteByConfigId(@Param("configId") Long configId, @Param("packNum") Integer packNum);
+    void deleteByPackNum(@Param("packNum") Integer packNum);
     /**
      * 查询电池组平均电流
      *

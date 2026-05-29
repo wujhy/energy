@@ -236,7 +236,7 @@ public class HostServiceImpl implements IHostService {
         Host host = this.getDetail();
         Map<String, Object> mapAll = StrUtil.isNotBlank(host.getExtend3())
                 ? JSON.parseObject(host.getExtend3())
-                : new HashMap<>();
+                : new HashMap<>(16);
         mapAll.putAll(map);
         host.setExtend3(JSON.toJSONString(mapAll));
         hostMapper.updateHost(host);

@@ -576,13 +576,13 @@ public class BatteryParamsHandler {
             return;
         }
         if (msg.length() < itemCode.getEnd()) {
-            log.error("Error processing alarm code {} : Message is null or too short", attribute.getCode());
+            log.error("处理告警编码 {} 失败：消息为空或过短", attribute.getCode());
             return;
         }
         try {
             sta = Integer.parseInt(msg.substring(itemCode.getStart(), itemCode.getEnd()));
         } catch (Exception e) {
-            log.error("Error processing alarm code {} , {}", attribute.getCode(), e.getMessage());
+            log.error("处理告警编码 {} 失败, {}", attribute.getCode(), e.getMessage());
         }
 
         if (sta != null && Objects.equals(attribute.getStatus(), sta)) {

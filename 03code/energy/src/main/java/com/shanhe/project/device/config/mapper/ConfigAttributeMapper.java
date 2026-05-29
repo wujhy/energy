@@ -47,10 +47,9 @@ public interface ConfigAttributeMapper
     /**
      * 查询默认设备属性列表
      *
-     * @param configId 设备id
      * @return 设备属性集合
      */
-    List<ConfigAttribute> selectByDefaultConfigId(Long configId);
+    List<ConfigAttribute> selectDefaultDeviceAttributes();
 
     /**
      * 新增设备属性
@@ -71,12 +70,11 @@ public interface ConfigAttributeMapper
     /**
      * 按模板属性同步生成设备属性
      *
-     * @param configId 配置ID
      * @param packNum 电池组编号
      * @param model 电池规格型号
      * @return 结果
      */
-    int insertByTemplateAttribute(@Param("configId") Long configId, @Param("packNum") Integer packNum, @Param("model") Integer model);
+    int insertByTemplateAttribute(@Param("packNum") Integer packNum, @Param("model") Integer model);
 
     /**
      * 修改设备属性
@@ -113,12 +111,10 @@ public interface ConfigAttributeMapper
     int deleteConfigAttributeByConfigAttrIds(String[] configAttrIds);
 
     /**
-     * 批量删除设备属性
-     *
-     * @param configIds 需要删除设备id
+     * 删除默认设备属性
      * @return 结果
      */
-    int deleteConfigAttributeByConfigIds(String[] configIds);
+    int deleteDefaultDeviceAttributes();
 
     /**
      * 批量删除设备属性
@@ -126,7 +122,7 @@ public interface ConfigAttributeMapper
      * @param packNums 需要删除设备包
      * @return 结果
      */
-    int deleteConfigAttributeByPackNums(@Param("configId") Long configId, @Param("packNums") List<Integer> packNums);
+    int deleteConfigAttributeByPackNums(@Param("packNums") List<Integer> packNums);
 
     /**
      * 导入属性
@@ -136,12 +132,11 @@ public interface ConfigAttributeMapper
     void importAttribute(List<ConfigAttribute> attributeList);
 
     /**
-     * 根据配置ID、电池组编号和属性编码查询
+     * 根据电池组编号和属性编码查询
      *
-     * @param configId 配置ID
      * @param packNum 电池组编号
      * @param code 属性编码
      * @return 配置属性
      */
-    ConfigAttribute getBy(@Param("configId") Long configId, @Param("packNum") Integer packNum, @Param("code") String code);
+    ConfigAttribute getBy(@Param("packNum") Integer packNum, @Param("code") String code);
 }

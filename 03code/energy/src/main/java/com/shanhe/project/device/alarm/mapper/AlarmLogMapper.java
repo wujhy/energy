@@ -74,11 +74,9 @@ public interface AlarmLogMapper
     int updateAlarmLog(AlarmLog alarmLog);
 
     /**
-     * 删除设备历史记录
-     *
-     * @param configIds 设备id
+     * 删除默认设备历史记录
      */
-    void deleteAlarmLogByConfigIds(String[] configIds);
+    void deleteDefaultDeviceAlarmLogs();
 
     /**
      * 删除设备历史记录
@@ -110,5 +108,5 @@ public interface AlarmLogMapper
     /**
      * 删除设备告警记录信息
      */
-    void deleteAlarmLogByConfigIdPackNum(@Param("configId") Long configId, @Param("packNum") Integer packNum);
+    void deleteBatteryAlarmLogByPackNum(@Param("packNum") Integer packNum);
 }

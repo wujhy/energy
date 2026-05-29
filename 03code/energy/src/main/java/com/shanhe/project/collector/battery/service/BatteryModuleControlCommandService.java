@@ -2,6 +2,7 @@ package com.shanhe.project.collector.battery.service;
 
 import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.*;
 import org.springframework.stereotype.Service;
 
 /**
@@ -113,14 +114,14 @@ public class BatteryModuleControlCommandService {
     public BatteryModuleControlCommand setCalibrationParameter(int moduleAddress, int... payloadBytes) {
         validateModuleAddress(moduleAddress);
         if (payloadBytes == null || (payloadBytes.length != 4 && payloadBytes.length != 6)) {
-            throw new IllegalArgumentException("SET_CALIBRATION_PARAMETER payload length must be 4 or 6");
+            throw new IllegalArgumentException("校准参数载荷长度必须为4或6字节");
         }
         return command(BatteryDeviceProtocolCode.SET_CALIBRATION_PARAMETER, moduleAddress, payloadBytes);
     }
 
     private BatteryModuleControlCommand command(BatteryDeviceProtocolCode protocolCode, int address, int... payloadBytes) {
         if (protocolCode == null) {
-            throw new IllegalArgumentException("protocolCode must not be null");
+            throw new IllegalArgumentException("协议编码不能为空");
         }
         validateModuleAddressOrBroadcast(address);
         return BatteryModuleControlCommand.builder()
@@ -153,25 +154,25 @@ public class BatteryModuleControlCommandService {
 
     private void validatePayloadLength(BatteryDeviceProtocolCode protocolCode, int[] payloadBytes, int length) {
         if (payloadBytes == null || payloadBytes.length != length) {
-            throw new IllegalArgumentException(protocolCode.name() + " payload length must be " + length);
+            throw new IllegalArgumentException(protocolCode.name() + " 载荷长度必须为 " + length);
         }
     }
 
     private void validateModuleAddress(int address) {
-        if (address < 1 || address > 246) {
-            throw new IllegalArgumentException("module address must be between 1 and 246");
+        if (address < 1 || address > GROUP_MODULE_ADDRESS) {
+            throw new IllegalArgumentException("模块地址必须在1到246之间");
         }
     }
 
     private void validateModuleAddressOrBroadcast(int address) {
-        if (address < 0 || address > 246) {
-            throw new IllegalArgumentException("module address must be between 0 and 246");
+        if (address < 0 || address > GROUP_MODULE_ADDRESS) {
+            throw new IllegalArgumentException("模块地址必须在0到246之间");
         }
     }
 
     private int validateByte(int value) {
-        if (value < 0 || value > 255) {
-            throw new IllegalArgumentException("payload byte must be between 0 and 255");
+        if (value < 0 || value > UNSIGNED_BYTE_MAX) {
+            throw new IllegalArgumentException("载荷字节值必须在0到255之间");
         }
         return value;
     }

@@ -359,12 +359,12 @@ public class ReflectUtils
 
         if (index >= params.length || index < 0)
         {
-            log.debug("Index: {}, Size of {}'s Parameterized Type: {}", index, clazz.getSimpleName(), params.length);
+            log.debug("索引: {}, {}的参数化类型大小: {}", index, clazz.getSimpleName(), params.length);
             return Object.class;
         }
         if (!(params[index] instanceof Class))
         {
-            log.debug("{} not set the actual class on superclass generic parameter", clazz.getSimpleName());
+            log.debug("{} 未设置父类泛型参数的实际类型", clazz.getSimpleName());
             return Object.class;
         }
 
@@ -375,7 +375,7 @@ public class ReflectUtils
     {
         if (instance == null)
         {
-            throw new RuntimeException("Instance must not be null");
+            throw new RuntimeException("实例不能为空");
         }
         Class<?> clazz = instance.getClass();
         if (clazz.getName().contains(CGLIB_CLASS_SEPARATOR))

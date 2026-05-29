@@ -27,9 +27,7 @@
         <include refid="selectStatBatteryResVo"/>
         from stat_battery_res
         <where>
-            <if test="configId != null ">
-                and config_id = #{configId}
-            </if>
+            and config_id = 1
             <if test="packNum != null ">
                 and pack_num = #{packNum}
             </if>
@@ -60,9 +58,9 @@
         </foreach>
     </insert>
 
-    <!-- 按配置ID删除内阻统计 -->
-    <delete id="deleteByConfigId">
-        delete from stat_battery_res where config_id = #{configId}
+    <!-- 按默认设备和电池组删除内阻统计 -->
+    <delete id="deleteByPackNum">
+        delete from stat_battery_res where config_id = 1
         <if test="packNum != null">
             and pack_num = #{packNum}
         </if>

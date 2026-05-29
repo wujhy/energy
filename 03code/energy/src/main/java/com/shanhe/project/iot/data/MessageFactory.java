@@ -121,7 +121,7 @@ public class MessageFactory {
                         exceptionMsg = ((InvocationTargetException) e).getTargetException().getMessage();
                     }
                 }
-                log.error("data error:--------starGainData--------" + exceptionMsg + "-------------------");
+                log.error("数据处理异常:--------starGainData--------" + exceptionMsg + "-------------------");
                 //睡眠1秒
                 try {
                     Thread.sleep(1000);
@@ -134,7 +134,7 @@ public class MessageFactory {
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }
-                log.error("data system error:--------starGainData--------" + e + "-------------------");
+                log.error("数据处理系统异常:--------starGainData--------" + e + "-------------------");
             }
         }
     }

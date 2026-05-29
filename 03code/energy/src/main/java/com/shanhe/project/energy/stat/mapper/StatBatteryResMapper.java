@@ -20,7 +20,7 @@ public interface StatBatteryResMapper {
      *
      * @return 单体内阻变化统计（内阻测试后）集合
      */
-    List<StatBatteryRes> selectList(@Param("configId") Long configId, @Param("packNum") Integer packNum, @Param("batNum") Integer batNum);
+    List<StatBatteryRes> selectList(@Param("packNum") Integer packNum, @Param("batNum") Integer batNum);
 
     /**
      * 新增单体内阻变化统计（内阻测试后）
@@ -30,9 +30,9 @@ public interface StatBatteryResMapper {
     void insertList(@Param("list") List<StatBatteryRes> statBatteryRes);
 
     /**
-     * 根据配置ID删除单体内阻变化统计（内阻测试后）
+     * 根据电池组编号删除单体内阻变化统计（内阻测试后）
      *
-     * @param configId 配置ID
+     * @param packNum 电池组编号
      */
-    void deleteByConfigId(@Param("configId") Long configId, @Param("packNum") Integer packNum);
+    void deleteByPackNum(@Param("packNum") Integer packNum);
 }

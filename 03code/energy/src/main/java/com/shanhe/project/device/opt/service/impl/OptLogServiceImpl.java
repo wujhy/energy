@@ -279,7 +279,7 @@ public class OptLogServiceImpl implements OptLogService {
     @Override
     public List<OptLog> select(OptLog optLog) {
         List<OptLog> optLogList = optLogMapper.select(optLog);
-        Map<Integer, Double> batCapacityMap = new HashMap<>();
+        Map<Integer, Double> batCapacityMap = new HashMap<>(16);
         if (optLogList != null && !optLogList.isEmpty()) {
             for (OptLog log : optLogList) {
                 if (log.getContent() != null) {
@@ -318,7 +318,7 @@ public class OptLogServiceImpl implements OptLogService {
      */
     @Override
     public void deleteDefaultDeviceLogs() {
-        optLogMapper.deleteByConfigIds(Convert.toStrArray(String.valueOf(Constants.DEFAULT_CONFIG_ID)));
+        optLogMapper.deleteDefaultDeviceLogs();
     }
 
     /**
@@ -394,7 +394,7 @@ public class OptLogServiceImpl implements OptLogService {
      */
     @Override
     public OptLog getRunningOptLog(Integer packNum, Integer type) {
-        return optLogMapper.getRunningOptLog(Constants.DEFAULT_CONFIG_ID, packNum, type);
+        return optLogMapper.getRunningOptLog(packNum, type);
     }
 
     /**
@@ -406,7 +406,7 @@ public class OptLogServiceImpl implements OptLogService {
      */
     @Override
     public Integer count(Integer packNum, List<Integer> types) {
-        Integer count = optLogMapper.count(Constants.DEFAULT_CONFIG_ID, packNum, types);
+        Integer count = optLogMapper.count(packNum, types);
         if (count != null) {
             return count;
         }
@@ -439,7 +439,7 @@ public class OptLogServiceImpl implements OptLogService {
      */
     @Override
     public OptLog lastType(Integer packNum, int type) {
-        return optLogMapper.lastByType(Constants.DEFAULT_CONFIG_ID, packNum, type);
+        return optLogMapper.lastByType(packNum, type);
     }
 
     /**
@@ -449,7 +449,7 @@ public class OptLogServiceImpl implements OptLogService {
      */
     @Override
     public void deleteByPackNum(Integer packNum) {
-        optLogMapper.deleteByConfigIdPackNum(Constants.DEFAULT_CONFIG_ID, packNum);
+        optLogMapper.deleteByPackNum(packNum);
     }
 
     /**
@@ -486,7 +486,7 @@ public class OptLogServiceImpl implements OptLogService {
         String cacheKey = String.format(logCache.getKey(), packNum, keyType);
         OptLog log = (OptLog) CacheUtils.get(logCache.getCache(), cacheKey);
         if (log == null) {
-            log = optLogMapper.getRunningOptLog(Constants.DEFAULT_CONFIG_ID, packNum, type);
+            log = optLogMapper.getRunningOptLog(packNum, type);
             if (log == null) {
                 return;
             }

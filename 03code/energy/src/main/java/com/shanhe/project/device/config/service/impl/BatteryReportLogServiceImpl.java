@@ -309,7 +309,7 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
      */
     @Override
     public void deleteByPackNum(Integer packNum) {
-        batteryReportLogMapper.deleteByConfigId(Constants.DEFAULT_CONFIG_ID, packNum);
+        batteryReportLogMapper.deleteByPackNum(packNum);
     }
 
     /**

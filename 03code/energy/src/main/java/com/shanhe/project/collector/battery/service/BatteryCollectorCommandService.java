@@ -4,6 +4,7 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.*;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,19 +30,19 @@ public class BatteryCollectorCommandService {
      * 980 聚合命令不允许直发 600 节下行总线时的提示。
      */
     private static final String AGGREGATE_COMMAND_UNSUPPORTED =
-            "980 aggregate command cannot be sent directly to 600 module channel; implement an explicit module-control mapping first";
+            "980聚合命令不能直接发送到600模块通道，请先实现显式模块控制映射";
 
     /**
      * 已映射但尚未接入串口下发队列时的提示。
      */
     private static final String MODULE_COMMAND_MAPPED =
-            "980 aggregate command mapped to 600 module command; serial dispatch is not enabled yet";
+            "980聚合命令已映射为600模块命令，串口下发尚未启用";
 
     /**
      * 已映射并加入600节模块端串口下发队列时的提示。
      */
     private static final String MODULE_COMMAND_QUEUED =
-            "980 aggregate command mapped to 600 module command and queued for serial dispatch";
+            "980聚合命令已映射为600模块命令并加入串口下发队列";
 
     /**
      * 600节模块端显式控制命令构造服务。
@@ -111,7 +112,7 @@ public class BatteryCollectorCommandService {
         try {
             moduleCommand = moduleControlCommandService.setModuleAddress(moduleAddress, newModuleAddress);
         } catch (IllegalArgumentException e) {
-            log.warn("manual module address command rejected, channel={}, group={}, address={}, newAddress={}, reason={}",
+            log.warn("手动设置模块地址命令被拒绝, 通道={}, 电池组={}, 地址={}, 新地址={}, 原因={}",
                     channelName,
                     batteryGroup,
                     moduleAddress,
@@ -152,7 +153,7 @@ public class BatteryCollectorCommandService {
         try {
             moduleCommand = moduleControlCommandService.clearSingleDebugData(CLEAR_ALL_DEBUG_PARAMETER);
         } catch (IllegalArgumentException e) {
-            log.warn("clear battery group debug data command rejected, channel={}, group={}, reason={}",
+            log.warn("清除电池组调试数据命令被拒绝, 通道={}, 电池组={}, 原因={}",
                     channelName,
                     batteryGroup,
                     e.getMessage());
@@ -187,7 +188,7 @@ public class BatteryCollectorCommandService {
             moduleCommand.setAutoAddressBatteryCount(batteryCount);
             moduleCommand.setAutoAddressBatterySpecification(batterySpecification);
         } catch (IllegalArgumentException e) {
-            log.warn("automatic module address command rejected, channel={}, group={}, batteryCount={}, specification={}, reason={}",
+            log.warn("自动编号命令被拒绝, 通道={}, 电池组={}, 单体数量={}, 规格={}, 原因={}",
                     channelName,
                     batteryGroup,
                     batteryCount,
@@ -222,7 +223,7 @@ public class BatteryCollectorCommandService {
                     moduleAddress,
                     resistanceCoefficientToM460FloatBytes(coefficient));
         } catch (IllegalArgumentException e) {
-            log.warn("internal resistance coefficient command rejected, channel={}, group={}, address={}, coefficient={}, reason={}",
+            log.warn("设置内阻系数命令被拒绝, 通道={}, 电池组={}, 地址={}, 系数={}, 原因={}",
                     channelName,
                     batteryGroup,
                     moduleAddress,
@@ -264,7 +265,7 @@ public class BatteryCollectorCommandService {
                     unsignedShortHigh(dataInfo),
                     unsignedShortLow(dataInfo));
         } catch (IllegalArgumentException e) {
-            log.warn("battery calibration command rejected, channel={}, group={}, address={}, dataType={}, dataStatus={}, dataInfo={}, reason={}",
+            log.warn("电池数据校正命令被拒绝, 通道={}, 电池组={}, 地址={}, 数据类型={}, 数据状态={}, 数据信息={}, 原因={}",
                     channelName,
                     batteryGroup,
                     moduleAddress,
@@ -335,7 +336,7 @@ public class BatteryCollectorCommandService {
                     return null;
             }
         } catch (IllegalArgumentException e) {
-            log.warn("980 aggregate command mapping rejected, command={}, reason={}",
+            log.warn("980聚合命令映射被拒绝, 命令={}, 原因={}",
                     commandDefinition.name(),
                     e.getMessage());
             return null;
@@ -346,7 +347,7 @@ public class BatteryCollectorCommandService {
                                                   String channelName,
                                                   BatteryModuleControlCommand moduleCommand,
                                                   boolean queued) {
-        log.info("mapped 980 aggregate command to 600 module command, channel={}, command={}, moduleCommand={}, queued={}",
+        log.info("980聚合命令已映射为600模块命令, 通道={}, 命令={}, 模块命令={}, 已入队={}",
                 channelName,
                 commandDefinition == null ? null : commandDefinition.name(),
                 moduleCommand == null ? null : moduleCommand.getProtocolCode(),
@@ -404,7 +405,7 @@ public class BatteryCollectorCommandService {
 
     private int[] resistanceCoefficientToM460FloatBytes(int coefficient) {
         // 16位无符号整数最大值，对应MCU端两字节寄存器
-        if (coefficient < 0 || coefficient > 65535) {
+        if (coefficient < 0 || coefficient > UNSIGNED_SHORT_MAX) {
             throw new IllegalArgumentException("内阻系数必须在0到65535之间");
         }
         // 旧 M460 将 980 侧两字节整数除以 1000 后，按 MCU 小端 float 内存字节下发给 600 模块。
@@ -432,7 +433,7 @@ public class BatteryCollectorCommandService {
     }
 
     private void validateBatteryCount(int batteryCount) {
-        if (batteryCount < 1 || batteryCount > 245) {
+        if (batteryCount < 1 || batteryCount > MAX_CELL_ADDRESS) {
             throw new IllegalArgumentException("电池组单体数量必须在1到245之间");
         }
     }
@@ -465,14 +466,14 @@ public class BatteryCollectorCommandService {
         if (value < 0) {
             value += 65536;
         }
-        if (value < 0 || value > 65535) {
-            throw new IllegalArgumentException("dataInfo must be between -65535 and 65535");
+        if (value < 0 || value > UNSIGNED_SHORT_MAX) {
+            throw new IllegalArgumentException("数据信息必须在-65535到65535之间");
         }
         return value;
     }
 
     private BatteryCollectorCommandResult unsupported(BatteryAggregateCommandDefinition commandDefinition, String channelName) {
-        log.warn("blocked 980 aggregate command on 600 module channel, channel={}, command={}",
+        log.warn("980聚合命令在600模块通道上被阻止, 通道={}, 命令={}",
                 channelName,
                 commandDefinition == null ? null : commandDefinition.name());
         return BatteryCollectorCommandResult.builder()

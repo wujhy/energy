@@ -6,6 +6,8 @@ import com.shanhe.project.collector.battery.model.BatteryModuleFrameData;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import org.springframework.stereotype.Service;
 
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.*;
+
 /**
  * 600节模块端帧标准数据解析服务。
  *
@@ -18,7 +20,7 @@ public class BatteryModuleFrameDataParserService {
     /**
      * 电流温度模块固定地址。
      */
-    private static final int ARRAY_MODULE_ADDRESS = 246;
+    private static final int ARRAY_MODULE_ADDRESS = GROUP_MODULE_ADDRESS;
 
     /**
      * 将 600 节模块端响应帧解析为标准数据对象。
@@ -71,7 +73,7 @@ public class BatteryModuleFrameDataParserService {
                     .environmentTemperature2(scale(s16(payload, 9), 10.0d))
                     .build();
         }
-        if (address < 1 || address > 245 || payload.length < 10) {
+        if (address < 1 || address > MAX_CELL_ADDRESS || payload.length < 10) {
             return null;
         }
         int responseFlag = u8(payload, 0);

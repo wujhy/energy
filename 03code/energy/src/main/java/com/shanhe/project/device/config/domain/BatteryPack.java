@@ -123,9 +123,15 @@ public class BatteryPack extends BaseEntity {
         heads.add("环境温度");
 
         if (null != batSinSize) {
-            for (int i = 1; i <= batSinSize; i++) heads.add("电压" + i);
-            for (int i = 1; i <= batSinSize; i++) heads.add("温度" + i);
-            for (int i = 1; i <= batSinSize; i++) heads.add("内阻" + i);
+            for (int i = 1; i <= batSinSize; i++) {
+                heads.add("电压" + i);
+            }
+            for (int i = 1; i <= batSinSize; i++) {
+                heads.add("温度" + i);
+            }
+            for (int i = 1; i <= batSinSize; i++) {
+                heads.add("内阻" + i);
+            }
         }
 
         return heads.stream().map(Lists::newArrayList).collect(Collectors.toList());

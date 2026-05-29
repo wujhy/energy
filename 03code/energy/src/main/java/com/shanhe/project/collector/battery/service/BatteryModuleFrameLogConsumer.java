@@ -52,7 +52,7 @@ public class BatteryModuleFrameLogConsumer implements BatteryModuleFrameConsumer
         try {
             frameLogMapper.insertOne(frameLog);
         } catch (Exception e) {
-            log.warn("save battery module frame log failed, channel={}, command={}",
+            log.warn("保存蓄电池模块帧日志失败, 通道={}, 命令={}",
                     channelConfig == null ? null : channelConfig.getName(),
                     frame == null ? null : String.format("%02X", frame.getCommand()),
                     e);

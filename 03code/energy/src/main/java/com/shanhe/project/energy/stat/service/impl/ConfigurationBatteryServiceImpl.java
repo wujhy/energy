@@ -89,7 +89,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
 
     @Override
     public Map<String, Object> getTempWarnLine(Integer packNum) {
-        Map<String, Object> packMap = new HashMap<>();
+        Map<String, Object> packMap = new HashMap<>(4);
         ConfigAttribute wdgAttribute = configAttributeService.getCacheBy(packNum, ItemCode.DTDCWDG.getCode());
         if (wdgAttribute != null && wdgAttribute.getListLevel() != null) {
             for (AlarmItemLevelVo level : wdgAttribute.getListLevel()) {
@@ -113,7 +113,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
 
     @Override
     public Map<String, Object> getResWarnLine(Integer packNum) {
-        Map<String, Object> packMap = new HashMap<>();
+        Map<String, Object> packMap = new HashMap<>(4);
         ConfigAttribute dAttribute = configAttributeService.getCacheBy(packNum, ItemCode.DTNZGD.getCode());
         if (null == dAttribute) {
             dAttribute = configAttributeService.getBy(packNum, ItemCode.DTNZGD.getCode());
@@ -214,7 +214,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
             }
         } catch (NumberFormatException e) {
             // 记录日志，但不中断流程
-            log.warn("Failed to parse backup duration", e);
+            log.warn("解析备电时长失败", e);
         }
     }
 

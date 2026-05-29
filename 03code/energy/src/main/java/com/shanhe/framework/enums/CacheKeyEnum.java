@@ -10,7 +10,7 @@ import lombok.Getter;
  */
 @Getter
 public enum CacheKeyEnum {
-
+    /* 系统缓存键 */
     LOGIN("sys-authCache", "login:%s", "登录信息"),
     HOST("sys-cache", "device:host", "站点信息"),
     HOST_TOKEN("sys-cache", "device:host:token", "站点token信息"),
@@ -18,15 +18,15 @@ public enum CacheKeyEnum {
     /* config.类型.端口号.通道号 */
     CONFIG_ONLINE("sys-cache", "config:%s:%s:%s", "设备在线"),
     BATTERY_ONLINE("sys-cache", "battery:online:%s", "电池组在线"),
-    /* attribute.配置id.组.属性编码 */
-    ATTRIBUTE("device-attribute", "attribute:%s:%s:%s", "设备属性"),
-    /* alarm.配置id.包编号.模块编号.属性编码 */
-    ALARM("device-alarm", "alarm:%s:%s:%s:%s", "设备告警"),
+    /* attribute.组.属性编码 */
+    ATTRIBUTE("device-attribute", "attribute:%s:%s", "设备属性"),
+    /* alarm.包编号.模块编号.属性编码 */
+    ALARM("device-alarm", "alarm:%s:%s:%s", "设备告警"),
     /* log:packNum:type */
     OPT_LOG("device-log", "log:%s:%s", "操作日志处理"),
     /* alarm.level */
     ALARM_LEVEL("sys-cache", "alarm:level", "告警等级"),
-    STORAGE_TIME("data-storage-time", "storageTime:%s:%s", "数据最后存储时间"),
+    STORAGE_TIME("data-storage-time", "storageTime:%s", "数据最后存储时间"),
     /* battery.配置id.包编号.模块编号 */
     BATTERY("device-battery", "battery:%s:%s:%s", "单体电池"),
     /* battery.包编号 */
@@ -46,8 +46,8 @@ public enum CacheKeyEnum {
     DEPLOY_DOWNLOAD("sys-cache", "deploy:download", "软件升级下载"),
     /* deploy:download */
     DEPLOY_STATUS("sys-cache", "deploy:status", "软件升级状态"),
-    /* battery.设备ID.包编号 */
-    BATTERY_PACK_INFO("device-battery", "battery:info:%s:%s", "蓄电池组数据"),
+    /* battery.包编号 */
+    BATTERY_PACK_INFO("device-battery", "battery:info:%s", "蓄电池组数据"),
     STAT_BATTERY_GROUP("stat-battery", "stat:battery:group:%s", "电池组预估容量");
 
     private final String cache;

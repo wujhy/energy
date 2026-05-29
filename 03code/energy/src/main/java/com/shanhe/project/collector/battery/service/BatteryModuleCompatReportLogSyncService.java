@@ -66,7 +66,7 @@ public class BatteryModuleCompatReportLogSyncService {
         boolean isInsert = dataService.isInsert(channelConfig.getBatteryGroup() + "");
         batteryReportLogService.insert(channelConfig.getBatteryGroup(),
                 reportLog.getPackParam(), batteryList, isInsert);
-        log.debug("sync battery module realtime to dev_battery_report_log, packNum={}, insert={}",
+        log.debug("同步蓄电池模块实时数据到历史记录, 电池组={}, 是否插入={}",
                 channelConfig.getBatteryGroup(), isInsert);
     }
 }

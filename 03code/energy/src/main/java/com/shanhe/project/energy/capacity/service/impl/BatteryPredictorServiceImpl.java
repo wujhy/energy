@@ -142,7 +142,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         // 2V
         int specSize = 1;
         //12V电池
-        if (spec == 12.0) {
+        if (Double.compare(spec, 12.0) == 0) {
             specSize = 6;
         }
 
@@ -178,7 +178,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
                                                          Date startTime, Date endTime,
                                                          Double aCapacity, int specSize) {
         // 单体预估容量
-        Map<String, PreBatteryVo> result = new HashMap<>();
+        Map<String, PreBatteryVo> result = new HashMap<>(specSize);
         // 放电倍率
         double crate = current / aCapacity;
         //格式化，保留2位小数
@@ -538,7 +538,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
     private int calcPrePointTime(double startVoltage, double endVoltage, double slope) {
         // 防止除零异常
         if (slope == 0) {
-            throw new IllegalArgumentException("slope cannot be zero");
+            throw new IllegalArgumentException("斜率不能为零");
         }
         // 计算逻辑 y = kx + b ，直接返回四舍五入结果
         return (int) Math.round((endVoltage - startVoltage) / slope);

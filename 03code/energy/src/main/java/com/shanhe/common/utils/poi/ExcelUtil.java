@@ -212,7 +212,7 @@ public class ExcelUtil<T>
         if (rows > 0)
         {
             // 定义一个map用于存放excel列的序号和field.
-            Map<String, Integer> cellMap = new HashMap<>();
+            Map<String, Integer> cellMap = new HashMap<>(16);
             // 获取表头
             Row heard = sheet.getRow(titleNum);
             for (int i = 0; i < heard.getPhysicalNumberOfCells(); i++)
@@ -1267,7 +1267,7 @@ public class ExcelUtil<T>
      */
     public static Map<String, PictureData> getSheetPictures03(HSSFSheet sheet, HSSFWorkbook workbook)
     {
-        Map<String, PictureData> sheetIndexPicMap = new HashMap<>();
+        Map<String, PictureData> sheetIndexPicMap = new HashMap<>(16);
         List<HSSFPictureData> pictures = workbook.getAllPictures();
         if (!pictures.isEmpty())
         {
@@ -1300,7 +1300,7 @@ public class ExcelUtil<T>
      */
     public static Map<String, PictureData> getSheetPictures07(XSSFSheet sheet, XSSFWorkbook workbook)
     {
-        Map<String, PictureData> sheetIndexPicMap = new HashMap<>();
+        Map<String, PictureData> sheetIndexPicMap = new HashMap<>(16);
         for (POIXMLDocumentPart dr : sheet.getRelations())
         {
             if (dr instanceof XSSFDrawing)

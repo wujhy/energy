@@ -73,7 +73,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     @Override
     public AlarmLog getByCache(Integer packNum, Integer modelNum, String itemCode) {
         return (AlarmLog) CacheUtils.get(alarmCache.getCache(),
-                String.format(alarmCache.getKey(), Constants.DEFAULT_CONFIG_ID, packNum, modelNum, itemCode));
+                String.format(alarmCache.getKey(), packNum, modelNum, itemCode));
     }
 
     /**
@@ -111,8 +111,8 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
         Integer isAlarm = YesNoEnum.NO.getDictValue();
         String prefix = packNum != null ?
-                String.format("alarm:%s:%s", Constants.DEFAULT_CONFIG_ID, packNum) :
-                String.format("alarm:%s", Constants.DEFAULT_CONFIG_ID);
+                String.format("alarm:%s:", packNum) :
+                "alarm:";
         for (String key : keys) {
             if (!StrUtil.startWith(key, prefix)) {
                 continue;
@@ -135,7 +135,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     public Long batteryAlarmNum() {
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
         long num = 0L;
-        String prefix = String.format("alarm:%s", Constants.DEFAULT_CONFIG_ID);
+        String prefix = "alarm:";
         for (String key : keys) {
             if (!StrUtil.startWith(key, prefix)) {
                 continue;
@@ -260,7 +260,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
             String alarmValue = warnParam.get(itemCode);
 
             // 取缓存告警记录
-            String key = String.format(alarmCache.getKey(), config.getConfigId(), packNum, modelNum, itemCode);
+            String key = String.format(alarmCache.getKey(), packNum, modelNum, itemCode);
             AlarmLog cacheLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
 
             /* -----------------------------------------屏蔽处理-------------------------------------------- */
@@ -491,7 +491,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
             }
             // 处理完成
             log.setStatus(YesNoEnum.YES.getDictValue());
-            this.updateStatus(log, String.format(alarmCache.getKey(), log.getConfigId(), log.getPackNum(), log.getModelNum(), log.getItemCode()));
+            this.updateStatus(log, String.format(alarmCache.getKey(), log.getPackNum(), log.getModelNum(), log.getItemCode()));
         }
     }
 
@@ -517,7 +517,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     @Override
     public void alarmValid(ConfigAttribute configAttribute, Integer modelNum, String value, Integer type) {
         // 取缓存告警记录
-        String key = String.format(alarmCache.getKey(), configAttribute.getConfigId(), configAttribute.getPackNum(), modelNum, configAttribute.getCode());
+        String key = String.format(alarmCache.getKey(), configAttribute.getPackNum(), modelNum, configAttribute.getCode());
         AlarmLog cacheLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
         // 未启用 不参与告警
         if (configAttribute.getStatus() == 1 || configAttribute.getAlarmConfig() == 1) {
@@ -785,7 +785,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
      */
     @Override
     public Integer isAlarm(ConfigAttribute attribute) {
-        String key = String.format(alarmCache.getKey(), attribute.getConfigId(), attribute.getPackNum(), null, attribute.getCode());
+        String key = String.format(alarmCache.getKey(), attribute.getPackNum(), null, attribute.getCode());
         AlarmLog cacheLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
         return cacheLog != null && Objects.equals(cacheLog.getStatus(), YesNoEnum.NO.getDictValue()) ? YesNoEnum.YES.getDictValue() : YesNoEnum.NO.getDictValue();
     }
@@ -797,7 +797,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
      */
     @Override
     public void closeAlarmLog(ConfigAttribute attribute) {
-        String key = String.format(alarmCache.getKey(), attribute.getConfigId(), attribute.getPackNum(), null, attribute.getCode());
+        String key = String.format(alarmCache.getKey(), attribute.getPackNum(), null, attribute.getCode());
         Object object = CacheUtils.get(alarmCache.getCache(), key);
         if (object != null) {
             AlarmLog cacheLog = (AlarmLog) object;
@@ -813,7 +813,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     public void closeDefaultDeviceAlarmLog() {
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
         // 前缀
-        String prefix = String.format("alarm:%s", Constants.DEFAULT_CONFIG_ID);
+        String prefix = "alarm:";
         for (String key : keys) {
             if (!StrUtil.startWith(key, prefix)) {
                 continue;
@@ -835,7 +835,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
      */
     @Override
     public int insertAlarmLog(AlarmLog alarmLog) {
-        String key = String.format(alarmCache.getKey(), alarmLog.getConfigId(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode());
+        String key = String.format(alarmCache.getKey(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode());
         AlarmLog cacheLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
 
         // 屏蔽处理
@@ -905,7 +905,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         alarmLog.setRemark(shiedAlarm.getRemark());
 
         // 缓存处理
-        String key = String.format(alarmCache.getKey(), alarmLog.getConfigId(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode());
+        String key = String.format(alarmCache.getKey(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode());
         // 如果已处理，且屏蔽时间小于当前时间，删除缓存
         if (Objects.equals(alarmLog.getStatus(), YesNoEnum.YES.getDictValue())
                 && (Objects.isNull(alarmLog.getShiedTime()) || alarmLog.getShiedTime().getTime() < System.currentTimeMillis())) {
@@ -936,7 +936,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
      */
     @Override
     public void deleteDefaultDeviceAlarmLogs() {
-        alarmLogMapper.deleteAlarmLogByConfigIds(new String[]{String.valueOf(Constants.DEFAULT_CONFIG_ID)});
+        alarmLogMapper.deleteDefaultDeviceAlarmLogs();
         this.updateCache();
     }
 
@@ -971,7 +971,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         List<AlarmLog> alarmLogList = alarmLogMapper.allAlarmLog();
         for (AlarmLog alarmLog : alarmLogList) {
             /* alarm.配置id.包编号.模块编号.属性编码 */
-            String key = String.format(alarmCache.getKey(), alarmLog.getConfigId(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode());
+            String key = String.format(alarmCache.getKey(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode());
             // 告警记录存在重复，则把旧告警处理
             if (!startKeys.contains(key)) {
                 startKeys.add(key);
@@ -1001,8 +1001,8 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     public List<AlarmLog> selectBatteryAlarmLogListCache(Integer packNum) {
         // 前缀
         String prefix = packNum != null ?
-                String.format("alarm:%s:%s", Constants.DEFAULT_CONFIG_ID, packNum) :
-                String.format("alarm:%s", Constants.DEFAULT_CONFIG_ID);
+                String.format("alarm:%s:", packNum) :
+                "alarm:";
 
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
         List<AlarmLog> alarmLogs = new ArrayList<>();
@@ -1055,7 +1055,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
      */
     @Override
     public void deleteBatteryAlarmLogByPackNum(Integer packNum) {
-        alarmLogMapper.deleteAlarmLogByConfigIdPackNum(Constants.DEFAULT_CONFIG_ID, packNum);
+        alarmLogMapper.deleteBatteryAlarmLogByPackNum(packNum);
     }
 
 
@@ -1139,7 +1139,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
      * 删除缓存
      */
     private void removeCache(AlarmLog alarmLog) {
-        String key = String.format(alarmCache.getKey(), alarmLog.getConfigId(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode());
+        String key = String.format(alarmCache.getKey(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode());
         AlarmLog cacheLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
         if (cacheLog != null && Objects.equals(cacheLog.getAlarmId(), alarmLog.getAlarmId())) {
             CacheUtils.remove(alarmCache.getCache(), key);

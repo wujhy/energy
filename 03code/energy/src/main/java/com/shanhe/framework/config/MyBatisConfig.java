@@ -59,7 +59,7 @@ public class MyBatisConfig {
                             try {
                                 result.add(Class.forName(metadataReader.getClassMetadata().getClassName()).getPackage().getName());
                             } catch (ClassNotFoundException e) {
-                                log.error("ClassNotFoundException{}", e.getMessage());
+                                log.error("类未找到异常:{}", e.getMessage());
                             }
                         }
                     }
@@ -99,7 +99,7 @@ public class MyBatisConfig {
                     resources.addAll(Arrays.asList(mappers));
                 } catch (IOException e) {
                     // 如果发生IOException，打印错误信息
-                    log.error("IOException{}", e.getMessage());
+                    log.error("IO异常:{}", e.getMessage());
                 }
             }
         }

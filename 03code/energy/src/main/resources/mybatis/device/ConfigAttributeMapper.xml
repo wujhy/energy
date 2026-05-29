@@ -69,10 +69,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where config_id = 1 and status = 0
     </select>
 
-    <!-- 按配置ID查询 -->
-    <select id="selectByDefaultConfigId" parameterType="Long" resultMap="ConfigAttributeResult">
+    <!-- 查询默认设备属性 -->
+    <select id="selectDefaultDeviceAttributes" resultMap="ConfigAttributeResult">
         <include refid="selectConfigAttributeVo"/>
-        where config_id = #{configId}
+        where config_id = 1
         order by sort
     </select>
 
@@ -176,7 +176,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         insert into dev_config_attribute
         (config_id, pack_num, code, name, unit, point, type, sort, track, list_display, screen_display, pack, status, alarm_config,
          remark, prot_value, val0, val1, is_linear, min_orig_range, min_target_range, max_orig_range, max_target_range, spk, spb, level_list, create_time)
-        select #{configId}, #{packNum}, code, name, unit, point, type, sort, track, list_display, screen_display, pack, status, alarm_config,
+        select 1, #{packNum}, code, name, unit, point, type, sort, track, list_display, screen_display, pack, status, alarm_config,
                remark, prot_value, val0, val1, is_linear, min_orig_range, min_target_range, max_orig_range, max_target_range, spk, spb, level_list,
                datetime(CURRENT_TIMESTAMP,'localtime')
         from dev_template_attribute
@@ -253,26 +253,23 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </delete>
 
-    <!-- 按配置ID批量删除 -->
-    <delete id="deleteConfigAttributeByConfigIds" parameterType="String">
-        delete from dev_config_attribute where config_id in
-        <foreach item="configId" collection="array" open="(" separator="," close=")">
-            #{configId}
-        </foreach>
+    <!-- 删除默认设备属性 -->
+    <delete id="deleteDefaultDeviceAttributes">
+        delete from dev_config_attribute where config_id = 1
     </delete>
 
     <!-- 按组号批量删除 -->
     <delete id="deleteConfigAttributeByPackNums" parameterType="String">
-        delete from dev_config_attribute where config_id = #{configId} and pack_num in
+        delete from dev_config_attribute where config_id = 1 and pack_num in
         <foreach item="packNum" collection="packNums" open="(" separator="," close=")">
             #{packNum}
         </foreach>
     </delete>
 
-    <!-- 按编码和配置ID查询 -->
+    <!-- 按默认设备和编码查询 -->
     <select id="getBy" resultMap="ConfigAttributeResult">
         <include refid="selectConfigAttributeVo"/>
-        WHERE code = #{code} AND config_id = #{configId}
+        WHERE code = #{code} AND config_id = 1
         <if test="packNum != null "> and pack_num = #{packNum}</if>
          limit 1
     </select>

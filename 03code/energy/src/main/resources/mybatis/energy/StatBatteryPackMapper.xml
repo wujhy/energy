@@ -101,11 +101,11 @@
         </foreach>
     </insert>
 
-    <!-- 按配置ID删除电池包统计 -->
-    <delete id="deleteByConfigId">
+    <!-- 按默认设备和电池组删除电池包统计 -->
+    <delete id="deleteByPackNum">
         delete
         from stat_battery_pack
-        where config_id = #{configId}
+        where config_id = 1
         <if test="packNum != null ">
             and pack_num = #{packNum}
         </if>

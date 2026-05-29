@@ -2,6 +2,7 @@ package com.shanhe.project.collector.battery.service;
 
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.UNSIGNED_SHORT_MAX;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import org.springframework.stereotype.Service;
 
@@ -53,10 +54,10 @@ public class BatteryModuleModbusReadMappingService {
      */
     public int[] readHoldingRegisters(Integer packNum, int referenceAddress, int quantity) {
         if (packNum == null) {
-            throw new IllegalArgumentException("packNum must not be null");
+            throw new IllegalArgumentException("电池组编号不能为空");
         }
         if (quantity <= 0 || quantity > MAX_READ_QUANTITY) {
-            throw new IllegalArgumentException("quantity must be between 1 and " + MAX_READ_QUANTITY);
+            throw new IllegalArgumentException("读取数量必须在1到" + MAX_READ_QUANTITY + "之间");
         }
 
         ModbusReadSnapshot snapshot = loadSnapshot(packNum);
@@ -117,7 +118,7 @@ public class BatteryModuleModbusReadMappingService {
      */
     private int resolveGroupRegister(BatteryModuleGroupRealtime group, int address) {
         if (!isSupportedGroupAddress(address)) {
-            throw new IllegalArgumentException("Unsupported Modbus reference address: " + address);
+            throw new IllegalArgumentException("不支持的Modbus参考地址: " + address);
         }
         if (group == null) {
             return 0;
@@ -182,7 +183,7 @@ public class BatteryModuleModbusReadMappingService {
             case 411766:
                 return scale(group.getDisChargeCapacity(), 10d);
             default:
-                throw new IllegalArgumentException("Unsupported Modbus reference address: " + address);
+                throw new IllegalArgumentException("不支持的Modbus参考地址: " + address);
         }
     }
 
@@ -269,8 +270,8 @@ public class BatteryModuleModbusReadMappingService {
         if (value == null) {
             return 0;
         }
-        if (value < 0 || value > 0xFFFF) {
-            throw new IllegalArgumentException("Register value out of range: " + value);
+        if (value < 0 || value > UNSIGNED_SHORT_MAX) {
+            throw new IllegalArgumentException("寄存器值超出范围: " + value);
         }
         return value;
     }

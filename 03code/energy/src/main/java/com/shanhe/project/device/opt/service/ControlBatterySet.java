@@ -6,6 +6,7 @@ import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.UNSIGNED_SHORT_MAX;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.ConfigAttribute;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
@@ -230,7 +231,7 @@ public class ControlBatterySet extends ControlBase {
      */
     public AjaxResult getBalanced(BatterySetVO batterySetVO) {
         Map<String, Object> mapAll = hostService.getExtend();
-        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>(4);
         map.put("autoBalanced", mapAll != null && mapAll.get("autoBalanced") != null ? mapAll.get("autoBalanced") : 0);
         map.put("manualBalanced", mapAll != null && mapAll.get("manualBalanced") != null ? mapAll.get("manualBalanced") : 0);
         map.put("buzzerStatus", mapAll != null && mapAll.get("buzzerStatus") != null ? mapAll.get("buzzerStatus") : 0);
@@ -363,7 +364,7 @@ public class ControlBatterySet extends ControlBase {
     }
 
     private AjaxResult reservedM460Migration(String action, String m460Command) {
-        log.info("battery set action reserved for energy migration, action={}, source={}", action, m460Command);
+        log.info("蓄电池设置操作已保留待迁移, 操作={}, 来源={}", action, m460Command);
         return AjaxResult.success();
     }
 
@@ -410,7 +411,7 @@ public class ControlBatterySet extends ControlBase {
      */
     public void saveBalancedStatus(Integer autoBalanced, Integer manualBalanced) {
         Map<String, Object> mapAll = hostService.getExtend();
-        mapAll = mapAll == null ? new HashMap<>() : mapAll;
+        mapAll = mapAll == null ? new HashMap<>(8) : mapAll;
         mapAll.put("autoBalanced", autoBalanced == null ? 0 : autoBalanced);
         mapAll.put("manualBalanced", manualBalanced == null ? 0 : manualBalanced);
         hostService.updateExtend(mapAll);
@@ -423,7 +424,7 @@ public class ControlBatterySet extends ControlBase {
      */
     public void saveBuzzerStatus(Integer buzzerStatus) {
         Map<String, Object> mapAll = hostService.getExtend();
-        mapAll = mapAll == null ? new HashMap<>() : mapAll;
+        mapAll = mapAll == null ? new HashMap<>(8) : mapAll;
         mapAll.put("buzzerStatus", buzzerStatus == null ? 0 : buzzerStatus);
         hostService.updateExtend(mapAll);
     }
@@ -451,7 +452,7 @@ public class ControlBatterySet extends ControlBase {
             throw new IllegalArgumentException("内阻系数不能为空！");
         }
         int resistance = (int) (resistanceValue * 1000);
-        if (resistance < 0 || resistance > 65535) {
+        if (resistance < 0 || resistance > UNSIGNED_SHORT_MAX) {
             throw new IllegalArgumentException("内阻系数过大！");
         }
         return resistance;

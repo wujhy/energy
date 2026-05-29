@@ -40,7 +40,7 @@ public class DataUploadHandler {
             return;
         }
 
-        log.debug("ignore legacy CM03N non-battery upload: type={}, port={}, channel={}, c3={}",
+        log.debug("忽略旧版CM03N非电池数据上传: 类型={}, 端口={}, 通道={}, c3={}",
                 deviceData.getC0(), deviceData.getC1(), deviceData.getC2(), deviceData.getC3());
     }
 }

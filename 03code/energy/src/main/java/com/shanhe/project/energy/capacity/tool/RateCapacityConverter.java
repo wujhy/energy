@@ -21,7 +21,7 @@ public class RateCapacityConverter {
     private static final Map<Double, Double> CONVERSION_TABLE = createConversionTable();
 
     private static Map<Double, Double> createConversionTable() {
-        Map<Double, Double> table = new HashMap<>();
+        Map<Double, Double> table = new HashMap<>(4);
         // 基准倍率
         table.put(0.10, 1.000);
         // 高倍率区间（大于0.1C）
@@ -62,7 +62,7 @@ public class RateCapacityConverter {
      * 批量转换方法
      */
     public static Map<Double, Double> convertBatch(Map<Double, Double> rateCapacityMap) {
-        Map<Double, Double> result = new HashMap<>();
+        Map<Double, Double> result = new HashMap<>(rateCapacityMap.size());
 
         for (Map.Entry<Double, Double> entry : rateCapacityMap.entrySet()) {
             double standardizedCapacity = convertTo01C(entry.getValue(), entry.getKey());

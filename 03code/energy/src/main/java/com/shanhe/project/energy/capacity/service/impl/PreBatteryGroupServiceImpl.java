@@ -89,7 +89,7 @@ public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
      */
     @Override
     public void deleteByPackNum(Integer packNum) {
-        preBatteryGroupMapper.deleteByConfigId(Constants.DEFAULT_CONFIG_ID, packNum);
+        preBatteryGroupMapper.deleteByPackNum(packNum);
     }
 
     /**
@@ -105,7 +105,7 @@ public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
         List<BatteryPack> batteryPackList = batteryPackMapper.selectAllBattery();
         for (BatteryPack batteryPack : batteryPackList) {
             // 查询最新一条记录
-            PreBatteryGroup reportLog = preBatteryGroupMapper.selectLast(Constants.DEFAULT_CONFIG_ID, batteryPack.getPackNum());
+            PreBatteryGroup reportLog = preBatteryGroupMapper.selectLast(batteryPack.getPackNum());
             if (reportLog == null) {
                 continue;
             }

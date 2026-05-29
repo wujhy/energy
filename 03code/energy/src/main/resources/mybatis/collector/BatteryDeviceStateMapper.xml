@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shanhe.project.collector.battery.mapper.BatteryDeviceStateMapper">
+
+    <resultMap id="BaseResultMap" type="com.shanhe.project.collector.battery.model.BatteryDeviceState">
+        <id property="stateId" column="state_id"/>
+        <result property="scopeType" column="scope_type"/>
+        <result property="scopeKey" column="scope_key"/>
+        <result property="packNum" column="pack_num"/>
+        <result property="channelName" column="channel_name"/>
+        <result property="modelNum" column="model_num"/>
+        <result property="stateCode" column="state_code"/>
+        <result property="stateValue" column="state_value"/>
+        <result property="stateLevel" column="state_level"/>
+        <result property="source" column="source"/>
+        <result property="sourceRefId" column="source_ref_id"/>
+        <result property="mode" column="mode"/>
+        <result property="optLogId" column="opt_log_id"/>
+        <result property="firstSeenTime" column="first_seen_time"/>
+        <result property="lastChangeTime" column="last_change_time"/>
+        <result property="lastUpdateTime" column="last_update_time"/>
+        <result property="expireTime" column="expire_time"/>
+        <result property="detail" column="detail"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        state_id, scope_type, scope_key, pack_num, channel_name, model_num,
+        state_code, state_value, state_level, source, source_ref_id, mode,
+        opt_log_id, first_seen_time, last_change_time, last_update_time,
+        expire_time, detail, remark
+    </sql>
+
+    <!-- 插入或更新（按唯一键 scope_type + scope_key + state_code 冲突时更新） -->
+    <insert id="upsert">
+        INSERT INTO battery_device_state (
+            scope_type, scope_key, pack_num, channel_name, model_num,
+            state_code, state_value, state_level, source, source_ref_id, mode,
+            opt_log_id, first_seen_time, last_change_time, expire_time, detail, remark
+        ) VALUES (
+            #{scopeType}, #{scopeKey}, #{packNum}, #{channelName}, #{modelNum},
+            #{stateCode}, #{stateValue}, #{stateLevel}, #{source}, #{sourceRefId}, #{mode},
+            #{optLogId}, #{firstSeenTime}, #{lastChangeTime}, #{expireTime}, #{detail}, #{remark}
+        )
+        ON CONFLICT(scope_type, scope_key, state_code) DO UPDATE SET
+            pack_num = excluded.pack_num,
+            channel_name = excluded.channel_name,
+            model_num = excluded.model_num,
+            state_value = excluded.state_value,
+            state_level = excluded.state_level,
+            source = excluded.source,
+            source_ref_id = excluded.source_ref_id,
+            mode = excluded.mode,
+            opt_log_id = excluded.opt_log_id,
+            first_seen_time = COALESCE(battery_device_state.first_seen_time, excluded.first_seen_time),
+            last_change_time = CASE
+                WHEN excluded.state_value IS NOT NULL AND excluded.state_value != battery_device_state.state_value
+                THEN excluded.last_change_time
+                ELSE battery_device_state.last_change_time
+            END,
+            last_update_time = datetime(CURRENT_TIMESTAMP, 'localtime'),
+            expire_time = excluded.expire_time,
+            detail = excluded.detail,
+            remark = excluded.remark
+    </insert>
+
+    <!-- 按作用域和状态编码查询 -->
+    <select id="selectByScope" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM battery_device_state
+        WHERE scope_type = #{scopeType}
+          AND scope_key = #{scopeKey}
+          AND state_code = #{stateCode}
+    </select>
+
+    <!-- 按电池组编号和状态编码查询 -->
+    <select id="selectByPackAndCode" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM battery_device_state
+        WHERE pack_num = #{packNum}
+          AND state_code = #{stateCode}
+    </select>
+
+    <!-- 按通道名称和状态编码查询 -->
+    <select id="selectByChannelAndCode" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM battery_device_state
+        WHERE channel_name = #{channelName}
+          AND state_code = #{stateCode}
+    </select>
+
+    <!-- 按电池组编号查询所有状态 -->
+    <select id="selectByPackNum" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM battery_device_state
+        WHERE pack_num = #{packNum}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" parameterType="com.shanhe.project.collector.battery.model.BatteryDeviceState" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM battery_device_state
+        <where>
+            <if test="scopeType != null and scopeType != ''">AND scope_type = #{scopeType}</if>
+            <if test="scopeKey != null and scopeKey != ''">AND scope_key = #{scopeKey}</if>
+            <if test="packNum != null">AND pack_num = #{packNum}</if>
+            <if test="channelName != null and channelName != ''">AND channel_name = #{channelName}</if>
+            <if test="stateCode != null and stateCode != ''">AND state_code = #{stateCode}</if>
+            <if test="stateLevel != null and stateLevel != ''">AND state_level = #{stateLevel}</if>
+            <if test="source != null and source != ''">AND source = #{source}</if>
+        </where>
+        ORDER BY last_update_time DESC
+    </select>
+
+    <!-- 按主键删除 -->
+    <delete id="deleteByStateId">
+        DELETE FROM battery_device_state WHERE state_id = #{stateId}
+    </delete>
+
+    <!-- 按作用域删除 -->
+    <delete id="deleteByScope">
+        DELETE FROM battery_device_state WHERE scope_type = #{scopeType} AND scope_key = #{scopeKey}
+    </delete>
+
+    <!-- 删除过期状态 -->
+    <delete id="deleteExpired">
+        DELETE FROM battery_device_state
+        WHERE expire_time IS NOT NULL
+          AND strftime('%Y-%m-%d %H:%M:%S', expire_time) &lt; strftime('%Y-%m-%d %H:%M:%S', datetime(CURRENT_TIMESTAMP, 'localtime'))
+    </delete>
+
+    <!-- 按电池组编号删除 -->
+    <delete id="deleteByPackNum">
+        DELETE FROM battery_device_state WHERE pack_num = #{packNum}
+    </delete>
+</mapper>

@@ -16,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 public class Threads
 {
 
+    private static final long SHUTDOWN_TIMEOUT_SECONDS = 120L;
+
     /**
      * sleep等待,单位为毫秒
      */
@@ -45,12 +47,12 @@ public class Threads
             pool.shutdown();
             try
             {
-                if (!pool.awaitTermination(120, TimeUnit.SECONDS))
+                if (!pool.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS))
                 {
                     pool.shutdownNow();
-                    if (!pool.awaitTermination(120, TimeUnit.SECONDS))
+                    if (!pool.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS))
                     {
-                        log.debug("Pool did not terminate");
+                        log.debug("线程池未能终止");
                     }
                 }
             }

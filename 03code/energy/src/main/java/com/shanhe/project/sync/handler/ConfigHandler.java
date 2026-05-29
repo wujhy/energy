@@ -47,7 +47,7 @@ public class ConfigHandler {
         String msg = null;
         try {
             String contentStr = JSONObject.toJSONString(request.getContent());
-            log.debug("sync device info: {}", contentStr);
+            log.debug("同步设备信息: {}", contentStr);
             DeviceVo device = JSONObject.parseObject(contentStr, DeviceVo.class);
             if (StrUtil.equals(device.getClassId(), "0")) {
                 hostService.updateName(device.getDevName());
@@ -77,7 +77,7 @@ public class ConfigHandler {
         String msg = null;
         try {
             String contentStr = JSONObject.toJSONString(request.getContent());
-            log.debug("ignore delete static default device config: {}", contentStr);
+            log.debug("忽略删除静态默认设备配置: {}", contentStr);
         } catch (Exception e) {
             msg = String.format("删除设备异常：%s", e.getMessage());
             log.error(msg);

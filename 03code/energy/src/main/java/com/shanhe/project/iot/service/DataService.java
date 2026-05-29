@@ -1,6 +1,5 @@
 package com.shanhe.project.iot.service;
 
-import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
@@ -47,7 +46,7 @@ public class DataService {
         boolean b = doInsert(grouping);
 
         if (b) {
-            String key = String.format(cache.getKey(), Constants.DEFAULT_CONFIG_ID, grouping);
+            String key = String.format(cache.getKey(), grouping);
             // 记录最后存储时间
             CacheUtils.put(cache.getCache(), key, new Date());
         }
@@ -55,7 +54,7 @@ public class DataService {
     }
 
     private boolean doInsert(String grouping) {
-        String key = String.format(cache.getKey(), Constants.DEFAULT_CONFIG_ID, grouping);
+        String key = String.format(cache.getKey(), grouping);
         Object o = CacheUtils.get(cache.getCache(), key);
         // 首次存储
         if (o == null) {
