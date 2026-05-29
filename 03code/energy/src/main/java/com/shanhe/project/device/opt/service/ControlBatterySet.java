@@ -363,6 +363,7 @@ public class ControlBatterySet extends ControlBase {
         }
     }
 
+    /** 记录待迁移的M460操作并返回成功。 */
     private AjaxResult reservedM460Migration(String action, String m460Command) {
         log.info("蓄电池设置操作已保留待迁移, 操作={}, 来源={}", action, m460Command);
         return AjaxResult.success();
@@ -383,6 +384,7 @@ public class ControlBatterySet extends ControlBase {
         return AjaxResult.success();
     }
 
+    /** 更新指定电池组和告警项的内阻基准值。 */
     private void updateResistanceStandValue(Integer packNum, ItemCode itemCode, Integer resistanceStandValue) {
         ConfigAttribute attribute = configAttributeService.getBy(packNum, itemCode.getCode());
         if (attribute == null) {
@@ -429,6 +431,7 @@ public class ControlBatterySet extends ControlBase {
         hostService.updateExtend(mapAll);
     }
 
+    /** 按电池组编号解析采集通道名称。 */
     private String resolveChannelName(Integer packNum) {
         String channelName = batteryCollectorCommandService.resolveChannelName(packNum);
         if (channelName == null) {
@@ -437,6 +440,7 @@ public class ControlBatterySet extends ControlBase {
         return channelName;
     }
 
+    /** 将命令执行结果转为AjaxResult。 */
     private AjaxResult toCommandAjaxResult(BatteryCollectorCommandResult result) {
         if (result == null) {
             return AjaxResult.error("指令下发失败！");
@@ -447,6 +451,7 @@ public class ControlBatterySet extends ControlBase {
         return AjaxResult.success();
     }
 
+    /** 将浮点内阻系数转为整数并校验范围。 */
     private int toResistanceCoefficient(Float resistanceValue) {
         if (resistanceValue == null) {
             throw new IllegalArgumentException("内阻系数不能为空！");
@@ -458,6 +463,7 @@ public class ControlBatterySet extends ControlBase {
         return resistance;
     }
 
+    /** 返回参数中第一个非空非空白字符串。 */
     private String firstNonBlank(String... values) {
         if (values == null) {
             return null;

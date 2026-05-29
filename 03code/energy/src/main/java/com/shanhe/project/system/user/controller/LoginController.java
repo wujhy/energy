@@ -25,6 +25,7 @@ public class LoginController extends BaseController {
     @Resource
     private LoginService loginService;
 
+    /** 用户登录验证。 */
     @PostMapping("/login")
     @ResponseBody
     public AjaxResult ajaxLogin(@RequestBody LoginVo loginVo) {
@@ -35,6 +36,7 @@ public class LoginController extends BaseController {
         }
     }
 
+    /** 用户退出登录。 */
     @GetMapping("/logouts")
     @ResponseBody
     public AjaxResult logout(HttpServletRequest request) {

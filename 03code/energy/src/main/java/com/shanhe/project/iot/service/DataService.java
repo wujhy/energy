@@ -53,6 +53,7 @@ public class DataService {
         return b;
     }
 
+    /** 判断指定分组是否需要插入历史数据。 */
     private boolean doInsert(String grouping) {
         String key = String.format(cache.getKey(), grouping);
         Object o = CacheUtils.get(cache.getCache(), key);

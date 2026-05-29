@@ -60,6 +60,7 @@ public class BatteryModuleCellCompatibilityFillService {
         connectResistanceCache.put(buildCellKey(batteryGroup, batNum), resistanceRageSlip);
     }
 
+    /** 从预估容量缓存填充单体容量字段。 */
     private void fillBcapacity(BatteryCollectorChannelConfig channelConfig, BatteryModuleCellRealtime cell) {
         if (preBatteryGroupService == null
                 || channelConfig == null
@@ -77,6 +78,7 @@ public class BatteryModuleCellCompatibilityFillService {
         }
     }
 
+    /** 从连接条电阻缓存填充单体连接条电阻字段。 */
     private void fillConnectResistance(BatteryCollectorChannelConfig channelConfig, BatteryModuleCellRealtime cell) {
         Integer batteryGroup = channelConfig == null ? cell.getPackNum() : channelConfig.getBatteryGroup();
         if (batteryGroup == null || cell.getBatNum() == null) {

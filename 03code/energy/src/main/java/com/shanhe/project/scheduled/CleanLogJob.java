@@ -60,9 +60,9 @@ public class CleanLogJob {
 
             try {
                 //程序休眠后5秒后再执行
-                log.info("----------------- vacuum run--------------------");
+                log.info("----------------- 数据库压缩开始 --------------------");
                 operLogService.vacuum();
-                log.info("----------------- vacuum end--------------------");
+                log.info("----------------- 数据库压缩结束 --------------------");
             } catch (Exception e) {
                 log.error("缩减数据空间：{}", e.getMessage());
             }

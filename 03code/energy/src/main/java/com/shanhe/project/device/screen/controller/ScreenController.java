@@ -21,7 +21,7 @@ public class ScreenController extends BaseController {
     @Resource
     private ScreenService screenService;
 
-    // 系统介绍
+    /** 系统介绍页面。 */
     @GetMapping("/main")
     public AjaxResult screenMain() {
         return AjaxResult.success(screenService.main());
@@ -70,7 +70,7 @@ public class ScreenController extends BaseController {
         return success(screenService.attributeSelect(packNum, screen, track));
     }
 
-    // 系统首页
+    /** 系统首页。 */
     @GetMapping()
     public String screen(ModelMap mMap) {
         mMap.put("host", screenService.host());

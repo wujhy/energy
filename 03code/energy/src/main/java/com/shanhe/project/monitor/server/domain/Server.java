@@ -49,6 +49,7 @@ public class Server {
     private final List<SysFile> sysFiles = new LinkedList<>();
 
 
+    /** 将服务器监控数据复制到自身字段。 */
     public void copyTo() {
         SystemInfo si = new SystemInfo();
         HardwareAbstractionLayer hal = si.getHardware();

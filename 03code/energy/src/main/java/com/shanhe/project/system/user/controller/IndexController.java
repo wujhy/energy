@@ -17,14 +17,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class IndexController extends BaseController {
 
-    // 锁定屏幕
+    /** 锁定屏幕。 */
     @GetMapping("/lockscreen")
     public AjaxResult lockscreen() {
         ServletUtils.getSession().setAttribute("lockscreen", true);
         return AjaxResult.success();
     }
 
-    // 解锁屏幕
+    /** 解锁屏幕。 */
     @PostMapping("/unLockscreen")
     @ResponseBody
     public AjaxResult unLockscreen() {

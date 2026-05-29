@@ -67,6 +67,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         return statBatteryPacks;
     }
 
+    /** 翻译电池组统计数据中的状态字段。 */
     private void translateBattery(List<StatBatteryPack> result) {
         if (org.springframework.util.CollectionUtils.isEmpty(result)) {
             return;
@@ -160,6 +161,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
 
     }
 
+    /** 获取导出文件名。 */
     private static String getExportName(StatBatteryPack params) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
         String exportName = "历史数据_";
@@ -180,6 +182,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         return exportName;
     }
 
+    /** 格式化日期对象。 */
     private static String format(Object beginTime) {
         return beginTime.toString().replaceAll("-", "").replaceAll(":", "").replaceAll(" ", "_");
     }
@@ -254,7 +257,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         return value;
     }
 
-
+    /** 插入电池组统计数据。 */
     private void insert(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList) {
         StatBatteryPack statBatteryPack = new StatBatteryPack();
         statBatteryPack.setId(IdUtils.getSnowflakeId());

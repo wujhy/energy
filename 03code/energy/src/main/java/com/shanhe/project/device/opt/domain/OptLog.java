@@ -64,6 +64,38 @@ public class OptLog extends BaseEntity {
     /** 更新时间 */
     private String createTimeStr;
 
+    /** 来源。 */
+    private String source;
+    /** 通道名称。 */
+    private String channelName;
+    /** 目标类型。 */
+    private String targetType;
+    /** 目标地址。 */
+    private Integer targetAddress;
+    /** 工作模式。 */
+    private Integer mode;
+    /** 命令状态：pending/success/failed/rejected/timeout。 */
+    private String status;
+    /** 请求码。 */
+    private Integer requestCode;
+    /** 响应码。 */
+    private Integer responseCode;
+    /** 协议编码。 */
+    private String protocolCode;
+    /** 命令名称。 */
+    private String commandName;
+    /** 请求载荷。 */
+    private String requestPayload;
+    /** 响应载荷。 */
+    private String responsePayload;
+    /** 错误信息。 */
+    private String errorMessage;
+    /** 轮询批次号。 */
+    private String pollBatchNo;
+    /** 开始时间。 */
+    private String startedAt;
+    /** 结束时间。 */
+    private String endedAt;
 
     ///////////////////////////////////////// 缓存
     /** 是否保存 */

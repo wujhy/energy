@@ -20,11 +20,17 @@ public interface DataPointService {
      * @param batNum    单体编号
      * @param startTime 开始时间
      * @param endTime   结束时间
+     * @return 数据点列表
      */
     List<DataPoint> findCurrentDataPoint(Integer packNum, Integer batNum, Date startTime, Date endTime);
 
     /**
      * 统计设备的平均电流
+     *
+     * @param packNum 电池组编号
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 平均电流
      */
     Double getAvgCurrent(Integer packNum, Date startTime, Date endTime);
 

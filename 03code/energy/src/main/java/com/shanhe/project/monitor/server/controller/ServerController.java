@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/monitor/server")
 public class ServerController extends BaseController {
 
+    /** 获取服务器监控信息。 */
     @GetMapping()
     public AjaxResult server() throws Exception
     {

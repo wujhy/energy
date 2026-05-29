@@ -74,6 +74,7 @@ public class ConfigUtil {
      * 上报设备参数
      *
      * @param config 本地
+     * @return 设备VO
      */
     public static DeviceVo uploadConfig(Config config) {
         DeviceVo device = new DeviceVo();

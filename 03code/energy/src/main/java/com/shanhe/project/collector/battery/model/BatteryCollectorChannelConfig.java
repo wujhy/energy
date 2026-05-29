@@ -11,18 +11,25 @@ import lombok.Data;
 @Data
 public class BatteryCollectorChannelConfig {
 
+    /** 通道名称。 */
     private String name;
 
+    /** 串口名称。 */
     private String portName;
 
+    /** 波特率。 */
     private Integer baudRate = 9600;
 
+    /** 数据位。 */
     private Integer dataBits = 8;
 
+    /** 停止位。 */
     private Integer stopBits = 1;
 
+    /** 校验位。 */
     private Integer parity = 0;
 
+    /** 超时时间（毫秒）。 */
     private Integer timeoutMs = 1000;
 
     /**
@@ -48,8 +55,9 @@ public class BatteryCollectorChannelConfig {
     /**
      * 请求超时后的最大重试次数。
      */
-    private Integer maxRetryCount = 2;
+    private Integer maxRetryCount = 1;
 
+    /** 设备地址。 */
     private Integer deviceAddress = 1;
 
     /**
@@ -67,8 +75,10 @@ public class BatteryCollectorChannelConfig {
      */
     private Integer expectedCellCount;
 
+    /** 电池端口号。 */
     private Integer batteryPort;
 
+    /** 电池通道号。 */
     private Integer batteryChannel;
 
     /**
@@ -81,5 +91,6 @@ public class BatteryCollectorChannelConfig {
      */
     private Integer batteryGroup;
 
+    /** 是否启用。 */
     private Boolean enabled = Boolean.TRUE;
 }

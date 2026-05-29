@@ -351,7 +351,7 @@ public class ReflectUtils
 
         if (!(genType instanceof ParameterizedType))
         {
-            log.debug("{}'s superclass not ParameterizedType", clazz.getSimpleName());
+            log.debug("{} 的父类不是参数化类型", clazz.getSimpleName());
             return Object.class;
         }
 

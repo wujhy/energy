@@ -100,10 +100,13 @@ public class BatterySetVO {
     private String datetime;
 
 
+    /** 数据类型。 */
     @NotNull(message = "数值类型", groups = {cmd76.class})
     private Integer dataType;
+    /** 数据状态。 */
     @NotNull(message = "数值高低", groups = {cmd76.class})
     private Integer dataStatus;
+    /** 数据信息。 */
     @NotNull(message = "数值", groups = {cmd76.class})
     private Integer dataInfo;
 }

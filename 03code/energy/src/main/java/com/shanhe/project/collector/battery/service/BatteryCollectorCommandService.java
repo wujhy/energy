@@ -311,6 +311,7 @@ public class BatteryCollectorCommandService {
         return value == null || value.trim().isEmpty();
     }
 
+    /** 将980聚合命令映射为600模块控制命令。 */
     private BatteryModuleControlCommand mapToModuleCommand(BatteryAggregateCommandDefinition commandDefinition,
                                                            int... payloadBytes) {
         if (commandDefinition == null) {
@@ -343,6 +344,7 @@ public class BatteryCollectorCommandService {
         }
     }
 
+    /** 构建映射成功的命令结果。 */
     private BatteryCollectorCommandResult mapped(BatteryAggregateCommandDefinition commandDefinition,
                                                   String channelName,
                                                   BatteryModuleControlCommand moduleCommand,
@@ -369,6 +371,7 @@ public class BatteryCollectorCommandService {
         return collectorService != null && collectorService.submitModuleCommand(channelName, moduleCommand);
     }
 
+    /** 为模块命令设置电池组和工作模式上下文。 */
     private BatteryModuleControlCommand applyContext(BatteryModuleControlCommand moduleCommand,
                                                      Integer batteryGroup,
                                                      Integer mode) {
@@ -379,6 +382,7 @@ public class BatteryCollectorCommandService {
         return moduleCommand;
     }
 
+    /** 根据聚合命令类型设置模块命令的工作模式。 */
     private void applyModeContext(BatteryModuleControlCommand moduleCommand,
                                   BatteryAggregateCommandDefinition commandDefinition,
                                   int... payloadBytes) {
@@ -403,6 +407,7 @@ public class BatteryCollectorCommandService {
         }
     }
 
+    /** 将内阻系数转换为M460 float字节数组（小端序）。 */
     private int[] resistanceCoefficientToM460FloatBytes(int coefficient) {
         // 16位无符号整数最大值，对应MCU端两字节寄存器
         if (coefficient < 0 || coefficient > UNSIGNED_SHORT_MAX) {
@@ -418,6 +423,7 @@ public class BatteryCollectorCommandService {
         };
     }
 
+    /** 构造自动编号命令的起始载荷。 */
     private int[] automaticSetAddressStartPayload(int batteryCount, int batterySpecification) {
         validateBatteryCount(batteryCount);
         validateBatterySpecification(batterySpecification);
@@ -472,6 +478,7 @@ public class BatteryCollectorCommandService {
         return value;
     }
 
+    /** 构建不支持的命令结果。 */
     private BatteryCollectorCommandResult unsupported(BatteryAggregateCommandDefinition commandDefinition, String channelName) {
         log.warn("980聚合命令在600模块通道上被阻止, 通道={}, 命令={}",
                 channelName,

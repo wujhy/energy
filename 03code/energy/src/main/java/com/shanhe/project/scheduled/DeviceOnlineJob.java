@@ -5,6 +5,8 @@ import com.shanhe.common.utils.DateUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.enums.YesNoEnum;
+import com.shanhe.project.collector.battery.model.BatteryDeviceState;
+import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
@@ -48,6 +50,10 @@ public class DeviceOnlineJob {
     private IAlarmLogService alarmLogService;
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    @Resource
+    private BatteryDeviceStateService batteryDeviceStateService;
+
+    private static final String STATE_CODE_ONLINE = "ONLINE";
 
     private final Map<Integer, Integer> offlineBatteryPackNumMap = new HashMap<>();
 
@@ -136,5 +142,25 @@ public class DeviceOnlineJob {
         warnParam.put(ItemCode.TXZT.getCode(), offline ? "1" : "0");
         BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(packNum);
         alarmLogService.alarmBattery(config, packNum, null, warnParam, batteryReportLog);
+        persistOnlineState(packNum, offline);
+    }
+
+    /** 持久化电池组在线/离线状态到 battery_device_state。 */
+    private void persistOnlineState(Integer packNum, boolean offline) {
+        try {
+            BatteryDeviceState state = new BatteryDeviceState();
+            state.setScopeType("pack");
+            state.setScopeKey(String.valueOf(packNum));
+            state.setPackNum(packNum);
+            state.setStateCode(STATE_CODE_ONLINE);
+            state.setStateValue(offline ? "offline" : "online");
+            state.setStateLevel(offline ? "warn" : "normal");
+            state.setSource("DeviceOnlineJob");
+            state.setFirstSeenTime(new Date());
+            state.setLastChangeTime(new Date());
+            batteryDeviceStateService.upsert(state);
+        } catch (Exception e) {
+            log.warn("持久化电池组在线状态失败, 电池组={}, 原因={}", packNum, e.getMessage());
+        }
     }
 }

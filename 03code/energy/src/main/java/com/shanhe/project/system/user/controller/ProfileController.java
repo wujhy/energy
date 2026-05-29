@@ -24,6 +24,7 @@ public class ProfileController extends BaseController {
     @Resource
     private IUserService userService;
 
+    /** 获取当前用户信息。 */
     @GetMapping("/info")
     public AjaxResult info() {
         User user = getSysUser();
@@ -33,6 +34,7 @@ public class ProfileController extends BaseController {
         return success(userService.selectUserById(user.getUserId()));
     }
 
+    /** 重置用户密码。 */
     @Log(title = "重置密码", businessType = BusinessType.UPDATE)
     @PostMapping("/resetPwd")
     @ResponseBody

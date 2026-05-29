@@ -121,7 +121,7 @@ public class MessageFactory {
                         exceptionMsg = ((InvocationTargetException) e).getTargetException().getMessage();
                     }
                 }
-                log.error("数据处理异常:--------starGainData--------" + exceptionMsg + "-------------------");
+                log.error("数据处理异常:--------获取数据--------" + exceptionMsg + "-------------------");
                 //睡眠1秒
                 try {
                     Thread.sleep(1000);
@@ -134,11 +134,12 @@ public class MessageFactory {
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }
-                log.error("数据处理系统异常:--------starGainData--------" + e + "-------------------");
+                log.error("数据处理系统异常:--------获取数据--------" + e + "-------------------");
             }
         }
     }
 
+    /** 从队列批量取出数据并推送入库。 */
     private static void doStartLog(int maxCount, BlockingQueue<MonitorData> queue, AtomicLong pushTime,List<MonitorData> datas) throws InterruptedException {
         int size = queue.size();
         // 当前时间戳

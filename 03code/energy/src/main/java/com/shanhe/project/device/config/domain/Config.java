@@ -95,6 +95,7 @@ public class Config extends BaseEntity
     @Excel(name = "在线状态 0-是，1-否")
     private Integer online;
 
+    /** 上线时间。 */
     private Date onlineTime;
 
     /** 是否告警 0-是，1-否 */
@@ -108,9 +109,11 @@ public class Config extends BaseEntity
     /** 电池组 */
     List<BatteryPack> packList;
 
+    /** 电池组列表JSON。 */
     @Excel(name = "电池组")
     private String packListJson;
 
+    /** 属性列表JSON。 */
     @Excel(name = "属性")
     private String attrListJson;
 

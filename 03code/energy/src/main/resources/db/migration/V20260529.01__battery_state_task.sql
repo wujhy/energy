@@ -1,21 +1,5 @@
 -- Battery operation/state persistence extension.
 -- Keep dev_opt_log as the operation/test fact table and add one current-state table.
-
-CREATE TABLE IF NOT EXISTS dev_opt_log
-(
-    id                       INTEGER PRIMARY KEY,
-    config_id                INTEGER,
-    pack_num                 INTEGER,
-    type                     INTEGER,
-    content                  TEXT,
-    result                   INTEGER,
-    create_time              TEXT,
-    update_time              TEXT,
-    bcapacity                REAL,
-    current                  REAL,
-    discharge_capacity       REAL
-);
-
 ALTER TABLE dev_opt_log ADD COLUMN source TEXT;
 ALTER TABLE dev_opt_log ADD COLUMN channel_name TEXT;
 ALTER TABLE dev_opt_log ADD COLUMN target_type TEXT;

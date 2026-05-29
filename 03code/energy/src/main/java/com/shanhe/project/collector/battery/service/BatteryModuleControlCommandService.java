@@ -119,6 +119,7 @@ public class BatteryModuleControlCommandService {
         return command(BatteryDeviceProtocolCode.SET_CALIBRATION_PARAMETER, moduleAddress, payloadBytes);
     }
 
+    /** 根据协议编码和地址构造模块控制命令。 */
     private BatteryModuleControlCommand command(BatteryDeviceProtocolCode protocolCode, int address, int... payloadBytes) {
         if (protocolCode == null) {
             throw new IllegalArgumentException("协议编码不能为空");
@@ -134,6 +135,7 @@ public class BatteryModuleControlCommandService {
                 .build();
     }
 
+    /** 解析响应码，广播设置内阻系数时无响应码。 */
     private Integer resolveResponseCode(BatteryDeviceProtocolCode protocolCode, int address) {
         if (protocolCode == BatteryDeviceProtocolCode.SET_INTERNAL_RESISTANCE_COEFFICIENT && address == 0) {
             return null;
@@ -141,6 +143,7 @@ public class BatteryModuleControlCommandService {
         return protocolCode.getResponseCode();
     }
 
+    /** 将int数组转换为byte数组载荷。 */
     private byte[] toPayload(int... payloadBytes) {
         if (payloadBytes == null || payloadBytes.length == 0) {
             return new byte[0];
@@ -152,18 +155,21 @@ public class BatteryModuleControlCommandService {
         return payload;
     }
 
+    /** 校验载荷长度是否符合协议要求。 */
     private void validatePayloadLength(BatteryDeviceProtocolCode protocolCode, int[] payloadBytes, int length) {
         if (payloadBytes == null || payloadBytes.length != length) {
             throw new IllegalArgumentException(protocolCode.name() + " 载荷长度必须为 " + length);
         }
     }
 
+    /** 校验模块地址是否在1到246之间。 */
     private void validateModuleAddress(int address) {
         if (address < 1 || address > GROUP_MODULE_ADDRESS) {
             throw new IllegalArgumentException("模块地址必须在1到246之间");
         }
     }
 
+    /** 校验模块地址是否在0到246之间（含广播地址0）。 */
     private void validateModuleAddressOrBroadcast(int address) {
         if (address < 0 || address > GROUP_MODULE_ADDRESS) {
             throw new IllegalArgumentException("模块地址必须在0到246之间");

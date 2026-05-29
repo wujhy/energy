@@ -109,6 +109,7 @@ public class OptLogServiceImpl implements OptLogService {
         this.resistanceTest(packNum, packMap, oldInfo);
     }
 
+    /** 处理核容测试操作日志。 */
     private void batteryTest(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
         String batteryPackStatus = Objects.toString(packMap.get("batteryPackStatus"), null);
         Integer type = getTestType(batteryPackStatus);
@@ -140,6 +141,7 @@ public class OptLogServiceImpl implements OptLogService {
 
     }
 
+    /** 插入操作日志并更新缓存。 */
     private void insert(OptLog oldOptLog, String cacheKey) {
         // 已保存
         if (oldOptLog.isSave()) {
@@ -163,6 +165,7 @@ public class OptLogServiceImpl implements OptLogService {
         CacheUtils.put(logCache.getCache(), cacheKey, oldOptLog);
     }
 
+    /** 创建新操作日志。 */
     private void create(Integer packNum, Integer type, String cacheKey) {
         // 创建新纪录
         OptLog optLog = new OptLog();
@@ -178,6 +181,7 @@ public class OptLogServiceImpl implements OptLogService {
         CacheUtils.put(logCache.getCache(), cacheKey, optLog);
     }
 
+    /** 判断是否需要插入操作日志。 */
     private void sotOptLog(Object object, String cacheKey, BatteryReportLog oldInfo) {
         if (object == null) {
             return;

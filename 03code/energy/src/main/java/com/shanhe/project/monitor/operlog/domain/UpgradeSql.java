@@ -13,5 +13,6 @@ import java.io.Serializable;
 @Data
 public class UpgradeSql implements Serializable {
     private static final long serialVersionUID = 1L;
+    /** SQL语句。 */
     private String sql;
 }

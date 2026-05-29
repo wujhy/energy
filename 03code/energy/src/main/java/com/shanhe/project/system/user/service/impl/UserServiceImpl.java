@@ -70,6 +70,8 @@ public class UserServiceImpl implements IUserService {
 
     /**
      * 生成随机盐
+     *
+     * @return 随机盐值
      */
     public String randomSalt() {
         // 一个Byte占两个字节，此处生成的3字节，字符串长度为6
@@ -78,6 +80,11 @@ public class UserServiceImpl implements IUserService {
 
     /**
      * 生成密码
+     *
+     * @param loginName 登录名
+     * @param password 密码
+     * @param salt 盐值
+     * @return 加密后的密码
      */
     public String encryptPassword(String loginName, String password, String salt) {
         return DigestUtil.md5Hex(loginName + password + salt);

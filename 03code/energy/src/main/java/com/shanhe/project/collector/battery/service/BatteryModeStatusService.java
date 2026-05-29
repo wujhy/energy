@@ -3,9 +3,14 @@ package com.shanhe.project.collector.battery.service;
 import cn.hutool.core.util.ObjUtil;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
+import com.shanhe.project.collector.battery.model.BatteryDeviceState;
+import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import com.shanhe.project.iot.model.BatteryModeInfo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.util.Date;
 import java.util.Objects;
 
 /**
@@ -14,8 +19,14 @@ import java.util.Objects;
  * @author wjh
  * @since 2026/5/13
  */
+@Slf4j
 @Service
 public class BatteryModeStatusService {
+
+    private static final String STATE_CODE_WORK_MODE = "WORK_MODE";
+
+    @Resource
+    private BatteryDeviceStateService batteryDeviceStateService;
 
     /**
      * 无测试。
@@ -91,6 +102,7 @@ public class BatteryModeStatusService {
         batteryModeInfo.setStatus(STATUS_RUNNING);
         batteryModeInfo.setAddress(address);
         cacheAccessor.put(cacheKeyEnum.getCache(), key(), batteryModeInfo);
+        persistModeState(packNum, mode, address, "running", null);
     }
 
     /**
@@ -121,6 +133,7 @@ public class BatteryModeStatusService {
             batteryModeInfo.setLastMode(mode);
         }
         cacheAccessor.put(cacheKeyEnum.getCache(), key(), batteryModeInfo);
+        persistModeState(packNum, MODE_IDLE, address, success ? "success" : "failed", null);
     }
 
     /**
@@ -160,11 +173,33 @@ public class BatteryModeStatusService {
         return MODE_STATUS_KEY;
     }
 
+    /** 将工作模式状态持久化到 battery_device_state。 */
+    private void persistModeState(Integer packNum, int mode, Integer address, String stateValue, Long optLogId) {
+        try {
+            BatteryDeviceState state = new BatteryDeviceState();
+            state.setScopeType("pack");
+            state.setScopeKey(String.valueOf(packNum));
+            state.setPackNum(packNum);
+            state.setStateCode(STATE_CODE_WORK_MODE);
+            state.setStateValue(stateValue);
+            state.setSourceRefId(address == null ? null : String.valueOf(address));
+            state.setMode(mode);
+            state.setOptLogId(optLogId);
+            state.setFirstSeenTime(new Date());
+            state.setLastChangeTime(new Date());
+            batteryDeviceStateService.upsert(state);
+        } catch (Exception e) {
+            log.warn("持久化工作模式状态失败, 电池组={}, 模式={}, 原因={}", packNum, mode, e.getMessage());
+        }
+    }
+
+    /** 从缓存获取已存储的工作模式信息。 */
     private BatteryModeInfo getStored() {
         Object result = cacheAccessor.get(cacheKeyEnum.getCache(), key());
         return result instanceof BatteryModeInfo ? (BatteryModeInfo) result : null;
     }
 
+    /** 构造空闲状态的工作模式信息。 */
     private BatteryModeInfo idle(Integer packNum) {
         BatteryModeInfo batteryModeInfo = new BatteryModeInfo();
         batteryModeInfo.setPackNum(packNum);

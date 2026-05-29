@@ -48,6 +48,7 @@ public class BatteryModuleFrameDataParserService {
         return null;
     }
 
+    /** 解析单体模块或电流温度模块的信息响应帧。 */
     private BatteryModuleFrameData parseModuleInfo(BatteryCollectorFrame frame) {
         byte[] payload = frame.getPayloadSafe();
         int address = frame.getAddress();
@@ -94,6 +95,7 @@ public class BatteryModuleFrameDataParserService {
                 .build();
     }
 
+    /** 解析连接条电阻测试电压响应帧。 */
     private BatteryModuleFrameData parseConnectResistanceVoltage(BatteryCollectorFrame frame) {
         byte[] payload = frame.getPayloadSafe();
         if (payload.length < 8) {
@@ -108,6 +110,7 @@ public class BatteryModuleFrameDataParserService {
                 .build();
     }
 
+    /** 解析状态响应帧（如清除调试数据、设置地址等）。 */
     private BatteryModuleFrameData parseStatusResponse(BatteryCollectorFrame frame, BatteryDeviceProtocolCode protocolCode) {
         byte[] payload = frame.getPayloadSafe();
         if (payload.length < 1) {
@@ -124,6 +127,7 @@ public class BatteryModuleFrameDataParserService {
                 .build();
     }
 
+    /** 解析自动编号响应帧，提取分配地址和步骤。 */
     private BatteryModuleFrameData parseAutoSetAddressResponse(BatteryCollectorFrame frame, BatteryDeviceProtocolCode protocolCode) {
         byte[] payload = frame.getPayloadSafe();
         if (payload.length < 3) {
@@ -166,6 +170,7 @@ public class BatteryModuleFrameDataParserService {
                 | (long) (payload[offset + 3] & 0xFF);
     }
 
+    /** 将原始值按除数缩放为浮点数。 */
     private Double scale(long raw, double divisor) {
         return raw / divisor;
     }

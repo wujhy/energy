@@ -43,6 +43,8 @@ public class HostController extends BaseController
 
     /**
      * 修改主机信息
+     *
+     * @param host 设备主机配置
      */
     @Log(title = "修改主机", businessType = BusinessType.UPDATE)
     @PostMapping("/edit")
@@ -54,6 +56,8 @@ public class HostController extends BaseController
 
     /**
      * 更新设备上报间隔时间
+     *
+     * @param spaceTime 采集间隔时间
      */
     @Log(title = "更新设备上报间隔时间", businessType = BusinessType.UPDATE)
     @GetMapping("/spaceTime/{spaceTime}")
@@ -65,6 +69,8 @@ public class HostController extends BaseController
 
     /**
      * 更新设备数据存储间隔时间
+     *
+     * @param storageTime 存储时间
      */
     @Log(title = "更新设备数据存储间隔时间", businessType = BusinessType.UPDATE)
     @GetMapping("/storageTime/{storageTime}")
@@ -76,6 +82,8 @@ public class HostController extends BaseController
 
     /**
      * 更新设备数据删除时间
+     *
+     * @param cleanLogDays 日志清理天数
      */
     @Log(title = "更新设备数据删除时间", businessType = BusinessType.UPDATE)
     @GetMapping("/cleanLogDays/{cleanLogDays}")
@@ -87,6 +95,8 @@ public class HostController extends BaseController
 
     /**
      * 更新主机服务IP
+     *
+     * @param host 设备主机配置
      */
     @Log(title = "更新主机服务IP", businessType = BusinessType.UPDATE)
     @PostMapping("/editReportIp")
@@ -97,7 +107,11 @@ public class HostController extends BaseController
         return success();
     }
 
-    /** 更新服务器时间 */
+    /**
+     * 更新服务器时间
+     *
+     * @param datetime 日期时间字符串
+     */
     @GetMapping("/syncServerTime")
     public AjaxResult syncServerTime(@RequestParam("datetime") String datetime) {
         if (StrUtil.isBlank(datetime)) {
@@ -113,7 +127,11 @@ public class HostController extends BaseController
         return success(IdUtils.genImei());
     }
 
-    /** 上传升级包 */
+    /**
+     * 上传升级包
+     *
+     * @param file 升级包文件
+     */
     @PostMapping("/uploadSoft")
     @ResponseBody
     public AjaxResult uploadSoft(MultipartFile file) {

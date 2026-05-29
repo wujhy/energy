@@ -13,9 +13,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class AlarmLevel extends BaseEntity {
-    /**
-     * $column.columnComment
-     */
+    /** 告警等级ID。 */
     private Long id;
 
     /**

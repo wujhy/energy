@@ -33,6 +33,6 @@ public class User implements Serializable {
     /** 超级管理员 */
     private Boolean superAdmin;
 
-    /** SESSION_ID */
+    /** 会话ID。 */
     private String sessionId;
 }

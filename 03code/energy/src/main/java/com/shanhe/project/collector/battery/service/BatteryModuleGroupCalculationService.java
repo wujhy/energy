@@ -99,6 +99,7 @@ public class BatteryModuleGroupCalculationService {
         return calculation;
     }
 
+    /** 填充旧协议兼容字段。 */
     private void fillCompatibilityFields(BatteryCollectorChannelConfig channelConfig,
                                          BatteryModuleGroupRealtime calculation) {
         if (compatibilityFillService == null) {
@@ -183,6 +184,7 @@ public class BatteryModuleGroupCalculationService {
         return calculation;
     }
 
+    /** 判断组模块数据是否属于当前轮询批次。 */
     private boolean isCurrentGroupModule(BatteryModuleGroupRealtime group, String pollBatchNo) {
         if (group == null) {
             return false;
@@ -194,6 +196,7 @@ public class BatteryModuleGroupCalculationService {
                 && Boolean.TRUE.equals(group.getGroupModuleFresh());
     }
 
+    /** 从组模块数据复制兼容字段到计算结果。 */
     private void copyCompatibilityFields(BatteryModuleGroupRealtime source,
                                          BatteryModuleGroupRealtime target) {
         target.setBatteryPackSoc(source.getBatteryPackSoc());

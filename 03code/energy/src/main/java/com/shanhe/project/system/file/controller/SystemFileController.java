@@ -27,6 +27,7 @@ public class SystemFileController extends BaseController {
     @Resource
     private ISysFileService sysFileService;
 
+    /** 列出USB磁盘。 */
     @GetMapping("/listUsbDisk")
     @ResponseBody
     public AjaxResult listUsbDisk() throws IOException {
@@ -37,6 +38,7 @@ public class SystemFileController extends BaseController {
         return success(list);
     }
 
+    /** 列出指定目录下的文件。 */
     @GetMapping("/listFile")
     @ResponseBody
     public AjaxResult listFile(String path) throws IOException {

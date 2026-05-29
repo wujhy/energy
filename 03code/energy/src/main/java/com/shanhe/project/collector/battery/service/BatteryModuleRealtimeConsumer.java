@@ -303,6 +303,7 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
         return realtime;
     }
 
+    /** 为单体实时数据设置轮询批次上下文。 */
     private void applyPollContext(BatteryModuleCellRealtime realtime) {
         BatteryModulePollContext context = BatteryModulePollContextHolder.get();
         if (context == null) {
@@ -312,6 +313,7 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
         realtime.setPollStartedAt(context.getPollStartedAt());
     }
 
+    /** 为电池组实时数据设置轮询批次上下文。 */
     private void applyPollContext(BatteryModuleGroupRealtime realtime) {
         BatteryModulePollContext context = BatteryModulePollContextHolder.get();
         if (context == null) {

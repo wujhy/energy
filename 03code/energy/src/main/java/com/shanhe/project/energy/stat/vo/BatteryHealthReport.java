@@ -15,6 +15,7 @@ import java.util.List;
 public class BatteryHealthReport implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    /** 设备配置ID。 */
     private Long configId;
     // 蓄电池组编号
     private Integer packNum;
@@ -46,6 +47,7 @@ public class BatteryHealthReport implements Serializable {
     private Integer isGblyAlarm;
     // 是否鼓包漏液
     private Integer isGbAlarm;
+    /** 是否漏液告警。 */
     private Integer isLyAlarm;
 
     // 是否组高温

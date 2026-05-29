@@ -50,22 +50,31 @@ public class BatteryCollectorChannelState {
      */
     private volatile long lastPollTime;
 
+    /** 最近一次超时时间戳。 */
     private volatile long lastTimeoutTime;
 
+    /** 累计超时次数。 */
     private volatile int timeoutCount;
 
+    /** 当前重试次数。 */
     private volatile int currentRetryCount;
 
+    /** 当前等待响应的命令。 */
     private volatile BatteryPendingRequest pendingCommand;
 
+    /** 最近一次请求码。 */
     private volatile int lastRequestCode;
 
+    /** 期望的响应码。 */
     private volatile int expectedResponseCode;
 
+    /** 最近一次实际响应码。 */
     private volatile int lastResponseCode;
 
+    /** 最近一次命令完成时间戳。 */
     private volatile long lastPendingCompletedAt;
 
+    /** 最近一次命令是否超时。 */
     private volatile boolean lastPendingTimedOut;
 
     /**
@@ -88,14 +97,19 @@ public class BatteryCollectorChannelState {
      */
     private volatile long lastCompletedModuleCommandTime;
 
+    /** 当前轮询批次号。 */
     private volatile String currentPollBatchNo;
 
+    /** 当前轮询开始时间戳。 */
     private volatile long currentPollStartedAt;
 
+    /** 当前轮询的模块地址。 */
     private volatile int currentPollAddress;
 
+    /** 轮询轮次计数。 */
     private volatile long pollRoundCount;
 
+    /** 当前是否为全地址发现轮询。 */
     private volatile boolean currentFullDiscovery;
 
     /**

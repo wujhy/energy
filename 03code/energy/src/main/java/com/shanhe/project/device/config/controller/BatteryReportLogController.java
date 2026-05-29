@@ -68,7 +68,7 @@ public class BatteryReportLogController extends BaseController
         return success();
     }
 
-    // 单体数据
+    /** 导出单体数据。 */
     @PostMapping("/export")
     public AjaxResult export(BatteryReportLog params) {
         if (SystemService.isWin()) {

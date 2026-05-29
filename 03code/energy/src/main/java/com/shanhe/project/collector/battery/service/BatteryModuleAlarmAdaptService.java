@@ -35,12 +35,14 @@ public class BatteryModuleAlarmAdaptService {
         return context;
     }
 
+    /** 追加电池组通信状态告警。 */
     private void appendGroupDirectStatus(BatteryModuleAlarmContext context, BatteryModuleGroupRealtime group) {
         if (group.getGroupModuleFresh() != null) {
             context.putPackWarn(ItemCode.TXZT.getCode(), Boolean.TRUE.equals(group.getGroupModuleFresh()) ? "0" : "1");
         }
     }
 
+    /** 追加单体漏液状态告警。 */
     private void appendCellDirectStatus(BatteryModuleAlarmContext context, List<BatteryModuleCellRealtime> cells) {
         if (cells == null || cells.isEmpty()) {
             return;
@@ -55,6 +57,7 @@ public class BatteryModuleAlarmAdaptService {
         }
     }
 
+    /** 将状态值转换为告警值字符串。 */
     private String toAlarmValue(Integer value) {
         return value != null && value == 1 ? "1" : "0";
     }

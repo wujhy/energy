@@ -21,6 +21,7 @@ public class SouthDataController {
     @Resource
     ClientDeviceService clientDeviceService;
 
+    /** 南向数据同步接口。 */
     @PostMapping("/shim/southData")
     @ResponseBody
     public String southData(@RequestBody RequestVo request) {

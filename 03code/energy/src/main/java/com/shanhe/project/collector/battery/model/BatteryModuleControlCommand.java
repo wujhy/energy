@@ -68,4 +68,9 @@ public class BatteryModuleControlCommand {
      * 自动编号电池规格。
      */
     private Integer autoAddressBatterySpecification;
+
+    /**
+     * 关联的操作日志ID。
+     */
+    private Long optLogId;
 }

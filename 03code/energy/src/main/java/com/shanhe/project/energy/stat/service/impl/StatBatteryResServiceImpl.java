@@ -296,6 +296,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         EasyExcel.write(fileName).head(heads).sheet("单体内阻记录").doWrite(getExportData(data, time));
     }
 
+    /** 转换为导出格式的数据。 */
     private List<List<Object>> getExportData(List<Map<String, Object>> data, Set<String> time) {
         List<List<Object>> list = new ArrayList<>();
         for (Map<String, Object> map : data) {
@@ -330,7 +331,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         return statBatteryResList;
     }
 
-
+    /** 计算内阻变化率。 */
     private String getResistanceRatio(Integer latestResistance, Integer baseResistance) {
         if (latestResistance == null || baseResistance == null || baseResistance == 0) {
             return "N/A";
@@ -342,6 +343,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         return String.format("%.2f%%", ratio);
     }
 
+    /** 格式化内阻值。 */
     private String getResistanceValue(Integer value) {
         if (null == value) {
             return "N/A";

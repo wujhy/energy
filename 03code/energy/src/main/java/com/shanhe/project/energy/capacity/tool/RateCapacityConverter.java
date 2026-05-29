@@ -20,6 +20,7 @@ public class RateCapacityConverter {
      */
     private static final Map<Double, Double> CONVERSION_TABLE = createConversionTable();
 
+    /** 创建0.1C放电倍率到容量的转换表。 */
     private static Map<Double, Double> createConversionTable() {
         Map<Double, Double> table = new HashMap<>(4);
         // 基准倍率

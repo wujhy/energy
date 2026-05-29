@@ -41,7 +41,9 @@ public class DevBatteryOpt extends BaseEntity {
     /** 测试时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date testTime;
+    /** 测试时间描述。 */
     private String testTimeStr;
+    /** 更换时间。 */
     private String replaceTime;
 
     /** 截止电压 */

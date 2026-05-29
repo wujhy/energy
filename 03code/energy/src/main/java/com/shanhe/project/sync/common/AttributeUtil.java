@@ -89,6 +89,7 @@ public class AttributeUtil {
      * 上报属性参数
      *
      * @param configAttribute 本地
+     * @return 告警项VO
      */
     public static AlarmItemVo uploadItem(ConfigAttribute configAttribute) {
         AlarmItemVo alarmItem = new AlarmItemVo();

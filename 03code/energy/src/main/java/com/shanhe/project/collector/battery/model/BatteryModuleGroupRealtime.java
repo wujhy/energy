@@ -103,40 +103,58 @@ public class BatteryModuleGroupRealtime {
      */
     private Boolean dataFresh;
 
+    /** 最高电压单体编号。 */
     private Integer maxVoltageBatNum;
 
+    /** 最高单体电压。 */
     private Double maxCellVoltage;
 
+    /** 最低电压单体编号。 */
     private Integer minVoltageBatNum;
 
+    /** 最低单体电压。 */
     private Double minCellVoltage;
 
+    /** 平均单体电压。 */
     private Double avgCellVoltage;
 
+    /** 电压极差。 */
     private Double voltageRange;
 
+    /** 最高温度单体编号。 */
     private Integer maxTemperatureBatNum;
 
+    /** 最高单体温度。 */
     private Double maxCellTemperature;
 
+    /** 最低温度单体编号。 */
     private Integer minTemperatureBatNum;
 
+    /** 最低单体温度。 */
     private Double minCellTemperature;
 
+    /** 平均单体温度。 */
     private Double avgCellTemperature;
 
+    /** 温度极差。 */
     private Double temperatureRange;
 
+    /** 最高内阻单体编号。 */
     private Integer maxResistanceBatNum;
 
+    /** 最高单体内阻。 */
     private Integer maxInternalResistance;
 
+    /** 最低内阻单体编号。 */
     private Integer minResistanceBatNum;
 
+    /** 最低单体内阻。 */
     private Integer minInternalResistance;
 
+    /** 平均单体内阻。 */
     private Double avgInternalResistance;
 
+    /** 内阻极差。 */
     private Integer resistanceRange;
 
     /**

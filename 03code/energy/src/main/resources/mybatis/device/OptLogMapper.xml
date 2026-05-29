@@ -16,16 +16,41 @@
         <result property="bcapacity" column="bcapacity" />
         <result property="current" column="current" />
         <result property="dischargeCapacity" column="discharge_capacity" />
+        <result property="source" column="source" />
+        <result property="channelName" column="channel_name" />
+        <result property="targetType" column="target_type" />
+        <result property="targetAddress" column="target_address" />
+        <result property="mode" column="mode" />
+        <result property="status" column="status" />
+        <result property="requestCode" column="request_code" />
+        <result property="responseCode" column="response_code" />
+        <result property="protocolCode" column="protocol_code" />
+        <result property="commandName" column="command_name" />
+        <result property="requestPayload" column="request_payload" />
+        <result property="responsePayload" column="response_payload" />
+        <result property="errorMessage" column="error_message" />
+        <result property="pollBatchNo" column="poll_batch_no" />
+        <result property="startedAt" column="started_at" />
+        <result property="endedAt" column="ended_at" />
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,config_id,pack_num,type,content,result,create_time,update_time,bcapacity,current,discharge_capacity
+        id,config_id,pack_num,type,content,result,create_time,update_time,bcapacity,current,discharge_capacity,
+        source,channel_name,target_type,target_address,mode,status,request_code,response_code,
+        protocol_code,command_name,request_payload,response_payload,error_message,
+        poll_batch_no,started_at,ended_at
     </sql>
 
     <!-- 插入操作日志 -->
     <insert id="insert">
-        insert into dev_opt_log (id,config_id,pack_num,type,content,result,create_time)
-        values (#{id},#{configId},#{packNum},#{type},#{content},#{result},#{createTimeStr})
+        insert into dev_opt_log (id,config_id,pack_num,type,content,result,create_time,
+            source,channel_name,target_type,target_address,mode,status,
+            request_code,response_code,protocol_code,command_name,
+            request_payload,response_payload,error_message,poll_batch_no,started_at,ended_at)
+        values (#{id},#{configId},#{packNum},#{type},#{content},#{result},#{createTimeStr},
+            #{source},#{channelName},#{targetType},#{targetAddress},#{mode},#{status},
+            #{requestCode},#{responseCode},#{protocolCode},#{commandName},
+            #{requestPayload},#{responsePayload},#{errorMessage},#{pollBatchNo},#{startedAt},#{endedAt})
     </insert>
 
     <!-- 更新操作结果 -->
@@ -139,4 +164,15 @@
     <delete id="deleteByPackNum">
         delete from dev_opt_log where config_id = 1 and pack_num = #{packNum}
     </delete>
+
+    <!-- 更新600模块命令执行状态 -->
+    <update id="updateCommandStatus">
+        update dev_opt_log
+        set status = #{status},
+            response_code = #{responseCode},
+            ended_at = #{endedAt},
+            error_message = #{errorMessage},
+            update_time = strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')
+        where id = #{id}
+    </update>
 </mapper>

@@ -24,6 +24,7 @@ public class ConfigController extends BaseController {
     @Resource
     private IConfigService configService;
 
+    /** 查询设备配置列表。 */
     @PostMapping("/list")
     public TableDataInfo list() {
         startPage();

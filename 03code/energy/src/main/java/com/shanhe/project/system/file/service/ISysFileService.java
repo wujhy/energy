@@ -18,6 +18,7 @@ public interface ISysFileService {
      * 列出文件目录下的内容
      *
      * @param directoryPath 目录
+     * @return 日志文件列表
      */
     List<SysLogFile> listContents(String directoryPath) throws IOException;
 

@@ -56,6 +56,7 @@ public class BatteryModuleFrameDispatcher {
         }
     }
 
+    /** 格式化帧协议编码为十六进制字符串。 */
     private String formatCode(BatteryCollectorFrame frame, BatteryModuleFrameSummary summary) {
         if (summary.getProtocolCode() == null || summary.getProtocolCode().isResponse(frame.getCommand())) {
             return String.format("%02X", frame.getCommand());

@@ -113,6 +113,7 @@ public class AlarmLogController extends BaseController
         return success(alarmLogService.getCurrentIsAlarm(itemCode));
     }
 
+    /** 清空告警日志。 */
     @GetMapping("/clear")
     @ResponseBody
     public AjaxResult clear(@RequestParam(name = "configId", required = false) Long ignoredConfigId) {

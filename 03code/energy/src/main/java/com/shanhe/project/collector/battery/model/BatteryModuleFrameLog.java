@@ -83,27 +83,39 @@ public class BatteryModuleFrameLog {
      */
     private String parsedType;
 
+    /** 单体电压。 */
     private Double cellVoltage;
 
+    /** 单体内阻。 */
     private Integer internalResistance;
 
+    /** 单体温度。 */
     private Double cellTemperature;
 
+    /** 漏液状态。 */
     private Integer leakageStatus;
 
+    /** 膨胀电压。 */
     private Double swollenVoltage;
 
+    /** 充放电电流。 */
     private Double chargeDischargeCurrent;
 
+    /** 浮充电流。 */
     private Double floatCurrent;
 
+    /** 外部电压。 */
     private Double externalVoltage;
 
+    /** 环境温度1。 */
     private Double environmentTemperature1;
 
+    /** 环境温度2。 */
     private Double environmentTemperature2;
 
+    /** 连接条电池电压。 */
     private Double connectBatteryVoltage;
 
+    /** 连接条测试电压。 */
     private Double connectTestVoltage;
 }

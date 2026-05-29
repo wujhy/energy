@@ -114,14 +114,23 @@ public class AlarmItemVo implements Serializable {
      */
     private Integer isMonitor;
 
+    /** 原始值0。 */
     private String val0;
+    /** 原始值1。 */
     private String val1;
+    /** 是否线性转换。 */
     private Integer isLinear=0;
+    /** 原始范围最小值。 */
     private Double minOrigRange=0.0;
+    /** 目标范围最小值。 */
     private Double minTargetRange;
+    /** 原始范围最大值。 */
     private Double maxOrigRange=0.0;
+    /** 目标范围最大值。 */
     private Double maxTargetRange;
+    /** 线性系数K。 */
     private Double spk=0.0;
+    /** 线性偏移B。 */
     private Double spb;
     /**
      * 告警等级

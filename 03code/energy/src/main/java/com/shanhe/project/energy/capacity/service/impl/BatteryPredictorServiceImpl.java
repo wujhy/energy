@@ -105,6 +105,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         optLogService.updateBatteryBcapacity(optLog.getId(), preBatteryGroup.getDischargeCapacity(), preBatteryGroup.getBcapacity(), preBatteryGroup.getCurrent(), preBatteryGroup.getEndTime());
     }
 
+    /** 计算电池组预估容量。 */
     private PreBatteryGroup calcPredictorBatCapacity(Integer packNum, Date startTime, Date endTime) {
         int diffMills = DateUtils.differentMillsByMillisecond(startTime, endTime);
         // 30分钟
@@ -260,9 +261,9 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
                 int p2 = this.calcPrePointTime(2.0  * specSize, 1.88 * specSize, slope);
                 int p3 = this.calcPrePointTime(1.88 * specSize, 1.8 * specSize, slope * 3);
                 preTotalSize = p1 + p2 + p3;
-                log.debug("P1==" + p1);
-                log.debug("P2==" + p2);
-                log.debug("P3==" + p3);
+                log.debug("阶段1==" + p1);
+                log.debug("阶段2==" + p2);
+                log.debug("阶段3==" + p3);
             }else if (lastPoint.getVoltage() >= (1.88 * specSize)) { //1.88V一个拐点
                 if(specSize==1){
                     if (Math.abs(slope) < 0.00036) {
@@ -281,8 +282,8 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
                 int p2 = this.calcPrePointTime(lastPoint.getVoltage(), 1.88 * specSize, slope);
                 int p3 = this.calcPrePointTime(1.88 * specSize, 1.8 * specSize, slope * 3);
                 preTotalSize = p2 + p3;
-                log.debug("P2==" + p2);
-                log.debug("P3==" + p3);
+                log.debug("阶段2==" + p2);
+                log.debug("阶段3==" + p3);
             } else if (lastPoint.getVoltage() >= (1.79 * specSize)) { //1.79结束
                 if(specSize==1){
                     if (Math.abs(slope) < 0.00108) {
@@ -300,7 +301,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
                 log.debug(lastPoint.getVoltage() + "=====斜率3========" + String.format("%.6f", slope));
                 int p3 = this.calcPrePointTime(lastPoint.getVoltage(), 1.8 * specSize, slope);
                 preTotalSize = p3;
-                log.debug("P3==" + p3);
+                log.debug("阶段3==" + p3);
             }
 
             //因为到临界点，数据预测的点数越少，需要补偿不同点相同电压的情况

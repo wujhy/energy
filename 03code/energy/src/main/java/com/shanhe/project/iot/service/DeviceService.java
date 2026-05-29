@@ -101,6 +101,7 @@ public class DeviceService {
 
     }
 
+    /** 对设备数据进行前置过滤，调试报文更新缓存。 */
     private void prefilter(DeviceData deviceData) {
         if (StrUtil.equals(deviceData.getC3(), "FF")) {
             clientReportService.updateCmdDebug(deviceData.getImei(), deviceData.getInfo());

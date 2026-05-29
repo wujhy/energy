@@ -122,6 +122,9 @@ public class ClientReportService {
 
     /**
      * 上报测试指令结果
+     *
+     * @param imei 设备IMEI
+     * @param info 调试信息
      */
     public void updateCmdDebug(String imei, String info) {
         // 是否同步上报、是否已建立通道
@@ -137,6 +140,7 @@ public class ClientReportService {
      * 上报告警记录
      *
      * @param alarmLog 告警记录
+     * @param imei 设备IMEI
      */
     public void uploadAlarm(AlarmLog alarmLog, String imei) {
         if (!this.canSend()) {
@@ -157,6 +161,7 @@ public class ClientReportService {
      * 上报测点数据
      *
      * @param configAttribute 测点数据
+     * @param imei 设备IMEI
      */
     public void uploadAlarmConfigItem(ConfigAttribute configAttribute, String imei) {
         if (StrUtil.isBlank(imei)) {
@@ -218,6 +223,10 @@ public class ClientReportService {
 
     /**
      * 上报内阻初装
+     *
+     * @param packNum 电池组编号
+     * @param devBatteryMonomers 单体数据列表
+     * @param imei 设备IMEI
      */
     public void uploadBatteryMonomer(Integer packNum, List<DevBatteryMonomer> devBatteryMonomers, String imei) {
         if (StrUtil.isBlank(imei)) {
@@ -244,6 +253,8 @@ public class ClientReportService {
 
     /**
      * 上报预估容量
+     *
+     * @param groupVo 预估容量数据
      */
     public void uploadPreBatteryGroup(PreBatteryGroup groupVo) {
         String imei = this.getImei();

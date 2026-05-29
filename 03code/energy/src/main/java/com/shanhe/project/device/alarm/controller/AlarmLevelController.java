@@ -51,6 +51,7 @@ public class AlarmLevelController extends BaseController {
         return success();
     }
 
+    /** 修改告警等级。 */
     @Log(title = "修改告警级别", businessType = BusinessType.UPDATE)
     @PostMapping("/edit")
     public AjaxResult edit(@RequestBody AlarmLevel alarmLevel) {
@@ -58,6 +59,7 @@ public class AlarmLevelController extends BaseController {
         return success();
     }
 
+    /** 删除告警等级。 */
     @Log(title = "删除告警级别", businessType = BusinessType.DELETE)
     @PostMapping( "/remove")
     @ResponseBody

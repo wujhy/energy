@@ -132,6 +132,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         return packMap;
     }
 
+    /** 根据各告警项状态处理SOH告警。 */
     private void handleSohAlarm(BatteryHealthReport batteryHealthReport) {
         // SOH 告警
         if (Objects.equals(0, batteryHealthReport.getIsGblyAlarm())
@@ -144,6 +145,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         }
     }
 
+    /** 构建评估因素列表。 */
     private List<EvaluationFactors> buildEvaluationFactors(BatteryPack batteryPack,
                                                            BatteryReportLog batteryReportLog,
                                                            BatteryHealthReport batteryHealthReport,
@@ -171,6 +173,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         return evaluationFactorsList;
     }
 
+    /** 填充电池组基本信息。 */
     private void populateBasicInfo(BatteryHealthReport batteryHealthReport, BatteryPack batteryPack) {
         batteryHealthReport.setConfigId(batteryPack.getConfigId());
         batteryHealthReport.setPackNum(batteryPack.getPackNum());
@@ -182,6 +185,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         batteryHealthReport.setProductionTime(batteryPack.getProductionTime());
     }
 
+    /** 填充SOH信息。 */
     private void populateSohInfo(BatteryHealthReport batteryHealthReport, PreBatteryGroup preBatteryGroup) {
         Double soh = 100.0;
         if (preBatteryGroup != null) {
@@ -190,6 +194,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         batteryHealthReport.setSoh(soh);
     }
 
+    /** 填充告警信息并返回按告警项分组的日志。 */
     private Map<String, List<AlarmLog>> populateAlarmInfo(BatteryHealthReport batteryHealthReport,
                                                           Integer packNum) {
         AlarmLog params = new AlarmLog();
@@ -203,6 +208,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         return alarmLogs.stream().collect(Collectors.groupingBy(AlarmLog::getItemCode));
     }
 
+    /** 从上报数据中解析备电时长。 */
     private void populateBackupDuration(BatteryHealthReport batteryHealthReport,
                                         BatteryReportLog batteryReportLog) {
         try {
@@ -218,6 +224,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         }
     }
 
+    /** 根据告警状态生成评估建议。 */
     private String getAssessAdvice(BatteryHealthReport batteryHealthReport) {
         // SOH 不告警
         if (!Objects.equals(0, batteryHealthReport.getSohAlarm())) {
@@ -259,6 +266,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         return result.append("。").toString();
     }
 
+    /** 获取SOH告警阈值。 */
     private Double getSohThreshold(Integer packNum) {
         ConfigAttribute sohAttribute = configAttributeService.getCacheBy(packNum, ItemCode.ZSOHDGJ.getCode());
         if (null == sohAttribute || null == sohAttribute.getListLevel() || sohAttribute.getListLevel().isEmpty()) {
@@ -271,6 +279,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         return 80.0;
     }
 
+    /** 计算电池使用年限。 */
     private String getLx(BatteryPack batteryPack) {
         if (batteryPack.getProductionTime() == null) {
             return "--";
@@ -305,6 +314,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         return "--";
     }
 
+    /** 构建鼓包漏液评估因素。 */
     private EvaluationFactors getGblyStr(Map<String, List<AlarmLog>> logMap, BatteryHealthReport batteryHealthReport) {
         Set<Integer> dtgbLogs = logMap.getOrDefault(ItemCode.DTGB.getCode(), Collections.emptyList()).stream().map(AlarmLog::getModelNum).filter(Objects::nonNull).collect(Collectors.toSet());
         Set<Integer> dtlygjLogs = logMap.getOrDefault(ItemCode.DTLYGJ.getCode(), Collections.emptyList()).stream().map(AlarmLog::getModelNum).filter(Objects::nonNull).collect(Collectors.toSet());
@@ -324,6 +334,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         return new EvaluationFactors("鼓包、漏液", "无", 1);
     }
 
+    /** 构建温度告警评估因素。 */
     private EvaluationFactors getWdStr(Map<String, List<AlarmLog>> logMap, String itemCode, BatteryReportLog batteryReportLog, BatteryHealthReport batteryHealthReport) {
         String str;
         if (ItemCode.ZWDG.getCode().equals(itemCode)) {
@@ -351,6 +362,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         return new EvaluationFactors(str, "无", 1);
     }
 
+    /** 获取温度告警当前值。 */
     private String getWd(String itemCode, BatteryReportLog batteryReportLog) {
         if (ItemCode.ZWDG.getCode().equals(itemCode)) {
             Map<String, Object> packParam = batteryReportLog.getPackParam();
@@ -399,6 +411,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         return new EvaluationFactors("内阻变化率/内阻过大", maxResistance + "%", 1);
     }
 
+    /** 计算电池容量百分比。 */
     private String getCapacity(BatteryPack batteryPack, PreBatteryGroup preBatteryGroup) {
         if (preBatteryGroup == null || preBatteryGroup.getBcapacity() == null || preBatteryGroup.getBcapacity() == 0) {
             return "100%";
@@ -408,6 +421,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         return (int) percentage + "%";
     }
 
+    /** 构建电压均衡度评估因素。 */
     private EvaluationFactors getVoltageRangeStr(BatteryPack batteryPack, BatteryReportLog batteryReportLog, BatteryHealthReport batteryHealthReport) {
         Integer voltageRange = getRange(batteryPack, batteryReportLog);
         if (voltageRange == null) {
@@ -423,6 +437,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         return new EvaluationFactors("电压均衡度", voltageRange + "mV", 1);
     }
 
+    /** 计算单体电压极差。 */
     private Integer getRange(BatteryPack batteryPack, BatteryReportLog oldInfo) {
         // 当前是浮充状态，取当前数据计算极差
         if (null == oldInfo || null == oldInfo.getPackParam() || null == oldInfo.getBatteryList() || oldInfo.getBatteryList().isEmpty()) {

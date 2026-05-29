@@ -85,19 +85,19 @@ public class HttpUtils
         }
         catch (ConnectException e)
         {
-            log.error("调用HttpUtils.sendGet ConnectException, url=" + url + ",param=" + param, e);
+            log.error("调用HttpUtils.sendGet 连接异常, url=" + url + ",param=" + param, e);
         }
         catch (SocketTimeoutException e)
         {
-            log.error("调用HttpUtils.sendGet SocketTimeoutException, url=" + url + ",param=" + param, e);
+            log.error("调用HttpUtils.sendGet 连接超时, url=" + url + ",param=" + param, e);
         }
         catch (IOException e)
         {
-            log.error("调用HttpUtils.sendGet IOException, url=" + url + ",param=" + param, e);
+            log.error("调用HttpUtils.sendGet IO异常, url=" + url + ",param=" + param, e);
         }
         catch (Exception e)
         {
-            log.error("调用HttpsUtil.sendGet Exception, url=" + url + ",param=" + param, e);
+            log.error("调用HttpUtils.sendGet 异常, url=" + url + ",param=" + param, e);
         }
         finally
         {
@@ -110,7 +110,7 @@ public class HttpUtils
             }
             catch (Exception ex)
             {
-                log.error("调用in.close Exception, url=" + url + ",param=" + param, ex);
+                log.error("调用in.close 异常, url=" + url + ",param=" + param, ex);
             }
         }
         return result.toString();
@@ -153,19 +153,19 @@ public class HttpUtils
         }
         catch (ConnectException e)
         {
-            log.error("调用HttpUtils.sendPost ConnectException, url={},param={}", url, param, e);
+            log.error("调用HttpUtils.sendPost 连接异常, url={},param={}", url, param, e);
         }
         catch (SocketTimeoutException e)
         {
-            log.error("调用HttpUtils.sendPost SocketTimeoutException, url={},param={}", url, param, e);
+            log.error("调用HttpUtils.sendPost 连接超时, url={},param={}", url, param, e);
         }
         catch (IOException e)
         {
-            log.error("调用HttpUtils.sendPost IOException, url={},param={}", url, param, e);
+            log.error("调用HttpUtils.sendPost IO异常, url={},param={}", url, param, e);
         }
         catch (Exception e)
         {
-            log.error("调用HttpsUtil.sendPost Exception, url={},param={}", url, param, e);
+            log.error("调用HttpUtils.sendPost 异常, url={},param={}", url, param, e);
         }
         finally
         {
@@ -182,7 +182,7 @@ public class HttpUtils
             }
             catch (IOException ex)
             {
-                log.error("调用in.close Exception, url={},param={}", url, param, ex);
+                log.error("调用in.close 异常, url={},param={}", url, param, ex);
             }
         }
         return result.toString();
@@ -226,19 +226,19 @@ public class HttpUtils
         }
         catch (ConnectException e)
         {
-            log.error("调用HttpUtils.sendSSLPost ConnectException, url={},param={}", url, param, e);
+            log.error("调用HttpUtils.sendSSLPost 连接异常, url={},param={}", url, param, e);
         }
         catch (SocketTimeoutException e)
         {
-            log.error("调用HttpUtils.sendSSLPost SocketTimeoutException, url={},param={}", url, param, e);
+            log.error("调用HttpUtils.sendSSLPost 连接超时, url={},param={}", url, param, e);
         }
         catch (IOException e)
         {
-            log.error("调用HttpUtils.sendSSLPost IOException, url={},param={}", url, param, e);
+            log.error("调用HttpUtils.sendSSLPost IO异常, url={},param={}", url, param, e);
         }
         catch (Exception e)
         {
-            log.error("调用HttpsUtil.sendSSLPost Exception, url={},param={}", url, param, e);
+            log.error("调用HttpUtils.sendSSLPost 异常, url={},param={}", url, param, e);
         }
         return result.toString();
     }

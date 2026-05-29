@@ -37,11 +37,13 @@ public class BatteryModuleGroupCompatibilityFillService {
         fillCapacityCache(channelConfig, group);
     }
 
+    /** 填充计算字段的旧协议别名。 */
     private void fillCalculatedAliases(BatteryModuleGroupRealtime group) {
         group.setBatteryAvgTemperature(group.getAvgCellTemperature());
         group.setBatteryVoltageRange(group.getVoltageRange());
     }
 
+    /** 根据充放电电流设置电池组状态。 */
     private void fillStatus(BatteryModuleGroupRealtime group) {
         if (group.getPackCurrent() == null) {
             return;
@@ -53,6 +55,7 @@ public class BatteryModuleGroupCompatibilityFillService {
         }
     }
 
+    /** 从预估容量缓存补充兼容字段。 */
     private void fillCapacityCache(BatteryCollectorChannelConfig channelConfig, BatteryModuleGroupRealtime group) {
         if (preBatteryGroupService == null
                 || channelConfig == null

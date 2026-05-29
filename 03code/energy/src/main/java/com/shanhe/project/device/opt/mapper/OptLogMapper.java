@@ -81,4 +81,19 @@ public interface OptLogMapper {
      * @param packNum 电池组编号
      */
     void deleteByPackNum(@Param("packNum") Integer packNum);
+
+    /**
+     * 更新600模块命令执行日志状态。
+     *
+     * @param id 记录ID
+     * @param status 命令状态
+     * @param responseCode 响应码
+     * @param endedAt 结束时间
+     * @param errorMessage 错误信息
+     */
+    void updateCommandStatus(@Param("id") Long id,
+                             @Param("status") String status,
+                             @Param("responseCode") Integer responseCode,
+                             @Param("endedAt") String endedAt,
+                             @Param("errorMessage") String errorMessage);
 }

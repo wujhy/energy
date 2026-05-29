@@ -114,6 +114,7 @@ public class ConfigAttribute extends BaseEntity
     /** 告警等级 */
     private String levelList;
 
+    /** 排除编码列表。 */
     private List<String> excludeCodes;
 
     public void setListLevel(List<AlarmItemLevelVo> listLevel) {

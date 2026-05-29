@@ -87,6 +87,9 @@ public class ArmRecordInfo implements Serializable {
 
     /**
      * 创建实体对象
+     *
+     * @param alarm 告警日志
+     * @return ARM记录信息
      */
     public static ArmRecordInfo of(AlarmLog alarm) {
         ArmRecordInfo info = new ArmRecordInfo();

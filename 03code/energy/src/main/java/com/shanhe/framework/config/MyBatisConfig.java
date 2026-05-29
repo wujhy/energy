@@ -75,7 +75,7 @@ public class MyBatisConfig {
                 throw new RuntimeException("mybatis typeAliasesPackage 路径扫描错误,参数typeAliasesPackage:" + typeAliasesPackage + "未找到任何包");
             }
         } catch (IOException e) {
-            log.error("IOException{}", e.getMessage());
+            log.error("IO异常:{}", e.getMessage());
         }
         return typeAliasesPackage;
     }

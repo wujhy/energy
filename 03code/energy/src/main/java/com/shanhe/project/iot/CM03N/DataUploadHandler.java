@@ -33,6 +33,7 @@ public class DataUploadHandler {
         this.dealData(deviceData);
     }
 
+    /** 根据设备类型分派数据上传处理。 */
     private void dealData(DeviceData deviceData) {
         Config config = configService.selectDefaultConfig();
         if (Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
