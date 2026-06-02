@@ -71,11 +71,31 @@
             <if test="type != null "> and type = #{type}</if>
             <if test="configId != null "> and config_id = #{configId}</if>
             <if test="packNum != null "> and pack_num = #{packNum}</if>
+            <if test="source != null and source != ''"> and source = #{source}</if>
+            <if test="channelName != null and channelName != ''"> and channel_name = #{channelName}</if>
+            <if test="targetType != null and targetType != ''"> and target_type = #{targetType}</if>
+            <if test="targetAddress != null"> and target_address = #{targetAddress}</if>
+            <if test="mode != null"> and mode = #{mode}</if>
+            <if test="status != null and status != ''"> and status = #{status}</if>
+            <if test="protocolCode != null and protocolCode != ''"> and protocol_code = #{protocolCode}</if>
+            <if test="commandName != null and commandName != ''"> and command_name = #{commandName}</if>
             <if test="params != null and params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
                 and strftime('%Y-%m-%d %H:%M:%S', create_time) &gt;= strftime('%Y-%m-%d %H:%M:%S', #{params.beginTime})
             </if>
             <if test="params != null and params.endTime != null and params.endTime != ''"><!-- 结束时间检索 -->
                 and strftime('%Y-%m-%d %H:%M:%S', create_time) &lt;= strftime('%Y-%m-%d %H:%M:%S', #{params.endTime})
+            </if>
+            <if test="params != null and params.startedAtBegin != null and params.startedAtBegin != ''"><!-- 命令开始时间检索 -->
+                and started_at &gt;= #{params.startedAtBegin}
+            </if>
+            <if test="params != null and params.startedAtEnd != null and params.startedAtEnd != ''">
+                and started_at &lt;= #{params.startedAtEnd}
+            </if>
+            <if test="params != null and params.endedAtBegin != null and params.endedAtBegin != ''"><!-- 命令结束时间检索 -->
+                and ended_at &gt;= #{params.endedAtBegin}
+            </if>
+            <if test="params != null and params.endedAtEnd != null and params.endedAtEnd != ''">
+                and ended_at &lt;= #{params.endedAtEnd}
             </if>
         </where>
         order by id desc
@@ -169,9 +189,10 @@
     <update id="updateCommandStatus">
         update dev_opt_log
         set status = #{status},
-            response_code = #{responseCode},
+            <if test="responseCode != null">response_code = #{responseCode},</if>
             ended_at = #{endedAt},
             error_message = #{errorMessage},
+            <if test="responsePayload != null">response_payload = #{responsePayload},</if>
             update_time = strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')
         where id = #{id}
     </update>

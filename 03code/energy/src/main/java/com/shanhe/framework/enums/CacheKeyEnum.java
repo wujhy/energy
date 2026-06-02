@@ -33,7 +33,7 @@ public enum CacheKeyEnum {
     BATTERY_REPORT("device-battery-report", "battery:%s", "蓄电池实时日志"),
     /* comm:sticky */
     STICKY("comm-data", "comm:sticky", "粘包数据处理"),
-    /* device:result:configId:packNum:C3 */
+    /* device:result:packNum:modelNum:C3 */
     RESULT("device-result", "device:result:%s:%s:%s", "返回结果处理"),
     /* result:C0:C1:C2:C3 */
     RESULT_CX("device-result", "result:%s:%s:%s:%s", "返回结果处理"),

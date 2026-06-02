@@ -242,17 +242,6 @@
         where battery.pack_id = #{packId}
     </select>
 
-    <!-- 根据配置ID批量查询电池组 -->
-    <select id="selectBatteryPackByConfigIds" resultMap="BatteryPackResult">
-        select
-        <include refid="selectBatteryPackVo"/>
-        from dev_battery_pack battery
-        where battery.config_id in
-        <foreach collection="configIds" item="configId" open="(" close=")" separator=",">
-            #{configId}
-        </foreach>
-    </select>
-
     <!-- 按条件查询电池组列表 -->
     <select id="selectBatteryPackList" parameterType="com.shanhe.project.device.config.domain.BatteryPack"
             resultMap="BatteryPackResult">

@@ -200,16 +200,6 @@
         </foreach>
     </delete>
 
-    <!-- 条件清空告警日志 -->
-    <delete id="clear">
-        delete from dev_alarm_log
-        <where>
-            <if test=" configId != null ">
-                config_id = #{configId}
-            </if>
-        </where>
-    </delete>
-
     <!-- 删除所有告警日志 -->
     <delete id="deleteAll" parameterType="Long">
         delete from dev_alarm_log

@@ -135,4 +135,9 @@
     <delete id="deleteByPackNum">
         DELETE FROM battery_device_state WHERE pack_num = #{packNum}
     </delete>
+
+    <!-- 删除全部设备状态 -->
+    <delete id="deleteAll">
+        DELETE FROM battery_device_state
+    </delete>
 </mapper>

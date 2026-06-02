@@ -1,5 +1,6 @@
 package com.shanhe.project.scheduled;
 
+import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.device.host.domain.Host;
 import com.shanhe.project.device.host.service.IHostService;
@@ -31,9 +32,12 @@ public class CleanLogJob {
 
     @Resource
     private IHostService hostService;
+    @Resource
     private BatteryReportLogService batteryReportLogService;
     @Resource
     private IOperLogService operLogService;
+    @Resource
+    private BatteryDeviceStateService batteryDeviceStateService;
 
     @Scheduled(cron = "${job.cleanLog}")
     public void logCleanJob() {
@@ -56,6 +60,12 @@ public class CleanLogJob {
                 operLogService.deleteOperLog(cleanSysLogMonth);
             } catch (Exception e) {
                 log.error("删除系统历史记录异常：{}", e.getMessage());
+            }
+
+            try {
+                batteryDeviceStateService.deleteExpired();
+            } catch (Exception e) {
+                log.error("删除过期设备状态异常：{}", e.getMessage());
             }
 
             try {

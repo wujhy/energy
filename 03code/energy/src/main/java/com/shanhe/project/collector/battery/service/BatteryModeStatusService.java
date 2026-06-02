@@ -4,7 +4,7 @@ import cn.hutool.core.util.ObjUtil;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
-import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
+import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,7 @@ import java.util.Objects;
 @Service
 public class BatteryModeStatusService {
 
-    private static final String STATE_CODE_WORK_MODE = "WORK_MODE";
+    private static final String STATE_CODE_WORK_MODE = BatteryDeviceStateConstants.StateCode.WORK_MODE;
 
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
@@ -102,7 +102,7 @@ public class BatteryModeStatusService {
         batteryModeInfo.setStatus(STATUS_RUNNING);
         batteryModeInfo.setAddress(address);
         cacheAccessor.put(cacheKeyEnum.getCache(), key(), batteryModeInfo);
-        persistModeState(packNum, mode, address, "running", null);
+        persistModeState(packNum, mode, address, String.valueOf(mode), BatteryDeviceStateConstants.StateLevel.RUNNING, null);
     }
 
     /**
@@ -133,7 +133,8 @@ public class BatteryModeStatusService {
             batteryModeInfo.setLastMode(mode);
         }
         cacheAccessor.put(cacheKeyEnum.getCache(), key(), batteryModeInfo);
-        persistModeState(packNum, MODE_IDLE, address, success ? "success" : "failed", null);
+        persistModeState(packNum, MODE_IDLE, address, String.valueOf(MODE_IDLE),
+                success ? BatteryDeviceStateConstants.StateLevel.NORMAL : BatteryDeviceStateConstants.StateLevel.WARN, null);
     }
 
     /**
@@ -174,14 +175,16 @@ public class BatteryModeStatusService {
     }
 
     /** 将工作模式状态持久化到 battery_device_state。 */
-    private void persistModeState(Integer packNum, int mode, Integer address, String stateValue, Long optLogId) {
+    private void persistModeState(Integer packNum, int mode, Integer address, String stateValue, String stateLevel, Long optLogId) {
         try {
             BatteryDeviceState state = new BatteryDeviceState();
-            state.setScopeType("pack");
+            state.setScopeType(BatteryDeviceStateConstants.ScopeType.PACK);
             state.setScopeKey(String.valueOf(packNum));
             state.setPackNum(packNum);
             state.setStateCode(STATE_CODE_WORK_MODE);
             state.setStateValue(stateValue);
+            state.setStateLevel(stateLevel);
+            state.setSource(BatteryDeviceStateConstants.Source.MODE_STATUS);
             state.setSourceRefId(address == null ? null : String.valueOf(address));
             state.setMode(mode);
             state.setOptLogId(optLogId);

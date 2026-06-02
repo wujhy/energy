@@ -5,11 +5,15 @@ import com.shanhe.framework.enums.BusinessType;
 import com.shanhe.framework.web.controller.BaseController;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
+import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
 import com.shanhe.project.collector.battery.service.BatteryCollectorService;
+import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import lombok.Data;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +36,8 @@ public class BatteryCollectorCommandController extends BaseController {
     private BatteryCollectorCommandService commandService;
     @Resource
     private BatteryCollectorService collectorService;
+    @Resource
+    private BatteryDeviceStateService batteryDeviceStateService;
 
     /**
      * 查询采集通道运行状态快照。
@@ -127,6 +133,32 @@ public class BatteryCollectorCommandController extends BaseController {
                 request.getChannelName(),
                 request.getBatteryGroup(),
                 request.getTimeoutMs()));
+    }
+
+    /**
+     * 查询指定电池组的设备状态。
+     */
+    @GetMapping("/deviceState")
+    public AjaxResult deviceState(Integer packNum) {
+        return success(batteryDeviceStateService.selectByPackNum(packNum));
+    }
+
+    /**
+     * 条件查询设备状态列表。
+     */
+    @GetMapping("/deviceState/list")
+    public AjaxResult deviceStateList(BatteryDeviceState query) {
+        return success(batteryDeviceStateService.selectList(query));
+    }
+
+    /**
+     * 删除指定设备状态记录。
+     */
+    @Log(title = "删除设备状态记录", businessType = BusinessType.DELETE)
+    @DeleteMapping("/deviceState/{stateId}")
+    public AjaxResult deleteDeviceState(@PathVariable Long stateId) {
+        batteryDeviceStateService.deleteByStateId(stateId);
+        return success();
     }
 
     private int[] toIntArray(List<Integer> values) {

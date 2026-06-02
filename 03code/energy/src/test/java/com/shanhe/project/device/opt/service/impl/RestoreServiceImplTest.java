@@ -2,6 +2,7 @@ package com.shanhe.project.device.opt.service.impl;
 
 import com.shanhe.common.constant.Constants;
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
+import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.Config;
@@ -37,6 +38,7 @@ class RestoreServiceImplTest {
         IStatBatteryPackService statBatteryPackService = Mockito.mock(IStatBatteryPackService.class, Mockito.CALLS_REAL_METHODS);
         IStatBatteryResService statBatteryResService = Mockito.mock(IStatBatteryResService.class, Mockito.CALLS_REAL_METHODS);
         PreBatteryGroupService preBatteryGroupService = Mockito.mock(PreBatteryGroupService.class, Mockito.CALLS_REAL_METHODS);
+        BatteryDeviceStateService batteryDeviceStateService = Mockito.mock(BatteryDeviceStateService.class);
 
         Config config = new Config();
         config.setConfigId(Constants.DEFAULT_CONFIG_ID);
@@ -57,6 +59,7 @@ class RestoreServiceImplTest {
         ReflectionTestUtils.setField(service, "statBatteryPackService", statBatteryPackService);
         ReflectionTestUtils.setField(service, "statBatteryResService", statBatteryResService);
         ReflectionTestUtils.setField(service, "preBatteryGroupService", preBatteryGroupService);
+        ReflectionTestUtils.setField(service, "batteryDeviceStateService", batteryDeviceStateService);
 
         BatterySetVO request = new BatterySetVO();
         request.setConfigId(99L);
@@ -74,5 +77,6 @@ class RestoreServiceImplTest {
         Mockito.verify(statBatteryPackService).deleteByPackNum(2);
         Mockito.verify(statBatteryResService).deleteByPackNum(2);
         Mockito.verify(preBatteryGroupService).deleteByPackNum(2);
+        Mockito.verify(batteryDeviceStateService).deleteByPackNum(2);
     }
 }

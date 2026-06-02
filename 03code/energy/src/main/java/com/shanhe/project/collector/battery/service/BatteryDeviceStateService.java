@@ -91,4 +91,9 @@ public interface BatteryDeviceStateService {
      * @param packNum 电池组编号
      */
     void deleteByPackNum(Integer packNum);
+
+    /**
+     * 删除全部设备状态。
+     */
+    void deleteAll();
 }

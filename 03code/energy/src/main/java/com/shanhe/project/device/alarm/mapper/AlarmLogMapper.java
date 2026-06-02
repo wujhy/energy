@@ -94,13 +94,6 @@ public interface AlarmLogMapper
     int deleteAlarmLogByAlarmIds(String[] alarmIds);
 
     /**
-     * 清空设备历史记录
-     *
-     * @param configId 设备id
-     */
-    void clear(Long configId);
-
-    /**
      * 删除设备告警记录信息
      */
     void deleteALL();

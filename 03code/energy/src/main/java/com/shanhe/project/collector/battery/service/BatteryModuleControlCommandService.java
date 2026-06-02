@@ -45,8 +45,8 @@ public class BatteryModuleControlCommandService {
      * @return 控制命令
      */
     public BatteryModuleControlCommand setModuleAddress(int moduleAddress, int newAddress) {
-        validateModuleAddress(moduleAddress);
-        validateModuleAddress(newAddress);
+        validateCellModuleAddress(moduleAddress);
+        validateCellModuleAddress(newAddress);
         return command(BatteryDeviceProtocolCode.SET_MODULE_ADDRESS, moduleAddress, newAddress);
     }
 
@@ -166,6 +166,13 @@ public class BatteryModuleControlCommandService {
     private void validateModuleAddress(int address) {
         if (address < 1 || address > GROUP_MODULE_ADDRESS) {
             throw new IllegalArgumentException("模块地址必须在1到246之间");
+        }
+    }
+
+    /** 校验普通单体模块地址（1-245，不含 246 组模块地址）。 */
+    private void validateCellModuleAddress(int address) {
+        if (address < 1 || address >= GROUP_MODULE_ADDRESS) {
+            throw new IllegalArgumentException("单体模块地址必须在1到245之间，不允许使用246");
         }
     }
 

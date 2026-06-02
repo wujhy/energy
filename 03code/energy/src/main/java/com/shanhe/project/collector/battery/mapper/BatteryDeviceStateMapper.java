@@ -100,4 +100,11 @@ public interface BatteryDeviceStateMapper {
      * @return 影响行数
      */
     int deleteByPackNum(@Param("packNum") Integer packNum);
+
+    /**
+     * 删除全部设备状态。
+     *
+     * @return 影响行数
+     */
+    int deleteAll();
 }

@@ -76,14 +76,6 @@ public interface BatteryPackMapper {
     void deleteBatteryPackByBatPackIds(@Param("packIds") List<Long> packIds);
 
     /**
-     * 根据配置ID查询电池组列表
-     *
-     * @param configIds 配置ID数组
-     * @return 电池组列表
-     */
-    List<BatteryPack> selectBatteryPackByConfigIds(@Param("configIds") List<Long> configIds);
-
-    /**
      * 查询蓄电池组列表
      *
      * @param batteryPack 蓄电池组

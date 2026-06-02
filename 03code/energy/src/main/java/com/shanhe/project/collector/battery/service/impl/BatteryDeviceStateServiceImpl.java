@@ -27,7 +27,16 @@ public class BatteryDeviceStateServiceImpl implements BatteryDeviceStateService 
         if (state == null) {
             return;
         }
+        if (isBlank(state.getScopeType()) || isBlank(state.getScopeKey()) || isBlank(state.getStateCode())) {
+            log.warn("设备状态写入被跳过, scopeType/scopeKey/stateCode 不能为空, scopeType={}, scopeKey={}, stateCode={}",
+                    state.getScopeType(), state.getScopeKey(), state.getStateCode());
+            return;
+        }
         batteryDeviceStateMapper.upsert(state);
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     @Override
@@ -72,6 +81,14 @@ public class BatteryDeviceStateServiceImpl implements BatteryDeviceStateService 
 
     @Override
     public void deleteByPackNum(Integer packNum) {
+        if (packNum == null) {
+            return;
+        }
         batteryDeviceStateMapper.deleteByPackNum(packNum);
+    }
+
+    @Override
+    public void deleteAll() {
+        batteryDeviceStateMapper.deleteAll();
     }
 }

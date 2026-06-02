@@ -90,10 +90,12 @@ public interface OptLogMapper {
      * @param responseCode 响应码
      * @param endedAt 结束时间
      * @param errorMessage 错误信息
+     * @param responsePayload 响应载荷hex（可为null）
      */
     void updateCommandStatus(@Param("id") Long id,
                              @Param("status") String status,
                              @Param("responseCode") Integer responseCode,
                              @Param("endedAt") String endedAt,
-                             @Param("errorMessage") String errorMessage);
+                             @Param("errorMessage") String errorMessage,
+                             @Param("responsePayload") String responsePayload);
 }
