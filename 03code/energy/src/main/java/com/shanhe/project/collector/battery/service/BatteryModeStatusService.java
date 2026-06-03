@@ -45,6 +45,11 @@ public class BatteryModeStatusService {
      */
     public static final int MODE_CONNECT_RESISTANCE = 10;
 
+    /**
+     * 单体均衡。
+     */
+    public static final int MODE_BALANCE = 11;
+
     private static final int STATUS_STOP = 0;
     private static final int STATUS_RUNNING = 1;
     private static final String MODE_STATUS_KEY = "battery:mode:status:EB";

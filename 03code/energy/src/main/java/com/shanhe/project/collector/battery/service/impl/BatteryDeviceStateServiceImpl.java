@@ -2,6 +2,7 @@ package com.shanhe.project.collector.battery.service.impl;
 
 import com.shanhe.project.collector.battery.mapper.BatteryDeviceStateMapper;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
+import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -90,5 +91,70 @@ public class BatteryDeviceStateServiceImpl implements BatteryDeviceStateService 
     @Override
     public void deleteAll() {
         batteryDeviceStateMapper.deleteAll();
+    }
+
+    @Override
+    public List<BatteryDeviceState> getPackStatusSummary(Integer packNum) {
+        if (packNum == null) {
+            return java.util.Collections.emptyList();
+        }
+        List<BatteryDeviceState> result = new java.util.ArrayList<>();
+        // 工作模式
+        BatteryDeviceState workMode = selectByScope(
+                BatteryDeviceStateConstants.ScopeType.PACK, String.valueOf(packNum),
+                BatteryDeviceStateConstants.StateCode.WORK_MODE);
+        if (workMode != null) {
+            result.add(workMode);
+        }
+        // 在线状态
+        BatteryDeviceState online = selectByScope(
+                BatteryDeviceStateConstants.ScopeType.PACK, String.valueOf(packNum),
+                BatteryDeviceStateConstants.StateCode.ONLINE);
+        if (online != null) {
+            result.add(online);
+        }
+        // 246 新鲜度
+        BatteryDeviceState freshness = selectByScope(
+                BatteryDeviceStateConstants.ScopeType.PACK, String.valueOf(packNum),
+                BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS);
+        if (freshness != null) {
+            result.add(freshness);
+        }
+        return result;
+    }
+
+    @Override
+    public List<BatteryDeviceState> getChannelStatusSummary(String channelName) {
+        if (channelName == null || channelName.trim().isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        List<BatteryDeviceState> result = new java.util.ArrayList<>();
+        // 通道串口状态
+        BatteryDeviceState channelOpen = selectByScope(
+                BatteryDeviceStateConstants.ScopeType.CHANNEL, channelName,
+                BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN);
+        if (channelOpen != null) {
+            result.add(channelOpen);
+        }
+        // 通道异常状态
+        BatteryDeviceState channelError = selectByScope(
+                BatteryDeviceStateConstants.ScopeType.CHANNEL, channelName,
+                BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR);
+        if (channelError != null) {
+            result.add(channelError);
+        }
+        // 超时模块列表
+        List<BatteryDeviceState> timeouts = selectByChannelAndCode(
+                channelName, BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT);
+        if (timeouts != null) {
+            result.addAll(timeouts);
+        }
+        // 活跃模块列表
+        List<BatteryDeviceState> active = selectByChannelAndCode(
+                channelName, BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE);
+        if (active != null) {
+            result.addAll(active);
+        }
+        return result;
     }
 }

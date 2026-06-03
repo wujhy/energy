@@ -73,4 +73,14 @@ public class BatteryModuleControlCommand {
      * 关联的操作日志ID。
      */
     private Long optLogId;
+
+    /**
+     * 连接条测试下一个待测单体地址。
+     */
+    private Integer connectResistanceNextAddress;
+
+    /**
+     * 连接条测试最大单体地址。
+     */
+    private Integer connectResistanceMaxAddress;
 }

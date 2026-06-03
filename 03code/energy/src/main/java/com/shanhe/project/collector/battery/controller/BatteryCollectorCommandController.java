@@ -129,9 +129,12 @@ public class BatteryCollectorCommandController extends BaseController {
                 || request.getBatteryGroup() == null) {
             return error("channelName、batteryGroup不能为空");
         }
+        int batteryCount = request.getBatteryCount() == null || request.getBatteryCount() <= 0
+                ? 245 : Math.min(request.getBatteryCount(), 245);
         return success(commandService.connectResistanceTest(
                 request.getChannelName(),
                 request.getBatteryGroup(),
+                batteryCount,
                 request.getTimeoutMs()));
     }
 
@@ -207,6 +210,7 @@ public class BatteryCollectorCommandController extends BaseController {
     public static class ConnectResistanceTestRequest {
         private String channelName;
         private Integer batteryGroup;
+        private Integer batteryCount;
         private Long timeoutMs;
     }
 

@@ -1,6 +1,10 @@
 package com.shanhe.project.collector.battery.service;
 
+import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
+import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
+import com.shanhe.project.collector.battery.model.BatteryDeviceState;
+import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.UNSIGNED_SHORT_MAX;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
@@ -34,14 +38,30 @@ public class BatteryModuleModbusReadMappingService {
     /** 单体鼓包电压起始参考寄存器。 */
     private static final int CELL_SWOLLEN_VOLTAGE_START = 410748;
 
+    /** 设备状态寄存器起始地址。 */
+    private static final int STATUS_START = 411483;
+
+    /** 设备状态寄存器数量。 */
+    private static final int STATUS_COUNT = 6;
+
     /** Modbus RTU单次读保持寄存器的常见上限。 */
     private static final int MAX_READ_QUANTITY = 125;
 
     /** 600节采集模块实时数据Mapper。 */
     private final BatteryModuleRealtimeMapper realtimeMapper;
 
-    public BatteryModuleModbusReadMappingService(BatteryModuleRealtimeMapper realtimeMapper) {
+    /** 设备状态服务，用于读取状态寄存器。 */
+    private final BatteryDeviceStateService batteryDeviceStateService;
+
+    /** 采集配置，用于按 packNum 解析通道名称。 */
+    private final BatteryCollectorProperties properties;
+
+    public BatteryModuleModbusReadMappingService(BatteryModuleRealtimeMapper realtimeMapper,
+                                                  BatteryDeviceStateService batteryDeviceStateService,
+                                                  BatteryCollectorProperties properties) {
         this.realtimeMapper = realtimeMapper;
+        this.batteryDeviceStateService = batteryDeviceStateService;
+        this.properties = properties;
     }
 
     /**
@@ -51,6 +71,8 @@ public class BatteryModuleModbusReadMappingService {
      * @param referenceAddress 文档参考寄存器号
      * @param quantity 读取数量
      * @return 16位无符号寄存器值
+     * @throws IllegalArgumentException 参数无效或地址不支持
+     * @throws IllegalStateException 首次数据未就绪（对应 Modbus 异常码 03）
      */
     public int[] readHoldingRegisters(Integer packNum, int referenceAddress, int quantity) {
         if (packNum == null) {
@@ -61,6 +83,9 @@ public class BatteryModuleModbusReadMappingService {
         }
 
         ModbusReadSnapshot snapshot = loadSnapshot(packNum);
+        if (!snapshot.isDataReady()) {
+            throw new IllegalStateException("电池组 " + packNum + " 实时数据未就绪");
+        }
         int[] values = new int[quantity];
         for (int i = 0; i < quantity; i++) {
             values[i] = resolveRegister(snapshot, referenceAddress + i);
@@ -75,9 +100,25 @@ public class BatteryModuleModbusReadMappingService {
      * @return Modbus读取快照
      */
     private ModbusReadSnapshot loadSnapshot(Integer packNum) {
+        String channelName = resolveChannelName(packNum);
         List<BatteryModuleCellRealtime> cells = realtimeMapper.selectCells(packNum);
         BatteryModuleGroupRealtime group = realtimeMapper.selectGroup(packNum);
-        return new ModbusReadSnapshot(cells, group);
+        return new ModbusReadSnapshot(cells, group, packNum, channelName);
+    }
+
+    /** 按 packNum 解析通道名称。 */
+    private String resolveChannelName(Integer packNum) {
+        if (packNum == null || properties == null || properties.getChannels() == null) {
+            return null;
+        }
+        for (BatteryCollectorChannelConfig channel : properties.getChannels()) {
+            if (channel != null
+                    && Boolean.TRUE.equals(channel.getEnabled())
+                    && packNum.equals(channel.getBatteryGroup())) {
+                return channel.getName();
+            }
+        }
+        return null;
     }
 
     /**
@@ -106,7 +147,7 @@ public class BatteryModuleModbusReadMappingService {
             BatteryModuleCellRealtime cell = snapshot.getCell(cellIndex(address, CELL_SWOLLEN_VOLTAGE_START));
             return scale(cell == null ? null : cell.getSwollenVoltage(), 10d);
         }
-        return resolveGroupRegister(snapshot.getGroup(), address);
+        return resolveGroupRegister(snapshot.getGroup(), address, snapshot);
     }
 
     /**
@@ -116,7 +157,10 @@ public class BatteryModuleModbusReadMappingService {
      * @param address 文档参考寄存器号
      * @return 16位无符号寄存器值
      */
-    private int resolveGroupRegister(BatteryModuleGroupRealtime group, int address) {
+    private int resolveGroupRegister(BatteryModuleGroupRealtime group, int address, ModbusReadSnapshot snapshot) {
+        if (isStatusAddress(address)) {
+            return resolveStatusRegister(address, snapshot);
+        }
         if (!isSupportedGroupAddress(address)) {
             throw new IllegalArgumentException("不支持的Modbus参考地址: " + address);
         }
@@ -188,6 +232,110 @@ public class BatteryModuleModbusReadMappingService {
     }
 
     /**
+     * 解析设备状态寄存器值。
+     *
+     * @param address 文档参考寄存器号
+     * @param snapshot Modbus读取快照（含 packNum）
+     * @return 16位无符号寄存器值
+     */
+    private int resolveStatusRegister(int address, ModbusReadSnapshot snapshot) {
+        Integer packNum = snapshot.getPackNum();
+        if (packNum == null) {
+            return 0;
+        }
+        switch (address) {
+            case 411483: // 通道在线状态：1=在线, 0=离线
+                return readChannelOpenStatus(snapshot.getChannelName());
+            case 411484: // 通道异常状态：1=异常, 0=正常
+                return readChannelErrorStatus(snapshot.getChannelName());
+            case 411485: // 模块活跃状态：1=有模块活跃, 0=全部无响应
+                return readModuleActiveStatus(snapshot.getChannelName());
+            case 411486: // 模块超时状态：1=存在超时, 0=正常
+                return readModuleTimeoutStatus(snapshot.getChannelName());
+            case 411487: // 246 新鲜度：1=新鲜, 0=过期
+                return readGroup246Freshness(packNum);
+            case 411488: // 工作模式：模式码
+                return readWorkMode(packNum);
+            default:
+                return 0;
+        }
+    }
+
+    /** 读取通道在线状态。 */
+    private int readChannelOpenStatus(String channelName) {
+        if (channelName == null || batteryDeviceStateService == null) {
+            return 0;
+        }
+        BatteryDeviceState state = batteryDeviceStateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.CHANNEL, channelName,
+                BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN);
+        return state != null && "open".equals(state.getStateValue()) ? 1 : 0;
+    }
+
+    /** 读取通道异常状态。 */
+    private int readChannelErrorStatus(String channelName) {
+        if (channelName == null || batteryDeviceStateService == null) {
+            return 0;
+        }
+        BatteryDeviceState state = batteryDeviceStateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.CHANNEL, channelName,
+                BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR);
+        return state != null && BatteryDeviceStateConstants.StateLevel.ERROR.equals(state.getStateLevel()) ? 1 : 0;
+    }
+
+    /** 读取模块活跃状态。 */
+    private int readModuleActiveStatus(String channelName) {
+        if (channelName == null || batteryDeviceStateService == null) {
+            return 0;
+        }
+        List<BatteryDeviceState> states = batteryDeviceStateService.selectByChannelAndCode(
+                channelName, BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE);
+        if (states != null) {
+            for (BatteryDeviceState state : states) {
+                if ("active".equals(state.getStateValue())) {
+                    return 1;
+                }
+            }
+        }
+        return 0;
+    }
+
+    /** 读取模块超时状态。 */
+    private int readModuleTimeoutStatus(String channelName) {
+        if (channelName == null || batteryDeviceStateService == null) {
+            return 0;
+        }
+        List<BatteryDeviceState> states = batteryDeviceStateService.selectByChannelAndCode(
+                channelName, BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT);
+        return states != null && !states.isEmpty() ? 1 : 0;
+    }
+
+    /** 读取 246 新鲜度。 */
+    private int readGroup246Freshness(Integer packNum) {
+        if (batteryDeviceStateService == null) {
+            return 0;
+        }
+        BatteryDeviceState state = batteryDeviceStateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.PACK, String.valueOf(packNum),
+                BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS);
+        return state != null && "fresh".equals(state.getStateValue()) ? 1 : 0;
+    }
+
+    /** 读取工作模式。 */
+    private int readWorkMode(Integer packNum) {
+        if (batteryDeviceStateService == null) {
+            return 0;
+        }
+        BatteryDeviceState state = batteryDeviceStateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.PACK, String.valueOf(packNum),
+                BatteryDeviceStateConstants.StateCode.WORK_MODE);
+        if (state != null && state.getMode() != null) {
+            return unsigned16(state.getMode());
+        }
+        return 0;
+    }
+
+    /**
      * 判断是否为已纳入草案的组寄存器地址。
      *
      * @param address 文档参考寄存器号
@@ -196,6 +344,11 @@ public class BatteryModuleModbusReadMappingService {
     private boolean isSupportedGroupAddress(int address) {
         return address >= 411729 && address <= 411752
                 || address >= 411762 && address <= 411766;
+    }
+
+    /** 判断是否为设备状态寄存器地址。 */
+    private boolean isStatusAddress(int address) {
+        return address >= STATUS_START && address < STATUS_START + STATUS_COUNT;
     }
 
     /**
@@ -270,8 +423,11 @@ public class BatteryModuleModbusReadMappingService {
         if (value == null) {
             return 0;
         }
-        if (value < 0 || value > UNSIGNED_SHORT_MAX) {
-            throw new IllegalArgumentException("寄存器值超出范围: " + value);
+        if (value < 0) {
+            return 0;
+        }
+        if (value > UNSIGNED_SHORT_MAX) {
+            return UNSIGNED_SHORT_MAX;
         }
         return value;
     }
@@ -287,7 +443,17 @@ public class BatteryModuleModbusReadMappingService {
         /** 组实时数据。 */
         private final BatteryModuleGroupRealtime group;
 
-        ModbusReadSnapshot(List<BatteryModuleCellRealtime> cells, BatteryModuleGroupRealtime group) {
+        /** 是否有数据（首次采集完成后为 true）。 */
+        private final boolean dataReady;
+
+        /** 电池组编号。 */
+        private final Integer packNum;
+
+        /** 通道名称。 */
+        private final String channelName;
+
+        ModbusReadSnapshot(List<BatteryModuleCellRealtime> cells, BatteryModuleGroupRealtime group,
+                           Integer packNum, String channelName) {
             if (cells != null) {
                 for (BatteryModuleCellRealtime cell : cells) {
                     if (cell != null && cell.getBatNum() != null) {
@@ -296,6 +462,9 @@ public class BatteryModuleModbusReadMappingService {
                 }
             }
             this.group = group;
+            this.dataReady = !cellMap.isEmpty() || group != null;
+            this.packNum = packNum;
+            this.channelName = channelName;
         }
 
         /**
@@ -315,6 +484,23 @@ public class BatteryModuleModbusReadMappingService {
          */
         BatteryModuleGroupRealtime getGroup() {
             return group;
+        }
+
+        /**
+         * 判断数据是否就绪（至少有单体或组数据）。
+         *
+         * @return true 表示数据已就绪
+         */
+        boolean isDataReady() {
+            return dataReady;
+        }
+
+        Integer getPackNum() {
+            return packNum;
+        }
+
+        String getChannelName() {
+            return channelName;
         }
     }
 }

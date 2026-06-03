@@ -96,4 +96,20 @@ public interface BatteryDeviceStateService {
      * 删除全部设备状态。
      */
     void deleteAll();
+
+    /**
+     * 查询电池组当前态摘要（工作模式、在线状态、246 新鲜度）。
+     *
+     * @param packNum 电池组编号
+     * @return 状态列表
+     */
+    List<BatteryDeviceState> getPackStatusSummary(Integer packNum);
+
+    /**
+     * 查询通道当前态摘要（串口状态、异常状态、超时模块列表、活跃模块列表）。
+     *
+     * @param channelName 通道名称
+     * @return 状态列表
+     */
+    List<BatteryDeviceState> getChannelStatusSummary(String channelName);
 }

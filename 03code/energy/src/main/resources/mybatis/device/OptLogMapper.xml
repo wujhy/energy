@@ -118,7 +118,7 @@
     <select id="findRunningList" parameterType="com.shanhe.project.device.opt.domain.OptLog" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
-        from dev_opt_log where result is null order by create_time desc
+        from dev_opt_log where result is null and type != 99 order by create_time desc
     </select>
 
     <!-- 更新电池参数 -->

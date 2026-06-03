@@ -109,6 +109,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     private BatteryDeviceStateService batteryDeviceStateService;
 
     /**
+     * 连接条电阻结果缓存服务。
+     */
+    @Resource
+    private BatteryModuleCellCompatibilityFillService compatibilityFillService;
+
+    /**
      * 状态去重缓存：key = scopeKey + stateCode，value = 上次写入的 stateValue。
      * 避免短时间内重复写入相同状态。
      */
@@ -504,6 +510,8 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         pendingRequest.setAutoAddressBatteryCount(command.getAutoAddressBatteryCount());
         pendingRequest.setAutoAddressBatterySpecification(command.getAutoAddressBatterySpecification());
         pendingRequest.setOptLogId(command.getOptLogId());
+        pendingRequest.setConnectResistanceNextAddress(command.getConnectResistanceNextAddress());
+        pendingRequest.setConnectResistanceMaxAddress(command.getConnectResistanceMaxAddress());
         return pendingRequest;
     }
 
@@ -581,6 +589,21 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         state.setLastPendingTimedOut(false);
         state.setRunState(BatteryCollectorRunState.READ);
         markCompletedModuleCommand(state, command.getProtocolCode().name(), 0, true);
+        // 连接条测试 0F 发送成功后，立即排队首个 11/91 电压读取命令
+        if (command.getProtocolCode() == BatteryDeviceProtocolCode.CONNECT_STRIP_RESISTANCE_TEST
+                && command.getConnectResistanceNextAddress() != null
+                && command.getConnectResistanceMaxAddress() != null) {
+            BatteryPendingRequest pendingFrom0F = BatteryPendingRequest.fromProtocolCode(
+                    command.getProtocolCode(), command.getAddress(),
+                    command.getPayload() == null ? new byte[0] : command.getPayload(), false);
+            pendingFrom0F.setConfigId(command.getConfigId());
+            pendingFrom0F.setBatteryGroup(command.getBatteryGroup());
+            pendingFrom0F.setMode(command.getMode());
+            pendingFrom0F.setOptLogId(command.getOptLogId());
+            pendingFrom0F.setConnectResistanceNextAddress(command.getConnectResistanceNextAddress());
+            pendingFrom0F.setConnectResistanceMaxAddress(command.getConnectResistanceMaxAddress());
+            queueNextConnectResistanceVoltageRead(state, pendingFrom0F);
+        }
         if (shouldStopModeAfterNoResponseCommand(command)) {
             markModeStopped(command, true);
         }
@@ -658,9 +681,16 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         }
         boolean success = isSuccessResponse(frame, pendingRequest);
         markCompletedModuleCommand(state, pendingRequest.getName(), frame.getCommand(), success);
-        updateCommandOptLog(pendingRequest.getOptLogId(), success ? BatteryDeviceStateConstants.CommandStatus.SUCCESS : BatteryDeviceStateConstants.CommandStatus.FAILED, frame.getCommand(), bytesToHex(frame.getPayloadSafe()));
+        // 连接条测试 91 响应不在中间步骤更新日志状态，只在最终完成时更新
+        if (!BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.name().equals(pendingRequest.getName())) {
+            updateCommandOptLog(pendingRequest.getOptLogId(), success ? BatteryDeviceStateConstants.CommandStatus.SUCCESS : BatteryDeviceStateConstants.CommandStatus.FAILED, frame.getCommand(), bytesToHex(frame.getPayloadSafe()));
+        }
         if (BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.name().equals(pendingRequest.getName())) {
             if (!success) {
+                log.warn("自动编号失败, 通道={}, 地址={}, 响应={}",
+                        state.getConfig() == null ? null : state.getConfig().getName(),
+                        String.format("%02X", pendingRequest.getRequestAddress()),
+                        String.format("%02X", frame.getCommand()));
                 markModeStopped(pendingRequest, false);
                 return;
             }
@@ -671,6 +701,18 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             resetModuleAddressCache(state);
             log.info("自动编号成功后蓄电池模块地址缓存已重置, 通道={}",
                     state.getConfig() == null ? null : state.getConfig().getName());
+            return;
+        }
+        if (BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.name().equals(pendingRequest.getName())) {
+            if (success) {
+                storeConnectResistanceResult(pendingRequest, frame);
+            }
+            if (!queueNextConnectResistanceVoltageRead(state, pendingRequest)) {
+                // 所有地址完成，按最后一个响应写最终状态
+                String finalStatus = success ? BatteryDeviceStateConstants.CommandStatus.SUCCESS : BatteryDeviceStateConstants.CommandStatus.FAILED;
+                updateCommandOptLog(pendingRequest.getOptLogId(), finalStatus, frame.getCommand(), bytesToHex(frame.getPayloadSafe()));
+                markModeStopped(pendingRequest, success);
+            }
             return;
         }
         markModeStopped(pendingRequest, success);
@@ -700,6 +742,60 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         }
         // payload[0]==0 表示模块应答成功
         return payload.length > 0 && (payload[0] & 0xFF) == 0;
+    }
+
+    /** 排队下一个连接条电阻测试电压读取命令。返回 true 表示已排队，false 表示测试完成。 */
+    private boolean queueNextConnectResistanceVoltageRead(BatteryCollectorChannelState state,
+                                                           BatteryPendingRequest pendingRequest) {
+        Integer nextAddress = pendingRequest.getConnectResistanceNextAddress();
+        Integer maxAddress = pendingRequest.getConnectResistanceMaxAddress();
+        if (nextAddress == null || maxAddress == null || nextAddress > maxAddress) {
+            return false;
+        }
+        int address = nextAddress;
+        pendingRequest.setConnectResistanceNextAddress(address + 1);
+        BatteryModuleControlCommand command = BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE)
+                .address(address)
+                .requestCode(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.getRequestCode())
+                .responseCode(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.getResponseCode())
+                .payload(new byte[0])
+                .description(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.getDescription())
+                .batteryGroup(pendingRequest.getBatteryGroup())
+                .mode(pendingRequest.getMode())
+                .optLogId(pendingRequest.getOptLogId())
+                .connectResistanceNextAddress(address + 1)
+                .connectResistanceMaxAddress(maxAddress)
+                .build();
+        return state.getQueuedModuleCommands().offer(command);
+    }
+
+    /**
+     * 解析 91 响应帧中的连接条测试电压并存入兼容缓存。
+     * <p>
+     * 注意：当前直接存储测试电压值（V），M460 连接条电阻计算公式待确认后，
+     * 应改为按公式计算实际电阻值再写入。暂以电压作为过程值记录。
+     */
+    private void storeConnectResistanceResult(BatteryPendingRequest pendingRequest, BatteryCollectorFrame frame) {
+        try {
+            byte[] payload = frame.getPayloadSafe();
+            if (payload.length < 2) {
+                return;
+            }
+            // 电压值：大端序两字节，单位 mV
+            int voltageMv = ((payload[0] & 0xFF) << 8) | (payload[1] & 0xFF);
+            double voltage = voltageMv / 1000.0;
+            Integer batteryGroup = pendingRequest.getBatteryGroup();
+            int address = pendingRequest.getRequestAddress();
+            if (batteryGroup != null) {
+                // TODO: M460 电阻公式确认后，应替换为 R = f(voltage, current, reference) 计算
+                compatibilityFillService.putConnectResistance(batteryGroup, address, voltage);
+                log.debug("连接条测试电压已记录（待公式确认后转电阻）, 电池组={}, 地址={}, 电压={}V",
+                        batteryGroup, address, voltage);
+            }
+        } catch (Exception e) {
+            log.warn("解析连接条电阻测试电压失败, 地址={}, 原因={}", pendingRequest.getRequestAddress(), e.getMessage());
+        }
     }
 
     private boolean shouldResetModuleAddressCacheAfterCommand(BatteryPendingRequest pendingRequest) {
@@ -1144,6 +1240,10 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         try {
             batteryDeviceStateService.upsert(ds);
             lastStateValues.put(cacheKey, stateValue);
+            // 防止缓存无限增长：超过阈值时清理非通道级条目
+            if (lastStateValues.size() > 1000) {
+                lastStateValues.keySet().removeIf(k -> k.contains(":"));
+            }
         } catch (Exception e) {
             log.warn("持久化设备状态失败, scopeKey={}, stateCode={}, 原因={}", scopeKey, stateCode, e.getMessage());
         }

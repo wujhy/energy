@@ -76,7 +76,7 @@ class BatteryCollectorCommandServiceTest {
 
     @Test
     void shouldMapConnectResistanceTestToBroadcastModuleCommand() {
-        BatteryCollectorCommandResult result = service.connectResistanceTest("battery-rs485-1", 1, 1000L);
+        BatteryCollectorCommandResult result = service.connectResistanceTest("battery-rs485-1", 1, 24, 1000L);
 
         Assertions.assertTrue(result.isMappedToModuleCommand());
         Assertions.assertFalse(result.isSuccess());
@@ -84,6 +84,8 @@ class BatteryCollectorCommandServiceTest {
                 result.getModuleControlCommand().getProtocolCode());
         Assertions.assertEquals(0, result.getModuleControlCommand().getAddress());
         Assertions.assertNull(result.getModuleControlCommand().getResponseCode());
+        Assertions.assertEquals(1, result.getModuleControlCommand().getConnectResistanceNextAddress());
+        Assertions.assertEquals(24, result.getModuleControlCommand().getConnectResistanceMaxAddress());
     }
 
     @Test

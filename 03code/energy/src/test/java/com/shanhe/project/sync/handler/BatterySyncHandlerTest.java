@@ -46,7 +46,7 @@ class BatterySyncHandlerTest {
         ReflectionTestUtils.setField(handler, "controlBattery", controlBattery);
         ReflectionTestUtils.setField(handler, "batteryCollectorCommandService", commandService);
         Mockito.when(commandService.resolveChannelName(1)).thenReturn("battery-rs485-1");
-        Mockito.when(commandService.connectResistanceTest("battery-rs485-1", 1, null))
+        Mockito.when(commandService.connectResistanceTest("battery-rs485-1", 1, 245, null))
                 .thenReturn(BatteryCollectorCommandResult.builder()
                         .success(true)
                         .mappedToModuleCommand(true)
@@ -57,7 +57,7 @@ class BatterySyncHandlerTest {
         ResponseVo response = handler.syncBatteryOpt(request(YesNoEnum.NO.getDictValue(), BatteryTestEnum._2.getDictValue(), null));
 
         Assertions.assertEquals(0, response.getCode());
-        Mockito.verify(commandService).connectResistanceTest("battery-rs485-1", 1, null);
+        Mockito.verify(commandService).connectResistanceTest("battery-rs485-1", 1, 245, null);
         Mockito.verifyNoInteractions(controlBattery);
     }
 

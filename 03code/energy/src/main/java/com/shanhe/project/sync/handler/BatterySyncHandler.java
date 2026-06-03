@@ -123,9 +123,11 @@ public class BatterySyncHandler {
         BatteryTestEnum testEnum = BatteryTestEnum.find(batteryOpt.getTestType());
         switch (testEnum) {
             case _2:
+                int batteryCount = resolveBatteryCount(batteryOpt.getPackNum());
                 return batteryCollectorCommandService.connectResistanceTest(
                         channelName,
                         batteryOpt.getPackNum(),
+                        batteryCount,
                         null);
             case _6:
                 if (batteryOpt.getModelNum() == null) {
@@ -196,5 +198,18 @@ public class BatterySyncHandler {
             log.error(msg);
         }
         return new ResponseVo(request.getImei(), MethodEnum._47.getDictValue(), request.getBusinessId(), msg);
+    }
+
+    /** 从电池组配置读取单体数量，默认 245。 */
+    private int resolveBatteryCount(Integer packNum) {
+        if (packNum == null) {
+            return 245;
+        }
+        try {
+            Integer count = batteryPackService.getBatteryMaxNumber(packNum);
+            return count != null && count > 0 ? Math.min(count, 245) : 245;
+        } catch (Exception e) {
+            return 245;
+        }
     }
 }

@@ -123,6 +123,18 @@ public class OptBatterySetController extends BaseController {
     }
 
     /**
+     * 单体均衡控制（600 03/83）。
+     */
+    @Log(title = "单体均衡", businessType = BusinessType.UPDATE)
+    @PostMapping("/singleBalance")
+    public AjaxResult singleBalance(@RequestBody BatterySetVO batterySetVO) {
+        return controlBatterySet.singleBatteryBalance(
+                batterySetVO.getPackNum(),
+                batterySetVO.getModelNum(),
+                batterySetVO.getBalancedValue());
+    }
+
+    /**
      * 清除电池组数据
      */
     @Log(title = "清组数据", businessType = BusinessType.UPDATE)

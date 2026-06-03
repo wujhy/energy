@@ -256,6 +256,40 @@ public class ControlBatterySet extends ControlBase {
     }
 
     /**
+     * 单体均衡控制（600 03/83）。
+     *
+     * @param packNum 电池组编号
+     * @param modelNum 单体地址
+     * @param balanceValue 均衡值
+     * @return 操作结果
+     */
+    public AjaxResult singleBatteryBalance(Integer packNum, Integer modelNum, Integer balanceValue) {
+        try {
+            if (packNum == null || packNum <= 0) {
+                return AjaxResult.error("电池组编号无效");
+            }
+            if (modelNum == null || modelNum < 1 || modelNum >= 246) {
+                return AjaxResult.error("单体地址必须在1到245之间");
+            }
+            int effectiveBalance = balanceValue == null ? 0 : balanceValue;
+            if (effectiveBalance < 0 || effectiveBalance > 255) {
+                return AjaxResult.error("均衡值必须在0到255之间");
+            }
+            // 模式互斥检查
+            BatteryModeInfo modeInfo = batteryModeStatusService.get(packNum);
+            if (modeInfo != null && modeInfo.getMode() != 0) {
+                return AjaxResult.error("当前有其他测试运行中，无法执行均衡操作");
+            }
+            String channelName = resolveChannelName(packNum);
+            BatteryCollectorCommandResult result = batteryCollectorCommandService.singleBatteryBalance(
+                    channelName, packNum, modelNum, effectiveBalance, null);
+            return toCommandAjaxResult(result);
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    /**
      * 清除电池组数据
      *
      * @param batterySetVO 设置参数

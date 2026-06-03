@@ -9,6 +9,10 @@ import org.mockito.Mockito;
 
 import java.util.Arrays;
 
+/**
+ * BatteryDeviceStateService 在单测中传 null，状态寄存器测试需要单独 mock。
+ */
+
 class BatteryModuleModbusReadMappingServiceTest {
 
     @Test
@@ -19,7 +23,7 @@ class BatteryModuleModbusReadMappingServiceTest {
                 cell(2, 2.456d, 102, -5.0d, null)
         ));
 
-        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper);
+        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper, null, null);
 
         Assertions.assertArrayEquals(new int[]{2123, 2456}, service.readHoldingRegisters(1, 410004, 2));
         Assertions.assertArrayEquals(new int[]{101, 102}, service.readHoldingRegisters(1, 410252, 2));
@@ -61,7 +65,7 @@ class BatteryModuleModbusReadMappingServiceTest {
         group.setDisChargeCapacity(18.6d);
         Mockito.when(mapper.selectGroup(1)).thenReturn(group);
 
-        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper);
+        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper, null, null);
 
         Assertions.assertArrayEquals(new int[]{1234, 29877, 10123, 751, 0},
                 service.readHoldingRegisters(1, 411729, 5));
@@ -76,12 +80,65 @@ class BatteryModuleModbusReadMappingServiceTest {
     @Test
     void shouldRejectUnsupportedAddressAndInvalidQuantity() {
         BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
-        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper);
+        Mockito.when(mapper.selectCells(1)).thenReturn(Arrays.asList(cell(1, 2.0d, 100, 25.0d, null)));
+        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper, null, null);
 
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> service.readHoldingRegisters(1, 411753, 1));
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> service.readHoldingRegisters(1, 410004, 126));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.readHoldingRegisters(null, 410004, 1));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.readHoldingRegisters(1, 410004, 0));
+    }
+
+    @Test
+    void shouldThrowWhenDataNotReady() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        Mockito.when(mapper.selectCells(1)).thenReturn(null);
+        Mockito.when(mapper.selectGroup(1)).thenReturn(null);
+
+        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper, null, null);
+
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> service.readHoldingRegisters(1, 410004, 1));
+    }
+
+    @Test
+    void shouldReturnZeroForMissingCellsWhenGroupExists() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        Mockito.when(mapper.selectCells(1)).thenReturn(null);
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setExternalVoltage(48.0d);
+        Mockito.when(mapper.selectGroup(1)).thenReturn(group);
+
+        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper, null, null);
+
+        // 单体数据为空时返回 0，组数据正常读取
+        Assertions.assertArrayEquals(new int[]{0}, service.readHoldingRegisters(1, 410004, 1));
+        Assertions.assertArrayEquals(new int[]{480}, service.readHoldingRegisters(1, 411729, 1));
+    }
+
+    @Test
+    void shouldHandleBoundaryCellAddresses() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        Mockito.when(mapper.selectCells(1)).thenReturn(Arrays.asList(
+                cell(1, 2.0d, 100, 25.0d, null),
+                cell(245, 2.5d, 200, 30.0d, 5.0d)
+        ));
+
+        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper, null, null);
+
+        // 单体 1 和 245 的电压
+        Assertions.assertArrayEquals(new int[]{2000}, service.readHoldingRegisters(1, 410004, 1));
+        Assertions.assertArrayEquals(new int[]{2500}, service.readHoldingRegisters(1, 410248, 1));
+        // 单体 1 和 245 的内阻
+        Assertions.assertArrayEquals(new int[]{100}, service.readHoldingRegisters(1, 410252, 1));
+        Assertions.assertArrayEquals(new int[]{200}, service.readHoldingRegisters(1, 410496, 1));
+        // 单体 1 和 245 的温度 (25+50)*10=750, (30+50)*10=800
+        Assertions.assertArrayEquals(new int[]{750}, service.readHoldingRegisters(1, 410500, 1));
+        Assertions.assertArrayEquals(new int[]{800}, service.readHoldingRegisters(1, 410744, 1));
     }
 
     private BatteryModuleCellRealtime cell(int batNum,

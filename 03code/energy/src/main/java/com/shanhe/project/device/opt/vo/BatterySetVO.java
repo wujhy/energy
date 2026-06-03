@@ -73,6 +73,9 @@ public class BatterySetVO {
     @NotNull(message = "手动均衡不能为空", groups = {cmd38.class})
     private Integer manualBalanced;
 
+    /** 均衡值（单体均衡控制用） */
+    private Integer balancedValue;
+
     /** 蜂鸣器状态 0 开 1 关闭 */
     @NotNull(message = "蜂鸣器状态", groups = {cmd39.class})
     private Integer buzzerStatus;

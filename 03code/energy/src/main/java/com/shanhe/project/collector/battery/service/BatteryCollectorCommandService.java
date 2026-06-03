@@ -131,11 +131,31 @@ public class BatteryCollectorCommandService {
      *
      * @param channelName 通道名称
      * @param batteryGroup 电池组编号
+     * @param batteryCount 单体数量（用于确定测试地址范围）
      * @param timeoutMs 超时时间
      * @return 命令结果
      */
-    public BatteryCollectorCommandResult connectResistanceTest(String channelName, int batteryGroup, Long timeoutMs) {
-        return execute(BatteryAggregateCommandDefinition.CONNECT_RESISTANCE_TEST, channelName, timeoutMs, batteryGroup);
+    public BatteryCollectorCommandResult connectResistanceTest(String channelName, int batteryGroup, int batteryCount, Long timeoutMs) {
+        if (channelName == null || channelName.trim().isEmpty()) {
+            return BatteryCollectorCommandResult.builder().success(false).message("通道名称不能为空").build();
+        }
+        if (batteryGroup <= 0) {
+            return BatteryCollectorCommandResult.builder().success(false).message("电池组编号无效").build();
+        }
+        int effectiveCount = (batteryCount > 0 && batteryCount <= 245) ? batteryCount : 245;
+        BatteryModuleControlCommand moduleCommand;
+        try {
+            moduleCommand = moduleControlCommandService.connectStripResistanceTest();
+            moduleCommand.setConnectResistanceNextAddress(1);
+            moduleCommand.setConnectResistanceMaxAddress(effectiveCount);
+        } catch (IllegalArgumentException e) {
+            log.warn("连接条测试命令被拒绝, 通道={}, 电池组={}, 原因={}", channelName, batteryGroup, e.getMessage());
+            return unsupported(BatteryAggregateCommandDefinition.CONNECT_RESISTANCE_TEST, channelName);
+        }
+        return mapped(BatteryAggregateCommandDefinition.CONNECT_RESISTANCE_TEST,
+                channelName,
+                applyContext(moduleCommand, batteryGroup, BatteryModeStatusService.MODE_CONNECT_RESISTANCE),
+                queueModuleCommand(channelName, moduleCommand));
     }
 
     /**
@@ -199,6 +219,34 @@ public class BatteryCollectorCommandService {
         return mapped(BatteryAggregateCommandDefinition.AUTOMATIC_SET_SUBMODULE_ADDRESS,
                 channelName,
                 applyContext(moduleCommand, batteryGroup, BatteryModeStatusService.MODE_AUTO_MODEL_NUM),
+                queueModuleCommand(channelName, moduleCommand));
+    }
+
+    /**
+     * 单体均衡控制。
+     *
+     * @param channelName 通道名称
+     * @param batteryGroup 电池组编号
+     * @param moduleAddress 单体地址
+     * @param balanceValue 均衡值
+     * @param timeoutMs 超时时间
+     * @return 命令结果
+     */
+    public BatteryCollectorCommandResult singleBatteryBalance(String channelName,
+                                                               int batteryGroup,
+                                                               int moduleAddress,
+                                                               int balanceValue,
+                                                               Long timeoutMs) {
+        BatteryModuleControlCommand moduleCommand;
+        try {
+            moduleCommand = moduleControlCommandService.singleBatteryBalance(moduleAddress, balanceValue);
+        } catch (IllegalArgumentException e) {
+            log.warn("均衡命令被拒绝, 通道={}, 电池组={}, 地址={}, 原因={}", channelName, batteryGroup, moduleAddress, e.getMessage());
+            return unsupported(BatteryAggregateCommandDefinition.BATTERY_EQUALIZATION_SET, channelName);
+        }
+        return mapped(BatteryAggregateCommandDefinition.BATTERY_EQUALIZATION_SET,
+                channelName,
+                applyContext(moduleCommand, batteryGroup, BatteryModeStatusService.MODE_BALANCE),
                 queueModuleCommand(channelName, moduleCommand));
     }
 

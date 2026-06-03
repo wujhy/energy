@@ -75,6 +75,16 @@ public class BatteryPendingRequest {
     private Long optLogId;
 
     /**
+     * 连接条测试下一个待测单体地址。
+     */
+    private Integer connectResistanceNextAddress;
+
+    /**
+     * 连接条测试最大单体地址。
+     */
+    private Integer connectResistanceMaxAddress;
+
+    /**
      * 根据 600 节模块端协议码创建待响应请求。
      *
      * @param protocolCode 协议码
