@@ -771,10 +771,11 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     }
 
     /**
-     * 解析 91 响应帧中的连接条测试电压并存入兼容缓存。
+     * 解析 91 响应帧中的连接条测试电压。
      * <p>
-     * 注意：当前直接存储测试电压值（V），M460 连接条电阻计算公式待确认后，
-     * 应改为按公式计算实际电阻值再写入。暂以电压作为过程值记录。
+     * 当前仅记录日志，不写入电阻缓存。M460 连接条电阻计算公式待确认后，
+     * 应按公式计算实际电阻值再写入 compatibilityFillService。
+     * 电压值已通过 updateCommandOptLog 写入 dev_opt_log.response_payload。
      */
     private void storeConnectResistanceResult(BatteryPendingRequest pendingRequest, BatteryCollectorFrame frame) {
         try {
@@ -787,12 +788,9 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             double voltage = voltageMv / 1000.0;
             Integer batteryGroup = pendingRequest.getBatteryGroup();
             int address = pendingRequest.getRequestAddress();
-            if (batteryGroup != null) {
-                // TODO: M460 电阻公式确认后，应替换为 R = f(voltage, current, reference) 计算
-                compatibilityFillService.putConnectResistance(batteryGroup, address, voltage);
-                log.debug("连接条测试电压已记录（待公式确认后转电阻）, 电池组={}, 地址={}, 电压={}V",
-                        batteryGroup, address, voltage);
-            }
+            // TODO: M460 电阻公式确认后，替换为 R = f(voltage, current, reference) 并写入 compatibilityFillService
+            log.info("连接条测试电压记录, 电池组={}, 地址={}, 电压={}V（待公式确认后转电阻）",
+                    batteryGroup, address, voltage);
         } catch (Exception e) {
             log.warn("解析连接条电阻测试电压失败, 地址={}, 原因={}", pendingRequest.getRequestAddress(), e.getMessage());
         }
@@ -1123,9 +1121,28 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                     e.getMessage() == null ? "unknown" : e.getMessage(),
                     BatteryDeviceStateConstants.StateLevel.ERROR, null);
             batteryDeviceStateService.upsert(ds);
+            lastStateValues.put(state.getConfig().getName() + ":" + BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR,
+                    ds.getStateValue());
         } catch (Exception ex) {
             log.warn("持久化通道异常状态失败, 通道={}, 原因={}",
                     state.getConfig().getName(), ex.getMessage());
+        }
+    }
+
+    /** 通道重新打开时清除异常状态（更新为正常）。 */
+    private void clearChannelError(String channelName, BatteryCollectorChannelConfig config) {
+        String cacheKey = channelName + ":" + BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR;
+        if (lastStateValues.containsKey(cacheKey)) {
+            try {
+                BatteryDeviceState ds = buildChannelState(channelName, config,
+                        BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, "cleared",
+                        BatteryDeviceStateConstants.StateLevel.NORMAL, null);
+                batteryDeviceStateService.upsert(ds);
+                lastStateValues.put(cacheKey, "cleared");
+                log.debug("已清除通道异常状态, 通道={}", channelName);
+            } catch (Exception e) {
+                log.warn("清除通道异常状态失败, 通道={}, 原因={}", channelName, e.getMessage());
+            }
         }
     }
 
@@ -1135,6 +1152,10 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         String stateLevel = opened ? BatteryDeviceStateConstants.StateLevel.NORMAL : BatteryDeviceStateConstants.StateLevel.ERROR;
         persistChannelStateThrottled(state.getConfig().getName(), state.getConfig(),
                 STATE_CODE_SERIAL_PORT, stateValue, stateLevel, null);
+        // 通道重新打开时，清除之前的异常状态
+        if (opened) {
+            clearChannelError(state.getConfig().getName(), state.getConfig());
+        }
     }
 
     /** 持久化通道轮询超时计数到 battery_device_state（带去重）。 */
@@ -1166,6 +1187,24 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 pendingRequest.getOptLogId(),
                 address);
         persistIfChanged(scopeKey, BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT, stateValue, ds);
+    }
+
+    /** 模块重新响应时清除超时状态（更新为已恢复）。 */
+    private void clearModuleTimeout(String channelName, BatteryCollectorChannelConfig config, int address) {
+        String scopeKey = channelName + ":" + address;
+        String cacheKey = scopeKey + ":" + BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT;
+        if (lastStateValues.containsKey(cacheKey)) {
+            try {
+                BatteryDeviceState ds = buildModuleState(scopeKey, config,
+                        BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT, "recovered",
+                        BatteryDeviceStateConstants.StateLevel.NORMAL, null, address);
+                batteryDeviceStateService.upsert(ds);
+                lastStateValues.put(cacheKey, "recovered");
+                log.debug("已清除模块超时状态, 通道={}, 地址={}", channelName, address);
+            } catch (Exception e) {
+                log.warn("清除模块超时状态失败, 通道={}, 地址={}, 原因={}", channelName, address, e.getMessage());
+            }
+        }
     }
 
     /** 持久化模块活跃状态到 battery_device_state（带去重）。 */
@@ -1566,6 +1605,8 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             if (!wasActive) {
                 persistModuleActive(state.getConfig().getName(), state.getConfig(), address, true);
             }
+            // 模块重新响应，清除超时状态
+            clearModuleTimeout(state.getConfig().getName(), state.getConfig(), address);
             if (isGroupModuleAddress(address)) {
                 persistGroup246Freshness(state.getConfig(), true);
             }
