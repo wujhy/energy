@@ -60,4 +60,15 @@
             #{connectTestVoltage}
         )
     </insert>
+
+    <!-- 删除指定天数之前的原始帧日志 -->
+    <delete id="deleteByDays">
+        delete from battery_module_frame_log
+        where create_time &lt; strftime('%Y-%m-%d %H:%M:%S', datetime(CURRENT_TIMESTAMP, 'localtime'), '-' || #{days} || ' days')
+    </delete>
+
+    <!-- 统计原始帧日志总数 -->
+    <select id="count" resultType="long">
+        select count(1) from battery_module_frame_log
+    </select>
 </mapper>

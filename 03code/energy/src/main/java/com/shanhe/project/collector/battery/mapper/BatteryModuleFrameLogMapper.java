@@ -18,4 +18,19 @@ public interface BatteryModuleFrameLogMapper {
      * @param log 原始帧日志
      */
     void insertOne(BatteryModuleFrameLog log);
+
+    /**
+     * 删除指定天数之前的原始帧日志。
+     *
+     * @param days 保留天数
+     * @return 删除数量
+     */
+    int deleteByDays(int days);
+
+    /**
+     * 统计原始帧日志总数。
+     *
+     * @return 日志总数
+     */
+    long count();
 }

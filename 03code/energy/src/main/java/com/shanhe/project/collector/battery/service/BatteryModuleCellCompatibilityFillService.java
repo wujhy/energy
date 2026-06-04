@@ -90,6 +90,20 @@ public class BatteryModuleCellCompatibilityFillService {
         }
     }
 
+    /**
+     * 清除指定电池组的连接条电阻缓存。
+     *
+     * @param packNum 电池组编号；为空时清除全部
+     */
+    public void clearConnectResistanceCache(Integer packNum) {
+        if (packNum == null) {
+            connectResistanceCache.clear();
+            return;
+        }
+        String prefix = packNum + ":";
+        connectResistanceCache.keySet().removeIf(k -> k.startsWith(prefix));
+    }
+
     private String buildCellKey(Integer batteryGroup, Integer batNum) {
         return batteryGroup + ":" + batNum;
     }

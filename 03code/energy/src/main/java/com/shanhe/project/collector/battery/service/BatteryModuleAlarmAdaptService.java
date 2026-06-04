@@ -10,7 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 600节模块端实时数据告警适配服务。
@@ -62,6 +64,79 @@ public class BatteryModuleAlarmAdaptService {
             log.warn("构建通信告警上下文失败, 电池组={}, 原因={}", packNum, e.getMessage());
         }
         return context;
+    }
+
+    /**
+     * 从标准实时模型构建阈值告警参数。
+     * <p>
+     * 返回 itemCode → 当前值 的映射，供 AlarmLogServiceImpl.alarmBatteryValue 使用。
+     * 缺失的实时值不会生成告警参数。
+     *
+     * @param packNum 电池组编号
+     * @param cells 单体实时数据
+     * @param group 组实时数据
+     * @return 告警参数映射
+     */
+    public Map<String, String> buildThresholdAlarmParam(Integer packNum,
+                                                         List<BatteryModuleCellRealtime> cells,
+                                                         BatteryModuleGroupRealtime group) {
+        Map<String, String> warnParam = new HashMap<>();
+        if (cells != null) {
+            for (BatteryModuleCellRealtime cell : cells) {
+                if (cell == null || cell.getBatNum() == null) {
+                    continue;
+                }
+                appendCellThreshold(warnParam, cell);
+            }
+        }
+        if (group != null) {
+            appendGroupThreshold(warnParam, group);
+        }
+        return warnParam;
+    }
+
+    /** 追加单体阈值告警参数。 */
+    private void appendCellThreshold(Map<String, String> warnParam, BatteryModuleCellRealtime cell) {
+        int batNum = cell.getBatNum();
+        // 单体电压
+        if (cell.getVoltage() != null) {
+            warnParam.put(ItemCode.DTDYGC.getCode(), String.valueOf(cell.getVoltage()));
+        }
+        // 单体内阻
+        if (cell.getResistance() != null) {
+            warnParam.put(ItemCode.DTNZGD.getCode(), String.valueOf(cell.getResistance()));
+        }
+        // 单体温度
+        if (cell.getTemperature() != null) {
+            warnParam.put(ItemCode.DTDCWDG.getCode(), String.valueOf(cell.getTemperature()));
+        }
+        // 单体鼓包
+        if (cell.getSwollenVoltage() != null) {
+            warnParam.put(ItemCode.DTGB.getCode(), String.valueOf(cell.getSwollenVoltage()));
+        }
+    }
+
+    /** 追加组阈值告警参数。 */
+    private void appendGroupThreshold(Map<String, String> warnParam, BatteryModuleGroupRealtime group) {
+        // 组电压
+        Double groupVoltage = first(group.getBatteryPackOuterVoltage(), group.getExternalVoltage());
+        if (groupVoltage != null) {
+            warnParam.put(ItemCode.ZDYGC.getCode(), String.valueOf(groupVoltage));
+        }
+        // 充放电电流
+        Double current = first(group.getPackCurrent(), group.getChargeDischargeCurrent());
+        if (current != null) {
+            warnParam.put(ItemCode.ZCGDLGJ.getCode(), String.valueOf(current));
+        }
+        // 环境温度
+        if (group.getEnvironmentTemperature1() != null) {
+            warnParam.put(ItemCode.ZWDG.getCode(), String.valueOf(group.getEnvironmentTemperature1()));
+        }
+    }
+
+    /** 返回首个非空值。 */
+    private Double first(Double a, Double b) {
+        return a != null ? a : b;
     }
 
     /** 追加电池组通信状态告警。 */

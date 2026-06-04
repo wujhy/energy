@@ -38,6 +38,8 @@ public class CleanLogJob {
     private IOperLogService operLogService;
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
+    @Resource
+    private com.shanhe.project.collector.battery.mapper.BatteryModuleFrameLogMapper frameLogMapper;
 
     @Scheduled(cron = "${job.cleanLog}")
     public void logCleanJob() {
@@ -66,6 +68,13 @@ public class CleanLogJob {
                 batteryDeviceStateService.deleteExpired();
             } catch (Exception e) {
                 log.error("删除过期设备状态异常：{}", e.getMessage());
+            }
+
+            try {
+                int frameLogDeleted = frameLogMapper.deleteByDays(7);
+                log.info("删除7天前原始帧日志：{}条", frameLogDeleted);
+            } catch (Exception e) {
+                log.error("删除原始帧日志异常：{}", e.getMessage());
             }
 
             try {

@@ -66,6 +66,8 @@ public class RestoreServiceImpl implements RestoreService {
     private BatteryModuleRealtimeMapper batteryModuleRealtimeMapper;
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
+    @Resource
+    private com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService compatibilityFillService;
 
     /**
      * 恢复出厂设置
@@ -113,6 +115,8 @@ public class RestoreServiceImpl implements RestoreService {
 
         // 删除设备状态
         batteryDeviceStateService.deleteAll();
+        // 清除采集缓存
+        compatibilityFillService.clearConnectResistanceCache(null);
 
         // 系统操作记录
         operLogService.cleanOperLog();
@@ -182,6 +186,8 @@ public class RestoreServiceImpl implements RestoreService {
 
         // 删除设备状态
         batteryDeviceStateService.deleteByPackNum(batterySetVO.getPackNum());
+        // 清除采集缓存
+        compatibilityFillService.clearConnectResistanceCache(batterySetVO.getPackNum());
 
     }
 

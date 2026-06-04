@@ -39,6 +39,8 @@ class RestoreServiceImplTest {
         IStatBatteryResService statBatteryResService = Mockito.mock(IStatBatteryResService.class, Mockito.CALLS_REAL_METHODS);
         PreBatteryGroupService preBatteryGroupService = Mockito.mock(PreBatteryGroupService.class, Mockito.CALLS_REAL_METHODS);
         BatteryDeviceStateService batteryDeviceStateService = Mockito.mock(BatteryDeviceStateService.class);
+        com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService compatibilityFillService =
+                Mockito.mock(com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService.class);
 
         Config config = new Config();
         config.setConfigId(Constants.DEFAULT_CONFIG_ID);
@@ -60,6 +62,7 @@ class RestoreServiceImplTest {
         ReflectionTestUtils.setField(service, "statBatteryResService", statBatteryResService);
         ReflectionTestUtils.setField(service, "preBatteryGroupService", preBatteryGroupService);
         ReflectionTestUtils.setField(service, "batteryDeviceStateService", batteryDeviceStateService);
+        ReflectionTestUtils.setField(service, "compatibilityFillService", compatibilityFillService);
 
         BatterySetVO request = new BatterySetVO();
         request.setConfigId(99L);

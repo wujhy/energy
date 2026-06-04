@@ -262,3 +262,12 @@ battery-collector:
         batteryPort: 6
         batteryChannel: 1
         batteryGroup: 6
+  modbus-rtu:
+    enabled: false
+    # portName: COM6
+    stationAddress: 1
+    baudRate: 115200
+    dataBits: 8
+    stopBits: 1
+    parity: 0
+    readTimeoutMs: 1000
