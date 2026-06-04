@@ -91,6 +91,16 @@ public class BatteryCollectorProperties {
     private List<String> debugChannels = new ArrayList<>();
 
     /**
+     * 原始帧日志保留天数；0 或负数表示不清理。
+     */
+    private Integer rawFrameLogRetentionDays = 7;
+
+    /**
+     * 原始帧日志查询最大返回条数。
+     */
+    private Integer rawFrameLogQueryLimit = 500;
+
+    /**
      * 指定本轮实际运行的通道名称；为空时按 enabled 规则运行。
      */
     private List<String> activeChannels = new ArrayList<>();

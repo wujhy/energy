@@ -32,12 +32,20 @@ import java.util.List;
 @RequestMapping("/collector/battery")
 public class BatteryCollectorCommandController extends BaseController {
 
+    private static final int DEFAULT_FRAME_LOG_QUERY_LIMIT = 500;
+    private static final int MAX_FRAME_LOG_QUERY_LIMIT = 2000;
+
+
     @Resource
     private BatteryCollectorCommandService commandService;
     @Resource
     private BatteryCollectorService collectorService;
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
+    @Resource
+    private com.shanhe.project.collector.battery.mapper.BatteryModuleFrameLogMapper frameLogMapper;
+    @Resource
+    private com.shanhe.project.collector.battery.config.BatteryCollectorProperties batteryCollectorProperties;
 
     /**
      * 查询采集通道运行状态快照。
@@ -144,6 +152,23 @@ public class BatteryCollectorCommandController extends BaseController {
     @GetMapping("/deviceState")
     public AjaxResult deviceState(Integer packNum) {
         return success(batteryDeviceStateService.selectByPackNum(packNum));
+    }
+
+    /**
+     * 查询原始帧日志。
+     */
+    @GetMapping("/frameLog")
+    public AjaxResult frameLog(String channelName, Integer batteryGroup, String commandCode) {
+        int limit = resolveFrameLogQueryLimit();
+        return success(frameLogMapper.selectList(channelName, batteryGroup, commandCode, limit));
+    }
+
+    private int resolveFrameLogQueryLimit() {
+        Integer configuredLimit = batteryCollectorProperties.getRawFrameLogQueryLimit();
+        if (configuredLimit == null || configuredLimit <= 0) {
+            return DEFAULT_FRAME_LOG_QUERY_LIMIT;
+        }
+        return Math.min(configuredLimit, MAX_FRAME_LOG_QUERY_LIMIT);
     }
 
     /**

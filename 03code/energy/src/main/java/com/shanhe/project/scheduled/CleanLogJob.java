@@ -40,6 +40,8 @@ public class CleanLogJob {
     private BatteryDeviceStateService batteryDeviceStateService;
     @Resource
     private com.shanhe.project.collector.battery.mapper.BatteryModuleFrameLogMapper frameLogMapper;
+    @Resource
+    private com.shanhe.project.collector.battery.config.BatteryCollectorProperties batteryCollectorProperties;
 
     @Scheduled(cron = "${job.cleanLog}")
     public void logCleanJob() {
@@ -71,8 +73,13 @@ public class CleanLogJob {
             }
 
             try {
-                int frameLogDeleted = frameLogMapper.deleteByDays(7);
-                log.info("删除7天前原始帧日志：{}条", frameLogDeleted);
+                int retentionDays = batteryCollectorProperties.getRawFrameLogRetentionDays();
+                if (retentionDays > 0) {
+                    int frameLogDeleted = frameLogMapper.deleteByDays(retentionDays);
+                    log.info("删除{}天前原始帧日志：{}条", retentionDays, frameLogDeleted);
+                } else {
+                    log.info("原始帧日志保留天数配置为{}，跳过清理", retentionDays);
+                }
             } catch (Exception e) {
                 log.error("删除原始帧日志异常：{}", e.getMessage());
             }

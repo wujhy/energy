@@ -71,4 +71,27 @@
     <select id="count" resultType="long">
         select count(1) from battery_module_frame_log
     </select>
+
+    <!-- 条件查询原始帧日志 -->
+    <select id="selectList" resultType="com.shanhe.project.collector.battery.model.BatteryModuleFrameLog">
+        select
+        <include refid="Base_Column_List"/>
+        from battery_module_frame_log
+        <where>
+            <if test="channelName != null and channelName != ''">and channel_name = #{channelName}</if>
+            <if test="batteryGroup != null">and battery_group = #{batteryGroup}</if>
+            <if test="commandCode != null and commandCode != ''">and command_code = #{commandCode}</if>
+        </where>
+        order by create_time desc
+        <if test="limit > 0">limit #{limit}</if>
+    </select>
+
+    <sql id="Base_Column_List">
+        id, create_time, channel_name, port_name, battery_group, module_address,
+        command_code, known, success, response_flag, payload_length, payload_hex,
+        frame_hex, parsed_type, cell_voltage, internal_resistance, cell_temperature,
+        leakage_status, swollen_voltage, charge_discharge_current, float_current,
+        external_voltage, environment_temperature1, environment_temperature2,
+        connect_battery_voltage, connect_test_voltage
+    </sql>
 </mapper>
