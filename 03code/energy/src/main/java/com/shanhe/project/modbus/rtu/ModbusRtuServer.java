@@ -3,6 +3,7 @@ package com.shanhe.project.modbus.rtu;
 import com.fazecast.jSerialComm.SerialPort;
 import com.shanhe.project.collector.battery.service.BatteryModuleModbusReadMappingService;
 import com.shanhe.project.modbus.config.ModbusRtuProperties;
+import com.shanhe.project.modbus.service.ModbusWriteMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -27,6 +28,8 @@ public class ModbusRtuServer implements ApplicationRunner {
 
     /** Modbus 功能码：读保持寄存器。 */
     private static final int FUNC_READ_HOLDING_REGISTERS = 0x03;
+    /** Modbus 功能码：写单个寄存器。 */
+    private static final int FUNC_WRITE_SINGLE_REGISTER = 0x06;
 
     /** Modbus 异常码：非法功能码。 */
     private static final int EXCEPTION_ILLEGAL_FUNCTION = 0x01;
@@ -42,6 +45,9 @@ public class ModbusRtuServer implements ApplicationRunner {
 
     @Resource
     private BatteryModuleModbusReadMappingService readMappingService;
+
+    @Resource
+    private ModbusWriteMappingService writeMappingService;
 
     private volatile boolean running;
     private Thread serverThread;
@@ -116,30 +122,36 @@ public class ModbusRtuServer implements ApplicationRunner {
             return; // 非本站请求
         }
         int functionCode = buffer[1] & 0xFF;
-        if (functionCode != FUNC_READ_HOLDING_REGISTERS) {
-            sendException(stationAddress, functionCode, EXCEPTION_ILLEGAL_FUNCTION);
-            return;
+        Integer packNum = resolvePackNumFromStation(stationAddress);
+
+        switch (functionCode) {
+            case FUNC_READ_HOLDING_REGISTERS:
+                processReadHoldingRegisters(stationAddress, functionCode, packNum, buffer, length);
+                break;
+            case FUNC_WRITE_SINGLE_REGISTER:
+                processWriteSingleRegister(stationAddress, functionCode, packNum, buffer, length);
+                break;
+            default:
+                sendException(stationAddress, functionCode, EXCEPTION_ILLEGAL_FUNCTION);
+                break;
         }
+    }
+
+    private void processReadHoldingRegisters(int stationAddress, int functionCode,
+                                              Integer packNum, byte[] buffer, int length) {
         if (length < 8) {
-            return; // 读保持寄存器请求：站号 + 功能码 + 起始地址(2) + 数量(2) + CRC(2)
+            return;
         }
         int startAddress = ((buffer[2] & 0xFF) << 8) | (buffer[3] & 0xFF);
         int quantity = ((buffer[4] & 0xFF) << 8) | (buffer[5] & 0xFF);
-
-        // Modbus 寄存器地址转文档参考号：寄存器地址 + 1 = 文档参考号
         int referenceAddress = startAddress + 1;
-
-        // 从站号解析 packNum：低 4 位为电池组号
-        Integer packNum = resolvePackNumFromStation(stationAddress);
 
         try {
             int[] values = readMappingService.readHoldingRegisters(packNum, referenceAddress, quantity);
             sendReadResponse(stationAddress, values);
         } catch (IllegalStateException e) {
-            // 数据未就绪
             sendException(stationAddress, functionCode, EXCEPTION_SLAVE_DEVICE_FAILURE);
         } catch (IllegalArgumentException e) {
-            // 非法地址或数量
             String msg = e.getMessage();
             if (msg != null && msg.contains("不支持")) {
                 sendException(stationAddress, functionCode, EXCEPTION_ILLEGAL_DATA_ADDRESS);
@@ -150,6 +162,50 @@ public class ModbusRtuServer implements ApplicationRunner {
             log.warn("Modbus RTU 读取异常: {}", e.getMessage());
             sendException(stationAddress, functionCode, EXCEPTION_SLAVE_DEVICE_FAILURE);
         }
+    }
+
+    private void processWriteSingleRegister(int stationAddress, int functionCode,
+                                             Integer packNum, byte[] buffer, int length) {
+        if (length < 8) {
+            return;
+        }
+        int registerAddress = ((buffer[2] & 0xFF) << 8) | (buffer[3] & 0xFF);
+        int value = ((buffer[4] & 0xFF) << 8) | (buffer[5] & 0xFF);
+        int referenceAddress = registerAddress + 1;
+
+        try {
+            boolean success = writeMappingService.writeSingleRegister(packNum, referenceAddress, value);
+            if (success) {
+                // 写成功：回显请求帧
+                sendWriteResponse(stationAddress, functionCode, registerAddress, value);
+            } else {
+                sendException(stationAddress, functionCode, EXCEPTION_SLAVE_DEVICE_FAILURE);
+            }
+        } catch (IllegalArgumentException e) {
+            String msg = e.getMessage();
+            if (msg != null && (msg.contains("超出范围") || msg.contains("无效"))) {
+                sendException(stationAddress, functionCode, EXCEPTION_ILLEGAL_DATA_VALUE);
+            } else {
+                sendException(stationAddress, functionCode, EXCEPTION_ILLEGAL_DATA_ADDRESS);
+            }
+        } catch (Exception e) {
+            log.warn("Modbus RTU 写入异常: {}", e.getMessage());
+            sendException(stationAddress, functionCode, EXCEPTION_SLAVE_DEVICE_FAILURE);
+        }
+    }
+
+    private void sendWriteResponse(int stationAddress, int functionCode, int registerAddress, int value) {
+        byte[] response = new byte[8]; // 站号 + 功能码 + 寄存器地址(2) + 值(2) + CRC(2)
+        response[0] = (byte) stationAddress;
+        response[1] = (byte) functionCode;
+        response[2] = (byte) ((registerAddress >> 8) & 0xFF);
+        response[3] = (byte) (registerAddress & 0xFF);
+        response[4] = (byte) ((value >> 8) & 0xFF);
+        response[5] = (byte) (value & 0xFF);
+        int crc = calculateCrc(response, 6);
+        response[6] = (byte) (crc & 0xFF);
+        response[7] = (byte) ((crc >> 8) & 0xFF);
+        writeResponse(response);
     }
 
     /** 从站号解析电池组号：低 4 位为电池组号。 */
