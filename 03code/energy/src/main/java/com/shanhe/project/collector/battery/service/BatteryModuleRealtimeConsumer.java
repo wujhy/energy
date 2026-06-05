@@ -6,7 +6,6 @@ import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryCollectorFrame;
-import com.shanhe.project.collector.battery.model.BatteryModuleAlarmContext;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleDataType;
 import com.shanhe.project.collector.battery.model.BatteryModuleFrameData;
@@ -82,18 +81,6 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
      */
     @Resource
     private BatteryModuleCellCompatibilityFillService compatibilityFillService;
-
-    /**
-     * 旧历史记录兼容同步服务。
-     */
-    @Resource
-    private BatteryModuleCompatReportLogSyncService compatReportLogSyncService;
-
-    /**
-     * 告警适配服务。
-     */
-    @Resource
-    private BatteryModuleAlarmAdaptService alarmAdaptService;
 
     @Override
     public void consume(BatteryCollectorChannelConfig channelConfig,
@@ -194,9 +181,6 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
     void runPostProcess(BatteryCollectorChannelConfig channelConfig,
                         BatteryModulePollContext context,
                         BatteryModuleGroupRealtime calculation) {
-        adaptAlarmContext(channelConfig, context, calculation);
-        syncCompatReportLogIfEnabled(channelConfig, context, calculation);
-        // 后处理流水线：在线状态、统计、操作日志等
         executePostProcessPipeline(channelConfig, context, calculation);
     }
 
@@ -208,17 +192,26 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
             return;
         }
         try {
-            BatteryRealtimePostProcessContext postContext = BatteryRealtimePostProcessContext.builder()
-                    .packNum(channelConfig == null ? null : channelConfig.getBatteryGroup())
-                    .source("collector")
-                    .pollBatchNo(context.getPollBatchNo())
-                    .cells(context.getCells())
-                    .group(calculation)
-                    .build();
+            BatteryRealtimePostProcessContext postContext =
+                    buildPostProcessContext(channelConfig, context, calculation);
             postProcessService.execute(postContext);
+            context.setAlarmContext(postContext.getAlarmContext());
         } catch (Exception e) {
             log.warn("后处理流水线执行失败, 通道={}", channelConfig == null ? null : channelConfig.getName(), e);
         }
+    }
+
+    private BatteryRealtimePostProcessContext buildPostProcessContext(BatteryCollectorChannelConfig channelConfig,
+                                                                      BatteryModulePollContext context,
+                                                                      BatteryModuleGroupRealtime calculation) {
+        return BatteryRealtimePostProcessContext.builder()
+                .packNum(channelConfig == null ? null : channelConfig.getBatteryGroup())
+                .source("collector")
+                .pollBatchNo(context.getPollBatchNo())
+                .cells(context.getCells())
+                .group(calculation)
+                .channelConfig(channelConfig)
+                .build();
     }
 
     void refreshBatteryOnlineCache(BatteryCollectorChannelConfig channelConfig) {
@@ -259,42 +252,6 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
                     e);
         }
         return null;
-    }
-
-    void adaptAlarmContext(BatteryCollectorChannelConfig channelConfig,
-                           BatteryModulePollContext context,
-                           BatteryModuleGroupRealtime calculation) {
-        if (alarmAdaptService == null || context == null) {
-            return;
-        }
-        try {
-            BatteryModuleAlarmContext alarmContext = alarmAdaptService.buildContext(calculation, context.getCells());
-            context.setAlarmContext(alarmContext);
-        } catch (Exception e) {
-            log.warn("适配蓄电池模块告警上下文失败, 通道={}, 电池组={}",
-                    channelConfig == null ? null : channelConfig.getName(),
-                    channelConfig == null ? null : channelConfig.getBatteryGroup(),
-                    e);
-        }
-    }
-
-    void syncCompatReportLogIfEnabled(BatteryCollectorChannelConfig channelConfig,
-                                      BatteryModulePollContext context,
-                                      BatteryModuleGroupRealtime calculation) {
-        if (!Boolean.TRUE.equals(properties.getCompatReportLogEnabled())
-                || compatReportLogSyncService == null
-                || context == null
-                || calculation == null) {
-            return;
-        }
-        try {
-            compatReportLogSyncService.sync(channelConfig, calculation, context.getCells());
-        } catch (Exception e) {
-            log.warn("同步蓄电池模块兼容报告日志失败, 通道={}, 电池组={}",
-                    channelConfig == null ? null : channelConfig.getName(),
-                    channelConfig == null ? null : channelConfig.getBatteryGroup(),
-                    e);
-        }
     }
 
     long resolveCalculationStaleThresholdMs() {

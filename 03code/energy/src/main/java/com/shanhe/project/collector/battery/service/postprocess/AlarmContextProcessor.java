@@ -34,14 +34,23 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
 
     @Override
     public boolean shouldProcess(BatteryRealtimePostProcessContext context) {
-        return context.getPackNum() != null
+        return alarmAdaptService != null
+                && context.getPackNum() != null
                 && context.getCells() != null
                 && !context.getCells().isEmpty();
     }
 
     @Override
     public void process(BatteryRealtimePostProcessContext context) {
-        // 告警上下文已由 adaptAlarmContext 在 runPostProcess 中构建，
-        // 此处理器预留为后续扩展点（如阈值告警引擎），当前不重复构建。
+        try {
+            BatteryModuleAlarmContext alarmContext =
+                    alarmAdaptService.buildContext(context.getGroup(), context.getCells());
+            context.setAlarmContext(alarmContext);
+        } catch (Exception e) {
+            log.warn("适配蓄电池模块告警上下文失败, 通道={}, 电池组={}",
+                    context.getChannelConfig() == null ? null : context.getChannelConfig().getName(),
+                    context.getPackNum(),
+                    e);
+        }
     }
 }
