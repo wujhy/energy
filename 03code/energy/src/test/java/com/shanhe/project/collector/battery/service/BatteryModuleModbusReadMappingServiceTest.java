@@ -59,6 +59,7 @@ class BatteryModuleModbusReadMappingServiceTest {
         group.setBatteryPackSoc(80.5d);
         group.setBatteryPackSoh(99.4d);
         group.setBatteryPackStatus(5);
+        group.setResistanceTestStatus(2);
         group.setBackupDuration(120);
         group.setCapacity(100.5d);
         group.setDisChargeDuration(60);
@@ -73,7 +74,7 @@ class BatteryModuleModbusReadMappingServiceTest {
                 service.readHoldingRegisters(1, 411734, 7));
         Assertions.assertArrayEquals(new int[]{3, 120, 1, 90, 106, 4, 802, 1, 700, 756, 805, 994},
                 service.readHoldingRegisters(1, 411741, 12));
-        Assertions.assertArrayEquals(new int[]{5, 120, 1005, 60, 186},
+        Assertions.assertArrayEquals(new int[]{0x0502, 120, 1005, 60, 186},
                 service.readHoldingRegisters(1, 411762, 5));
     }
 

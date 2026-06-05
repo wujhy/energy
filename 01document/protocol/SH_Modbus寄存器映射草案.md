@@ -68,7 +68,7 @@
 | `411750` | 平均电池温度值 | `battery_avg_temperature` / `avg_cell_temperature` | ℃，1 位小数 |
 | `411751` | 组 SOC | `battery_pack_soc` | 由轮询外定时/异步服务维护缓存；算法未完整迁移时字段可为空 |
 | `411752` | 组 SOH | `battery_pack_soh` | 由轮询外定时/异步服务维护缓存；算法未完整迁移时字段可为空 |
-| `411762` | 电池组状态寄存器 | `battery_pack_status` / 标准状态模型 | 状态位语义待确认 |
+| `411762` | 电池组状态寄存器 | `(battery_pack_status << 8) \| resistance_test_status` | 对齐 M460 `Battery_State_Register`：高字节低4位为电池组状态，低字节为内阻测试状态；缺失按 0 输出 |
 | `411763` | 电池组备电时长 | `backup_duration` | 分钟；来自轮询外后处理缓存或兼容/预测结果 |
 | `411764` | 电池组核容值 | `bcapacity` / `capacity` | AH，1 位小数；来自轮询外后处理缓存或兼容/预测结果 |
 | `411765` | 电池组放电时长 | `dis_charge_duration` | 分钟；来自轮询外后处理缓存或兼容/预测结果 |

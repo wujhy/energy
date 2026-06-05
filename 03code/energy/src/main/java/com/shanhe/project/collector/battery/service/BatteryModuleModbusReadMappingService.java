@@ -217,7 +217,7 @@ public class BatteryModuleModbusReadMappingService {
             case 411752:
                 return scale(group.getBatteryPackSoh(), 10d);
             case 411762:
-                return unsigned16(group.getBatteryPackStatus());
+                return batteryStateRegister(group);
             case 411763:
                 return unsigned16(group.getBackupDuration());
             case 411764:
@@ -229,6 +229,15 @@ public class BatteryModuleModbusReadMappingService {
             default:
                 throw new IllegalArgumentException("不支持的Modbus参考地址: " + address);
         }
+    }
+
+    /**
+     * M460 Battery_State_Register：高字节低4位为电池组状态，低字节为内阻测试状态。
+     */
+    private int batteryStateRegister(BatteryModuleGroupRealtime group) {
+        int batteryStatus = group.getBatteryPackStatus() == null ? 0 : group.getBatteryPackStatus() & 0xFF;
+        int resistanceTestStatus = group.getResistanceTestStatus() == null ? 0 : group.getResistanceTestStatus() & 0xFF;
+        return ((batteryStatus & 0xFF) << 8) | resistanceTestStatus;
     }
 
     /**
