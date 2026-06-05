@@ -83,6 +83,7 @@ public class RealtimeToReportLogAdapter {
         putIfNotNull(packParam, "batteryPackSoh", group.getBatteryPackSoh());
         putIfNotNull(packParam, "residualDischargeDuration", group.getResidualDischargeDuration());
         putIfNotNull(packParam, "batteryPackStatus", group.getBatteryPackStatus());
+        putIfNotNull(packParam, "resistanceTestStatus", group.getResistanceTestStatus());
         return packParam;
     }
 
