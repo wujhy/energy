@@ -773,27 +773,36 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     /**
      * 解析 91 响应帧中的连接条测试电压。
      * <p>
-     * 当前仅记录日志，不写入电阻缓存。M460 连接条电阻计算公式待确认后，
-     * 应按公式计算实际电阻值再写入 compatibilityFillService。
-     * 电压值已通过 updateCommandOptLog 写入 dev_opt_log.response_payload。
+     * 91 响应 8 字节：BatteryVoltage(4B) + TestVoltage(4B)，大端序。
+     * 原始值单位：0.1mV（与 BatteryModuleFrameDataParserService 的 ÷10000 换算一致）。
+     * 连接条电阻公式、单位和电流来源仍需按 M460 源码/现场确认后再写入 resistanceRageSlip。
      */
     private void storeConnectResistanceResult(BatteryPendingRequest pendingRequest, BatteryCollectorFrame frame) {
         try {
             byte[] payload = frame.getPayloadSafe();
-            if (payload.length < 2) {
+            if (payload.length < 8) {
+                log.debug("连接条测试响应载荷不足8字节, 地址={}, 长度={}",
+                        pendingRequest.getRequestAddress(), payload.length);
                 return;
             }
-            // 电压值：大端序两字节，单位 mV
-            int voltageMv = ((payload[0] & 0xFF) << 8) | (payload[1] & 0xFF);
-            double voltage = voltageMv / 1000.0;
+            // 91 响应：BatteryVoltage(4B) + TestVoltage(4B)，大端序，原始值单位 0.1mV
+            long batteryVoltageRaw = u32(payload, 0);
+            long testVoltageRaw = u32(payload, 4);
             Integer batteryGroup = pendingRequest.getBatteryGroup();
             int address = pendingRequest.getRequestAddress();
-            // TODO: M460 电阻公式确认后，替换为 R = f(voltage, current, reference) 并写入 compatibilityFillService
-            log.info("连接条测试电压记录, 电池组={}, 地址={}, 电压={}V（待公式确认后转电阻）",
-                    batteryGroup, address, voltage);
+            log.info("连接条测试电压记录, 电池组={}, 地址={}, 电池电压raw={}, 测试电压raw={}（待公式确认后转电阻）",
+                    batteryGroup, address, batteryVoltageRaw, testVoltageRaw);
         } catch (Exception e) {
-            log.warn("解析连接条电阻测试电压失败, 地址={}, 原因={}", pendingRequest.getRequestAddress(), e.getMessage());
+            log.warn("解析连接条电阻测试失败, 地址={}, 原因={}", pendingRequest.getRequestAddress(), e.getMessage());
         }
+    }
+
+    /** 无符号 32 位解析（大端序）。 */
+    private long u32(byte[] payload, int offset) {
+        return ((long) (payload[offset] & 0xFF) << 24)
+                | ((long) (payload[offset + 1] & 0xFF) << 16)
+                | ((long) (payload[offset + 2] & 0xFF) << 8)
+                | (long) (payload[offset + 3] & 0xFF);
     }
 
     private boolean shouldResetModuleAddressCacheAfterCommand(BatteryPendingRequest pendingRequest) {

@@ -13,6 +13,8 @@ import com.shanhe.project.collector.battery.model.BatteryModuleFrameData;
 import com.shanhe.project.collector.battery.model.BatteryModuleFrameSummary;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
+import com.shanhe.project.collector.battery.service.postprocess.BatteryRealtimePostProcessContext;
+import com.shanhe.project.collector.battery.service.postprocess.BatteryRealtimePostProcessService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -68,6 +70,12 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
      */
     @Resource
     private BatteryModuleGroupCalculationService calculationService;
+
+    /**
+     * 实时数据后处理流水线服务。
+     */
+    @Resource
+    private BatteryRealtimePostProcessService postProcessService;
 
     /**
      * 单体兼容字段缓存填充服务。
@@ -188,6 +196,29 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
                         BatteryModuleGroupRealtime calculation) {
         adaptAlarmContext(channelConfig, context, calculation);
         syncCompatReportLogIfEnabled(channelConfig, context, calculation);
+        // 后处理流水线：在线状态、统计、操作日志等
+        executePostProcessPipeline(channelConfig, context, calculation);
+    }
+
+    /** 执行后处理流水线。 */
+    private void executePostProcessPipeline(BatteryCollectorChannelConfig channelConfig,
+                                             BatteryModulePollContext context,
+                                             BatteryModuleGroupRealtime calculation) {
+        if (postProcessService == null || context == null) {
+            return;
+        }
+        try {
+            BatteryRealtimePostProcessContext postContext = BatteryRealtimePostProcessContext.builder()
+                    .packNum(channelConfig == null ? null : channelConfig.getBatteryGroup())
+                    .source("collector")
+                    .pollBatchNo(context.getPollBatchNo())
+                    .cells(context.getCells())
+                    .group(calculation)
+                    .build();
+            postProcessService.execute(postContext);
+        } catch (Exception e) {
+            log.warn("后处理流水线执行失败, 通道={}", channelConfig == null ? null : channelConfig.getName(), e);
+        }
     }
 
     void refreshBatteryOnlineCache(BatteryCollectorChannelConfig channelConfig) {
