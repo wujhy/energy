@@ -785,11 +785,11 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                         pendingRequest.getRequestAddress(), payload.length);
                 return;
             }
-            // 91 响应：BatteryVoltage(4B) + TestVoltage(4B)，大端序，原始值单位 0.1mV
             long batteryVoltageRaw = u32(payload, 0);
             long testVoltageRaw = u32(payload, 4);
             Integer batteryGroup = pendingRequest.getBatteryGroup();
             int address = pendingRequest.getRequestAddress();
+
             log.info("连接条测试电压记录, 电池组={}, 地址={}, 电池电压raw={}, 测试电压raw={}（待公式确认后转电阻）",
                     batteryGroup, address, batteryVoltageRaw, testVoltageRaw);
         } catch (Exception e) {
