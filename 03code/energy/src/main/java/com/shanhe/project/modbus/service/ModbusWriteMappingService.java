@@ -45,11 +45,11 @@ public class ModbusWriteMappingService {
         if (packNum == null || packNum <= 0) {
             throw new IllegalArgumentException("电池组编号无效");
         }
-        if (referenceAddress >= BALANCE_START && referenceAddress < BALANCE_START + 245) {
-            return writeBalance(packNum, referenceAddress - BALANCE_START + 1, value);
-        }
         if (referenceAddress >= MANUAL_ADDR_START && referenceAddress < MANUAL_ADDR_START + 2) {
             return writeManualAddress(packNum, value);
+        }
+        if (referenceAddress >= BALANCE_START && referenceAddress < BALANCE_START + 245) {
+            return writeBalance(packNum, referenceAddress - BALANCE_START + 1, value);
         }
         throw new IllegalArgumentException("不支持的写寄存器地址: " + referenceAddress);
     }

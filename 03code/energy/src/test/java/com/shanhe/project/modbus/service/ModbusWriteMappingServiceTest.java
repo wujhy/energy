@@ -45,10 +45,16 @@ class ModbusWriteMappingServiceTest {
 
     @Test
     void shouldRejectManualAddressSingleRegisterWrite() {
-        ModbusWriteMappingService service = service(Mockito.mock(BatteryCollectorCommandService.class));
+        BatteryCollectorCommandService commandService = Mockito.mock(BatteryCollectorCommandService.class);
+        Mockito.when(commandService.resolveChannelName(1)).thenReturn("COM1");
+        ModbusWriteMappingService service = service(commandService);
 
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> service.writeSingleRegister(1, 404921, 8));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.writeSingleRegister(1, 404922, 8));
+        Mockito.verify(commandService, Mockito.never())
+                .singleBatteryBalance(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt(), Mockito.anyInt(), Mockito.any());
     }
 
     @Test
