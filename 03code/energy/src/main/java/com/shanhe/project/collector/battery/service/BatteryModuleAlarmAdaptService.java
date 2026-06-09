@@ -100,15 +100,21 @@ public class BatteryModuleAlarmAdaptService {
     private void appendCellThreshold(Map<String, String> warnParam, BatteryModuleCellRealtime cell) {
         // 单体电压
         if (cell.getVoltage() != null) {
-            warnParam.put(ItemCode.DTDYGC.getCode(), String.valueOf(cell.getVoltage()));
+            String value = String.valueOf(cell.getVoltage());
+            warnParam.put(ItemCode.DTDYGC.getCode(), value);
+            warnParam.put(ItemCode.DTDYGF.getCode(), value);
         }
         // 单体内阻
         if (cell.getResistance() != null) {
-            warnParam.put(ItemCode.DTNZGD.getCode(), String.valueOf(cell.getResistance()));
+            String value = String.valueOf(cell.getResistance());
+            warnParam.put(ItemCode.DTNZGD.getCode(), value);
+            warnParam.put(ItemCode.DTNZGX.getCode(), value);
         }
         // 单体温度
         if (cell.getTemperature() != null) {
-            warnParam.put(ItemCode.DTDCWDG.getCode(), String.valueOf(cell.getTemperature()));
+            String value = String.valueOf(cell.getTemperature());
+            warnParam.put(ItemCode.DTDCWDG.getCode(), value);
+            warnParam.put(ItemCode.DTDCWDD.getCode(), value);
         }
         // 单体鼓包
         if (cell.getSwollenVoltage() != null) {
@@ -120,13 +126,19 @@ public class BatteryModuleAlarmAdaptService {
     private void appendCellThreshold(BatteryModuleAlarmContext context, BatteryModuleCellRealtime cell) {
         Integer batNum = cell.getBatNum();
         if (cell.getVoltage() != null) {
-            context.putCellWarn(batNum, ItemCode.DTDYGC.getCode(), String.valueOf(cell.getVoltage()));
+            String value = String.valueOf(cell.getVoltage());
+            context.putCellWarn(batNum, ItemCode.DTDYGC.getCode(), value);
+            context.putCellWarn(batNum, ItemCode.DTDYGF.getCode(), value);
         }
         if (cell.getResistance() != null) {
-            context.putCellWarn(batNum, ItemCode.DTNZGD.getCode(), String.valueOf(cell.getResistance()));
+            String value = String.valueOf(cell.getResistance());
+            context.putCellWarn(batNum, ItemCode.DTNZGD.getCode(), value);
+            context.putCellWarn(batNum, ItemCode.DTNZGX.getCode(), value);
         }
         if (cell.getTemperature() != null) {
-            context.putCellWarn(batNum, ItemCode.DTDCWDG.getCode(), String.valueOf(cell.getTemperature()));
+            String value = String.valueOf(cell.getTemperature());
+            context.putCellWarn(batNum, ItemCode.DTDCWDG.getCode(), value);
+            context.putCellWarn(batNum, ItemCode.DTDCWDD.getCode(), value);
         }
         if (cell.getSwollenVoltage() != null) {
             context.putCellWarn(batNum, ItemCode.DTGB.getCode(), String.valueOf(cell.getSwollenVoltage()));
@@ -138,7 +150,9 @@ public class BatteryModuleAlarmAdaptService {
         // 组电压
         Double groupVoltage = first(group.getBatteryPackOuterVoltage(), group.getExternalVoltage());
         if (groupVoltage != null) {
-            warnParam.put(ItemCode.ZDYGC.getCode(), String.valueOf(groupVoltage));
+            String value = String.valueOf(groupVoltage);
+            warnParam.put(ItemCode.ZDYGC.getCode(), value);
+            warnParam.put(ItemCode.ZDYGF.getCode(), value);
         }
         // 充放电电流
         Double current = first(group.getPackCurrent(), group.getChargeDischargeCurrent());
@@ -147,7 +161,15 @@ public class BatteryModuleAlarmAdaptService {
         }
         // 环境温度
         if (group.getEnvironmentTemperature1() != null) {
-            warnParam.put(ItemCode.ZWDG.getCode(), String.valueOf(group.getEnvironmentTemperature1()));
+            String value = String.valueOf(group.getEnvironmentTemperature1());
+            warnParam.put(ItemCode.ZWDG.getCode(), value);
+            warnParam.put(ItemCode.ZWDD.getCode(), value);
+        }
+        if (group.getBatteryPackSoc() != null) {
+            warnParam.put(ItemCode.ZSOCDGJ.getCode(), String.valueOf(group.getBatteryPackSoc()));
+        }
+        if (group.getBatteryPackSoh() != null) {
+            warnParam.put(ItemCode.ZSOHDGJ.getCode(), String.valueOf(group.getBatteryPackSoh()));
         }
     }
 
@@ -155,14 +177,24 @@ public class BatteryModuleAlarmAdaptService {
     private void appendGroupThreshold(BatteryModuleAlarmContext context, BatteryModuleGroupRealtime group) {
         Double groupVoltage = first(group.getBatteryPackOuterVoltage(), group.getExternalVoltage());
         if (groupVoltage != null) {
-            context.putPackWarn(ItemCode.ZDYGC.getCode(), String.valueOf(groupVoltage));
+            String value = String.valueOf(groupVoltage);
+            context.putPackWarn(ItemCode.ZDYGC.getCode(), value);
+            context.putPackWarn(ItemCode.ZDYGF.getCode(), value);
         }
         Double current = first(group.getPackCurrent(), group.getChargeDischargeCurrent());
         if (current != null) {
             context.putPackWarn(ItemCode.ZCGDLGJ.getCode(), String.valueOf(current));
         }
         if (group.getEnvironmentTemperature1() != null) {
-            context.putPackWarn(ItemCode.ZWDG.getCode(), String.valueOf(group.getEnvironmentTemperature1()));
+            String value = String.valueOf(group.getEnvironmentTemperature1());
+            context.putPackWarn(ItemCode.ZWDG.getCode(), value);
+            context.putPackWarn(ItemCode.ZWDD.getCode(), value);
+        }
+        if (group.getBatteryPackSoc() != null) {
+            context.putPackWarn(ItemCode.ZSOCDGJ.getCode(), String.valueOf(group.getBatteryPackSoc()));
+        }
+        if (group.getBatteryPackSoh() != null) {
+            context.putPackWarn(ItemCode.ZSOHDGJ.getCode(), String.valueOf(group.getBatteryPackSoh()));
         }
     }
 
