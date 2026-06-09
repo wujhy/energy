@@ -3,6 +3,7 @@ package com.shanhe.project.device.opt.service.impl;
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
+import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.Config;
@@ -67,6 +68,8 @@ public class RestoreServiceImpl implements RestoreService {
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
     @Resource
+    private BatteryModeStatusService batteryModeStatusService;
+    @Resource
     private com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService compatibilityFillService;
 
     /**
@@ -116,6 +119,7 @@ public class RestoreServiceImpl implements RestoreService {
         // 删除设备状态
         batteryDeviceStateService.deleteAll();
         // 清除采集缓存
+        batteryModeStatusService.clear(null);
         compatibilityFillService.clearConnectResistanceCache(null);
 
         // 系统操作记录
@@ -187,6 +191,7 @@ public class RestoreServiceImpl implements RestoreService {
         // 删除设备状态
         batteryDeviceStateService.deleteByPackNum(batterySetVO.getPackNum());
         // 清除采集缓存
+        batteryModeStatusService.clear(batterySetVO.getPackNum());
         compatibilityFillService.clearConnectResistanceCache(batterySetVO.getPackNum());
 
     }
