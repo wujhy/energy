@@ -1288,13 +1288,22 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         try {
             batteryDeviceStateService.upsert(ds);
             lastStateValues.put(cacheKey, stateValue);
-            // 防止缓存无限增长：超过阈值时清理非通道级条目
+            // 防止缓存无限增长：超过阈值时清理模块/pack 级高基数条目，保留通道级去重状态。
             if (lastStateValues.size() > 1000) {
-                lastStateValues.keySet().removeIf(k -> k.contains(":"));
+                lastStateValues.keySet().removeIf(this::isHighCardinalityStateCacheKey);
             }
         } catch (Exception e) {
             log.warn("持久化设备状态失败, scopeKey={}, stateCode={}, 原因={}", scopeKey, stateCode, e.getMessage());
         }
+    }
+
+    private boolean isHighCardinalityStateCacheKey(String cacheKey) {
+        if (cacheKey == null) {
+            return false;
+        }
+        return cacheKey.contains(":" + BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT)
+                || cacheKey.contains(":" + BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE)
+                || cacheKey.endsWith(":" + BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS);
     }
 
     /** 静默关闭串口并重置通道状态。 */
@@ -1603,6 +1612,9 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
 
     /** 更新模块地址活跃缓存。 */
     private void updateModuleAddressCache(BatteryCollectorChannelState state, int address, boolean responded) {
+        if (isGroupModuleAddress(address)) {
+            persistGroup246Freshness(state.getConfig(), responded);
+        }
         if (!Boolean.TRUE.equals(properties.getModuleAddressCacheEnabled())) {
             return;
         }
@@ -1616,9 +1628,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             }
             // 模块重新响应，清除超时状态
             clearModuleTimeout(state.getConfig().getName(), state.getConfig(), address);
-            if (isGroupModuleAddress(address)) {
-                persistGroup246Freshness(state.getConfig(), true);
-            }
             return;
         }
         if (!state.getActiveModuleAddresses().contains(address)) {
@@ -1629,9 +1638,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             state.getActiveModuleAddresses().remove(address);
             state.getModuleAddressMissCounts().remove(address);
             persistModuleActive(state.getConfig().getName(), state.getConfig(), address, false);
-            if (isGroupModuleAddress(address)) {
-                persistGroup246Freshness(state.getConfig(), false);
-            }
             log.warn("蓄电池模块地址因连续未响应已从缓存移除, 通道={}, 地址={}, 未响应次数={}",
                     state.getConfig().getName(),
                     address,

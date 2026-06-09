@@ -1,6 +1,8 @@
 package com.shanhe.project.collector.battery.service;
 
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
+import com.shanhe.project.collector.battery.model.BatteryDeviceState;
+import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import org.junit.jupiter.api.Assertions;
@@ -122,6 +124,63 @@ class BatteryModuleModbusReadMappingServiceTest {
     }
 
     @Test
+    void shouldReturnOneForFreshGroup246Freshness() {
+        BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        Mockito.when(stateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.PACK,
+                "1",
+                BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS))
+                .thenReturn(deviceState("fresh"));
+
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, stateService, null);
+
+        Assertions.assertArrayEquals(new int[]{1}, service.readHoldingRegisters(1, 411487, 1));
+    }
+
+    @Test
+    void shouldReturnZeroForStaleGroup246Freshness() {
+        BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        Mockito.when(stateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.PACK,
+                "1",
+                BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS))
+                .thenReturn(deviceState("stale"));
+
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, stateService, null);
+
+        Assertions.assertArrayEquals(new int[]{0}, service.readHoldingRegisters(1, 411487, 1));
+    }
+
+    @Test
+    void shouldReturnZeroWhenGroup246FreshnessMissing() {
+        BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        Mockito.when(stateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.PACK,
+                "1",
+                BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS))
+                .thenReturn(null);
+
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, stateService, null);
+
+        Assertions.assertArrayEquals(new int[]{0}, service.readHoldingRegisters(1, 411487, 1));
+    }
+
+    @Test
+    void shouldReturnZeroForGroup246FreshnessWhenStateServiceMissing() {
+        BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, null, null);
+
+        Assertions.assertArrayEquals(new int[]{0}, service.readHoldingRegisters(1, 411487, 1));
+    }
+
+    @Test
     void shouldHandleBoundaryCellAddresses() {
         BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
         Mockito.when(mapper.selectCells(1)).thenReturn(Arrays.asList(
@@ -154,5 +213,18 @@ class BatteryModuleModbusReadMappingServiceTest {
         cell.setTemperature(temperature);
         cell.setSwollenVoltage(swollenVoltage);
         return cell;
+    }
+
+    private BatteryModuleRealtimeMapper mapperWithReadyGroup(int packNum) {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        Mockito.when(mapper.selectCells(packNum)).thenReturn(null);
+        Mockito.when(mapper.selectGroup(packNum)).thenReturn(new BatteryModuleGroupRealtime());
+        return mapper;
+    }
+
+    private BatteryDeviceState deviceState(String stateValue) {
+        BatteryDeviceState state = new BatteryDeviceState();
+        state.setStateValue(stateValue);
+        return state;
     }
 }

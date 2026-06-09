@@ -8,11 +8,15 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorFrame;
 import com.shanhe.project.collector.battery.model.BatteryCollectorRunState;
 import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.model.BatteryPendingRequest;
+import com.shanhe.project.collector.battery.model.BatteryDeviceState;
+import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
@@ -285,6 +289,76 @@ class BatteryCollectorServiceTest {
 
         Assertions.assertFalse(state.getActiveModuleAddresses().contains(8));
         Assertions.assertFalse(state.getModuleAddressMissCounts().containsKey(8));
+    }
+
+    @Test
+    void shouldPersistGroupModuleFreshnessStaleWhen246HasNoResponseBeforeCached() {
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        properties.setModuleAddressCacheEnabled(true);
+        ReflectionTestUtils.setField(service, "properties", properties);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setName("battery-group-1");
+        channelConfig.setBatteryGroup(1);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+
+        ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 246, false);
+
+        ArgumentCaptor<BatteryDeviceState> captor = ArgumentCaptor.forClass(BatteryDeviceState.class);
+        Mockito.verify(stateService).upsert(captor.capture());
+        BatteryDeviceState deviceState = captor.getValue();
+        Assertions.assertEquals(BatteryDeviceStateConstants.ScopeType.PACK, deviceState.getScopeType());
+        Assertions.assertEquals("1", deviceState.getScopeKey());
+        Assertions.assertEquals(1, deviceState.getPackNum());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, deviceState.getStateCode());
+        Assertions.assertEquals("stale", deviceState.getStateValue());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateLevel.WARN, deviceState.getStateLevel());
+        Assertions.assertFalse(state.getActiveModuleAddresses().contains(246));
+    }
+
+    @Test
+    void shouldPersistGroupModuleFreshnessWhenAddressCacheDisabled() {
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        properties.setModuleAddressCacheEnabled(false);
+        ReflectionTestUtils.setField(service, "properties", properties);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setName("battery-group-1");
+        channelConfig.setBatteryGroup(1);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+
+        ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 246, true);
+
+        ArgumentCaptor<BatteryDeviceState> captor = ArgumentCaptor.forClass(BatteryDeviceState.class);
+        Mockito.verify(stateService).upsert(captor.capture());
+        BatteryDeviceState deviceState = captor.getValue();
+        Assertions.assertEquals(BatteryDeviceStateConstants.ScopeType.PACK, deviceState.getScopeType());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, deviceState.getStateCode());
+        Assertions.assertEquals("fresh", deviceState.getStateValue());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateLevel.NORMAL, deviceState.getStateLevel());
+        Assertions.assertFalse(state.getActiveModuleAddresses().contains(246));
+    }
+
+    @Test
+    void shouldOnlyTreatModuleAndPackStateCacheKeysAsHighCardinality() {
+        Boolean channelOpen = ReflectionTestUtils.invokeMethod(service,
+                "isHighCardinalityStateCacheKey", "battery-group-1:CHANNEL_OPEN");
+        Boolean channelError = ReflectionTestUtils.invokeMethod(service,
+                "isHighCardinalityStateCacheKey", "battery-group-1:CHANNEL_ERROR");
+        Boolean moduleTimeout = ReflectionTestUtils.invokeMethod(service,
+                "isHighCardinalityStateCacheKey", "battery-group-1:8:MODULE_TIMEOUT");
+        Boolean moduleActive = ReflectionTestUtils.invokeMethod(service,
+                "isHighCardinalityStateCacheKey", "battery-group-1:8:MODULE_ACTIVE");
+        Boolean group246 = ReflectionTestUtils.invokeMethod(service,
+                "isHighCardinalityStateCacheKey", "1:GROUP_246_FRESHNESS");
+
+        Assertions.assertFalse(Boolean.TRUE.equals(channelOpen));
+        Assertions.assertFalse(Boolean.TRUE.equals(channelError));
+        Assertions.assertTrue(Boolean.TRUE.equals(moduleTimeout));
+        Assertions.assertTrue(Boolean.TRUE.equals(moduleActive));
+        Assertions.assertTrue(Boolean.TRUE.equals(group246));
     }
 
     @Test
