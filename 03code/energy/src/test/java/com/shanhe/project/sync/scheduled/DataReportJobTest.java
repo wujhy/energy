@@ -82,6 +82,22 @@ class DataReportJobTest {
         Assertions.assertSame(oldLog, result);
     }
 
+    @Test
+    void shouldFallbackToOldCacheWhenRealtimeAdapterFails() {
+        DataReportJob job = newJob(true);
+        BatteryReportLogService oldService = Mockito.mock(BatteryReportLogService.class);
+        BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
+        BatteryReportLog oldLog = log("old");
+        ReflectionTestUtils.setField(job, "batteryReportLogService", oldService);
+        ReflectionTestUtils.setField(job, "batteryModuleReportLogAdapterService", adapterService);
+        Mockito.when(adapterService.buildReportLog(1)).thenThrow(new RuntimeException("realtime failed"));
+        Mockito.when(oldService.lastCache(1)).thenReturn(oldLog);
+
+        BatteryReportLog result = job.resolveBatteryReportLog(1);
+
+        Assertions.assertSame(oldLog, result);
+    }
+
     private DataReportJob newJob(boolean realtimeSourceEnabled) {
         DataReportJob job = new DataReportJob();
         BatteryCollectorProperties properties = new BatteryCollectorProperties();

@@ -155,10 +155,15 @@ public class DataReportJob {
      * @return 蓄电池上报数据
      */
     BatteryReportLog resolveBatteryReportLog(Integer packNum) {
-        if (Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
-            BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
-            if (isUsableBatteryReportLog(realtimeLog)) {
-                return realtimeLog;
+        if (batteryCollectorProperties != null
+                && Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
+            try {
+                BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
+                if (isUsableBatteryReportLog(realtimeLog)) {
+                    return realtimeLog;
+                }
+            } catch (Exception e) {
+                log.warn("标准实时数据构建JSON/TCP上报失败, packNum={}, fallback=oldCache", packNum, e);
             }
         }
         return batteryReportLogService.lastCache(packNum);
