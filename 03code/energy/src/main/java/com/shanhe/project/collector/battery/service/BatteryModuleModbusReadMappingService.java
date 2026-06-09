@@ -8,6 +8,7 @@ import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.UNSIGNED_SHORT_MAX;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.protocol.BatteryModuleStatusRegisterCodec;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -235,9 +236,7 @@ public class BatteryModuleModbusReadMappingService {
      * M460 Battery_State_Register：高字节低4位为电池组状态，低字节为内阻测试状态。
      */
     private int batteryStateRegister(BatteryModuleGroupRealtime group) {
-        int batteryStatus = group.getBatteryPackStatus() == null ? 0 : group.getBatteryPackStatus() & 0xFF;
-        int resistanceTestStatus = group.getResistanceTestStatus() == null ? 0 : group.getResistanceTestStatus() & 0xFF;
-        return ((batteryStatus & 0xFF) << 8) | resistanceTestStatus;
+        return BatteryModuleStatusRegisterCodec.compose(group.getBatteryPackStatus(), group.getResistanceTestStatus());
     }
 
     /**
