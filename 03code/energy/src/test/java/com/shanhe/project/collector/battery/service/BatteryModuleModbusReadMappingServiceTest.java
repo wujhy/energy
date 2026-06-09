@@ -94,12 +94,45 @@ class BatteryModuleModbusReadMappingServiceTest {
                 () -> service.readHoldingRegisters(null, 410004, 1));
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> service.readHoldingRegisters(1, 410004, 0));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.readHoldingRegisters(1, 410004, -1));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.readHoldingRegisters(1, 410248, 2));
+    }
+
+    @Test
+    void shouldAllowMaxReadQuantityWhenAddressRangeIsSupported() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        Mockito.when(mapper.selectCells(1)).thenReturn(Arrays.asList(cell(1, 2.0d, 100, 25.0d, null)));
+        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper, null, null);
+
+        int[] values = service.readHoldingRegisters(1, 410004, 125);
+
+        Assertions.assertEquals(125, values.length);
+        Assertions.assertEquals(2000, values[0]);
+        Assertions.assertEquals(0, values[124]);
     }
 
     @Test
     void shouldThrowWhenDataNotReady() {
         BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
         Mockito.when(mapper.selectCells(1)).thenReturn(null);
+        Mockito.when(mapper.selectGroup(1)).thenReturn(null);
+
+        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper, null, null);
+
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> service.readHoldingRegisters(1, 410004, 1));
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> service.readHoldingRegisters(1, 411729, 1));
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> service.readHoldingRegisters(1, 411487, 1));
+    }
+
+    @Test
+    void shouldThrowWhenCellsAreEmptyAndGroupMissing() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        Mockito.when(mapper.selectCells(1)).thenReturn(Arrays.asList());
         Mockito.when(mapper.selectGroup(1)).thenReturn(null);
 
         BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper, null, null);
@@ -121,6 +154,17 @@ class BatteryModuleModbusReadMappingServiceTest {
         // 单体数据为空时返回 0，组数据正常读取
         Assertions.assertArrayEquals(new int[]{0}, service.readHoldingRegisters(1, 410004, 1));
         Assertions.assertArrayEquals(new int[]{480}, service.readHoldingRegisters(1, 411729, 1));
+    }
+
+    @Test
+    void shouldReturnZeroForMissingGroupWhenCellsExist() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        Mockito.when(mapper.selectCells(1)).thenReturn(Arrays.asList(cell(1, 2.0d, 100, 25.0d, null)));
+        Mockito.when(mapper.selectGroup(1)).thenReturn(null);
+
+        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper, null, null);
+
+        Assertions.assertArrayEquals(new int[]{0}, service.readHoldingRegisters(1, 411729, 1));
     }
 
     @Test
