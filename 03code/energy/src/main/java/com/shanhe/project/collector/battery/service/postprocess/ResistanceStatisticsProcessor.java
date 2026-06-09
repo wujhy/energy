@@ -1,5 +1,6 @@
 package com.shanhe.project.collector.battery.service.postprocess;
 
+import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.energy.stat.service.IStatBatteryResService;
@@ -7,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,10 +44,13 @@ public class ResistanceStatisticsProcessor implements BatteryRealtimePostProcess
 
     @Override
     public boolean shouldProcess(BatteryRealtimePostProcessContext context) {
-        return context.getPackNum() != null
+        return context != null
+                && context.getPackNum() != null
                 && context.getGroup() != null
                 && context.getCells() != null
-                && !context.getCells().isEmpty();
+                && !context.getCells().isEmpty()
+                && hasText(context.getPollBatchNo())
+                && sameBatch(context);
     }
 
     @Override
@@ -65,5 +70,23 @@ public class ResistanceStatisticsProcessor implements BatteryRealtimePostProcess
         } catch (Exception e) {
             log.warn("内阻统计后处理失败, packNum={}", packNum, e);
         }
+    }
+
+    private boolean sameBatch(BatteryRealtimePostProcessContext context) {
+        String pollBatchNo = context.getPollBatchNo();
+        if (!pollBatchNo.equals(context.getGroup().getPollBatchNo())) {
+            return false;
+        }
+        List<BatteryModuleCellRealtime> cells = context.getCells();
+        for (BatteryModuleCellRealtime cell : cells) {
+            if (cell == null || !pollBatchNo.equals(cell.getPollBatchNo())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 }

@@ -20,10 +20,13 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BatteryRealtimePostProcessorsTest {
+
+    private static final String POLL_BATCH_NO = "batch-1";
 
     @Test
     void statisticsProcessorShouldAdaptRealtimeModel() {
@@ -79,7 +82,10 @@ class BatteryRealtimePostProcessorsTest {
         ReflectionTestUtils.setField(processor, "statBatteryResService", statBatteryResService);
         ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
 
-        processor.process(context(group(6, null), cells()));
+        BatteryRealtimePostProcessContext context = context(group(6, null), cells());
+        assertTrue(processor.shouldProcess(context));
+
+        processor.process(context);
 
         Mockito.verifyNoInteractions(statBatteryResService);
         Mockito.verifyNoInteractions(reportLogService);
@@ -98,7 +104,10 @@ class BatteryRealtimePostProcessorsTest {
         List<BatteryModuleCellRealtime> cells = cells();
         cells.get(0).setResistanceRageSlip(9000.0d);
 
-        processor.process(context(group(6, 2), cells));
+        BatteryRealtimePostProcessContext context = context(group(6, 2), cells);
+        assertTrue(processor.shouldProcess(context));
+
+        processor.process(context);
 
         ArgumentCaptor<Map<String, Object>> packMapCaptor = ArgumentCaptor.forClass(Map.class);
         ArgumentCaptor<List> batteryListCaptor = ArgumentCaptor.forClass(List.class);
@@ -107,6 +116,28 @@ class BatteryRealtimePostProcessorsTest {
         List<BatteryMonitor> adaptedCells = batteryListCaptor.getValue();
         assertEquals(110, adaptedCells.get(0).getResistance());
         assertNull(adaptedCells.get(0).getResistancerageslip());
+    }
+
+    @Test
+    void resistanceStatisticsProcessorShouldRejectMissingOrMismatchedBatch() {
+        ResistanceStatisticsProcessor processor = new ResistanceStatisticsProcessor();
+        List<BatteryModuleCellRealtime> cells = cells();
+
+        BatteryRealtimePostProcessContext missingBatch = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .group(group(6, 2))
+                .cells(cells)
+                .build();
+        assertFalse(processor.shouldProcess(missingBatch));
+
+        cells.get(0).setPollBatchNo("other-batch");
+        BatteryRealtimePostProcessContext mismatchedBatch = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .pollBatchNo(POLL_BATCH_NO)
+                .group(group(6, 2))
+                .cells(cells)
+                .build();
+        assertFalse(processor.shouldProcess(mismatchedBatch));
     }
 
     @Test
@@ -137,6 +168,7 @@ class BatteryRealtimePostProcessorsTest {
                                                       List<BatteryModuleCellRealtime> cells) {
         return BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
+                .pollBatchNo(POLL_BATCH_NO)
                 .group(group)
                 .cells(cells)
                 .build();
@@ -150,6 +182,7 @@ class BatteryRealtimePostProcessorsTest {
         group.setResistanceTestStatus(resistanceTestStatus);
         group.setDeviceWorkStatus(3);
         group.setDeviceWorkIoStatus(1);
+        group.setPollBatchNo(POLL_BATCH_NO);
         return group;
     }
 
@@ -159,12 +192,14 @@ class BatteryRealtimePostProcessorsTest {
         first.setBatNum(1);
         first.setVoltage(2.1);
         first.setResistance(110);
+        first.setPollBatchNo(POLL_BATCH_NO);
 
         BatteryModuleCellRealtime second = new BatteryModuleCellRealtime();
         second.setPackNum(1);
         second.setBatNum(2);
         second.setVoltage(2.7);
         second.setResistance(120);
+        second.setPollBatchNo(POLL_BATCH_NO);
 
         return Arrays.asList(first, second);
     }
