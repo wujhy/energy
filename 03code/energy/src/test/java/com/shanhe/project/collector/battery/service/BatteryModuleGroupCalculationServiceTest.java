@@ -5,6 +5,10 @@ import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -76,11 +80,18 @@ class BatteryModuleGroupCalculationServiceTest {
     }
 
     @Test
-    void shouldNotCopyStaleGroupModuleValuesWhenBatchDoesNotMatch() {
+    void shouldMarkGroupModuleStaleAndLeaveRawValuesToDatabaseWhenBatchDoesNotMatch() {
         Date now = new Date(1_000_000L);
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackVoltage(240.0d);
         group.setExternalVoltage(123.4d);
         group.setPackCurrent(-10.0d);
+        group.setBatteryPackFloatCurrent(0.123d);
+        group.setBatteryPackOuterVoltage(123.4d);
+        group.setChargeDischargeCurrent(-10.0d);
+        group.setFloatCurrent(0.123d);
+        group.setEnvironmentTemperature1(25.1d);
+        group.setEnvironmentTemperature2(25.2d);
         group.setCreateTime(new Date(900_000L));
         group.setPollBatchNo("old-batch");
         group.setGroupModuleFresh(Boolean.TRUE);
@@ -95,9 +106,38 @@ class BatteryModuleGroupCalculationServiceTest {
                 180_000L);
 
         Assertions.assertFalse(calculation.getGroupModuleFresh());
+        Assertions.assertNull(calculation.getPackVoltage());
         Assertions.assertNull(calculation.getExternalVoltage());
         Assertions.assertNull(calculation.getPackCurrent());
+        Assertions.assertNull(calculation.getBatteryPackFloatCurrent());
+        Assertions.assertNull(calculation.getBatteryPackOuterVoltage());
+        Assertions.assertNull(calculation.getChargeDischargeCurrent());
+        Assertions.assertNull(calculation.getFloatCurrent());
+        Assertions.assertNull(calculation.getEnvironmentTemperature1());
+        Assertions.assertNull(calculation.getEnvironmentTemperature2());
         Assertions.assertEquals(new Date(900_000L), calculation.getLatestGroupUpdateTime());
+    }
+
+    @Test
+    void shouldNotUpdateGroupRawColumnsWhenSavingCalculationOnly() throws IOException {
+        String xml = new String(Files.readAllBytes(Paths.get(
+                "src/main/resources/mybatis/collector/BatteryModuleRealtimeMapper.xml")), StandardCharsets.UTF_8);
+        String updateGroupCalculation = xml.substring(xml.indexOf("<insert id=\"updateGroupCalculation\""));
+        String conflictUpdateSet = updateGroupCalculation.substring(
+                updateGroupCalculation.indexOf("on conflict(pack_num) do update set"));
+
+        assertNotUpdatedInCalculation(conflictUpdateSet, "pack_voltage");
+        assertNotUpdatedInCalculation(conflictUpdateSet, "pack_current");
+        assertNotUpdatedInCalculation(conflictUpdateSet, "battery_pack_float_current");
+        assertNotUpdatedInCalculation(conflictUpdateSet, "battery_pack_outer_voltage");
+        assertNotUpdatedInCalculation(conflictUpdateSet, "external_voltage");
+        assertNotUpdatedInCalculation(conflictUpdateSet, "charge_discharge_current");
+        assertNotUpdatedInCalculation(conflictUpdateSet, "float_current");
+        assertNotUpdatedInCalculation(conflictUpdateSet, "environment_temperature1");
+        assertNotUpdatedInCalculation(conflictUpdateSet, "environment_temperature2");
+        Assertions.assertTrue(conflictUpdateSet.contains("group_module_fresh = excluded.group_module_fresh"));
+        Assertions.assertTrue(conflictUpdateSet.contains("poll_batch_no = excluded.poll_batch_no"));
+        Assertions.assertTrue(conflictUpdateSet.contains("poll_started_at = excluded.poll_started_at"));
     }
 
     private BatteryModuleCellRealtime cell(int address,
@@ -112,5 +152,9 @@ class BatteryModuleGroupCalculationServiceTest {
         cell.setTemperature(temperature);
         cell.setCreateTime(new Date(updateTimeMs));
         return cell;
+    }
+
+    private void assertNotUpdatedInCalculation(String updateSet, String column) {
+        Assertions.assertFalse(updateSet.contains(column + " = excluded." + column));
     }
 }
