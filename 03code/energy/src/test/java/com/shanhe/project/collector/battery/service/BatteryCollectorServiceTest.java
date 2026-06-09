@@ -342,6 +342,130 @@ class BatteryCollectorServiceTest {
     }
 
     @Test
+    void shouldDeduplicateChannelOpenAndPersistRecoveryBoundary() {
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(newChannelConfig());
+
+        ReflectionTestUtils.invokeMethod(service, "persistSerialPortState", state, true);
+        ReflectionTestUtils.invokeMethod(service, "persistSerialPortState", state, true);
+        ReflectionTestUtils.invokeMethod(service, "persistSerialPortState", state, false);
+        ReflectionTestUtils.invokeMethod(service, "persistSerialPortState", state, false);
+        ReflectionTestUtils.invokeMethod(service, "persistSerialPortState", state, true);
+
+        ArgumentCaptor<BatteryDeviceState> captor = ArgumentCaptor.forClass(BatteryDeviceState.class);
+        Mockito.verify(stateService, Mockito.times(3)).upsert(captor.capture());
+        List<BatteryDeviceState> states = captor.getAllValues();
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN, states.get(0).getStateCode());
+        Assertions.assertEquals("open", states.get(0).getStateValue());
+        Assertions.assertEquals("closed", states.get(1).getStateValue());
+        Assertions.assertEquals("open", states.get(2).getStateValue());
+    }
+
+    @Test
+    void shouldDeduplicateChannelErrorAndClearAfterOpen() {
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(newChannelConfig());
+
+        ReflectionTestUtils.invokeMethod(service, "persistChannelError", state, new IllegalStateException("open failed"));
+        ReflectionTestUtils.invokeMethod(service, "persistChannelError", state, new IllegalStateException("open failed"));
+        ReflectionTestUtils.invokeMethod(service, "persistSerialPortState", state, true);
+        ReflectionTestUtils.invokeMethod(service, "persistSerialPortState", state, true);
+
+        ArgumentCaptor<BatteryDeviceState> captor = ArgumentCaptor.forClass(BatteryDeviceState.class);
+        Mockito.verify(stateService, Mockito.times(3)).upsert(captor.capture());
+        List<BatteryDeviceState> states = captor.getAllValues();
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, states.get(0).getStateCode());
+        Assertions.assertEquals("open failed", states.get(0).getStateValue());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN, states.get(1).getStateCode());
+        Assertions.assertEquals("open", states.get(1).getStateValue());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, states.get(2).getStateCode());
+        Assertions.assertEquals("cleared", states.get(2).getStateValue());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateLevel.NORMAL, states.get(2).getStateLevel());
+    }
+
+    @Test
+    void shouldDeduplicateModuleTimeoutAndPersistRecoveredOnResponse() {
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        properties.setModuleAddressCacheEnabled(true);
+        ReflectionTestUtils.setField(service, "properties", properties);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(newChannelConfig());
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.MODULE_INFO,
+                8,
+                new byte[0],
+                true);
+
+        ReflectionTestUtils.invokeMethod(service, "persistModuleTimeout", state, pendingRequest);
+        ReflectionTestUtils.invokeMethod(service, "persistModuleTimeout", state, pendingRequest);
+        ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 8, true);
+        ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 8, true);
+
+        ArgumentCaptor<BatteryDeviceState> captor = ArgumentCaptor.forClass(BatteryDeviceState.class);
+        Mockito.verify(stateService, Mockito.times(3)).upsert(captor.capture());
+        List<BatteryDeviceState> states = captor.getAllValues();
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT, states.get(0).getStateCode());
+        Assertions.assertEquals("01/81", states.get(0).getStateValue());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE, states.get(1).getStateCode());
+        Assertions.assertEquals("active", states.get(1).getStateValue());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT, states.get(2).getStateCode());
+        Assertions.assertEquals("recovered", states.get(2).getStateValue());
+    }
+
+    @Test
+    void shouldDeduplicateModuleActiveAndPersistInactiveAfterMissThreshold() {
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        properties.setModuleAddressCacheEnabled(true);
+        properties.setModuleAddressMissThreshold(2);
+        ReflectionTestUtils.setField(service, "properties", properties);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(newChannelConfig());
+
+        ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 8, true);
+        ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 8, true);
+        ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 8, false);
+        ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 8, false);
+        ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 8, false);
+
+        ArgumentCaptor<BatteryDeviceState> captor = ArgumentCaptor.forClass(BatteryDeviceState.class);
+        Mockito.verify(stateService, Mockito.times(2)).upsert(captor.capture());
+        List<BatteryDeviceState> states = captor.getAllValues();
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE, states.get(0).getStateCode());
+        Assertions.assertEquals("active", states.get(0).getStateValue());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE, states.get(1).getStateCode());
+        Assertions.assertEquals("inactive", states.get(1).getStateValue());
+    }
+
+    @Test
+    void shouldDeduplicateGroup246FreshnessAndPersistFreshRecovery() {
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        properties.setModuleAddressCacheEnabled(false);
+        ReflectionTestUtils.setField(service, "properties", properties);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(newChannelConfig());
+
+        ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 246, false);
+        ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 246, false);
+        ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 246, true);
+        ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 246, true);
+
+        ArgumentCaptor<BatteryDeviceState> captor = ArgumentCaptor.forClass(BatteryDeviceState.class);
+        Mockito.verify(stateService, Mockito.times(2)).upsert(captor.capture());
+        List<BatteryDeviceState> states = captor.getAllValues();
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, states.get(0).getStateCode());
+        Assertions.assertEquals("stale", states.get(0).getStateValue());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateLevel.WARN, states.get(0).getStateLevel());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, states.get(1).getStateCode());
+        Assertions.assertEquals("fresh", states.get(1).getStateValue());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateLevel.NORMAL, states.get(1).getStateLevel());
+    }
+
+    @Test
     void shouldOnlyTreatModuleAndPackStateCacheKeysAsHighCardinality() {
         Boolean channelOpen = ReflectionTestUtils.invokeMethod(service,
                 "isHighCardinalityStateCacheKey", "battery-group-1:CHANNEL_OPEN");
@@ -776,5 +900,13 @@ class BatteryCollectorServiceTest {
 
         Assertions.assertEquals(0L, state.getPollRoundCount());
         Assertions.assertEquals(0L, state.getLastPollTime());
+    }
+
+    private BatteryCollectorChannelConfig newChannelConfig() {
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setName("battery-group-1");
+        channelConfig.setBatteryGroup(1);
+        channelConfig.setConfigId(1L);
+        return channelConfig;
     }
 }

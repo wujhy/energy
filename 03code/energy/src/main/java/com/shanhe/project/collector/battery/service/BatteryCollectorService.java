@@ -1124,34 +1124,23 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
 
     /** 持久化通道异常到 battery_device_state。 */
     private void persistChannelError(BatteryCollectorChannelState state, Exception e) {
-        try {
-            BatteryDeviceState ds = buildChannelState(state.getConfig().getName(), state.getConfig(),
-                    BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR,
-                    e.getMessage() == null ? "unknown" : e.getMessage(),
-                    BatteryDeviceStateConstants.StateLevel.ERROR, null);
-            batteryDeviceStateService.upsert(ds);
-            lastStateValues.put(state.getConfig().getName() + ":" + BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR,
-                    ds.getStateValue());
-        } catch (Exception ex) {
-            log.warn("持久化通道异常状态失败, 通道={}, 原因={}",
-                    state.getConfig().getName(), ex.getMessage());
-        }
+        String channelName = state.getConfig().getName();
+        String stateValue = e.getMessage() == null ? "unknown" : e.getMessage();
+        BatteryDeviceState ds = buildChannelState(channelName, state.getConfig(),
+                BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR,
+                stateValue,
+                BatteryDeviceStateConstants.StateLevel.ERROR, null);
+        persistIfChanged(channelName, BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, stateValue, ds);
     }
 
     /** 通道重新打开时清除异常状态（更新为正常）。 */
     private void clearChannelError(String channelName, BatteryCollectorChannelConfig config) {
         String cacheKey = channelName + ":" + BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR;
         if (lastStateValues.containsKey(cacheKey)) {
-            try {
-                BatteryDeviceState ds = buildChannelState(channelName, config,
-                        BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, "cleared",
-                        BatteryDeviceStateConstants.StateLevel.NORMAL, null);
-                batteryDeviceStateService.upsert(ds);
-                lastStateValues.put(cacheKey, "cleared");
-                log.debug("已清除通道异常状态, 通道={}", channelName);
-            } catch (Exception e) {
-                log.warn("清除通道异常状态失败, 通道={}, 原因={}", channelName, e.getMessage());
-            }
+            BatteryDeviceState ds = buildChannelState(channelName, config,
+                    BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, "cleared",
+                    BatteryDeviceStateConstants.StateLevel.NORMAL, null);
+            persistIfChanged(channelName, BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, "cleared", ds);
         }
     }
 
@@ -1203,16 +1192,10 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         String scopeKey = channelName + ":" + address;
         String cacheKey = scopeKey + ":" + BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT;
         if (lastStateValues.containsKey(cacheKey)) {
-            try {
-                BatteryDeviceState ds = buildModuleState(scopeKey, config,
-                        BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT, "recovered",
-                        BatteryDeviceStateConstants.StateLevel.NORMAL, null, address);
-                batteryDeviceStateService.upsert(ds);
-                lastStateValues.put(cacheKey, "recovered");
-                log.debug("已清除模块超时状态, 通道={}, 地址={}", channelName, address);
-            } catch (Exception e) {
-                log.warn("清除模块超时状态失败, 通道={}, 地址={}, 原因={}", channelName, address, e.getMessage());
-            }
+            BatteryDeviceState ds = buildModuleState(scopeKey, config,
+                    BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT, "recovered",
+                    BatteryDeviceStateConstants.StateLevel.NORMAL, null, address);
+            persistIfChanged(scopeKey, BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT, "recovered", ds);
         }
     }
 
