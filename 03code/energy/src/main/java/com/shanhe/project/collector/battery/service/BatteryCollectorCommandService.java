@@ -440,9 +440,7 @@ public class BatteryCollectorCommandService {
         BatteryModeInfo modeInfo = batteryModeStatusService.get(batteryGroup);
         return modeInfo != null
                 && Objects.equals(modeInfo.getPackNum(), batteryGroup)
-                && Objects.equals(modeInfo.getStatus(), 1)
-                && modeInfo.getMode() != null
-                && modeInfo.getMode() != BatteryModeStatusService.MODE_IDLE;
+                && Objects.equals(modeInfo.getStatus(), 1);
     }
 
     /** 为模块命令设置电池组和工作模式上下文。 */
