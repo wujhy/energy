@@ -2,6 +2,7 @@ package com.shanhe.project.collector.battery.service.postprocess;
 
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.device.config.domain.BatteryMonitor;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BatteryRealtimePostProcessorsTest {
@@ -93,11 +95,18 @@ class BatteryRealtimePostProcessorsTest {
         ReflectionTestUtils.setField(processor, "statBatteryResService", statBatteryResService);
         ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
 
-        processor.process(context(group(6, 2), cells()));
+        List<BatteryModuleCellRealtime> cells = cells();
+        cells.get(0).setResistanceRageSlip(9000.0d);
+
+        processor.process(context(group(6, 2), cells));
 
         ArgumentCaptor<Map<String, Object>> packMapCaptor = ArgumentCaptor.forClass(Map.class);
-        Mockito.verify(statBatteryResService).init(Mockito.eq(1), packMapCaptor.capture(), Mockito.anyList(), Mockito.same(oldInfo));
+        ArgumentCaptor<List> batteryListCaptor = ArgumentCaptor.forClass(List.class);
+        Mockito.verify(statBatteryResService).init(Mockito.eq(1), packMapCaptor.capture(), batteryListCaptor.capture(), Mockito.same(oldInfo));
         assertEquals(2, packMapCaptor.getValue().get("resistanceTestStatus"));
+        List<BatteryMonitor> adaptedCells = batteryListCaptor.getValue();
+        assertEquals(110, adaptedCells.get(0).getResistance());
+        assertNull(adaptedCells.get(0).getResistancerageslip());
     }
 
     @Test
