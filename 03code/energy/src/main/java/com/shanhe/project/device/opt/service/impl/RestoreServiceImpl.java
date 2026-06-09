@@ -124,6 +124,7 @@ public class RestoreServiceImpl implements RestoreService {
         // 清除采集缓存
         batteryModeStatusService.clear(null);
         batteryCollectorService.resetModuleAddressCacheByBatteryGroup(null);
+        batteryCollectorService.clearDeviceStateDedupCacheByBatteryGroup(null);
         compatibilityFillService.clearConnectResistanceCache(null);
 
         // 系统操作记录
@@ -197,6 +198,7 @@ public class RestoreServiceImpl implements RestoreService {
         // 清除采集缓存
         batteryModeStatusService.clear(batterySetVO.getPackNum());
         batteryCollectorService.resetModuleAddressCacheByBatteryGroup(batterySetVO.getPackNum());
+        batteryCollectorService.clearDeviceStateDedupCacheByBatteryGroup(batterySetVO.getPackNum());
         compatibilityFillService.clearConnectResistanceCache(batterySetVO.getPackNum());
 
     }

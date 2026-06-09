@@ -93,6 +93,7 @@ class RestoreServiceImplTest {
         Mockito.verify(batteryDeviceStateService).deleteByPackNum(2);
         Mockito.verify(batteryModeStatusService).clear(2);
         Mockito.verify(batteryCollectorService).resetModuleAddressCacheByBatteryGroup(2);
+        Mockito.verify(batteryCollectorService).clearDeviceStateDedupCacheByBatteryGroup(2);
         Mockito.verify(compatibilityFillService).clearConnectResistanceCache(2);
     }
 
@@ -149,6 +150,7 @@ class RestoreServiceImplTest {
         Mockito.verify(batteryDeviceStateService).deleteAll();
         Mockito.verify(batteryModeStatusService).clear(null);
         Mockito.verify(batteryCollectorService).resetModuleAddressCacheByBatteryGroup(null);
+        Mockito.verify(batteryCollectorService).clearDeviceStateDedupCacheByBatteryGroup(null);
         Mockito.verify(compatibilityFillService).clearConnectResistanceCache(null);
     }
 }

@@ -225,6 +225,7 @@ class BatteryCollectorServiceTest {
     void shouldResetModuleAddressCacheForSelectedBatteryGroupOnly() {
         BatteryCollectorChannelConfig groupOneConfig = new BatteryCollectorChannelConfig();
         groupOneConfig.setBatteryGroup(1);
+        groupOneConfig.setName("battery-group-1");
         BatteryCollectorChannelState groupOneState = new BatteryCollectorChannelState(groupOneConfig);
         groupOneState.getActiveModuleAddresses().add(8);
         groupOneState.getModuleAddressMissCounts().put(8, 2);
@@ -232,6 +233,7 @@ class BatteryCollectorServiceTest {
 
         BatteryCollectorChannelConfig groupTwoConfig = new BatteryCollectorChannelConfig();
         groupTwoConfig.setBatteryGroup(2);
+        groupTwoConfig.setName("battery-group-2");
         BatteryCollectorChannelState groupTwoState = new BatteryCollectorChannelState(groupTwoConfig);
         groupTwoState.getActiveModuleAddresses().add(9);
         groupTwoState.getModuleAddressMissCounts().put(9, 1);
@@ -250,6 +252,42 @@ class BatteryCollectorServiceTest {
         Assertions.assertFalse(groupTwoState.getActiveModuleAddresses().isEmpty());
         Assertions.assertFalse(groupTwoState.getModuleAddressMissCounts().isEmpty());
         Assertions.assertFalse(groupTwoState.getFullDiscoveryRequested().get());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldClearDeviceStateDedupCacheForSelectedBatteryGroupOnly() {
+        BatteryCollectorChannelConfig groupOneConfig = new BatteryCollectorChannelConfig();
+        groupOneConfig.setBatteryGroup(1);
+        groupOneConfig.setName("battery-group-1");
+        BatteryCollectorChannelState groupOneState = new BatteryCollectorChannelState(groupOneConfig);
+
+        BatteryCollectorChannelConfig groupTwoConfig = new BatteryCollectorChannelConfig();
+        groupTwoConfig.setBatteryGroup(2);
+        groupTwoConfig.setName("battery-group-2");
+        BatteryCollectorChannelState groupTwoState = new BatteryCollectorChannelState(groupTwoConfig);
+
+        List<BatteryCollectorChannelState> channelStates =
+                (List<BatteryCollectorChannelState>) ReflectionTestUtils.getField(service, "channelStates");
+        channelStates.add(groupOneState);
+        channelStates.add(groupTwoState);
+
+        Map<String, String> lastStateValues =
+                (Map<String, String>) ReflectionTestUtils.getField(service, "lastStateValues");
+        lastStateValues.put("1:GROUP_246_FRESHNESS", "fresh");
+        lastStateValues.put("battery-group-1:CHANNEL_OPEN", "open");
+        lastStateValues.put("battery-group-1:8:MODULE_ACTIVE", "active");
+        lastStateValues.put("2:GROUP_246_FRESHNESS", "fresh");
+        lastStateValues.put("battery-group-2:CHANNEL_OPEN", "open");
+
+        int removed = service.clearDeviceStateDedupCacheByBatteryGroup(1);
+
+        Assertions.assertEquals(3, removed);
+        Assertions.assertFalse(lastStateValues.containsKey("1:GROUP_246_FRESHNESS"));
+        Assertions.assertFalse(lastStateValues.containsKey("battery-group-1:CHANNEL_OPEN"));
+        Assertions.assertFalse(lastStateValues.containsKey("battery-group-1:8:MODULE_ACTIVE"));
+        Assertions.assertTrue(lastStateValues.containsKey("2:GROUP_246_FRESHNESS"));
+        Assertions.assertTrue(lastStateValues.containsKey("battery-group-2:CHANNEL_OPEN"));
     }
 
     @Test

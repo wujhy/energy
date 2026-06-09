@@ -1683,6 +1683,45 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return matched;
     }
 
+    /**
+     * 清理设备状态去重缓存，确保删除状态表后相同状态值也能重新写入。
+     *
+     * @param batteryGroup 电池组编号；为空时清除全部
+     * @return 清理的缓存条目数
+     */
+    public int clearDeviceStateDedupCacheByBatteryGroup(Integer batteryGroup) {
+        if (batteryGroup == null) {
+            int size = lastStateValues.size();
+            lastStateValues.clear();
+            return size;
+        }
+        int before = lastStateValues.size();
+        String packPrefix = batteryGroup + ":";
+        List<String> channelPrefixes = new ArrayList<>();
+        for (BatteryCollectorChannelState state : new ArrayList<>(channelStates)) {
+            BatteryCollectorChannelConfig config = state == null ? null : state.getConfig();
+            if (config != null && Objects.equals(batteryGroup, config.getBatteryGroup())
+                    && config.getName() != null && !config.getName().trim().isEmpty()) {
+                channelPrefixes.add(config.getName() + ":");
+            }
+        }
+        lastStateValues.keySet().removeIf(key ->
+                key != null && (key.startsWith(packPrefix) || startsWithAny(key, channelPrefixes)));
+        return before - lastStateValues.size();
+    }
+
+    private boolean startsWithAny(String value, List<String> prefixes) {
+        if (value == null || prefixes == null || prefixes.isEmpty()) {
+            return false;
+        }
+        for (String prefix : prefixes) {
+            if (value.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** 重置通道的模块地址缓存。 */
     private void resetModuleAddressCache(BatteryCollectorChannelState state) {
         if (state == null) {
