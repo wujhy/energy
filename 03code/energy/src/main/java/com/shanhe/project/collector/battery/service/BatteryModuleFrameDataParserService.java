@@ -54,7 +54,7 @@ public class BatteryModuleFrameDataParserService {
         int address = frame.getAddress();
         // 01/81 中地址 246 是电流温度模块，1..245 才是单体模块。
         if (address == ARRAY_MODULE_ADDRESS) {
-            if (payload.length < 11) {
+            if (payload.length < 1) {
                 return null;
             }
             int responseFlag = u8(payload, 0);
@@ -66,6 +66,9 @@ public class BatteryModuleFrameDataParserService {
             if (responseFlag != 0) {
                 return builder.build();
             }
+            if (payload.length < 11) {
+                return null;
+            }
             return builder
                     .chargeDischargeCurrent(scale(s16(payload, 1), 10.0d))
                     .floatCurrent(scale(s16(payload, 3), 1000.0d))
@@ -74,7 +77,7 @@ public class BatteryModuleFrameDataParserService {
                     .environmentTemperature2(scale(s16(payload, 9), 10.0d))
                     .build();
         }
-        if (address < 1 || address > MAX_CELL_ADDRESS || payload.length < 10) {
+        if (address < 1 || address > MAX_CELL_ADDRESS || payload.length < 1) {
             return null;
         }
         int responseFlag = u8(payload, 0);
@@ -85,6 +88,9 @@ public class BatteryModuleFrameDataParserService {
                 .success(responseFlag == 0);
         if (responseFlag != 0) {
             return builder.build();
+        }
+        if (payload.length < 10) {
+            return null;
         }
         return builder
                 .cellVoltage(scale(u16(payload, 1), 1000.0d))

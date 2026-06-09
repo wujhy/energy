@@ -100,9 +100,9 @@ class BatteryModuleFrameDataParserServiceTest {
     @Test
     void shouldKeepFailedModuleInfoAsStatusOnly() {
         BatteryCollectorFrame singleFrame = codec.buildRequest(0x05, 0x81,
-                new byte[]{0x01, 0x09, (byte) 0xC4, 0x00, 0x64, 0x00, (byte) 0xFB, 0x01, 0x04, (byte) 0xD2});
+                new byte[]{0x01});
         BatteryCollectorFrame groupFrame = codec.buildRequest(0xF6, 0x81,
-                new byte[]{0x02, 0x00, 0x7B, 0x00, 0x7B, 0x30, 0x39, (byte) 0xFF, (byte) 0x9C, 0x00, (byte) 0xFA});
+                new byte[]{0x02});
 
         BatteryModuleFrameData singleData = service.parse(singleFrame);
         BatteryModuleFrameData groupData = service.parse(groupFrame);
