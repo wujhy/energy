@@ -15,7 +15,8 @@ import javax.annotation.Resource;
 /**
  * Modbus RTU 从站服务。
  * <p>
- * 只支持读保持寄存器（功能码 0x03），不开放写寄存器。
+ * 支持读保持寄存器（功能码 0x03）和已映射的写单寄存器（功能码 0x06），
+ * 写操作必须经 ModbusWriteMappingService 转为内部控制服务调用。
  * 默认关闭，通过 battery-collector.modbus-rtu.enabled 启用。
  *
  * @author wjh
