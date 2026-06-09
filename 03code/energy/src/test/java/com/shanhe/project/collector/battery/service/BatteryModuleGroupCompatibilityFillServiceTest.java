@@ -26,7 +26,11 @@ class BatteryModuleGroupCompatibilityFillServiceTest {
         Assertions.assertEquals(25.6d, group.getBatteryAvgTemperature(), 0.0001d);
         Assertions.assertEquals(0.12d, group.getBatteryVoltageRange(), 0.0001d);
         Assertions.assertEquals(5, group.getBatteryPackStatus());
+        Assertions.assertNull(group.getBatteryPackSoc());
         Assertions.assertNull(group.getBcapacity());
+        Assertions.assertNull(group.getCapacity());
+        Assertions.assertNull(group.getBackupDuration());
+        Assertions.assertNull(group.getDisChargeCapacity());
         Assertions.assertNull(group.getBatteryPackSoh());
     }
 
@@ -73,5 +77,31 @@ class BatteryModuleGroupCompatibilityFillServiceTest {
         service.fillAfterCalculation(channelConfig, new BatteryModuleGroupRealtime());
 
         Mockito.verifyNoInteractions(preBatteryGroupService);
+    }
+
+    @Test
+    void shouldNotCalculateSocSohOrCapacityWhenPredictionCacheMissing() {
+        PreBatteryGroupService preBatteryGroupService = Mockito.mock(PreBatteryGroupService.class);
+        ReflectionTestUtils.setField(service, "preBatteryGroupService", preBatteryGroupService);
+        Mockito.when(preBatteryGroupService.lastCache(1)).thenReturn(null);
+
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setBatteryGroup(1);
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackCurrent(-1.0d);
+        group.setPackVoltage(53.2d);
+        group.setAvgCellVoltage(2.21d);
+        group.setMinCellVoltage(2.08d);
+        group.setMaxCellVoltage(2.35d);
+
+        service.fillAfterCalculation(channelConfig, group);
+
+        Assertions.assertEquals(5, group.getBatteryPackStatus());
+        Assertions.assertNull(group.getBatteryPackSoc());
+        Assertions.assertNull(group.getBatteryPackSoh());
+        Assertions.assertNull(group.getBcapacity());
+        Assertions.assertNull(group.getCapacity());
+        Assertions.assertNull(group.getBackupDuration());
+        Assertions.assertNull(group.getDisChargeCapacity());
     }
 }
