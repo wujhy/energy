@@ -1,5 +1,7 @@
 package com.shanhe.project.collector.battery.service;
 
+import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
+import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * BatteryDeviceStateService 在单测中传 null，状态寄存器测试需要单独 mock。
@@ -225,6 +228,116 @@ class BatteryModuleModbusReadMappingServiceTest {
     }
 
     @Test
+    void shouldMapDeviceStateRegistersFrom411483To411488() {
+        BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        Mockito.when(stateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.CHANNEL,
+                "COM1",
+                BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN))
+                .thenReturn(deviceState("open"));
+        Mockito.when(stateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.CHANNEL,
+                "COM1",
+                BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR))
+                .thenReturn(deviceState("error", BatteryDeviceStateConstants.StateLevel.ERROR, null));
+        Mockito.when(stateService.selectByChannelAndCode(
+                "COM1",
+                BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE))
+                .thenReturn(Collections.singletonList(deviceState("active")));
+        Mockito.when(stateService.selectByChannelAndCode(
+                "COM1",
+                BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT))
+                .thenReturn(Collections.singletonList(deviceState("01/81")));
+        Mockito.when(stateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.PACK,
+                "1",
+                BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS))
+                .thenReturn(deviceState("fresh"));
+        Mockito.when(stateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.PACK,
+                "1",
+                BatteryDeviceStateConstants.StateCode.WORK_MODE))
+                .thenReturn(deviceState("mode", null, 6));
+
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, stateService, properties("COM1", 1));
+
+        Assertions.assertArrayEquals(new int[]{1, 1, 1, 1, 1, 6},
+                service.readHoldingRegisters(1, 411483, 6));
+    }
+
+    @Test
+    void shouldReturnZeroForMissingDeviceStateRegisters() {
+        BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        Mockito.when(stateService.selectByChannelAndCode(
+                "COM1",
+                BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE))
+                .thenReturn(Collections.singletonList(deviceState("inactive")));
+        Mockito.when(stateService.selectByChannelAndCode(
+                "COM1",
+                BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT))
+                .thenReturn(Collections.emptyList());
+
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, stateService, properties("COM1", 1));
+
+        Assertions.assertArrayEquals(new int[]{0, 0, 0, 0, 0, 0},
+                service.readHoldingRegisters(1, 411483, 6));
+    }
+
+    @Test
+    void shouldReturnZeroForClosedChannelOpenRegister() {
+        BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        Mockito.when(stateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.CHANNEL,
+                "COM1",
+                BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN))
+                .thenReturn(deviceState("closed"));
+
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, stateService, properties("COM1", 1));
+
+        Assertions.assertArrayEquals(new int[]{0}, service.readHoldingRegisters(1, 411483, 1));
+    }
+
+    @Test
+    void shouldReturnZeroForNonErrorChannelErrorRegister() {
+        BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        Mockito.when(stateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.CHANNEL,
+                "COM1",
+                BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR))
+                .thenReturn(deviceState("normal", BatteryDeviceStateConstants.StateLevel.NORMAL, null));
+
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, stateService, properties("COM1", 1));
+
+        Assertions.assertArrayEquals(new int[]{0}, service.readHoldingRegisters(1, 411484, 1));
+    }
+
+    @Test
+    void shouldClampWorkModeRegisterToUnsigned16() {
+        BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        Mockito.when(stateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.PACK,
+                "1",
+                BatteryDeviceStateConstants.StateCode.WORK_MODE))
+                .thenReturn(deviceState("mode", null, -1))
+                .thenReturn(deviceState("mode", null, 70000));
+
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, stateService, properties("COM1", 1));
+
+        Assertions.assertArrayEquals(new int[]{0}, service.readHoldingRegisters(1, 411488, 1));
+        Assertions.assertArrayEquals(new int[]{65535}, service.readHoldingRegisters(1, 411488, 1));
+    }
+
+    @Test
     void shouldHandleBoundaryCellAddresses() {
         BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
         Mockito.when(mapper.selectCells(1)).thenReturn(Arrays.asList(
@@ -270,5 +383,22 @@ class BatteryModuleModbusReadMappingServiceTest {
         BatteryDeviceState state = new BatteryDeviceState();
         state.setStateValue(stateValue);
         return state;
+    }
+
+    private BatteryDeviceState deviceState(String stateValue, String stateLevel, Integer mode) {
+        BatteryDeviceState state = deviceState(stateValue);
+        state.setStateLevel(stateLevel);
+        state.setMode(mode);
+        return state;
+    }
+
+    private BatteryCollectorProperties properties(String channelName, int packNum) {
+        BatteryCollectorChannelConfig channel = new BatteryCollectorChannelConfig();
+        channel.setName(channelName);
+        channel.setEnabled(Boolean.TRUE);
+        channel.setBatteryGroup(packNum);
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        properties.setChannels(Collections.singletonList(channel));
+        return properties;
     }
 }
