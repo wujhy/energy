@@ -62,7 +62,7 @@ class BatteryModuleReportLogAdapterServiceTest {
         Assertions.assertEquals("99.9", packParam.get("bcapacity"));
 
         BatteryMonitor monitor = reportLog.getBatteryList().get(0);
-        Assertions.assertEquals(10L, monitor.getConfigId());
+        Assertions.assertEquals(Constants.DEFAULT_CONFIG_ID, monitor.getConfigId());
         Assertions.assertEquals(1, monitor.getPackNum());
         Assertions.assertEquals(1, monitor.getBatNum());
         Assertions.assertEquals(2.10d, monitor.getVoltage(), 0.0001d);
@@ -84,6 +84,31 @@ class BatteryModuleReportLogAdapterServiceTest {
         Assertions.assertTrue(reportLog.getBatteryList().isEmpty());
         Assertions.assertEquals("{}", reportLog.getPackData());
         Assertions.assertEquals("[]", reportLog.getMonitorData());
+    }
+
+    @Test
+    void shouldNotHardCalculateSocSohOrCapacityWhenCompatibilityFieldsMissing() {
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackVoltage(220.0d);
+        group.setBatteryPackOuterVoltage(219.0d);
+        group.setPackCurrent(-10.0d);
+        group.setMaxCellVoltage(2.30d);
+        group.setMinCellVoltage(2.10d);
+        group.setAvgCellVoltage(2.20d);
+        group.setBatteryAvgTemperature(25.0d);
+        group.setBatteryPackStatus(5);
+
+        Map<String, Object> packParam = service.toPackParam(group);
+
+        Assertions.assertFalse(packParam.containsKey("batteryPackSoc"));
+        Assertions.assertFalse(packParam.containsKey("batteryPackSoh"));
+        Assertions.assertFalse(packParam.containsKey("bcapacity"));
+        Assertions.assertFalse(packParam.containsKey("capacity"));
+        Assertions.assertFalse(packParam.containsKey("disChargeCapacity"));
+        Assertions.assertFalse(packParam.containsKey("backupDuration"));
+        Assertions.assertEquals("220.0", packParam.get("packVoltage"));
+        Assertions.assertEquals("-10.0", packParam.get("packCurrent"));
+        Assertions.assertEquals("5", packParam.get("batteryPackStatus"));
     }
 
     private BatteryModuleCellRealtime cell(int batNum, double voltage, int resistance, double temperature) {
