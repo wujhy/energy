@@ -32,6 +32,25 @@ class BatteryModuleFrameDataParserServiceTest {
     }
 
     @Test
+    void shouldParseSingleModuleInfoAtMaxAddressWithSignedTemperature() {
+        BatteryCollectorFrame frame = codec.buildRequest(0xF5, 0x81,
+                new byte[]{0x00, 0x08, (byte) 0xFC, 0x00, (byte) 0xC8,
+                        (byte) 0xFF, (byte) 0xCE, 0x00, 0x00, 0x00});
+
+        BatteryModuleFrameData data = service.parse(frame);
+
+        Assertions.assertNotNull(data);
+        Assertions.assertEquals(BatteryModuleDataType.SINGLE_MODULE_INFO, data.getType());
+        Assertions.assertEquals(245, data.getModuleAddress());
+        Assertions.assertTrue(data.isSuccess());
+        Assertions.assertEquals(2.3d, data.getCellVoltage(), 0.0001d);
+        Assertions.assertEquals(200, data.getInternalResistance());
+        Assertions.assertEquals(-5.0d, data.getCellTemperature(), 0.0001d);
+        Assertions.assertEquals(0, data.getLeakageStatus());
+        Assertions.assertEquals(0.0d, data.getSwollenVoltage(), 0.0001d);
+    }
+
+    @Test
     void shouldParseArrayModuleInfo() {
         BatteryCollectorFrame frame = codec.buildRequest(0xF6, 0x81,
                 new byte[]{0x00, 0x00, 0x7B, 0x00, 0x7B, 0x30, 0x39, (byte) 0xFF, (byte) 0x9C, 0x00, (byte) 0xFA});
@@ -46,6 +65,24 @@ class BatteryModuleFrameDataParserServiceTest {
         Assertions.assertEquals(123.45d, data.getExternalVoltage(), 0.0001d);
         Assertions.assertEquals(-10.0d, data.getEnvironmentTemperature1(), 0.0001d);
         Assertions.assertEquals(25.0d, data.getEnvironmentTemperature2(), 0.0001d);
+    }
+
+    @Test
+    void shouldParseArrayModuleInfoWithSignedCurrentFields() {
+        BatteryCollectorFrame frame = codec.buildRequest(0xF6, 0x81,
+                new byte[]{0x00, (byte) 0xFF, (byte) 0x85, (byte) 0xEC, 0x78,
+                        0x13, (byte) 0x88, 0x00, 0x00, (byte) 0xFF, (byte) 0x9C});
+
+        BatteryModuleFrameData data = service.parse(frame);
+
+        Assertions.assertNotNull(data);
+        Assertions.assertEquals(BatteryModuleDataType.ARRAY_MODULE_INFO, data.getType());
+        Assertions.assertEquals(246, data.getModuleAddress());
+        Assertions.assertEquals(-12.3d, data.getChargeDischargeCurrent(), 0.0001d);
+        Assertions.assertEquals(-5.0d, data.getFloatCurrent(), 0.0001d);
+        Assertions.assertEquals(50.0d, data.getExternalVoltage(), 0.0001d);
+        Assertions.assertEquals(0.0d, data.getEnvironmentTemperature1(), 0.0001d);
+        Assertions.assertEquals(-10.0d, data.getEnvironmentTemperature2(), 0.0001d);
     }
 
     @Test
