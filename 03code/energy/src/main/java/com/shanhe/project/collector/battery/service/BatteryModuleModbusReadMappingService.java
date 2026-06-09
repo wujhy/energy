@@ -257,9 +257,9 @@ public class BatteryModuleModbusReadMappingService {
             case 411484: // 通道异常状态：1=异常, 0=正常
                 return readChannelErrorStatus(snapshot.getChannelName());
             case 411485: // 模块活跃状态：1=有模块活跃, 0=全部无响应
-                return readModuleActiveStatus(snapshot.getChannelName());
+                return readModuleActiveStatus(snapshot.getChannelName(), packNum);
             case 411486: // 模块超时状态：1=存在超时, 0=正常
-                return readModuleTimeoutStatus(snapshot.getChannelName());
+                return readModuleTimeoutStatus(snapshot.getChannelName(), packNum);
             case 411487: // 246 新鲜度：1=新鲜, 0=过期
                 return readGroup246Freshness(packNum);
             case 411488: // 工作模式：模式码
@@ -292,7 +292,7 @@ public class BatteryModuleModbusReadMappingService {
     }
 
     /** 读取模块活跃状态。 */
-    private int readModuleActiveStatus(String channelName) {
+    private int readModuleActiveStatus(String channelName, Integer packNum) {
         if (channelName == null || batteryDeviceStateService == null) {
             return 0;
         }
@@ -300,7 +300,7 @@ public class BatteryModuleModbusReadMappingService {
                 channelName, BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE);
         if (states != null) {
             for (BatteryDeviceState state : states) {
-                if ("active".equals(state.getStateValue())) {
+                if (belongsToPack(state, packNum) && "active".equals(state.getStateValue())) {
                     return 1;
                 }
             }
@@ -309,13 +309,27 @@ public class BatteryModuleModbusReadMappingService {
     }
 
     /** 读取模块超时状态。 */
-    private int readModuleTimeoutStatus(String channelName) {
+    private int readModuleTimeoutStatus(String channelName, Integer packNum) {
         if (channelName == null || batteryDeviceStateService == null) {
             return 0;
         }
         List<BatteryDeviceState> states = batteryDeviceStateService.selectByChannelAndCode(
                 channelName, BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT);
-        return states != null && !states.isEmpty() ? 1 : 0;
+        if (states != null) {
+            for (BatteryDeviceState state : states) {
+                if (belongsToPack(state, packNum)
+                        && !BatteryDeviceStateConstants.StateLevel.NORMAL.equals(state.getStateLevel())
+                        && !"recovered".equals(state.getStateValue())) {
+                    return 1;
+                }
+            }
+        }
+        return 0;
+    }
+
+    /** 判断模块状态是否归属当前电池组。 */
+    private boolean belongsToPack(BatteryDeviceState state, Integer packNum) {
+        return state != null && packNum != null && packNum.equals(state.getPackNum());
     }
 
     /** 读取 246 新鲜度。 */

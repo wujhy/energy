@@ -281,6 +281,30 @@ class BatteryModuleModbusReadMappingServiceTest {
     }
 
     @Test
+    void shouldIgnoreOtherPackAndRecoveredModuleStatusRegisters() {
+        BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        Mockito.when(stateService.selectByChannelAndCode(
+                "COM1",
+                BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE))
+                .thenReturn(Arrays.asList(
+                        deviceState(2, "active"),
+                        deviceState(1, "inactive")));
+        Mockito.when(stateService.selectByChannelAndCode(
+                "COM1",
+                BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT))
+                .thenReturn(Arrays.asList(
+                        deviceState(2, "01/81", BatteryDeviceStateConstants.StateLevel.WARN, null),
+                        deviceState(1, "recovered", BatteryDeviceStateConstants.StateLevel.NORMAL, null)));
+
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, stateService, properties("COM1", 1));
+
+        Assertions.assertArrayEquals(new int[]{0, 0},
+                service.readHoldingRegisters(1, 411485, 2));
+    }
+
+    @Test
     void shouldReturnZeroForMissingDeviceStateRegisters() {
         BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
@@ -394,7 +418,14 @@ class BatteryModuleModbusReadMappingServiceTest {
 
     private BatteryDeviceState deviceState(String stateValue) {
         BatteryDeviceState state = new BatteryDeviceState();
+        state.setPackNum(1);
         state.setStateValue(stateValue);
+        return state;
+    }
+
+    private BatteryDeviceState deviceState(Integer packNum, String stateValue) {
+        BatteryDeviceState state = deviceState(stateValue);
+        state.setPackNum(packNum);
         return state;
     }
 
@@ -402,6 +433,12 @@ class BatteryModuleModbusReadMappingServiceTest {
         BatteryDeviceState state = deviceState(stateValue);
         state.setStateLevel(stateLevel);
         state.setMode(mode);
+        return state;
+    }
+
+    private BatteryDeviceState deviceState(Integer packNum, String stateValue, String stateLevel, Integer mode) {
+        BatteryDeviceState state = deviceState(stateValue, stateLevel, mode);
+        state.setPackNum(packNum);
         return state;
     }
 
