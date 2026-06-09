@@ -10,6 +10,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Date;
 
 class BatteryModuleRealtimeConsumerTest {
@@ -100,11 +104,32 @@ class BatteryModuleRealtimeConsumerTest {
 
         Assertions.assertEquals(1, realtime.getPackNum());
         Assertions.assertFalse(realtime.getGroupModuleFresh());
+        Assertions.assertNull(realtime.getPackCurrent());
+        Assertions.assertNull(realtime.getBatteryPackFloatCurrent());
+        Assertions.assertNull(realtime.getBatteryPackOuterVoltage());
         Assertions.assertNull(realtime.getChargeDischargeCurrent());
         Assertions.assertNull(realtime.getFloatCurrent());
         Assertions.assertNull(realtime.getExternalVoltage());
         Assertions.assertNull(realtime.getEnvironmentTemperature1());
         Assertions.assertNull(realtime.getEnvironmentTemperature2());
+    }
+
+    @Test
+    void shouldKeepPreviousGroupRawValuesWhenFailedGroupUpsertWritesNulls() throws IOException {
+        String xml = new String(Files.readAllBytes(Paths.get(
+                "src/main/resources/mybatis/collector/BatteryModuleRealtimeMapper.xml")), StandardCharsets.UTF_8);
+
+        assertCoalesceExistingValue(xml, "pack_current");
+        assertCoalesceExistingValue(xml, "battery_pack_float_current");
+        assertCoalesceExistingValue(xml, "battery_pack_outer_voltage");
+        assertCoalesceExistingValue(xml, "environment_temperature1");
+        assertCoalesceExistingValue(xml, "environment_temperature2");
+        assertCoalesceExistingValue(xml, "charge_discharge_current");
+        assertCoalesceExistingValue(xml, "float_current");
+        assertCoalesceExistingValue(xml, "external_voltage");
+        Assertions.assertTrue(xml.contains("group_module_fresh = excluded.group_module_fresh"));
+        Assertions.assertTrue(xml.contains("poll_batch_no = excluded.poll_batch_no"));
+        Assertions.assertTrue(xml.contains("poll_started_at = excluded.poll_started_at"));
     }
 
     @Test
@@ -135,5 +160,10 @@ class BatteryModuleRealtimeConsumerTest {
         cell.setBatNum(batNum);
         cell.setLeakageStatus(leakageStatus);
         return cell;
+    }
+
+    private void assertCoalesceExistingValue(String xml, String column) {
+        Assertions.assertTrue(xml.contains(column + " = coalesce(excluded." + column
+                + ", battery_module_group_realtime." + column + ")"));
     }
 }

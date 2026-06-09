@@ -29,11 +29,11 @@ class BatteryRealtimePostProcessorsTest {
         IStatBatteryPackService statBatteryPackService = Mockito.mock(IStatBatteryPackService.class);
         ReflectionTestUtils.setField(processor, "statBatteryPackService", statBatteryPackService);
 
-        processor.process(context(group("6", null), cells()));
+        processor.process(context(group(6, null), cells()));
 
         ArgumentCaptor<Map<String, Object>> packMapCaptor = ArgumentCaptor.forClass(Map.class);
         Mockito.verify(statBatteryPackService).insertList(Mockito.eq(1), packMapCaptor.capture(), Mockito.anyList());
-        assertEquals("6", packMapCaptor.getValue().get("batteryPackStatus"));
+        assertEquals(6, packMapCaptor.getValue().get("batteryPackStatus"));
         assertEquals(53.2, packMapCaptor.getValue().get("packVoltage"));
     }
 
@@ -45,7 +45,7 @@ class BatteryRealtimePostProcessorsTest {
         ReflectionTestUtils.setField(processor, "optLogService", optLogService);
         ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
 
-        processor.process(context(group("99", null), cells()));
+        processor.process(context(group(99, null), cells()));
 
         Mockito.verifyNoInteractions(optLogService);
         Mockito.verifyNoInteractions(reportLogService);
@@ -61,7 +61,7 @@ class BatteryRealtimePostProcessorsTest {
         ReflectionTestUtils.setField(processor, "optLogService", optLogService);
         ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
 
-        processor.process(context(group("6", null), cells()));
+        processor.process(context(group(6, null), cells()));
 
         Mockito.verify(reportLogService).lastCache(1);
         Mockito.verify(optLogService).insertBattery(Mockito.eq(1), Mockito.anyMap(), Mockito.same(oldInfo));
@@ -75,7 +75,7 @@ class BatteryRealtimePostProcessorsTest {
         ReflectionTestUtils.setField(processor, "statBatteryResService", statBatteryResService);
         ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
 
-        processor.process(context(group("6", null), cells()));
+        processor.process(context(group(6, null), cells()));
 
         Mockito.verifyNoInteractions(statBatteryResService);
         Mockito.verifyNoInteractions(reportLogService);
@@ -91,7 +91,7 @@ class BatteryRealtimePostProcessorsTest {
         ReflectionTestUtils.setField(processor, "statBatteryResService", statBatteryResService);
         ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
 
-        processor.process(context(group("6", 2), cells()));
+        processor.process(context(group(6, 2), cells()));
 
         ArgumentCaptor<Map<String, Object>> packMapCaptor = ArgumentCaptor.forClass(Map.class);
         Mockito.verify(statBatteryResService).init(Mockito.eq(1), packMapCaptor.capture(), Mockito.anyList(), Mockito.same(oldInfo));
@@ -106,7 +106,7 @@ class BatteryRealtimePostProcessorsTest {
         Mockito.when(batteryPackService.selectBatteryInfoByPackNum(1)).thenReturn(pack);
         ReflectionTestUtils.setField(processor, "batteryPackService", batteryPackService);
 
-        processor.process(context(group("6", null), cells()));
+        processor.process(context(group(6, null), cells()));
 
         Mockito.verify(batteryPackService).update(pack);
         assertEquals(600, pack.getVoltageRange());
@@ -131,7 +131,7 @@ class BatteryRealtimePostProcessorsTest {
                 .build();
     }
 
-    private BatteryModuleGroupRealtime group(String batteryPackStatus, Integer resistanceTestStatus) {
+    private BatteryModuleGroupRealtime group(Integer batteryPackStatus, Integer resistanceTestStatus) {
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
         group.setPackNum(1);
         group.setPackVoltage(53.2);
