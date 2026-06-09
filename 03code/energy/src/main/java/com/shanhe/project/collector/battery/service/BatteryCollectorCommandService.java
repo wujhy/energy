@@ -6,6 +6,7 @@ import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
 import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.*;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
+import com.shanhe.project.iot.model.BatteryModeInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -45,12 +46,20 @@ public class BatteryCollectorCommandService {
             "980聚合命令已映射为600模块命令并加入串口下发队列";
 
     /**
+     * 已有测试/维护模式运行时的提示。
+     */
+    private static final String MODE_BUSY_MESSAGE =
+            "当前有其他测试运行中，无法执行均衡操作";
+
+    /**
      * 600节模块端显式控制命令构造服务。
      */
     @Resource
     private BatteryModuleControlCommandService moduleControlCommandService = new BatteryModuleControlCommandService();
     @Resource
     private BatteryCollectorProperties properties;
+    @Resource
+    private BatteryModeStatusService batteryModeStatusService;
 
     /**
      * 独立采集服务，负责按通道线程串行下发显式模块端命令。
@@ -237,6 +246,9 @@ public class BatteryCollectorCommandService {
                                                                int moduleAddress,
                                                                int balanceValue,
                                                                Long timeoutMs) {
+        if (hasRunningWorkMode(batteryGroup)) {
+            return blocked(BatteryAggregateCommandDefinition.BATTERY_EQUALIZATION_SET, channelName, MODE_BUSY_MESSAGE);
+        }
         BatteryModuleControlCommand moduleCommand;
         try {
             moduleCommand = moduleControlCommandService.singleBatteryBalance(moduleAddress, balanceValue);
@@ -419,6 +431,17 @@ public class BatteryCollectorCommandService {
         return collectorService != null && collectorService.submitModuleCommand(channelName, moduleCommand);
     }
 
+    /** 当前已有工作模式运行时，禁止均衡命令插队。 */
+    private boolean hasRunningWorkMode(Integer batteryGroup) {
+        if (batteryModeStatusService == null) {
+            return false;
+        }
+        BatteryModeInfo modeInfo = batteryModeStatusService.get(batteryGroup);
+        return modeInfo != null
+                && modeInfo.getMode() != null
+                && modeInfo.getMode() != BatteryModeStatusService.MODE_IDLE;
+    }
+
     /** 为模块命令设置电池组和工作模式上下文。 */
     private BatteryModuleControlCommand applyContext(BatteryModuleControlCommand moduleCommand,
                                                      Integer batteryGroup,
@@ -540,6 +563,26 @@ public class BatteryCollectorCommandService {
                 .requestCode(commandDefinition == null ? null : commandDefinition.getRequestCode())
                 .responseCode(commandDefinition == null ? null : commandDefinition.getResponseCode())
                 .message(AGGREGATE_COMMAND_UNSUPPORTED)
+                .build();
+    }
+
+    /** 构建被前置策略阻止的命令结果。 */
+    private BatteryCollectorCommandResult blocked(BatteryAggregateCommandDefinition commandDefinition,
+                                                  String channelName,
+                                                  String message) {
+        log.warn("600模块命令被前置策略阻止, 通道={}, 命令={}, 原因={}",
+                channelName,
+                commandDefinition == null ? null : commandDefinition.name(),
+                message);
+        return BatteryCollectorCommandResult.builder()
+                .success(false)
+                .timeout(false)
+                .mappedToModuleCommand(false)
+                .channelName(channelName)
+                .commandDefinition(commandDefinition)
+                .requestCode(commandDefinition == null ? null : commandDefinition.getRequestCode())
+                .responseCode(commandDefinition == null ? null : commandDefinition.getResponseCode())
+                .message(message)
                 .build();
     }
 }

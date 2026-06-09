@@ -175,6 +175,25 @@ class BatteryCollectorCommandServiceTest {
     }
 
     @Test
+    void shouldRejectBalanceWhenWorkModeAlreadyRunning() {
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        modeStatusService.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+
+        BatteryCollectorCommandResult result = service.singleBatteryBalance(
+                "battery-rs485-1",
+                1,
+                8,
+                1,
+                1000L);
+
+        Assertions.assertFalse(result.isSuccess());
+        Assertions.assertFalse(result.isMappedToModuleCommand());
+        Assertions.assertNull(result.getModuleControlCommand());
+        Assertions.assertTrue(result.getMessage().contains("其他测试运行中"));
+    }
+
+    @Test
     void shouldMapInternalResistanceCoefficientWithM460FloatPayload() {
         BatteryCollectorCommandResult result = service.setInternalResistanceCoefficient(
                 "battery-rs485-1",
