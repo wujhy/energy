@@ -60,7 +60,8 @@ public class BatteryModuleCompatReportLogSyncService {
             return;
         }
         List<BatteryMonitor> batteryList = reportLog.getBatteryList();
-        if (batteryList == null || batteryList.isEmpty() || reportLog.getPackParam() == null) {
+        if (batteryList == null || batteryList.isEmpty()
+                || reportLog.getPackParam() == null || reportLog.getPackParam().isEmpty()) {
             return;
         }
         boolean isInsert = dataService.isInsert(channelConfig.getBatteryGroup() + "");

@@ -53,6 +53,29 @@ class BatteryModuleCompatReportLogSyncServiceTest {
     }
 
     @Test
+    void shouldSkipWhenAdaptedReportHasEmptyPackParam() {
+        BatteryModuleCompatReportLogSyncService service = new BatteryModuleCompatReportLogSyncService();
+        BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
+        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
+        DataService dataService = Mockito.mock(DataService.class);
+        ReflectionTestUtils.setField(service, "adapterService", adapterService);
+        ReflectionTestUtils.setField(service, "batteryReportLogService", reportLogService);
+        ReflectionTestUtils.setField(service, "dataService", dataService);
+        BatteryReportLog reportLog = new BatteryReportLog();
+        reportLog.setPackParam(Collections.emptyMap());
+        reportLog.setBatteryList(Collections.singletonList(new BatteryMonitor()));
+        Mockito.when(adapterService.buildReportLog(Mockito.eq(1), Mockito.any(), Mockito.any()))
+                .thenReturn(reportLog);
+
+        service.sync(channelConfig(), new BatteryModuleGroupRealtime(),
+                Collections.singletonList(new BatteryModuleCellRealtime()));
+
+        Mockito.verify(adapterService).buildReportLog(Mockito.eq(1), Mockito.any(), Mockito.any());
+        Mockito.verifyNoInteractions(dataService);
+        Mockito.verifyNoInteractions(reportLogService);
+    }
+
+    @Test
     void shouldInsertAdaptedReportThroughOldHistoryService() {
         BatteryModuleCompatReportLogSyncService service = new BatteryModuleCompatReportLogSyncService();
         BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
