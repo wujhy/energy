@@ -1,5 +1,6 @@
 package com.shanhe.project.collector.battery.service;
 
+import com.fazecast.jSerialComm.SerialPort;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelSnapshot;
@@ -19,6 +20,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +52,33 @@ class BatteryCollectorServiceTest {
         @Override
         public void remove(String cacheName, String key) {
             cache.remove(cacheName + ":" + key);
+        }
+    }
+
+    private static class RecordingBatteryCollectorService extends BatteryCollectorService {
+        private final List<Integer> writtenCommands = new ArrayList<>();
+        private BatteryCollectorChannelState commandQueueTarget;
+        private int enqueueCommandAfterWriteCount = -1;
+        private boolean failWrites;
+
+        @Override
+        protected boolean isSerialPortOpen(SerialPort serialPort) {
+            return true;
+        }
+
+        @Override
+        protected int writeSerialBytes(SerialPort serialPort, byte[] bytes) {
+            writtenCommands.add(bytes[6] & 0xFF);
+            if (commandQueueTarget != null && writtenCommands.size() == enqueueCommandAfterWriteCount) {
+                commandQueueTarget.getQueuedModuleCommands().offer(BatteryModuleControlCommand.builder()
+                        .protocolCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST)
+                        .address(8)
+                        .requestCode(0x02)
+                        .responseCode(0x82)
+                        .payload(new byte[0])
+                        .build());
+            }
+            return failWrites ? 0 : bytes.length;
         }
     }
 
@@ -572,6 +601,59 @@ class BatteryCollectorServiceTest {
         ReflectionTestUtils.invokeMethod(service, "processQueuedModuleCommand", state);
 
         Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
+    }
+
+    @Test
+    void shouldBreakImmediateModuleCommandProcessingWhenWriteFails() {
+        RecordingBatteryCollectorService recordingService = new RecordingBatteryCollectorService();
+        ReflectionTestUtils.setField(recordingService, "frameCodec", new BatteryCollectorFrameCodec());
+        ReflectionTestUtils.setField(recordingService, "running", true);
+        recordingService.failWrites = true;
+        BatteryCollectorChannelConfig channelConfig = newChannelConfig();
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        state.setSerialPort(SerialPort.getCommPort("battery-test"));
+        state.getQueuedModuleCommands().offer(BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST)
+                .address(8)
+                .requestCode(0x02)
+                .responseCode(0x82)
+                .payload(new byte[0])
+                .build());
+
+        ReflectionTestUtils.invokeMethod(recordingService, "processQueuedModuleCommandsImmediately", state);
+
+        Assertions.assertEquals(Arrays.asList(0x02), recordingService.writtenCommands);
+        Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
+        Assertions.assertNull(state.getPendingCommand());
+    }
+
+    @Test
+    void shouldRunQueuedModuleCommandBetweenAutoPollAddresses() {
+        RecordingBatteryCollectorService recordingService = new RecordingBatteryCollectorService();
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        properties.setRequestGapMs(1L);
+        ReflectionTestUtils.setField(recordingService, "properties", properties);
+        ReflectionTestUtils.setField(recordingService, "frameCodec", new BatteryCollectorFrameCodec());
+        ReflectionTestUtils.setField(recordingService, "realtimeConsumer", Mockito.mock(BatteryModuleRealtimeConsumer.class));
+        ReflectionTestUtils.setField(recordingService, "batteryDeviceStateService", Mockito.mock(BatteryDeviceStateService.class));
+        ReflectionTestUtils.setField(recordingService, "running", true);
+
+        BatteryCollectorChannelConfig channelConfig = newChannelConfig();
+        channelConfig.setModuleAddressStart(1);
+        channelConfig.setModuleAddressEnd(2);
+        channelConfig.setResponseTimeoutMs(1L);
+        channelConfig.setMaxRetryCount(0);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        state.setSerialPort(SerialPort.getCommPort("battery-test"));
+        recordingService.commandQueueTarget = state;
+        recordingService.enqueueCommandAfterWriteCount = 1;
+
+        ReflectionTestUtils.invokeMethod(recordingService, "pollOnce", state);
+
+        Assertions.assertEquals(Arrays.asList(0x01, 0x02, 0x01, 0x01), recordingService.writtenCommands);
+        Assertions.assertTrue(state.getQueuedModuleCommands().isEmpty());
+        Assertions.assertEquals("SINGLE_BATTERY_IR_TEST", state.getLastCompletedModuleCommandName());
+        Assertions.assertFalse(state.isLastCompletedModuleCommandSuccess());
     }
 
     @Test

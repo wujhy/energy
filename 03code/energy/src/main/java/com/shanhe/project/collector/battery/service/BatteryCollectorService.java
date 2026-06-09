@@ -468,19 +468,21 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
 
     private void processQueuedModuleCommandsImmediately(BatteryCollectorChannelState state) {
         while (running && state.getPendingCommand() == null && !state.getQueuedModuleCommands().isEmpty()) {
-            processQueuedModuleCommand(state);
+            if (!processQueuedModuleCommand(state)) {
+                break;
+            }
             waitForPendingComplete(state);
         }
     }
 
     /** 取出一条排队的控制命令并下发。 */
-    private void processQueuedModuleCommand(BatteryCollectorChannelState state) {
+    private boolean processQueuedModuleCommand(BatteryCollectorChannelState state) {
         if (state.getPendingCommand() != null) {
-            return;
+            return false;
         }
         BatteryModuleControlCommand command = state.getQueuedModuleCommands().poll();
         if (command == null) {
-            return;
+            return false;
         }
         BatteryCollectorFrame request = frameCodec.buildRequest(
                 command.getAddress(),
@@ -489,12 +491,15 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         if (command.getResponseCode() == null) {
             if (!writeFrameWithoutPending(state, request, command)) {
                 state.getQueuedModuleCommands().offer(command);
+                return false;
             }
-            return;
+            return true;
         }
         if (!writeFrame(state, request, pendingFromCommand(command), BatteryCollectorRunState.WAIT_COMMAND_RESPONSE)) {
             state.getQueuedModuleCommands().offer(command);
+            return false;
         }
+        return true;
     }
 
     /** 将控制命令转换为等待响应的待处理请求。 */
@@ -538,11 +543,11 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     private boolean writeFrame(BatteryCollectorChannelState state, BatteryCollectorFrame frame,
                                BatteryPendingRequest pendingRequest, BatteryCollectorRunState waitingState) {
         SerialPort serialPort = state.getSerialPort();
-        if (serialPort == null || !serialPort.isOpen()) {
+        if (serialPort == null || !isSerialPortOpen(serialPort)) {
             return false;
         }
         byte[] bytes = frame.toByteArray();
-        int written = serialPort.writeBytes(bytes, bytes.length);
+        int written = writeSerialBytes(serialPort, bytes);
         if (written != bytes.length) {
             log.warn("蓄电池指令写入不完整, 通道={}, 请求={}, 预期={}, 实际={}",
                     state.getConfig().getName(),
@@ -570,11 +575,11 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                                              BatteryCollectorFrame frame,
                                              BatteryModuleControlCommand command) {
         SerialPort serialPort = state.getSerialPort();
-        if (serialPort == null || !serialPort.isOpen()) {
+        if (serialPort == null || !isSerialPortOpen(serialPort)) {
             return false;
         }
         byte[] bytes = frame.toByteArray();
-        int written = serialPort.writeBytes(bytes, bytes.length);
+        int written = writeSerialBytes(serialPort, bytes);
         if (written != bytes.length) {
             log.warn("蓄电池指令写入不完整, 通道={}, 请求={}, 预期={}, 实际={}",
                     state.getConfig().getName(),
@@ -613,6 +618,14 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 + ", mode=" + BatteryCollectorRunState.READ
                 + ", hex=" + frame.toHex());
         return true;
+    }
+
+    protected boolean isSerialPortOpen(SerialPort serialPort) {
+        return serialPort != null && serialPort.isOpen();
+    }
+
+    protected int writeSerialBytes(SerialPort serialPort, byte[] bytes) {
+        return serialPort.writeBytes(bytes, bytes.length);
     }
 
     /** 从串口读取数据并解码分发响应帧。 */
