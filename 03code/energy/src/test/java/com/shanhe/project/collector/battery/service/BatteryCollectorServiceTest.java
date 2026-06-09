@@ -221,6 +221,38 @@ class BatteryCollectorServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void shouldResetModuleAddressCacheForSelectedBatteryGroupOnly() {
+        BatteryCollectorChannelConfig groupOneConfig = new BatteryCollectorChannelConfig();
+        groupOneConfig.setBatteryGroup(1);
+        BatteryCollectorChannelState groupOneState = new BatteryCollectorChannelState(groupOneConfig);
+        groupOneState.getActiveModuleAddresses().add(8);
+        groupOneState.getModuleAddressMissCounts().put(8, 2);
+        groupOneState.getFullDiscoveryRequested().set(false);
+
+        BatteryCollectorChannelConfig groupTwoConfig = new BatteryCollectorChannelConfig();
+        groupTwoConfig.setBatteryGroup(2);
+        BatteryCollectorChannelState groupTwoState = new BatteryCollectorChannelState(groupTwoConfig);
+        groupTwoState.getActiveModuleAddresses().add(9);
+        groupTwoState.getModuleAddressMissCounts().put(9, 1);
+        groupTwoState.getFullDiscoveryRequested().set(false);
+
+        List<BatteryCollectorChannelState> channelStates =
+                (List<BatteryCollectorChannelState>) ReflectionTestUtils.getField(service, "channelStates");
+        channelStates.add(groupOneState);
+        channelStates.add(groupTwoState);
+
+        Assertions.assertTrue(service.resetModuleAddressCacheByBatteryGroup(1));
+
+        Assertions.assertTrue(groupOneState.getActiveModuleAddresses().isEmpty());
+        Assertions.assertTrue(groupOneState.getModuleAddressMissCounts().isEmpty());
+        Assertions.assertTrue(groupOneState.getFullDiscoveryRequested().get());
+        Assertions.assertFalse(groupTwoState.getActiveModuleAddresses().isEmpty());
+        Assertions.assertFalse(groupTwoState.getModuleAddressMissCounts().isEmpty());
+        Assertions.assertFalse(groupTwoState.getFullDiscoveryRequested().get());
+    }
+
+    @Test
     void shouldRequireFullDiscoveryWhenOnlyGroupModuleAddressIsCached() {
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
         channelConfig.setModuleAddressStart(1);

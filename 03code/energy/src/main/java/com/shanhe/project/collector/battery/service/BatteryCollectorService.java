@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.concurrent.ExecutorService;
@@ -1657,6 +1658,24 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         for (BatteryCollectorChannelState state : new ArrayList<>(channelStates)) {
             if (channelName == null || channelName.trim().isEmpty()
                     || channelName.equals(state.getConfig().getName())) {
+                resetModuleAddressCache(state);
+                matched = true;
+            }
+        }
+        return matched;
+    }
+
+    /**
+     * 按电池组重置模块地址缓存，下轮轮询恢复全量发现。
+     *
+     * @param batteryGroup 电池组编号；为空时重置全部通道
+     * @return 是否匹配到通道
+     */
+    public boolean resetModuleAddressCacheByBatteryGroup(Integer batteryGroup) {
+        boolean matched = false;
+        for (BatteryCollectorChannelState state : new ArrayList<>(channelStates)) {
+            BatteryCollectorChannelConfig config = state == null ? null : state.getConfig();
+            if (batteryGroup == null || (config != null && Objects.equals(batteryGroup, config.getBatteryGroup()))) {
                 resetModuleAddressCache(state);
                 matched = true;
             }

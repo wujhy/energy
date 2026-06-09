@@ -2,6 +2,7 @@ package com.shanhe.project.device.opt.service.impl;
 
 import com.shanhe.common.constant.Constants;
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
+import com.shanhe.project.collector.battery.service.BatteryCollectorService;
 import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
@@ -45,6 +46,7 @@ class RestoreServiceImplTest {
         PreBatteryGroupService preBatteryGroupService = Mockito.mock(PreBatteryGroupService.class, Mockito.CALLS_REAL_METHODS);
         BatteryDeviceStateService batteryDeviceStateService = Mockito.mock(BatteryDeviceStateService.class);
         BatteryModeStatusService batteryModeStatusService = Mockito.mock(BatteryModeStatusService.class);
+        BatteryCollectorService batteryCollectorService = Mockito.mock(BatteryCollectorService.class);
         com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService compatibilityFillService =
                 Mockito.mock(com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService.class);
 
@@ -69,6 +71,7 @@ class RestoreServiceImplTest {
         ReflectionTestUtils.setField(service, "preBatteryGroupService", preBatteryGroupService);
         ReflectionTestUtils.setField(service, "batteryDeviceStateService", batteryDeviceStateService);
         ReflectionTestUtils.setField(service, "batteryModeStatusService", batteryModeStatusService);
+        ReflectionTestUtils.setField(service, "batteryCollectorService", batteryCollectorService);
         ReflectionTestUtils.setField(service, "compatibilityFillService", compatibilityFillService);
 
         BatterySetVO request = new BatterySetVO();
@@ -89,6 +92,7 @@ class RestoreServiceImplTest {
         Mockito.verify(preBatteryGroupService).deleteByPackNum(2);
         Mockito.verify(batteryDeviceStateService).deleteByPackNum(2);
         Mockito.verify(batteryModeStatusService).clear(2);
+        Mockito.verify(batteryCollectorService).resetModuleAddressCacheByBatteryGroup(2);
         Mockito.verify(compatibilityFillService).clearConnectResistanceCache(2);
     }
 
@@ -108,6 +112,7 @@ class RestoreServiceImplTest {
         PreBatteryGroupService preBatteryGroupService = Mockito.mock(PreBatteryGroupService.class);
         BatteryDeviceStateService batteryDeviceStateService = Mockito.mock(BatteryDeviceStateService.class);
         BatteryModeStatusService batteryModeStatusService = Mockito.mock(BatteryModeStatusService.class);
+        BatteryCollectorService batteryCollectorService = Mockito.mock(BatteryCollectorService.class);
         com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService compatibilityFillService =
                 Mockito.mock(com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService.class);
         IOperLogService operLogService = Mockito.mock(IOperLogService.class);
@@ -132,6 +137,7 @@ class RestoreServiceImplTest {
         ReflectionTestUtils.setField(service, "preBatteryGroupService", preBatteryGroupService);
         ReflectionTestUtils.setField(service, "batteryDeviceStateService", batteryDeviceStateService);
         ReflectionTestUtils.setField(service, "batteryModeStatusService", batteryModeStatusService);
+        ReflectionTestUtils.setField(service, "batteryCollectorService", batteryCollectorService);
         ReflectionTestUtils.setField(service, "compatibilityFillService", compatibilityFillService);
         ReflectionTestUtils.setField(service, "operLogService", operLogService);
         ReflectionTestUtils.setField(service, "batteryPackService", batteryPackService);
@@ -142,6 +148,7 @@ class RestoreServiceImplTest {
 
         Mockito.verify(batteryDeviceStateService).deleteAll();
         Mockito.verify(batteryModeStatusService).clear(null);
+        Mockito.verify(batteryCollectorService).resetModuleAddressCacheByBatteryGroup(null);
         Mockito.verify(compatibilityFillService).clearConnectResistanceCache(null);
     }
 }
