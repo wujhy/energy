@@ -6,6 +6,7 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorChannelState;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
+import com.shanhe.project.iot.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -55,7 +56,7 @@ class BatteryCollectorCommandServiceTest {
         Assertions.assertFalse(result.isMappedToModuleCommand());
         Assertions.assertEquals("battery-rs485-1", result.getChannelName());
         Assertions.assertEquals(BatteryAggregateCommandDefinition.GET_BATTERY_GROUP_INFO, result.getCommandDefinition());
-        Assertions.assertTrue(result.getMessage().contains("cannot be sent directly"));
+        Assertions.assertTrue(result.getMessage().contains("不能直接发送"));
     }
 
     @Test
@@ -190,7 +191,8 @@ class BatteryCollectorCommandServiceTest {
         List<BatteryCollectorChannelState> channelStates =
                 (List<BatteryCollectorChannelState>) ReflectionTestUtils.getField(collectorService, "channelStates");
         channelStates.add(state);
-        ReflectionTestUtils.setField(collectorService, "batteryModeStatusService", newModeStatusService());
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        ReflectionTestUtils.setField(collectorService, "batteryModeStatusService", modeStatusService);
         ReflectionTestUtils.setField(service, "collectorService", collectorService);
 
         BatteryCollectorCommandResult result = service.singleInternalResistanceTest(
@@ -208,7 +210,12 @@ class BatteryCollectorCommandServiceTest {
                 result.getRequestCode());
         Assertions.assertEquals(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST.getResponseCode(),
                 result.getResponseCode());
-        Assertions.assertTrue(result.getMessage().contains("queued"));
+        Assertions.assertTrue(result.getMessage().contains("加入串口下发队列"));
+        BatteryModeInfo modeInfo = modeStatusService.get(1);
+        Assertions.assertEquals(1, modeInfo.getPackNum());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, modeInfo.getMode());
+        Assertions.assertEquals(1, modeInfo.getStatus());
+        Assertions.assertEquals(8, modeInfo.getAddress());
     }
 
     @Test
@@ -221,7 +228,7 @@ class BatteryCollectorCommandServiceTest {
 
         Assertions.assertFalse(result.isMappedToModuleCommand());
         Assertions.assertNull(result.getModuleControlCommand());
-        Assertions.assertTrue(result.getMessage().contains("cannot be sent directly"));
+        Assertions.assertTrue(result.getMessage().contains("不能直接发送"));
     }
 
     @Test
