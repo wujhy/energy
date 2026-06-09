@@ -47,6 +47,38 @@ class BatteryModuleAlarmAdaptServiceTest {
     }
 
     @Test
+    void shouldKeepSameThresholdItemCodeSeparatedByCellNumber() {
+        BatteryModuleCellRealtime cell1 = cell(1, null);
+        cell1.setVoltage(2.1d);
+        cell1.setResistance(101);
+        BatteryModuleCellRealtime cell2 = cell(2, null);
+        cell2.setVoltage(2.2d);
+        cell2.setResistance(102);
+
+        BatteryModuleAlarmContext context = service.buildContext(null, Arrays.asList(cell1, cell2));
+
+        Assertions.assertEquals("2.1", context.getCellWarnParam().get(1).get(ItemCode.DTDYGC.getCode()));
+        Assertions.assertEquals("101", context.getCellWarnParam().get(1).get(ItemCode.DTNZGD.getCode()));
+        Assertions.assertEquals("2.2", context.getCellWarnParam().get(2).get(ItemCode.DTDYGC.getCode()));
+        Assertions.assertEquals("102", context.getCellWarnParam().get(2).get(ItemCode.DTNZGD.getCode()));
+    }
+
+    @Test
+    void shouldBuildGroupThresholdAlarmCandidates() {
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackNum(1);
+        group.setBatteryPackOuterVoltage(230.5d);
+        group.setChargeDischargeCurrent(-12.3d);
+        group.setEnvironmentTemperature1(28.8d);
+
+        BatteryModuleAlarmContext context = service.buildContext(group, null);
+
+        Assertions.assertEquals("230.5", context.getPackWarnParam().get(ItemCode.ZDYGC.getCode()));
+        Assertions.assertEquals("-12.3", context.getPackWarnParam().get(ItemCode.ZCGDLGJ.getCode()));
+        Assertions.assertEquals("28.8", context.getPackWarnParam().get(ItemCode.ZWDG.getCode()));
+    }
+
+    @Test
     void shouldMapStaleGroup246FreshnessToCommunicationAlarm() throws Exception {
         BatteryModuleAlarmAdaptService service = communicationServiceWithGroup246Freshness("stale");
 
