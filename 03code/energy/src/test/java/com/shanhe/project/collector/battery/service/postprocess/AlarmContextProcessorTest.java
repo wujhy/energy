@@ -103,6 +103,37 @@ class AlarmContextProcessorTest {
     }
 
     @Test
+    void processShouldSendMergedPackAndCellAlarmContext() {
+        AlarmContextProcessor processor = newProcessor();
+        BatteryModuleAlarmAdaptService alarmAdaptService = Mockito.mock(BatteryModuleAlarmAdaptService.class);
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryModuleAlarmContext realtimeContext = alarmContext(1);
+        realtimeContext.putPackWarn(ItemCode.ZDYGC.getCode(), "230.5");
+        realtimeContext.putCellWarn(2, ItemCode.DTDYGC.getCode(), "2.1");
+        BatteryModuleAlarmContext communicationContext = alarmContext(1);
+        communicationContext.putPackWarn(ItemCode.TXZT.getCode(), "1");
+        BatteryRealtimePostProcessContext context = contextWithChannelConfig();
+        Mockito.when(alarmAdaptService.buildContext(context.getGroup(), context.getCells()))
+                .thenReturn(realtimeContext);
+        Mockito.when(alarmAdaptService.buildCommunicationAlarmContext(1, "COM1"))
+                .thenReturn(communicationContext);
+        ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
+        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+
+        processor.process(context);
+
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+                Mockito.isNull(), Mockito.argThat(params ->
+                        "230.5".equals(params.get(ItemCode.ZDYGC.getCode()))
+                                && "1".equals(params.get(ItemCode.TXZT.getCode()))));
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+                Mockito.eq(2), Mockito.argThat(params ->
+                        "2.1".equals(params.get(ItemCode.DTDYGC.getCode()))));
+        Mockito.verifyNoMoreInteractions(alarmLogService);
+        Assertions.assertSame(realtimeContext, context.getAlarmContext());
+    }
+
+    @Test
     void processShouldBuildCommunicationOnlyAlarmContextWhenCellsAreMissing() {
         AlarmContextProcessor processor = newProcessor();
         BatteryModuleAlarmAdaptService alarmAdaptService = Mockito.mock(BatteryModuleAlarmAdaptService.class);
