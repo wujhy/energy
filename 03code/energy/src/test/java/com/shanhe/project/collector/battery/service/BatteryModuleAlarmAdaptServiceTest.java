@@ -96,6 +96,16 @@ class BatteryModuleAlarmAdaptServiceTest {
         Assertions.assertFalse(context.getPackWarnParam().containsKey(ItemCode.TXZT.getCode()));
     }
 
+    @Test
+    void shouldIgnoreNullModuleActiveStateAndContinueWithGroup246Freshness() throws Exception {
+        BatteryModuleAlarmAdaptService service = communicationServiceWithStates("stale",
+                Collections.singletonList(null));
+
+        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+
+        Assertions.assertEquals("1", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
+    }
+
     private BatteryModuleCellRealtime cell(int batNum, Integer leakageStatus) {
         BatteryModuleCellRealtime cell = new BatteryModuleCellRealtime();
         cell.setBatNum(batNum);

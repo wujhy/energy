@@ -1015,20 +1015,25 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
 
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
         List<AlarmLog> alarmLogs = new ArrayList<>();
+        Set<String> existingKeys = new HashSet<>();
         for (String key : keys) {
             if (StrUtil.startWith(key, prefix)) {
-                alarmLogs.add((AlarmLog) CacheUtils.get(alarmCache.getCache(), key));
+                AlarmLog alarmLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
+                alarmLogs.add(alarmLog);
+                if (alarmLog != null) {
+                    existingKeys.add(communicationAlarmKey(alarmLog));
+                }
             }
         }
-        alarmLogs.addAll(buildStateCommunicationAlarms(packNum));
+        alarmLogs.addAll(buildStateCommunicationAlarms(packNum, existingKeys));
         return alarmLogs;
     }
 
     private boolean hasStateCommunicationAlarm(Integer packNum) {
-        return !buildStateCommunicationAlarms(packNum).isEmpty();
+        return !buildStateCommunicationAlarms(packNum, Collections.emptySet()).isEmpty();
     }
 
-    private List<AlarmLog> buildStateCommunicationAlarms(Integer packNum) {
+    private List<AlarmLog> buildStateCommunicationAlarms(Integer packNum, Set<String> excludedKeys) {
         if (batteryDeviceStateService == null) {
             return Collections.emptyList();
         }
@@ -1045,12 +1050,19 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
             if (alarmLog == null) {
                 continue;
             }
-            String key = alarmLog.getPackNum() + ":" + alarmLog.getModelNum() + ":" + alarmLog.getItemCode();
+            String key = communicationAlarmKey(alarmLog);
+            if (excludedKeys != null && excludedKeys.contains(key)) {
+                continue;
+            }
             if (dedupe.add(key)) {
                 alarmLogs.add(alarmLog);
             }
         }
         return alarmLogs;
+    }
+
+    private String communicationAlarmKey(AlarmLog alarmLog) {
+        return alarmLog.getPackNum() + ":" + alarmLog.getModelNum() + ":" + alarmLog.getItemCode();
     }
 
     private AlarmLog toCommunicationAlarmLog(BatteryDeviceState state) {

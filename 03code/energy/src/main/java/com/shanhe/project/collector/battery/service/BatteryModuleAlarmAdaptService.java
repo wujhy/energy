@@ -218,7 +218,7 @@ public class BatteryModuleAlarmAdaptService {
                 channelName, BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE);
         if (inactiveStates != null) {
             for (BatteryDeviceState state : inactiveStates) {
-                if ("inactive".equals(state.getStateValue())) {
+                if (state != null && "inactive".equals(state.getStateValue())) {
                     context.putPackWarn(ItemCode.TXZT.getCode(), "1");
                     return;
                 }

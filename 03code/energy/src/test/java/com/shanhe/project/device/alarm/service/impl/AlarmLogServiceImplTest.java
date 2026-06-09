@@ -103,6 +103,38 @@ class AlarmLogServiceImplTest {
     }
 
     @Test
+    void shouldNotAppendStateAlarmWhenSameCachedAlarmExists() {
+        AlarmLog handledCacheAlarm = new AlarmLog();
+        handledCacheAlarm.setPackNum(2);
+        handledCacheAlarm.setItemCode(ItemCode.TXZT.getCode());
+        handledCacheAlarm.setStatus(YesNoEnum.YES.getDictValue());
+        CacheUtils.put(CacheKeyEnum.ALARM.getCache(),
+                String.format(CacheKeyEnum.ALARM.getKey(), 2, null, ItemCode.TXZT.getCode()),
+                handledCacheAlarm);
+        Mockito.when(batteryDeviceStateService.selectByPackNum(2)).thenReturn(Collections.singletonList(
+                state(2, null, BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, "stale",
+                        BatteryDeviceStateConstants.StateLevel.WARN)));
+
+        List<AlarmLog> alarmLogs = service.selectBatteryAlarmLogListCache(2);
+
+        Assertions.assertEquals(1, alarmLogs.size());
+        Assertions.assertSame(handledCacheAlarm, alarmLogs.get(0));
+        Assertions.assertEquals(YesNoEnum.YES.getDictValue(), alarmLogs.get(0).getStatus());
+    }
+
+    @Test
+    void shouldMapChannelTimeoutCountToCommunicationAlarm() {
+        Mockito.when(batteryDeviceStateService.selectByPackNum(2)).thenReturn(Collections.singletonList(
+                state(2, null, BatteryDeviceStateConstants.StateCode.CHANNEL_TIMEOUT_COUNT, "3",
+                        BatteryDeviceStateConstants.StateLevel.WARN)));
+
+        List<AlarmLog> alarmLogs = service.selectBatteryAlarmLogListCache(2);
+
+        Assertions.assertEquals(1, alarmLogs.size());
+        Assertions.assertEquals(ItemCode.TXZT.getCode(), alarmLogs.get(0).getItemCode());
+    }
+
+    @Test
     void shouldAllowNullConfigWhenValidatingBatteryAlarmValue() {
         IConfigAttributeService configAttributeService = Mockito.mock(IConfigAttributeService.class);
         ReflectionTestUtils.setField(service, "configAttributeService", configAttributeService);
