@@ -2,7 +2,6 @@ package com.shanhe.project.modbus.service;
 
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
-import com.shanhe.project.device.opt.service.ControlBatterySet;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -21,16 +20,16 @@ import javax.annotation.Resource;
 @Service
 public class ModbusWriteMappingService {
 
-    /** 写寄存器起始地址：单体均衡。 */
-    private static final int BALANCE_START = 404901;
-    /** 写寄存器起始地址：手动编号。 */
-    private static final int MANUAL_ADDR_START = 404921;
+    /**
+     * 写寄存器地址：M460 modbus.c 中
+     * BATTERY_ARRAY_STATE_REGISTER_START_ADDRESS(0x1324) + 14。
+     */
+    private static final int BALANCE_REGISTER = 404915;
+    /** 16 位寄存器最大值。 */
+    private static final int UNSIGNED_SHORT_MAX = 0xFFFF;
 
     @Resource
     private BatteryCollectorCommandService commandService;
-
-    @Resource
-    private ControlBatterySet controlBatterySet;
 
     /**
      * 处理写单寄存器请求。
@@ -45,39 +44,33 @@ public class ModbusWriteMappingService {
         if (packNum == null || packNum <= 0) {
             throw new IllegalArgumentException("电池组编号无效");
         }
-        if (referenceAddress >= MANUAL_ADDR_START && referenceAddress < MANUAL_ADDR_START + 2) {
-            return writeManualAddress(packNum, value);
+        if (value < 0 || value > UNSIGNED_SHORT_MAX) {
+            throw new IllegalArgumentException("写入值超出范围: " + value);
         }
-        if (referenceAddress >= BALANCE_START && referenceAddress < BALANCE_START + 245) {
-            return writeBalance(packNum, referenceAddress - BALANCE_START + 1, value);
+        if (referenceAddress == BALANCE_REGISTER) {
+            return writeBalance(packNum, value);
         }
         throw new IllegalArgumentException("不支持的写寄存器地址: " + referenceAddress);
     }
 
     /** 写单体均衡控制。 */
-    private boolean writeBalance(Integer packNum, int modelNum, int value) {
+    private boolean writeBalance(Integer packNum, int value) {
+        int balanceValue = (value >> 8) & 0xFF;
+        int modelNum = value & 0xFF;
         if (modelNum < 1 || modelNum > 245) {
             throw new IllegalArgumentException("单体地址超出范围: " + modelNum);
         }
-        if (value < 0 || value > 255) {
-            throw new IllegalArgumentException("均衡值超出范围: " + value);
+        if (balanceValue < 0 || balanceValue > 1) {
+            throw new IllegalArgumentException("均衡状态超出范围: " + balanceValue);
         }
         String channelName = commandService.resolveChannelName(packNum);
         if (channelName == null) {
             throw new IllegalArgumentException("未找到电池组 " + packNum + " 对应的采集通道");
         }
         BatteryCollectorCommandResult result = commandService.singleBatteryBalance(
-                channelName, packNum, modelNum, value, null);
-        log.info("Modbus 写均衡命令已入队, packNum={}, modelNum={}, value={}, success={}",
-                packNum, modelNum, value, result.isSuccess());
+                channelName, packNum, modelNum, balanceValue, null);
+        log.info("Modbus 写均衡命令已入队, packNum={}, modelNum={}, balanceValue={}, success={}",
+                packNum, modelNum, balanceValue, result.isSuccess());
         return result.isSuccess();
-    }
-
-    /** 写手动编号请求。 */
-    private boolean writeManualAddress(Integer packNum, int value) {
-        if (value < 1 || value > 245) {
-            throw new IllegalArgumentException("模块地址超出范围: " + value);
-        }
-        throw new IllegalArgumentException("手动编号需要连续寄存器写入，暂未开放单寄存器写入");
     }
 }
