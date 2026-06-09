@@ -195,9 +195,17 @@ public class BatteryModuleAlarmAdaptService {
         }
         List<BatteryDeviceState> timeoutStates = batteryDeviceStateService.selectByChannelAndCode(
                 channelName, BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT);
-        if (timeoutStates != null && !timeoutStates.isEmpty()) {
-            // 存在模块超时记录，标记该组有模块无响应
-            context.putPackWarn(ItemCode.TXZT.getCode(), "1");
+        if (timeoutStates == null || timeoutStates.isEmpty()) {
+            return;
+        }
+        for (BatteryDeviceState state : timeoutStates) {
+            if (state != null
+                    && !BatteryDeviceStateConstants.StateLevel.NORMAL.equals(state.getStateLevel())
+                    && !"recovered".equals(state.getStateValue())) {
+                // 存在模块超时记录，标记该组有模块无响应
+                context.putPackWarn(ItemCode.TXZT.getCode(), "1");
+                return;
+            }
         }
     }
 

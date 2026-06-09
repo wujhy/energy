@@ -1,5 +1,7 @@
 package com.shanhe.project.collector.battery.service.postprocess;
 
+import com.shanhe.framework.enums.ItemCode;
+import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleAlarmContext;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
@@ -74,6 +76,56 @@ class AlarmContextProcessorTest {
     }
 
     @Test
+    void processShouldMergeCommunicationAlarmContext() {
+        AlarmContextProcessor processor = newProcessor();
+        BatteryModuleAlarmAdaptService alarmAdaptService = Mockito.mock(BatteryModuleAlarmAdaptService.class);
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryModuleAlarmContext realtimeContext = alarmContext(1);
+        realtimeContext.putPackWarn(ItemCode.ZDYGC.getCode(), "1");
+        BatteryModuleAlarmContext communicationContext = alarmContext(1);
+        communicationContext.putPackWarn(ItemCode.TXZT.getCode(), "1");
+        BatteryRealtimePostProcessContext context = contextWithChannelConfig();
+        Mockito.when(alarmAdaptService.buildContext(context.getGroup(), context.getCells()))
+                .thenReturn(realtimeContext);
+        Mockito.when(alarmAdaptService.buildCommunicationAlarmContext(1, "COM1"))
+                .thenReturn(communicationContext);
+        ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
+        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+
+        processor.process(context);
+
+        ArgumentCaptor<Map<String, String>> warnParamCaptor = ArgumentCaptor.forClass(Map.class);
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+                Mockito.isNull(), warnParamCaptor.capture());
+        Assertions.assertEquals("1", warnParamCaptor.getValue().get(ItemCode.ZDYGC.getCode()));
+        Assertions.assertEquals("1", warnParamCaptor.getValue().get(ItemCode.TXZT.getCode()));
+        Assertions.assertSame(realtimeContext, context.getAlarmContext());
+    }
+
+    @Test
+    void processShouldBuildCommunicationOnlyAlarmContextWhenCellsAreMissing() {
+        AlarmContextProcessor processor = newProcessor();
+        BatteryModuleAlarmAdaptService alarmAdaptService = Mockito.mock(BatteryModuleAlarmAdaptService.class);
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryModuleAlarmContext communicationContext = alarmContext(1);
+        communicationContext.putPackWarn(ItemCode.TXZT.getCode(), "1");
+        BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .channelConfig(channelConfig())
+                .build();
+        Mockito.when(alarmAdaptService.buildCommunicationAlarmContext(1, "COM1"))
+                .thenReturn(communicationContext);
+        ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
+        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+
+        processor.process(context);
+
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+                Mockito.isNull(), Mockito.argThat(params -> "1".equals(params.get(ItemCode.TXZT.getCode()))));
+        Assertions.assertNotNull(context.getAlarmContext());
+    }
+
+    @Test
     void processShouldNotCallAlarmServiceWhenAlarmContextMissingAndAdaptServiceMissing() {
         AlarmContextProcessor processor = newProcessor();
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
@@ -132,6 +184,15 @@ class AlarmContextProcessorTest {
                 .build();
     }
 
+    private BatteryRealtimePostProcessContext contextWithChannelConfig() {
+        return BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .group(group())
+                .cells(Arrays.asList(cell(1), cell(2)))
+                .channelConfig(channelConfig())
+                .build();
+    }
+
     private BatteryRealtimePostProcessContext contextWithAlarmContext(BatteryModuleAlarmContext alarmContext) {
         return BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
@@ -156,5 +217,12 @@ class AlarmContextProcessorTest {
         cell.setPackNum(1);
         cell.setBatNum(batNum);
         return cell;
+    }
+
+    private BatteryCollectorChannelConfig channelConfig() {
+        BatteryCollectorChannelConfig config = new BatteryCollectorChannelConfig();
+        config.setName("COM1");
+        config.setBatteryGroup(1);
+        return config;
     }
 }

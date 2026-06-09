@@ -45,10 +45,9 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
         if (context.getAlarmContext() != null && alarmLogService != null) {
             return true;
         }
-        return alarmAdaptService != null
-                && context.getPackNum() != null
-                && context.getCells() != null
-                && !context.getCells().isEmpty();
+        return alarmAdaptService != null && context.getPackNum() != null
+                && ((context.getCells() != null && !context.getCells().isEmpty())
+                || context.getChannelConfig() != null);
     }
 
     @Override
@@ -61,6 +60,14 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
             if (alarmContext == null && alarmAdaptService != null) {
                 alarmContext = alarmAdaptService.buildContext(context.getGroup(), context.getCells());
             }
+            if (alarmContext == null && alarmAdaptService != null) {
+                alarmContext = new BatteryModuleAlarmContext();
+                alarmContext.setPackNum(context.getPackNum());
+            }
+            if (alarmAdaptService != null && context.getChannelConfig() != null) {
+                mergeAlarmContext(alarmContext, alarmAdaptService.buildCommunicationAlarmContext(
+                        context.getPackNum(), context.getChannelConfig().getName()));
+            }
             context.setAlarmContext(alarmContext);
             handleAlarmContext(context, alarmContext);
         } catch (Exception e) {
@@ -68,6 +75,26 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
                     context.getChannelConfig() == null ? null : context.getChannelConfig().getName(),
                     context.getPackNum(),
                     e);
+        }
+    }
+
+    private void mergeAlarmContext(BatteryModuleAlarmContext target, BatteryModuleAlarmContext source) {
+        if (target == null || source == null || source.isEmpty()) {
+            return;
+        }
+        if (source.getPackWarnParam() != null) {
+            target.getPackWarnParam().putAll(source.getPackWarnParam());
+        }
+        if (source.getCellWarnParam() == null || source.getCellWarnParam().isEmpty()) {
+            return;
+        }
+        for (Map.Entry<Integer, Map<String, String>> entry : source.getCellWarnParam().entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null || entry.getValue().isEmpty()) {
+                continue;
+            }
+            target.getCellWarnParam()
+                    .computeIfAbsent(entry.getKey(), key -> new java.util.LinkedHashMap<>())
+                    .putAll(entry.getValue());
         }
     }
 

@@ -76,6 +76,26 @@ class BatteryModuleAlarmAdaptServiceTest {
         Assertions.assertFalse(context.getPackWarnParam().containsKey(ItemCode.TXZT.getCode()));
     }
 
+    @Test
+    void shouldMapActiveModuleTimeoutToCommunicationAlarm() throws Exception {
+        BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
+                Collections.singletonList(moduleTimeout("01/81", BatteryDeviceStateConstants.StateLevel.WARN)));
+
+        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+
+        Assertions.assertEquals("1", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
+    }
+
+    @Test
+    void shouldNotMapRecoveredModuleTimeoutToCommunicationAlarm() throws Exception {
+        BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
+                Collections.singletonList(moduleTimeout("recovered", BatteryDeviceStateConstants.StateLevel.NORMAL)));
+
+        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+
+        Assertions.assertFalse(context.getPackWarnParam().containsKey(ItemCode.TXZT.getCode()));
+    }
+
     private BatteryModuleCellRealtime cell(int batNum, Integer leakageStatus) {
         BatteryModuleCellRealtime cell = new BatteryModuleCellRealtime();
         cell.setBatNum(batNum);
@@ -84,19 +104,34 @@ class BatteryModuleAlarmAdaptServiceTest {
     }
 
     private BatteryModuleAlarmAdaptService communicationServiceWithGroup246Freshness(String stateValue) throws Exception {
+        return communicationServiceWithStates(stateValue, Collections.emptyList());
+    }
+
+    private BatteryModuleAlarmAdaptService communicationServiceWithStates(String stateValue,
+                                                                          List<BatteryDeviceState> channelStates) throws Exception {
         BatteryModuleAlarmAdaptService service = new BatteryModuleAlarmAdaptService();
         Field field = BatteryModuleAlarmAdaptService.class.getDeclaredField("batteryDeviceStateService");
         field.setAccessible(true);
-        field.set(service, new StubBatteryDeviceStateService(stateValue));
+        field.set(service, new StubBatteryDeviceStateService(stateValue, channelStates));
         return service;
+    }
+
+    private BatteryDeviceState moduleTimeout(String stateValue, String stateLevel) {
+        BatteryDeviceState state = new BatteryDeviceState();
+        state.setStateCode(BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT);
+        state.setStateValue(stateValue);
+        state.setStateLevel(stateLevel);
+        return state;
     }
 
     private static class StubBatteryDeviceStateService implements BatteryDeviceStateService {
 
         private final String group246Freshness;
+        private final List<BatteryDeviceState> channelStates;
 
-        private StubBatteryDeviceStateService(String group246Freshness) {
+        private StubBatteryDeviceStateService(String group246Freshness, List<BatteryDeviceState> channelStates) {
             this.group246Freshness = group246Freshness;
+            this.channelStates = channelStates;
         }
 
         @Override
@@ -125,7 +160,7 @@ class BatteryModuleAlarmAdaptServiceTest {
 
         @Override
         public List<BatteryDeviceState> selectByChannelAndCode(String channelName, String stateCode) {
-            return Collections.emptyList();
+            return channelStates;
         }
 
         @Override

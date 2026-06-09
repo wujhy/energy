@@ -28,6 +28,9 @@ import com.shanhe.project.device.config.service.IConfigAttributeService;
 import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.device.opt.service.ControlBatterySet;
 import com.shanhe.project.device.opt.service.OptLogService;
+import com.shanhe.project.collector.battery.model.BatteryDeviceState;
+import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
+import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import com.shanhe.project.sync.domain.AlarmItemLevelVo;
 import com.shanhe.project.sync.service.ClientReportService;
 import org.springframework.stereotype.Service;
@@ -58,6 +61,8 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     private OptLogService optLogService;
     @Resource
     private ControlBatterySet controlBatterySet;
+    @Resource
+    private BatteryDeviceStateService batteryDeviceStateService;
 
     // 缓存枚举
     CacheKeyEnum alarmCache = CacheKeyEnum.ALARM;
@@ -122,6 +127,9 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
                 isAlarm = YesNoEnum.YES.getDictValue();
                 break;
             }
+        }
+        if (Objects.equals(isAlarm, YesNoEnum.NO.getDictValue()) && hasStateCommunicationAlarm(packNum)) {
+            isAlarm = YesNoEnum.YES.getDictValue();
         }
         return isAlarm;
     }
@@ -447,6 +455,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
      */
     @Override
     public void alarmBatteryValue(Config config, Integer packNum, Integer modelNum, Map<String, String> warnParam) {
+        Integer type = config == null ? null : config.getType();
         for (String keyParam : warnParam.keySet()) {
             // 属性配置
             ConfigAttribute configAttribute = configAttributeService.getCacheBy(packNum, keyParam);
@@ -454,7 +463,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
                 continue;
             }
 
-            this.alarmValid(configAttribute, modelNum, warnParam.get(keyParam), config.getType());
+            this.alarmValid(configAttribute, modelNum, warnParam.get(keyParam), type);
         }
     }
 
@@ -1011,7 +1020,107 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
                 alarmLogs.add((AlarmLog) CacheUtils.get(alarmCache.getCache(), key));
             }
         }
+        alarmLogs.addAll(buildStateCommunicationAlarms(packNum));
         return alarmLogs;
+    }
+
+    private boolean hasStateCommunicationAlarm(Integer packNum) {
+        return !buildStateCommunicationAlarms(packNum).isEmpty();
+    }
+
+    private List<AlarmLog> buildStateCommunicationAlarms(Integer packNum) {
+        if (batteryDeviceStateService == null) {
+            return Collections.emptyList();
+        }
+        List<BatteryDeviceState> states = packNum == null ?
+                batteryDeviceStateService.selectList(new BatteryDeviceState()) :
+                batteryDeviceStateService.selectByPackNum(packNum);
+        if (states == null || states.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<AlarmLog> alarmLogs = new ArrayList<>();
+        Set<String> dedupe = new HashSet<>();
+        for (BatteryDeviceState state : states) {
+            AlarmLog alarmLog = toCommunicationAlarmLog(state);
+            if (alarmLog == null) {
+                continue;
+            }
+            String key = alarmLog.getPackNum() + ":" + alarmLog.getModelNum() + ":" + alarmLog.getItemCode();
+            if (dedupe.add(key)) {
+                alarmLogs.add(alarmLog);
+            }
+        }
+        return alarmLogs;
+    }
+
+    private AlarmLog toCommunicationAlarmLog(BatteryDeviceState state) {
+        if (state == null || state.getPackNum() == null || !isActiveCommunicationState(state)) {
+            return null;
+        }
+        String itemCode = toCommunicationItemCode(state.getStateCode());
+        if (itemCode == null) {
+            return null;
+        }
+        AlarmLog alarmLog = new AlarmLog();
+        alarmLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        alarmLog.setConfigName("蓄电池");
+        alarmLog.setType(DeviceTypeEnum._1.getDictValue());
+        alarmLog.setPackNum(state.getPackNum());
+        alarmLog.setModelNum(state.getModelNum());
+        alarmLog.setItemCode(itemCode);
+        alarmLog.setAlarmLevel("2");
+        alarmLog.setStatus(YesNoEnum.NO.getDictValue());
+        alarmLog.setDuration(0L);
+        alarmLog.setDataInfo(toCommunicationAlarmInfo(state, itemCode));
+        alarmLog.setCreateTime(state.getFirstSeenTime() == null ? state.getLastChangeTime() : state.getFirstSeenTime());
+        alarmLog.setUpdateTime(state.getLastUpdateTime() == null ? state.getLastChangeTime() : state.getLastUpdateTime());
+        return alarmLog;
+    }
+
+    private boolean isActiveCommunicationState(BatteryDeviceState state) {
+        String code = state.getStateCode();
+        String value = state.getStateValue();
+        String level = state.getStateLevel();
+        if (BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN.equals(code)) {
+            return BatteryDeviceStateConstants.StateLevel.ERROR.equals(level) || "closed".equals(value);
+        }
+        if (BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR.equals(code)) {
+            return BatteryDeviceStateConstants.StateLevel.ERROR.equals(level);
+        }
+        if (BatteryDeviceStateConstants.StateCode.CHANNEL_TIMEOUT_COUNT.equals(code)) {
+            return BatteryDeviceStateConstants.StateLevel.WARN.equals(level)
+                    || BatteryDeviceStateConstants.StateLevel.ERROR.equals(level);
+        }
+        if (BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT.equals(code)) {
+            return !BatteryDeviceStateConstants.StateLevel.NORMAL.equals(level) && !"recovered".equals(value);
+        }
+        if (BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE.equals(code)) {
+            return "inactive".equals(value);
+        }
+        if (BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS.equals(code)) {
+            return "stale".equals(value);
+        }
+        return false;
+    }
+
+    private String toCommunicationItemCode(String stateCode) {
+        if (BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN.equals(stateCode)
+                || BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR.equals(stateCode)) {
+            return ItemCode.DTTXZT.getCode();
+        }
+        if (BatteryDeviceStateConstants.StateCode.CHANNEL_TIMEOUT_COUNT.equals(stateCode)
+                || BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT.equals(stateCode)
+                || BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE.equals(stateCode)
+                || BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS.equals(stateCode)) {
+            return ItemCode.TXZT.getCode();
+        }
+        return null;
+    }
+
+    private String toCommunicationAlarmInfo(BatteryDeviceState state, String itemCode) {
+        String detail = StrUtil.isNotBlank(state.getDetail()) ? state.getDetail() : state.getStateValue();
+        String prefix = ItemCode.DTTXZT.getCode().equals(itemCode) ? "单体通信异常" : "组压通讯异常";
+        return StrUtil.isBlank(detail) ? prefix : prefix + "：" + detail;
     }
 
     /**
