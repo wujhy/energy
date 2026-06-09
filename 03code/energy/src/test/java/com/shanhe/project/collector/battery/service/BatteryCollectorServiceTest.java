@@ -13,6 +13,7 @@ import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
+import com.shanhe.project.device.opt.mapper.OptLogMapper;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -948,6 +949,79 @@ class BatteryCollectorServiceTest {
         Assertions.assertEquals("GET_CONNECT_STRIP_RESISTANCE_VOLTAGE", state.getLastCompletedModuleCommandName());
         Assertions.assertEquals(0x91, state.getLastCompletedModuleResponseCode());
         Assertions.assertTrue(state.isLastCompletedModuleCommandSuccess());
+    }
+
+    @Test
+    void shouldQueueNextConnectResistanceReadWithoutUpdatingOptLogForIntermediate91Response() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+        BatteryCollectorChannelConfig channelConfig = newChannelConfig();
+        channelConfig.setBatteryGroup(2);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE,
+                8,
+                new byte[0],
+                false);
+        pendingRequest.setOptLogId(10L);
+        pendingRequest.setBatteryGroup(2);
+        pendingRequest.setMode(BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+        pendingRequest.setConnectResistanceNextAddress(9);
+        pendingRequest.setConnectResistanceMaxAddress(10);
+        BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(8, 0x91,
+                new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
+
+        service.handleCompletedPendingResponse(state, frame, pendingRequest);
+
+        Mockito.verifyNoInteractions(optLogMapper);
+        Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
+        BatteryModuleControlCommand nextCommand = state.getQueuedModuleCommands().poll();
+        Assertions.assertNotNull(nextCommand);
+        Assertions.assertEquals(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE,
+                nextCommand.getProtocolCode());
+        Assertions.assertEquals(9, nextCommand.getAddress());
+        Assertions.assertEquals(10L, nextCommand.getOptLogId());
+        Assertions.assertEquals(Integer.valueOf(10), nextCommand.getConnectResistanceNextAddress());
+        Assertions.assertEquals(Integer.valueOf(10), nextCommand.getConnectResistanceMaxAddress());
+    }
+
+    @Test
+    void shouldUpdateOptLogOnlyWhenFinalConnectResistance91ResponseCompletes() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        modeStatusService.markRunning(2, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 10);
+        BatteryCollectorChannelConfig channelConfig = newChannelConfig();
+        channelConfig.setBatteryGroup(2);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE,
+                10,
+                new byte[0],
+                false);
+        pendingRequest.setOptLogId(10L);
+        pendingRequest.setBatteryGroup(2);
+        pendingRequest.setMode(BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+        pendingRequest.setConnectResistanceNextAddress(11);
+        pendingRequest.setConnectResistanceMaxAddress(10);
+        BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(10, 0x91,
+                new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
+
+        service.handleCompletedPendingResponse(state, frame, pendingRequest);
+
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.SUCCESS),
+                Mockito.eq(0x91),
+                Mockito.anyString(),
+                Mockito.isNull(),
+                Mockito.eq("0102030405060708"));
+        Assertions.assertTrue(state.getQueuedModuleCommands().isEmpty());
+        BatteryModeInfo modeInfo = modeStatusService.get(2);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Assertions.assertEquals(0, modeInfo.getStatus());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, modeInfo.getLastMode());
     }
 
     @Test
