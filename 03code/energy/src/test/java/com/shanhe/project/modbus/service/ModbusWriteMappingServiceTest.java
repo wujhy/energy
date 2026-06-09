@@ -15,11 +15,15 @@ class ModbusWriteMappingServiceTest {
         Mockito.when(commandService.resolveChannelName(1)).thenReturn("COM1");
         Mockito.when(commandService.singleBatteryBalance("COM1", 1, 2, 1, null))
                 .thenReturn(BatteryCollectorCommandResult.builder().success(true).build());
+        Mockito.when(commandService.singleBatteryBalance("COM1", 1, 1, 255, null))
+                .thenReturn(BatteryCollectorCommandResult.builder().success(true).build());
         ModbusWriteMappingService service = service(commandService);
 
         Assertions.assertTrue(service.writeSingleRegister(1, 404915, 0x0102));
+        Assertions.assertTrue(service.writeSingleRegister(1, 404915, 0xFF01));
 
         Mockito.verify(commandService).singleBatteryBalance("COM1", 1, 2, 1, null);
+        Mockito.verify(commandService).singleBatteryBalance("COM1", 1, 1, 255, null);
     }
 
     @Test
@@ -58,7 +62,7 @@ class ModbusWriteMappingServiceTest {
     }
 
     @Test
-    void shouldRejectInvalidBalanceValueAndPackNum() {
+    void shouldRejectInvalidRegisterValuePackNumAndModelNum() {
         ModbusWriteMappingService service = service(Mockito.mock(BatteryCollectorCommandService.class));
 
         Assertions.assertThrows(IllegalArgumentException.class,
@@ -67,8 +71,6 @@ class ModbusWriteMappingServiceTest {
                 () -> service.writeSingleRegister(1, 404915, -1));
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> service.writeSingleRegister(1, 404915, 0x1_0000));
-        Assertions.assertThrows(IllegalArgumentException.class,
-                () -> service.writeSingleRegister(1, 404915, 0x0201));
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> service.writeSingleRegister(1, 404915, 0x0100));
         Assertions.assertThrows(IllegalArgumentException.class,

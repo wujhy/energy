@@ -60,9 +60,6 @@ public class ModbusWriteMappingService {
         if (modelNum < 1 || modelNum > 245) {
             throw new IllegalArgumentException("单体地址超出范围: " + modelNum);
         }
-        if (balanceValue < 0 || balanceValue > 1) {
-            throw new IllegalArgumentException("均衡状态超出范围: " + balanceValue);
-        }
         String channelName = commandService.resolveChannelName(packNum);
         if (channelName == null) {
             throw new IllegalArgumentException("未找到电池组 " + packNum + " 对应的采集通道");
