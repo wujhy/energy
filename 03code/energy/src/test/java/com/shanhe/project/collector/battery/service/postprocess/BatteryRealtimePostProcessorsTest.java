@@ -34,7 +34,10 @@ class BatteryRealtimePostProcessorsTest {
         IStatBatteryPackService statBatteryPackService = Mockito.mock(IStatBatteryPackService.class);
         ReflectionTestUtils.setField(processor, "statBatteryPackService", statBatteryPackService);
 
-        processor.process(context(group(6, null), cells()));
+        BatteryRealtimePostProcessContext context = context(group(6, null), cells());
+        assertTrue(processor.shouldProcess(context));
+
+        processor.process(context);
 
         ArgumentCaptor<Map<String, Object>> packMapCaptor = ArgumentCaptor.forClass(Map.class);
         Mockito.verify(statBatteryPackService).insertList(Mockito.eq(1), packMapCaptor.capture(), Mockito.anyList());
@@ -42,6 +45,28 @@ class BatteryRealtimePostProcessorsTest {
         assertEquals(3, packMapCaptor.getValue().get("deviceWorkStatus"));
         assertEquals(1, packMapCaptor.getValue().get("deviceWorkIOStatus"));
         assertEquals(53.2, packMapCaptor.getValue().get("packVoltage"));
+    }
+
+    @Test
+    void statisticsProcessorShouldRejectMissingOrMismatchedBatch() {
+        StatisticsProcessor processor = new StatisticsProcessor();
+        List<BatteryModuleCellRealtime> cells = cells();
+
+        BatteryRealtimePostProcessContext missingBatch = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .group(group(6, null))
+                .cells(cells)
+                .build();
+        assertFalse(processor.shouldProcess(missingBatch));
+
+        cells.get(1).setPollBatchNo("other-batch");
+        BatteryRealtimePostProcessContext mismatchedBatch = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .pollBatchNo(POLL_BATCH_NO)
+                .group(group(6, null))
+                .cells(cells)
+                .build();
+        assertFalse(processor.shouldProcess(mismatchedBatch));
     }
 
     @Test

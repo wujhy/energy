@@ -1,11 +1,13 @@
 package com.shanhe.project.collector.battery.service.postprocess;
 
+import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.energy.stat.service.IStatBatteryPackService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 统计数据后处理器。
@@ -35,10 +37,13 @@ public class StatisticsProcessor implements BatteryRealtimePostProcessor {
 
     @Override
     public boolean shouldProcess(BatteryRealtimePostProcessContext context) {
-        return context.getPackNum() != null
+        return context != null
+                && context.getPackNum() != null
                 && context.getGroup() != null
                 && context.getCells() != null
-                && !context.getCells().isEmpty();
+                && !context.getCells().isEmpty()
+                && hasText(context.getPollBatchNo())
+                && sameBatch(context);
     }
 
     @Override
@@ -51,5 +56,23 @@ public class StatisticsProcessor implements BatteryRealtimePostProcessor {
         } catch (Exception e) {
             log.warn("统计后处理失败, packNum={}", packNum, e);
         }
+    }
+
+    private boolean sameBatch(BatteryRealtimePostProcessContext context) {
+        String pollBatchNo = context.getPollBatchNo();
+        if (!pollBatchNo.equals(context.getGroup().getPollBatchNo())) {
+            return false;
+        }
+        List<BatteryModuleCellRealtime> cells = context.getCells();
+        for (BatteryModuleCellRealtime cell : cells) {
+            if (cell == null || !pollBatchNo.equals(cell.getPollBatchNo())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 }
