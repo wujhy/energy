@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Objects;
 
 /**
  * 980聚合命令兼容服务。
@@ -438,6 +439,8 @@ public class BatteryCollectorCommandService {
         }
         BatteryModeInfo modeInfo = batteryModeStatusService.get(batteryGroup);
         return modeInfo != null
+                && Objects.equals(modeInfo.getPackNum(), batteryGroup)
+                && Objects.equals(modeInfo.getStatus(), 1)
                 && modeInfo.getMode() != null
                 && modeInfo.getMode() != BatteryModeStatusService.MODE_IDLE;
     }

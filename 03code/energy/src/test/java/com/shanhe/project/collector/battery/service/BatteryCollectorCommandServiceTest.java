@@ -194,6 +194,49 @@ class BatteryCollectorCommandServiceTest {
     }
 
     @Test
+    void shouldAllowBalanceWhenOtherPackWorkModeAlreadyRunning() {
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        modeStatusService.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+
+        BatteryCollectorCommandResult result = service.singleBatteryBalance(
+                "battery-rs485-2",
+                2,
+                8,
+                1,
+                1000L);
+
+        Assertions.assertTrue(result.isMappedToModuleCommand());
+        Assertions.assertFalse(result.isSuccess());
+        Assertions.assertNotNull(result.getModuleControlCommand());
+        Assertions.assertEquals(2, result.getModuleControlCommand().getBatteryGroup());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_BALANCE, result.getModuleControlCommand().getMode());
+    }
+
+    @Test
+    void shouldAllowBalanceWhenSyncedModeIsStopped() {
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        BatteryModeInfo stoppedMode = new BatteryModeInfo();
+        stoppedMode.setPackNum(1);
+        stoppedMode.setMode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+        stoppedMode.setStatus(0);
+        modeStatusService.putFromM460(stoppedMode);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+
+        BatteryCollectorCommandResult result = service.singleBatteryBalance(
+                "battery-rs485-1",
+                1,
+                8,
+                1,
+                1000L);
+
+        Assertions.assertTrue(result.isMappedToModuleCommand());
+        Assertions.assertFalse(result.isSuccess());
+        Assertions.assertNotNull(result.getModuleControlCommand());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_BALANCE, result.getModuleControlCommand().getMode());
+    }
+
+    @Test
     void shouldMapInternalResistanceCoefficientWithM460FloatPayload() {
         BatteryCollectorCommandResult result = service.setInternalResistanceCoefficient(
                 "battery-rs485-1",
