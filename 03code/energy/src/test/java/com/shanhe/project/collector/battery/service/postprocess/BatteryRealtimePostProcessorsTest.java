@@ -34,6 +34,8 @@ class BatteryRealtimePostProcessorsTest {
         ArgumentCaptor<Map<String, Object>> packMapCaptor = ArgumentCaptor.forClass(Map.class);
         Mockito.verify(statBatteryPackService).insertList(Mockito.eq(1), packMapCaptor.capture(), Mockito.anyList());
         assertEquals(6, packMapCaptor.getValue().get("batteryPackStatus"));
+        assertEquals(3, packMapCaptor.getValue().get("deviceWorkStatus"));
+        assertEquals(1, packMapCaptor.getValue().get("deviceWorkIOStatus"));
         assertEquals(53.2, packMapCaptor.getValue().get("packVoltage"));
     }
 
@@ -137,6 +139,8 @@ class BatteryRealtimePostProcessorsTest {
         group.setPackVoltage(53.2);
         group.setBatteryPackStatus(batteryPackStatus);
         group.setResistanceTestStatus(resistanceTestStatus);
+        group.setDeviceWorkStatus(3);
+        group.setDeviceWorkIoStatus(1);
         return group;
     }
 
