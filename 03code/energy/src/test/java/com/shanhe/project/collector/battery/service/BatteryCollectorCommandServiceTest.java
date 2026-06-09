@@ -90,6 +90,20 @@ class BatteryCollectorCommandServiceTest {
     }
 
     @Test
+    void shouldUseFullAddressRangeWhenConnectResistanceCountInvalid() {
+        BatteryCollectorCommandResult zeroCount = service.connectResistanceTest("battery-rs485-1", 1, 0, 1000L);
+        BatteryCollectorCommandResult negativeCount = service.connectResistanceTest("battery-rs485-1", 1, -1, 1000L);
+        BatteryCollectorCommandResult tooLargeCount = service.connectResistanceTest("battery-rs485-1", 1, 246, 1000L);
+
+        Assertions.assertEquals(245, zeroCount.getModuleControlCommand().getConnectResistanceMaxAddress());
+        Assertions.assertEquals(245, negativeCount.getModuleControlCommand().getConnectResistanceMaxAddress());
+        Assertions.assertEquals(245, tooLargeCount.getModuleControlCommand().getConnectResistanceMaxAddress());
+        Assertions.assertEquals(1, zeroCount.getModuleControlCommand().getConnectResistanceNextAddress());
+        Assertions.assertEquals(1, negativeCount.getModuleControlCommand().getConnectResistanceNextAddress());
+        Assertions.assertEquals(1, tooLargeCount.getModuleControlCommand().getConnectResistanceNextAddress());
+    }
+
+    @Test
     void shouldMapClearBatteryGroupDebugDataToBroadcastModuleCommand() {
         BatteryCollectorCommandResult result = service.clearBatteryGroupDebugData("battery-rs485-1", 1, 1000L);
 
