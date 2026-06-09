@@ -952,6 +952,34 @@ class BatteryCollectorServiceTest {
     }
 
     @Test
+    void shouldNotWriteConnectResistanceCacheFrom91VoltageResponse() {
+        BatteryModuleCellCompatibilityFillService compatibilityFillService =
+                Mockito.mock(BatteryModuleCellCompatibilityFillService.class);
+        ReflectionTestUtils.setField(service, "compatibilityFillService", compatibilityFillService);
+        BatteryCollectorChannelConfig channelConfig = newChannelConfig();
+        channelConfig.setBatteryGroup(2);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE,
+                8,
+                new byte[0],
+                false);
+        pendingRequest.setBatteryGroup(2);
+        pendingRequest.setConnectResistanceNextAddress(9);
+        pendingRequest.setConnectResistanceMaxAddress(8);
+        BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(8, 0x91,
+                new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
+
+        service.handleCompletedPendingResponse(state, frame, pendingRequest);
+
+        Assertions.assertEquals("GET_CONNECT_STRIP_RESISTANCE_VOLTAGE", state.getLastCompletedModuleCommandName());
+        Assertions.assertEquals(0x91, state.getLastCompletedModuleResponseCode());
+        Assertions.assertTrue(state.isLastCompletedModuleCommandSuccess());
+        Mockito.verify(compatibilityFillService, Mockito.never()).putConnectResistance(
+                Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
     void shouldQueueNextConnectResistanceReadWithoutUpdatingOptLogForIntermediate91Response() {
         OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
         ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
