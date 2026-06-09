@@ -265,6 +265,7 @@ public class BatteryModuleAlarmAdaptService {
         }
         for (BatteryDeviceState state : timeoutStates) {
             if (state != null
+                    && belongsToPack(state, packNum)
                     && !BatteryDeviceStateConstants.StateLevel.NORMAL.equals(state.getStateLevel())
                     && !"recovered".equals(state.getStateValue())) {
                 // 存在模块超时记录，标记该组有模块无响应
@@ -283,12 +284,17 @@ public class BatteryModuleAlarmAdaptService {
                 channelName, BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE);
         if (inactiveStates != null) {
             for (BatteryDeviceState state : inactiveStates) {
-                if (state != null && "inactive".equals(state.getStateValue())) {
+                if (state != null && belongsToPack(state, packNum) && "inactive".equals(state.getStateValue())) {
                     context.putPackWarn(ItemCode.TXZT.getCode(), "1");
                     return;
                 }
             }
         }
+    }
+
+    /** 判断通道级模块状态是否属于当前电池组。 */
+    private boolean belongsToPack(BatteryDeviceState state, Integer packNum) {
+        return packNum != null && packNum.equals(state.getPackNum());
     }
 
     /** 追加 246 组模块新鲜度告警。 */

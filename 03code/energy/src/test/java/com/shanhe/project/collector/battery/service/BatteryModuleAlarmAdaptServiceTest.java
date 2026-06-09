@@ -147,9 +147,31 @@ class BatteryModuleAlarmAdaptServiceTest {
     }
 
     @Test
+    void shouldMapClosedChannelOpenToCommunicationAlarm() throws Exception {
+        BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
+                Collections.singletonList(channelState(BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN,
+                        "closed", BatteryDeviceStateConstants.StateLevel.ERROR)));
+
+        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+
+        Assertions.assertEquals("1", context.getPackWarnParam().get(ItemCode.DTTXZT.getCode()));
+    }
+
+    @Test
+    void shouldMapChannelErrorToCommunicationAlarm() throws Exception {
+        BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
+                Collections.singletonList(channelState(BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR,
+                        "read failed", BatteryDeviceStateConstants.StateLevel.ERROR)));
+
+        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+
+        Assertions.assertEquals("1", context.getPackWarnParam().get(ItemCode.DTTXZT.getCode()));
+    }
+
+    @Test
     void shouldMapActiveModuleTimeoutToCommunicationAlarm() throws Exception {
         BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
-                Collections.singletonList(moduleTimeout("01/81", BatteryDeviceStateConstants.StateLevel.WARN)));
+                Collections.singletonList(moduleTimeout(1, "01/81", BatteryDeviceStateConstants.StateLevel.WARN)));
 
         BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
@@ -159,7 +181,39 @@ class BatteryModuleAlarmAdaptServiceTest {
     @Test
     void shouldNotMapRecoveredModuleTimeoutToCommunicationAlarm() throws Exception {
         BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
-                Collections.singletonList(moduleTimeout("recovered", BatteryDeviceStateConstants.StateLevel.NORMAL)));
+                Collections.singletonList(moduleTimeout(1, "recovered", BatteryDeviceStateConstants.StateLevel.NORMAL)));
+
+        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+
+        Assertions.assertFalse(context.getPackWarnParam().containsKey(ItemCode.TXZT.getCode()));
+    }
+
+    @Test
+    void shouldMapInactiveModuleActiveToCommunicationAlarm() throws Exception {
+        BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
+                Collections.singletonList(moduleActive(1, "inactive")));
+
+        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+
+        Assertions.assertEquals("1", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
+    }
+
+    @Test
+    void shouldNotMapActiveModuleActiveToCommunicationAlarm() throws Exception {
+        BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
+                Collections.singletonList(moduleActive(1, "active")));
+
+        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+
+        Assertions.assertFalse(context.getPackWarnParam().containsKey(ItemCode.TXZT.getCode()));
+    }
+
+    @Test
+    void shouldIgnoreModuleCommunicationStatesFromOtherPack() throws Exception {
+        BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
+                Arrays.asList(
+                        moduleTimeout(2, "01/81", BatteryDeviceStateConstants.StateLevel.WARN),
+                        moduleActive(2, "inactive")));
 
         BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
@@ -196,11 +250,43 @@ class BatteryModuleAlarmAdaptServiceTest {
         return service;
     }
 
-    private BatteryDeviceState moduleTimeout(String stateValue, String stateLevel) {
+    private BatteryDeviceState channelState(String stateCode, String stateValue, String stateLevel) {
         BatteryDeviceState state = new BatteryDeviceState();
+        state.setScopeType(BatteryDeviceStateConstants.ScopeType.CHANNEL);
+        state.setScopeKey("COM1");
+        state.setPackNum(1);
+        state.setChannelName("COM1");
+        state.setStateCode(stateCode);
+        state.setStateValue(stateValue);
+        state.setStateLevel(stateLevel);
+        return state;
+    }
+
+    private BatteryDeviceState moduleTimeout(Integer packNum, String stateValue, String stateLevel) {
+        BatteryDeviceState state = new BatteryDeviceState();
+        state.setScopeType(BatteryDeviceStateConstants.ScopeType.MODULE);
+        state.setScopeKey("COM1:8");
+        state.setPackNum(packNum);
+        state.setChannelName("COM1");
+        state.setModelNum(8);
         state.setStateCode(BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT);
         state.setStateValue(stateValue);
         state.setStateLevel(stateLevel);
+        return state;
+    }
+
+    private BatteryDeviceState moduleActive(Integer packNum, String stateValue) {
+        BatteryDeviceState state = new BatteryDeviceState();
+        state.setScopeType(BatteryDeviceStateConstants.ScopeType.MODULE);
+        state.setScopeKey("COM1:8");
+        state.setPackNum(packNum);
+        state.setChannelName("COM1");
+        state.setModelNum(8);
+        state.setStateCode(BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE);
+        state.setStateValue(stateValue);
+        state.setStateLevel("inactive".equals(stateValue)
+                ? BatteryDeviceStateConstants.StateLevel.WARN
+                : BatteryDeviceStateConstants.StateLevel.NORMAL);
         return state;
     }
 
@@ -220,15 +306,25 @@ class BatteryModuleAlarmAdaptServiceTest {
 
         @Override
         public BatteryDeviceState selectByScope(String scopeType, String scopeKey, String stateCode) {
-            if (group246Freshness == null) {
-                return null;
-            }
             if (BatteryDeviceStateConstants.ScopeType.PACK.equals(scopeType)
                     && "1".equals(scopeKey)
-                    && BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS.equals(stateCode)) {
+                    && BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS.equals(stateCode)
+                    && group246Freshness != null) {
                 BatteryDeviceState state = new BatteryDeviceState();
+                state.setScopeType(scopeType);
+                state.setScopeKey(scopeKey);
+                state.setPackNum(1);
+                state.setStateCode(stateCode);
                 state.setStateValue(group246Freshness);
                 return state;
+            }
+            for (BatteryDeviceState state : channelStates) {
+                if (state != null
+                        && scopeType.equals(state.getScopeType())
+                        && scopeKey.equals(state.getScopeKey())
+                        && stateCode.equals(state.getStateCode())) {
+                    return state;
+                }
             }
             return null;
         }
@@ -240,7 +336,18 @@ class BatteryModuleAlarmAdaptServiceTest {
 
         @Override
         public List<BatteryDeviceState> selectByChannelAndCode(String channelName, String stateCode) {
-            return channelStates;
+            if (channelStates == null || channelStates.isEmpty()) {
+                return Collections.emptyList();
+            }
+            List<BatteryDeviceState> result = new java.util.ArrayList<>();
+            for (BatteryDeviceState state : channelStates) {
+                if (state != null
+                        && channelName.equals(state.getChannelName())
+                        && stateCode.equals(state.getStateCode())) {
+                    result.add(state);
+                }
+            }
+            return result;
         }
 
         @Override
