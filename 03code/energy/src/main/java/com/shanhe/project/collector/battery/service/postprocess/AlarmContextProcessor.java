@@ -1,14 +1,12 @@
 package com.shanhe.project.collector.battery.service.postprocess;
 
 import com.shanhe.project.collector.battery.model.BatteryModuleAlarmContext;
-import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.service.BatteryModuleAlarmAdaptService;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,14 +42,14 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
         if (context == null) {
             return false;
         }
-        if (!hasText(context.getPollBatchNo())) {
+        if (!PostProcessBatchGuard.hasText(context.getPollBatchNo())) {
             return false;
         }
         if (context.getAlarmContext() != null && alarmLogService != null) {
             return true;
         }
         return alarmAdaptService != null && context.getPackNum() != null
-                && (sameRealtimeBatch(context) || context.getChannelConfig() != null);
+                && (PostProcessBatchGuard.sameRealtimeBatch(context) || context.getChannelConfig() != null);
     }
 
     @Override
@@ -61,7 +59,7 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
         }
         try {
             BatteryModuleAlarmContext alarmContext = context.getAlarmContext();
-            if (alarmContext == null && alarmAdaptService != null && sameRealtimeBatch(context)) {
+            if (alarmContext == null && alarmAdaptService != null && PostProcessBatchGuard.sameRealtimeBatch(context)) {
                 alarmContext = alarmAdaptService.buildContext(context.getGroup(), context.getCells());
             }
             if (alarmContext == null && alarmAdaptService != null) {
@@ -123,24 +121,4 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
         }
     }
 
-    private boolean sameRealtimeBatch(BatteryRealtimePostProcessContext context) {
-        if (context.getGroup() == null || context.getCells() == null || context.getCells().isEmpty()) {
-            return false;
-        }
-        String pollBatchNo = context.getPollBatchNo();
-        if (!hasText(pollBatchNo) || !pollBatchNo.equals(context.getGroup().getPollBatchNo())) {
-            return false;
-        }
-        List<BatteryModuleCellRealtime> cells = context.getCells();
-        for (BatteryModuleCellRealtime cell : cells) {
-            if (cell == null || !pollBatchNo.equals(cell.getPollBatchNo())) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean hasText(String value) {
-        return value != null && !value.trim().isEmpty();
-    }
 }

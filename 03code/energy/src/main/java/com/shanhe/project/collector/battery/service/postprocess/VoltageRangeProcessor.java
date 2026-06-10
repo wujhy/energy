@@ -41,8 +41,7 @@ public class VoltageRangeProcessor implements BatteryRealtimePostProcessor {
                 && context.getPackNum() != null
                 && context.getCells() != null
                 && !context.getCells().isEmpty()
-                && hasText(context.getPollBatchNo())
-                && sameBatch(context);
+                && PostProcessBatchGuard.sameCellBatch(context.getPollBatchNo(), context.getCells());
     }
 
     @Override
@@ -76,18 +75,4 @@ public class VoltageRangeProcessor implements BatteryRealtimePostProcessor {
         }
     }
 
-    private boolean sameBatch(BatteryRealtimePostProcessContext context) {
-        String pollBatchNo = context.getPollBatchNo();
-        List<BatteryModuleCellRealtime> cells = context.getCells();
-        for (BatteryModuleCellRealtime cell : cells) {
-            if (cell == null || !pollBatchNo.equals(cell.getPollBatchNo())) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean hasText(String value) {
-        return value != null && !value.trim().isEmpty();
-    }
 }

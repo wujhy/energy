@@ -106,6 +106,28 @@ class BatteryRealtimePostProcessorsTest {
     }
 
     @Test
+    void operationLogProcessorShouldIgnoreCompatInsertOldReportLogBoundary() {
+        OperationLogProcessor processor = new OperationLogProcessor();
+        OptLogService optLogService = Mockito.mock(OptLogService.class);
+        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
+        BatteryReportLog contextOldInfo = new BatteryReportLog();
+        BatteryReportLog cachedOldInfo = new BatteryReportLog();
+        Mockito.when(reportLogService.lastCache(1)).thenReturn(cachedOldInfo);
+        ReflectionTestUtils.setField(processor, "optLogService", optLogService);
+        ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
+
+        BatteryRealtimePostProcessContext context = context(group(6, null), cells());
+        context.setCompatInsert(true);
+        context.setOldReportLog(contextOldInfo);
+
+        assertTrue(processor.shouldProcess(context));
+        processor.process(context);
+
+        Mockito.verify(reportLogService).lastCache(1);
+        Mockito.verify(optLogService).insertBattery(Mockito.eq(1), Mockito.anyMap(), Mockito.same(cachedOldInfo));
+    }
+
+    @Test
     void operationLogProcessorShouldRejectMissingOrMismatchedBatch() {
         OperationLogProcessor processor = new OperationLogProcessor();
 
