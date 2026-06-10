@@ -19,6 +19,8 @@ import java.util.Map;
 
 class AlarmContextProcessorTest {
 
+    private static final String POLL_BATCH_NO = "batch-1";
+
     @Test
     void processShouldBuildContextAndSkipAlarmServiceWhenAlarmContextIsEmpty() {
         AlarmContextProcessor processor = newProcessor();
@@ -192,8 +194,79 @@ class AlarmContextProcessorTest {
 
         Assertions.assertTrue(processor.shouldProcess(BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
+                .pollBatchNo(POLL_BATCH_NO)
                 .alarmContext(alarmContext(1))
                 .build()));
+    }
+
+    @Test
+    void shouldProcessShouldRejectContextWithoutPollBatchNo() {
+        AlarmContextProcessor processor = newProcessor();
+        ReflectionTestUtils.setField(processor, "alarmAdaptService", Mockito.mock(BatteryModuleAlarmAdaptService.class));
+
+        Assertions.assertFalse(processor.shouldProcess(BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .group(group())
+                .cells(Arrays.asList(cell(1), cell(2)))
+                .build()));
+    }
+
+    @Test
+    void shouldProcessShouldRejectRealtimeContextWhenGroupBatchDoesNotMatch() {
+        AlarmContextProcessor processor = newProcessor();
+        ReflectionTestUtils.setField(processor, "alarmAdaptService", Mockito.mock(BatteryModuleAlarmAdaptService.class));
+        BatteryModuleGroupRealtime group = group();
+        group.setPollBatchNo("other-batch");
+
+        Assertions.assertFalse(processor.shouldProcess(BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .pollBatchNo(POLL_BATCH_NO)
+                .group(group)
+                .cells(Arrays.asList(cell(1), cell(2)))
+                .build()));
+    }
+
+    @Test
+    void shouldProcessShouldRejectRealtimeContextWhenCellBatchDoesNotMatch() {
+        AlarmContextProcessor processor = newProcessor();
+        ReflectionTestUtils.setField(processor, "alarmAdaptService", Mockito.mock(BatteryModuleAlarmAdaptService.class));
+        BatteryModuleCellRealtime staleCell = cell(2);
+        staleCell.setPollBatchNo("other-batch");
+
+        Assertions.assertFalse(processor.shouldProcess(BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .pollBatchNo(POLL_BATCH_NO)
+                .group(group())
+                .cells(Arrays.asList(cell(1), staleCell))
+                .build()));
+    }
+
+    @Test
+    void processShouldNotBuildRealtimeAlarmContextFromDifferentBatchWhenCommunicationAlarmExists() {
+        AlarmContextProcessor processor = newProcessor();
+        BatteryModuleAlarmAdaptService alarmAdaptService = Mockito.mock(BatteryModuleAlarmAdaptService.class);
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryModuleCellRealtime staleCell = cell(2);
+        staleCell.setPollBatchNo("other-batch");
+        BatteryModuleAlarmContext communicationContext = alarmContext(1);
+        communicationContext.putPackWarn(ItemCode.TXZT.getCode(), "1");
+        BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .pollBatchNo(POLL_BATCH_NO)
+                .group(group())
+                .cells(Arrays.asList(cell(1), staleCell))
+                .channelConfig(channelConfig())
+                .build();
+        Mockito.when(alarmAdaptService.buildCommunicationAlarmContext(1, "COM1"))
+                .thenReturn(communicationContext);
+        ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
+        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+
+        processor.process(context);
+
+        Mockito.verify(alarmAdaptService, Mockito.never()).buildContext(Mockito.any(), Mockito.anyList());
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+                Mockito.isNull(), Mockito.argThat(params -> "1".equals(params.get(ItemCode.TXZT.getCode()))));
     }
 
     @Test
@@ -210,6 +283,7 @@ class AlarmContextProcessorTest {
     private BatteryRealtimePostProcessContext contextWithoutAlarmContext() {
         return BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
+                .pollBatchNo(POLL_BATCH_NO)
                 .group(group())
                 .cells(Arrays.asList(cell(1), cell(2)))
                 .build();
@@ -218,6 +292,7 @@ class AlarmContextProcessorTest {
     private BatteryRealtimePostProcessContext contextWithChannelConfig() {
         return BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
+                .pollBatchNo(POLL_BATCH_NO)
                 .group(group())
                 .cells(Arrays.asList(cell(1), cell(2)))
                 .channelConfig(channelConfig())
@@ -227,6 +302,7 @@ class AlarmContextProcessorTest {
     private BatteryRealtimePostProcessContext contextWithAlarmContext(BatteryModuleAlarmContext alarmContext) {
         return BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
+                .pollBatchNo(POLL_BATCH_NO)
                 .alarmContext(alarmContext)
                 .build();
     }
@@ -240,6 +316,7 @@ class AlarmContextProcessorTest {
     private BatteryModuleGroupRealtime group() {
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
         group.setPackNum(1);
+        group.setPollBatchNo(POLL_BATCH_NO);
         return group;
     }
 
@@ -247,6 +324,7 @@ class AlarmContextProcessorTest {
         BatteryModuleCellRealtime cell = new BatteryModuleCellRealtime();
         cell.setPackNum(1);
         cell.setBatNum(batNum);
+        cell.setPollBatchNo(POLL_BATCH_NO);
         return cell;
     }
 
