@@ -152,12 +152,28 @@ public class BatteryCollectorCommandService {
         if (batteryGroup <= 0) {
             return BatteryCollectorCommandResult.builder().success(false).message("电池组编号无效").build();
         }
-        int effectiveCount = (batteryCount > 0 && batteryCount <= 245) ? batteryCount : 245;
+        try {
+            validateBatteryCount(batteryCount);
+        } catch (IllegalArgumentException e) {
+            log.warn("连接条测试命令被拒绝, 通道={}, 电池组={}, 单体数量={}, 原因={}",
+                    channelName,
+                    batteryGroup,
+                    batteryCount,
+                    e.getMessage());
+            return BatteryCollectorCommandResult.builder()
+                    .success(false)
+                    .timeout(false)
+                    .mappedToModuleCommand(false)
+                    .channelName(channelName)
+                    .commandDefinition(BatteryAggregateCommandDefinition.CONNECT_RESISTANCE_TEST)
+                    .message("电池组单体数量无效")
+                    .build();
+        }
         BatteryModuleControlCommand moduleCommand;
         try {
             moduleCommand = moduleControlCommandService.connectStripResistanceTest();
             moduleCommand.setConnectResistanceNextAddress(1);
-            moduleCommand.setConnectResistanceMaxAddress(effectiveCount);
+            moduleCommand.setConnectResistanceMaxAddress(batteryCount);
         } catch (IllegalArgumentException e) {
             log.warn("连接条测试命令被拒绝, 通道={}, 电池组={}, 原因={}", channelName, batteryGroup, e.getMessage());
             return unsupported(BatteryAggregateCommandDefinition.CONNECT_RESISTANCE_TEST, channelName);

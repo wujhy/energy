@@ -87,20 +87,26 @@ class BatteryCollectorCommandServiceTest {
         Assertions.assertNull(result.getModuleControlCommand().getResponseCode());
         Assertions.assertEquals(1, result.getModuleControlCommand().getConnectResistanceNextAddress());
         Assertions.assertEquals(24, result.getModuleControlCommand().getConnectResistanceMaxAddress());
+        Assertions.assertEquals(1, result.getModuleControlCommand().getBatteryGroup());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE,
+                result.getModuleControlCommand().getMode());
     }
 
     @Test
-    void shouldUseFullAddressRangeWhenConnectResistanceCountInvalid() {
+    void shouldRejectConnectResistanceTestWhenCountInvalid() {
         BatteryCollectorCommandResult zeroCount = service.connectResistanceTest("battery-rs485-1", 1, 0, 1000L);
         BatteryCollectorCommandResult negativeCount = service.connectResistanceTest("battery-rs485-1", 1, -1, 1000L);
         BatteryCollectorCommandResult tooLargeCount = service.connectResistanceTest("battery-rs485-1", 1, 246, 1000L);
 
-        Assertions.assertEquals(245, zeroCount.getModuleControlCommand().getConnectResistanceMaxAddress());
-        Assertions.assertEquals(245, negativeCount.getModuleControlCommand().getConnectResistanceMaxAddress());
-        Assertions.assertEquals(245, tooLargeCount.getModuleControlCommand().getConnectResistanceMaxAddress());
-        Assertions.assertEquals(1, zeroCount.getModuleControlCommand().getConnectResistanceNextAddress());
-        Assertions.assertEquals(1, negativeCount.getModuleControlCommand().getConnectResistanceNextAddress());
-        Assertions.assertEquals(1, tooLargeCount.getModuleControlCommand().getConnectResistanceNextAddress());
+        Assertions.assertFalse(zeroCount.isSuccess());
+        Assertions.assertFalse(zeroCount.isMappedToModuleCommand());
+        Assertions.assertNull(zeroCount.getModuleControlCommand());
+        Assertions.assertFalse(negativeCount.isSuccess());
+        Assertions.assertFalse(negativeCount.isMappedToModuleCommand());
+        Assertions.assertNull(negativeCount.getModuleControlCommand());
+        Assertions.assertFalse(tooLargeCount.isSuccess());
+        Assertions.assertFalse(tooLargeCount.isMappedToModuleCommand());
+        Assertions.assertNull(tooLargeCount.getModuleControlCommand());
     }
 
     @Test
@@ -351,6 +357,40 @@ class BatteryCollectorCommandServiceTest {
         Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, modeInfo.getMode());
         Assertions.assertEquals(1, modeInfo.getStatus());
         Assertions.assertEquals(8, modeInfo.getAddress());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldQueueConnectResistanceTestWhenCollectorChannelExists() {
+        BatteryCollectorService collectorService = new BatteryCollectorService();
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setName("battery-rs485-1");
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        List<BatteryCollectorChannelState> channelStates =
+                (List<BatteryCollectorChannelState>) ReflectionTestUtils.getField(collectorService, "channelStates");
+        channelStates.add(state);
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        ReflectionTestUtils.setField(collectorService, "batteryModeStatusService", modeStatusService);
+        ReflectionTestUtils.setField(service, "collectorService", collectorService);
+
+        BatteryCollectorCommandResult result = service.connectResistanceTest(
+                "battery-rs485-1",
+                1,
+                24,
+                1000L);
+
+        Assertions.assertTrue(result.isSuccess());
+        Assertions.assertTrue(result.isMappedToModuleCommand());
+        Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
+        Assertions.assertEquals(BatteryDeviceProtocolCode.CONNECT_STRIP_RESISTANCE_TEST,
+                state.getQueuedModuleCommands().peek().getProtocolCode());
+        Assertions.assertEquals(1, state.getQueuedModuleCommands().peek().getConnectResistanceNextAddress());
+        Assertions.assertEquals(24, state.getQueuedModuleCommands().peek().getConnectResistanceMaxAddress());
+        BatteryModeInfo modeInfo = modeStatusService.get(1);
+        Assertions.assertEquals(1, modeInfo.getPackNum());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, modeInfo.getMode());
+        Assertions.assertEquals(1, modeInfo.getStatus());
+        Assertions.assertEquals(0, modeInfo.getAddress());
     }
 
     @Test
