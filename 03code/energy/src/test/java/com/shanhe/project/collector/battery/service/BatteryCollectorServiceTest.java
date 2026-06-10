@@ -13,6 +13,8 @@ import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
+import com.shanhe.framework.enums.BatteryTestEnum;
+import com.shanhe.project.device.opt.domain.OptLog;
 import com.shanhe.project.device.opt.mapper.OptLogMapper;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
@@ -656,6 +658,81 @@ class BatteryCollectorServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void shouldCreateCommandOptLogWithExplicitModuleCommandFields() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setName("battery-group-1");
+        channelConfig.setConfigId(1L);
+        channelConfig.setBatteryGroup(2);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        List<BatteryCollectorChannelState> channelStates =
+                (List<BatteryCollectorChannelState>) ReflectionTestUtils.getField(service, "channelStates");
+        channelStates.add(state);
+
+        boolean queued = service.submitModuleCommand("battery-group-1", BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST)
+                .address(8)
+                .requestCode(0x02)
+                .responseCode(0x82)
+                .payload(new byte[]{0x01, 0x23})
+                .mode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE)
+                .build());
+
+        Assertions.assertTrue(queued);
+        ArgumentCaptor<OptLog> captor = ArgumentCaptor.forClass(OptLog.class);
+        Mockito.verify(optLogMapper).insert(captor.capture());
+        OptLog optLog = captor.getValue();
+        Assertions.assertNotNull(optLog.getId());
+        Assertions.assertEquals(1L, optLog.getConfigId());
+        Assertions.assertEquals(2, optLog.getPackNum());
+        Assertions.assertEquals(BatteryTestEnum._99.getDictValue(), optLog.getType());
+        Assertions.assertEquals(BatteryDeviceStateConstants.Source.COLLECTOR, optLog.getSource());
+        Assertions.assertEquals("battery-group-1", optLog.getChannelName());
+        Assertions.assertEquals("module", optLog.getTargetType());
+        Assertions.assertEquals(8, optLog.getTargetAddress());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, optLog.getMode());
+        Assertions.assertEquals(BatteryDeviceStateConstants.CommandStatus.PENDING, optLog.getStatus());
+        Assertions.assertEquals(0x02, optLog.getRequestCode());
+        Assertions.assertEquals(0x82, optLog.getResponseCode());
+        Assertions.assertEquals("SINGLE_BATTERY_IR_TEST", optLog.getProtocolCode());
+        Assertions.assertEquals(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST.getDescription(), optLog.getCommandName());
+        Assertions.assertEquals("0123", optLog.getRequestPayload());
+        Assertions.assertNull(optLog.getResponsePayload());
+        Assertions.assertNull(optLog.getErrorMessage());
+        Assertions.assertNotNull(optLog.getStartedAt());
+        Assertions.assertNotNull(state.getQueuedModuleCommands().peek().getOptLogId());
+    }
+
+    @Test
+    void shouldCreateCommandOptLogWithNullRequestPayloadForEmptyPayload() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", newModeStatusService());
+        BatteryCollectorChannelConfig channelConfig = newChannelConfig();
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        @SuppressWarnings("unchecked")
+        List<BatteryCollectorChannelState> channelStates =
+                (List<BatteryCollectorChannelState>) ReflectionTestUtils.getField(service, "channelStates");
+        channelStates.add(state);
+
+        Assertions.assertTrue(service.submitModuleCommand("battery-group-1", BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST)
+                .address(8)
+                .requestCode(0x02)
+                .responseCode(0x82)
+                .payload(new byte[0])
+                .build()));
+
+        ArgumentCaptor<OptLog> captor = ArgumentCaptor.forClass(OptLog.class);
+        Mockito.verify(optLogMapper).insert(captor.capture());
+        Assertions.assertNull(captor.getValue().getRequestPayload());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void shouldRequeueModuleCommandWhenSerialPortIsUnavailable() {
         ReflectionTestUtils.setField(service, "frameCodec", new BatteryCollectorFrameCodec());
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
@@ -1204,13 +1281,41 @@ class BatteryCollectorServiceTest {
     }
 
     @Test
-    void shouldRecordTimedOutModuleCommandAsFailed() {
+    void shouldUpdateCommandOptLogWithResponsePayloadOnCompletedModuleCommand() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
         BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
                 BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
                 8,
                 new byte[0],
                 false);
+        pendingRequest.setOptLogId(10L);
+        BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(8, 0x82,
+                new byte[]{0x00, 0x02});
+
+        service.handleCompletedPendingResponse(state, frame, pendingRequest);
+
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.SUCCESS),
+                Mockito.eq(0x82),
+                Mockito.anyString(),
+                Mockito.isNull(),
+                Mockito.eq("0002"));
+    }
+
+    @Test
+    void shouldRecordTimedOutModuleCommandAsFailed() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
+                8,
+                new byte[0],
+                false);
+        pendingRequest.setOptLogId(10L);
 
         service.handleTimedOutPendingRequest(state, pendingRequest);
 
@@ -1218,6 +1323,13 @@ class BatteryCollectorServiceTest {
         Assertions.assertEquals(0x82, state.getLastCompletedModuleResponseCode());
         Assertions.assertFalse(state.isLastCompletedModuleCommandSuccess());
         Assertions.assertTrue(state.getLastCompletedModuleCommandTime() > 0);
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.TIMEOUT),
+                Mockito.isNull(),
+                Mockito.anyString(),
+                Mockito.eq("命令响应超时"),
+                Mockito.isNull());
     }
 
     @Test
