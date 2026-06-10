@@ -8,6 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -42,17 +45,27 @@ public class BatteryDeviceStateServiceImpl implements BatteryDeviceStateService 
 
     @Override
     public BatteryDeviceState selectByScope(String scopeType, String scopeKey, String stateCode) {
-        return batteryDeviceStateMapper.selectByScope(scopeType, scopeKey, stateCode);
+        if (isBlank(scopeType) || isBlank(scopeKey) || isBlank(stateCode)) {
+            return null;
+        }
+        BatteryDeviceState state = batteryDeviceStateMapper.selectByScope(scopeType, scopeKey, stateCode);
+        return isExpired(state) ? null : state;
     }
 
     @Override
     public List<BatteryDeviceState> selectByPackAndCode(Integer packNum, String stateCode) {
-        return batteryDeviceStateMapper.selectByPackAndCode(packNum, stateCode);
+        if (packNum == null || isBlank(stateCode)) {
+            return Collections.emptyList();
+        }
+        return filterCurrent(batteryDeviceStateMapper.selectByPackAndCode(packNum, stateCode));
     }
 
     @Override
     public List<BatteryDeviceState> selectByChannelAndCode(String channelName, String stateCode) {
-        return batteryDeviceStateMapper.selectByChannelAndCode(channelName, stateCode);
+        if (isBlank(channelName) || isBlank(stateCode)) {
+            return Collections.emptyList();
+        }
+        return filterCurrent(batteryDeviceStateMapper.selectByChannelAndCode(channelName, stateCode));
     }
 
     @Override
@@ -96,9 +109,9 @@ public class BatteryDeviceStateServiceImpl implements BatteryDeviceStateService 
     @Override
     public List<BatteryDeviceState> getPackStatusSummary(Integer packNum) {
         if (packNum == null) {
-            return java.util.Collections.emptyList();
+            return Collections.emptyList();
         }
-        List<BatteryDeviceState> result = new java.util.ArrayList<>();
+        List<BatteryDeviceState> result = new ArrayList<>();
         // 工作模式
         BatteryDeviceState workMode = selectByScope(
                 BatteryDeviceStateConstants.ScopeType.PACK, String.valueOf(packNum),
@@ -125,10 +138,10 @@ public class BatteryDeviceStateServiceImpl implements BatteryDeviceStateService 
 
     @Override
     public List<BatteryDeviceState> getChannelStatusSummary(String channelName) {
-        if (channelName == null || channelName.trim().isEmpty()) {
-            return java.util.Collections.emptyList();
+        if (isBlank(channelName)) {
+            return Collections.emptyList();
         }
-        List<BatteryDeviceState> result = new java.util.ArrayList<>();
+        List<BatteryDeviceState> result = new ArrayList<>();
         // 通道串口状态
         BatteryDeviceState channelOpen = selectByScope(
                 BatteryDeviceStateConstants.ScopeType.CHANNEL, channelName,
@@ -156,5 +169,23 @@ public class BatteryDeviceStateServiceImpl implements BatteryDeviceStateService 
             result.addAll(active);
         }
         return result;
+    }
+
+    private List<BatteryDeviceState> filterCurrent(List<BatteryDeviceState> states) {
+        if (states == null || states.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<BatteryDeviceState> result = new ArrayList<>();
+        for (BatteryDeviceState state : states) {
+            if (!isExpired(state)) {
+                result.add(state);
+            }
+        }
+        return result;
+    }
+
+    private boolean isExpired(BatteryDeviceState state) {
+        Date expireTime = state == null ? null : state.getExpireTime();
+        return expireTime != null && !expireTime.after(new Date());
     }
 }

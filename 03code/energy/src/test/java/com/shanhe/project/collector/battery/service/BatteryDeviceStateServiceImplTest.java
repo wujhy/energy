@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import static org.mockito.Mockito.verify;
@@ -145,9 +146,109 @@ class BatteryDeviceStateServiceImplTest {
         verifyNoInteractions(batteryDeviceStateMapper);
     }
 
+    @Test
+    void selectByScopeShouldReturnNullWhenInputIsMissingOrStateExpired() {
+        Assertions.assertNull(service.selectByScope(null, "1", BatteryDeviceStateConstants.StateCode.ONLINE));
+        Assertions.assertNull(service.selectByScope(BatteryDeviceStateConstants.ScopeType.PACK, " ", BatteryDeviceStateConstants.StateCode.ONLINE));
+        Assertions.assertNull(service.selectByScope(BatteryDeviceStateConstants.ScopeType.PACK, "1", ""));
+        verifyNoInteractions(batteryDeviceStateMapper);
+
+        BatteryDeviceState expired = state(BatteryDeviceStateConstants.StateCode.ONLINE);
+        expired.setExpireTime(new Date(System.currentTimeMillis() - 1000L));
+        when(batteryDeviceStateMapper.selectByScope(BatteryDeviceStateConstants.ScopeType.PACK, "1",
+                BatteryDeviceStateConstants.StateCode.ONLINE))
+                .thenReturn(expired);
+
+        Assertions.assertNull(service.selectByScope(BatteryDeviceStateConstants.ScopeType.PACK, "1",
+                BatteryDeviceStateConstants.StateCode.ONLINE));
+    }
+
+    @Test
+    void selectByPackAndCodeShouldGuardMissingInputAndFilterExpiredStates() {
+        Assertions.assertTrue(service.selectByPackAndCode(null, BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE).isEmpty());
+        Assertions.assertTrue(service.selectByPackAndCode(1, " ").isEmpty());
+        verifyNoInteractions(batteryDeviceStateMapper);
+
+        BatteryDeviceState normal = state(BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE,
+                BatteryDeviceStateConstants.StateLevel.NORMAL);
+        BatteryDeviceState error = state(BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE,
+                BatteryDeviceStateConstants.StateLevel.ERROR);
+        BatteryDeviceState expired = state(BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE,
+                BatteryDeviceStateConstants.StateLevel.ERROR);
+        expired.setExpireTime(new Date(System.currentTimeMillis() - 1000L));
+        when(batteryDeviceStateMapper.selectByPackAndCode(1, BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE))
+                .thenReturn(Arrays.asList(normal, expired, error));
+
+        List<BatteryDeviceState> states = service.selectByPackAndCode(1,
+                BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE);
+
+        Assertions.assertEquals(2, states.size());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateLevel.NORMAL, states.get(0).getStateLevel());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateLevel.ERROR, states.get(1).getStateLevel());
+    }
+
+    @Test
+    void selectByChannelAndCodeShouldGuardMissingInputAndFilterExpiredStates() {
+        Assertions.assertTrue(service.selectByChannelAndCode(null, BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT).isEmpty());
+        Assertions.assertTrue(service.selectByChannelAndCode("  ", BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT).isEmpty());
+        Assertions.assertTrue(service.selectByChannelAndCode("COM1", null).isEmpty());
+        verifyNoInteractions(batteryDeviceStateMapper);
+
+        BatteryDeviceState active = state(BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT,
+                BatteryDeviceStateConstants.StateLevel.ERROR);
+        BatteryDeviceState expired = state(BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT,
+                BatteryDeviceStateConstants.StateLevel.ERROR);
+        expired.setExpireTime(new Date(System.currentTimeMillis() - 1000L));
+        when(batteryDeviceStateMapper.selectByChannelAndCode("COM1",
+                BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT))
+                .thenReturn(Arrays.asList(expired, active));
+
+        List<BatteryDeviceState> states = service.selectByChannelAndCode("COM1",
+                BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT);
+
+        Assertions.assertEquals(1, states.size());
+        Assertions.assertSame(active, states.get(0));
+    }
+
+    @Test
+    void summariesShouldExcludeExpiredStates() {
+        BatteryDeviceState currentOnline = state(BatteryDeviceStateConstants.StateCode.ONLINE);
+        BatteryDeviceState expiredWorkMode = state(BatteryDeviceStateConstants.StateCode.WORK_MODE);
+        BatteryDeviceState expiredTimeout = state(BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT);
+        BatteryDeviceState currentActive = state(BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE);
+        expiredWorkMode.setExpireTime(new Date(System.currentTimeMillis() - 1000L));
+        expiredTimeout.setExpireTime(new Date(System.currentTimeMillis() - 1000L));
+        when(batteryDeviceStateMapper.selectByScope(BatteryDeviceStateConstants.ScopeType.PACK, "3",
+                BatteryDeviceStateConstants.StateCode.WORK_MODE))
+                .thenReturn(expiredWorkMode);
+        when(batteryDeviceStateMapper.selectByScope(BatteryDeviceStateConstants.ScopeType.PACK, "3",
+                BatteryDeviceStateConstants.StateCode.ONLINE))
+                .thenReturn(currentOnline);
+        when(batteryDeviceStateMapper.selectByChannelAndCode("COM3",
+                BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT))
+                .thenReturn(Arrays.asList(expiredTimeout));
+        when(batteryDeviceStateMapper.selectByChannelAndCode("COM3",
+                BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE))
+                .thenReturn(Arrays.asList(currentActive));
+
+        List<BatteryDeviceState> packSummary = service.getPackStatusSummary(3);
+        List<BatteryDeviceState> channelSummary = service.getChannelStatusSummary("COM3");
+
+        Assertions.assertEquals(1, packSummary.size());
+        Assertions.assertSame(currentOnline, packSummary.get(0));
+        Assertions.assertEquals(1, channelSummary.size());
+        Assertions.assertSame(currentActive, channelSummary.get(0));
+    }
+
     private BatteryDeviceState state(String stateCode) {
         BatteryDeviceState state = new BatteryDeviceState();
         state.setStateCode(stateCode);
+        return state;
+    }
+
+    private BatteryDeviceState state(String stateCode, String stateLevel) {
+        BatteryDeviceState state = state(stateCode);
+        state.setStateLevel(stateLevel);
         return state;
     }
 }
