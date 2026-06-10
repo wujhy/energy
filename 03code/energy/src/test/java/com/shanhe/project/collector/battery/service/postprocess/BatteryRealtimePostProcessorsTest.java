@@ -147,6 +147,11 @@ class BatteryRealtimePostProcessorsTest {
                 .cells(cells())
                 .build();
         assertFalse(processor.shouldProcess(mismatchedBatch));
+
+        List<BatteryModuleCellRealtime> mismatchedCells = cells();
+        mismatchedCells.get(0).setPollBatchNo("other-batch");
+        BatteryRealtimePostProcessContext mismatchedCellBatch = context(group(6, null), mismatchedCells);
+        assertFalse(processor.shouldProcess(mismatchedCellBatch));
     }
 
     @Test
@@ -191,6 +196,11 @@ class BatteryRealtimePostProcessorsTest {
                 .cells(cells())
                 .build();
         assertFalse(processor.shouldProcess(mismatchedBatch));
+
+        List<BatteryModuleCellRealtime> mismatchedCells = cells();
+        mismatchedCells.get(0).setPollBatchNo("other-batch");
+        BatteryRealtimePostProcessContext mismatchedCellBatch = context(group(5, null), mismatchedCells);
+        assertFalse(processor.shouldProcess(mismatchedCellBatch));
     }
 
     @Test

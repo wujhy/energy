@@ -49,9 +49,7 @@ public class CapacityPredictionProcessor implements BatteryRealtimePostProcessor
     public boolean shouldProcess(BatteryRealtimePostProcessContext context) {
         return context != null
                 && context.getPackNum() != null
-                && context.getGroup() != null
-                && hasText(context.getPollBatchNo())
-                && context.getPollBatchNo().equals(context.getGroup().getPollBatchNo());
+                && PostProcessBatchGuard.sameRealtimeBatch(context);
     }
 
     @Override
@@ -97,7 +95,4 @@ public class CapacityPredictionProcessor implements BatteryRealtimePostProcessor
         return BatteryPackStatusEnum.find(status) != null;
     }
 
-    private boolean hasText(String value) {
-        return value != null && !value.trim().isEmpty();
-    }
 }
