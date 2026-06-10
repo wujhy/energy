@@ -104,6 +104,19 @@ class BatteryCollectorCommandServiceTest {
     }
 
     @Test
+    void shouldRejectConnectResistanceTestWhenChannelOrGroupInvalid() {
+        BatteryCollectorCommandResult blankChannel = service.connectResistanceTest(" ", 1, 24, 1000L);
+        BatteryCollectorCommandResult invalidGroup = service.connectResistanceTest("battery-rs485-1", 0, 24, 1000L);
+
+        Assertions.assertFalse(blankChannel.isSuccess());
+        Assertions.assertNull(blankChannel.getModuleControlCommand());
+        Assertions.assertTrue(blankChannel.getMessage().contains("通道名称不能为空"));
+        Assertions.assertFalse(invalidGroup.isSuccess());
+        Assertions.assertNull(invalidGroup.getModuleControlCommand());
+        Assertions.assertTrue(invalidGroup.getMessage().contains("电池组编号无效"));
+    }
+
+    @Test
     void shouldMapClearBatteryGroupDebugDataToBroadcastModuleCommand() {
         BatteryCollectorCommandResult result = service.clearBatteryGroupDebugData("battery-rs485-1", 1, 1000L);
 
