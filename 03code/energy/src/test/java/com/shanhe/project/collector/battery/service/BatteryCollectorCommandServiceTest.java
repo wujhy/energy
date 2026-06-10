@@ -170,6 +170,29 @@ class BatteryCollectorCommandServiceTest {
     }
 
     @Test
+    void shouldRejectAutomaticModuleAddressWhenChannelOrGroupInvalid() {
+        BatteryCollectorCommandResult blankChannel = service.autoSetSubmoduleAddress(
+                " ",
+                1,
+                24,
+                2,
+                1000L);
+        BatteryCollectorCommandResult invalidGroup = service.autoSetSubmoduleAddress(
+                "battery-rs485-1",
+                0,
+                24,
+                2,
+                1000L);
+
+        Assertions.assertFalse(blankChannel.isSuccess());
+        Assertions.assertFalse(blankChannel.isMappedToModuleCommand());
+        Assertions.assertNull(blankChannel.getModuleControlCommand());
+        Assertions.assertFalse(invalidGroup.isSuccess());
+        Assertions.assertFalse(invalidGroup.isMappedToModuleCommand());
+        Assertions.assertNull(invalidGroup.getModuleControlCommand());
+    }
+
+    @Test
     void shouldMapManualModuleAddressToModuleCommand() {
         BatteryCollectorCommandResult result = service.manualSetSubmoduleAddress(
                 "battery-rs485-1",

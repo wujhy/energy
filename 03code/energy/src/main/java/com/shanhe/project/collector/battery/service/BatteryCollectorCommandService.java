@@ -209,7 +209,13 @@ public class BatteryCollectorCommandService {
                                                                  int batteryGroup,
                                                                  int batteryCount,
                                                                  int batterySpecification,
-                                                                 Long timeoutMs) {
+        Long timeoutMs) {
+        if (channelName == null || channelName.trim().isEmpty()) {
+            return BatteryCollectorCommandResult.builder().success(false).message("通道名称不能为空").build();
+        }
+        if (batteryGroup <= 0) {
+            return BatteryCollectorCommandResult.builder().success(false).message("电池组编号无效").build();
+        }
         BatteryModuleControlCommand moduleCommand;
         try {
             moduleCommand = moduleControlCommandService.autoSetModuleAddress(
