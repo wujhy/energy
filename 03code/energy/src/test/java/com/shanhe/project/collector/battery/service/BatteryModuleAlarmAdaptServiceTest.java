@@ -117,6 +117,24 @@ class BatteryModuleAlarmAdaptServiceTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
+    void shouldDocumentFlatThresholdAlarmParamAsSingleCellCompatibilityPath() {
+        BatteryModuleCellRealtime cell1 = cell(1, null);
+        cell1.setVoltage(2.1d);
+        cell1.setResistance(101);
+        BatteryModuleCellRealtime cell2 = cell(2, null);
+        cell2.setVoltage(2.2d);
+        cell2.setResistance(102);
+
+        Map<String, String> warnParam = service.buildThresholdAlarmParam(1, Arrays.asList(cell1, cell2), null);
+
+        Assertions.assertEquals("2.2", warnParam.get(ItemCode.DTDYGC.getCode()));
+        Assertions.assertEquals("2.2", warnParam.get(ItemCode.DTDYGF.getCode()));
+        Assertions.assertEquals("102", warnParam.get(ItemCode.DTNZGD.getCode()));
+        Assertions.assertEquals("102", warnParam.get(ItemCode.DTNZGX.getCode()));
+    }
+
+    @Test
     void shouldMapStaleGroup246FreshnessToCommunicationAlarm() throws Exception {
         BatteryModuleAlarmAdaptService service = communicationServiceWithGroup246Freshness("stale");
 

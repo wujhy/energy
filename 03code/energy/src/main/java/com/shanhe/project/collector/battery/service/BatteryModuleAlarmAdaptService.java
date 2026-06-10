@@ -77,7 +77,10 @@ public class BatteryModuleAlarmAdaptService {
      * @param cells 单体实时数据
      * @param group 组实时数据
      * @return 告警参数映射
+     * @deprecated 仅保留给扁平单体或组级兼容输入；多单体告警必须使用 {@link #buildContext(BatteryModuleGroupRealtime, List)}
+     * 按单体编号隔离，避免相同 itemCode 互相覆盖。
      */
+    @Deprecated
     public Map<String, String> buildThresholdAlarmParam(Integer packNum,
                                                          List<BatteryModuleCellRealtime> cells,
                                                          BatteryModuleGroupRealtime group) {
