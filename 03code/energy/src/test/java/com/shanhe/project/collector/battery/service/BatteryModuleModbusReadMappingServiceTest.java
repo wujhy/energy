@@ -253,6 +253,16 @@ class BatteryModuleModbusReadMappingServiceTest {
     }
 
     @Test
+    void shouldReturnZeroForDeviceStateRegistersWhenStateServiceMissing() {
+        BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, null, properties("COM1", 1));
+
+        Assertions.assertArrayEquals(new int[]{0, 0, 0, 0, 0, 0},
+                service.readHoldingRegisters(1, 411483, 6));
+    }
+
+    @Test
     void shouldMapDeviceStateRegistersFrom411483To411488() {
         BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
@@ -314,6 +324,83 @@ class BatteryModuleModbusReadMappingServiceTest {
 
         Assertions.assertArrayEquals(new int[]{0, 0},
                 service.readHoldingRegisters(1, 411485, 2));
+    }
+
+    @Test
+    void shouldReturnZeroForRecoveredTimeoutEvenWhenLevelIsWarn() {
+        BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        Mockito.when(stateService.selectByChannelAndCode(
+                "COM1",
+                BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT))
+                .thenReturn(Collections.singletonList(
+                        deviceState(1, "recovered", BatteryDeviceStateConstants.StateLevel.WARN, null)));
+
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, stateService, properties("COM1", 1));
+
+        Assertions.assertArrayEquals(new int[]{0}, service.readHoldingRegisters(1, 411486, 1));
+    }
+
+    @Test
+    void shouldUseOnlyEnabledChannelMatchedByPackNumForChannelScopedStatus() {
+        BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        Mockito.when(stateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.CHANNEL,
+                "COM1",
+                BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN))
+                .thenReturn(deviceState("open"));
+        Mockito.when(stateService.selectByChannelAndCode(
+                "COM1",
+                BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE))
+                .thenReturn(Collections.singletonList(deviceState(1, "active")));
+        BatteryCollectorProperties properties = properties("COM1", 1);
+        BatteryCollectorChannelConfig disabledSamePack = new BatteryCollectorChannelConfig();
+        disabledSamePack.setName("COM_DISABLED");
+        disabledSamePack.setEnabled(Boolean.FALSE);
+        disabledSamePack.setBatteryGroup(1);
+        BatteryCollectorChannelConfig otherPack = new BatteryCollectorChannelConfig();
+        otherPack.setName("COM_OTHER");
+        otherPack.setEnabled(Boolean.TRUE);
+        otherPack.setBatteryGroup(2);
+        properties.setChannels(Arrays.asList(disabledSamePack, otherPack, properties.getChannels().get(0)));
+
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, stateService, properties);
+
+        Assertions.assertArrayEquals(new int[]{1, 0, 1}, service.readHoldingRegisters(1, 411483, 3));
+        Mockito.verify(stateService, Mockito.never()).selectByScope(
+                Mockito.eq(BatteryDeviceStateConstants.ScopeType.CHANNEL),
+                Mockito.eq("COM_DISABLED"),
+                Mockito.anyString());
+        Mockito.verify(stateService, Mockito.never()).selectByScope(
+                Mockito.eq(BatteryDeviceStateConstants.ScopeType.CHANNEL),
+                Mockito.eq("COM_OTHER"),
+                Mockito.anyString());
+        Mockito.verify(stateService, Mockito.never()).selectByChannelAndCode(
+                Mockito.eq("COM_DISABLED"),
+                Mockito.anyString());
+        Mockito.verify(stateService, Mockito.never()).selectByChannelAndCode(
+                Mockito.eq("COM_OTHER"),
+                Mockito.anyString());
+    }
+
+    @Test
+    void shouldReturnZeroForChannelScopedStatusWhenPackHasNoEnabledChannel() {
+        BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, stateService, properties("COM2", 2));
+
+        Assertions.assertArrayEquals(new int[]{0, 0, 0, 0}, service.readHoldingRegisters(1, 411483, 4));
+        Mockito.verify(stateService, Mockito.never()).selectByScope(
+                Mockito.eq(BatteryDeviceStateConstants.ScopeType.CHANNEL),
+                Mockito.anyString(),
+                Mockito.anyString());
+        Mockito.verify(stateService, Mockito.never()).selectByChannelAndCode(
+                Mockito.anyString(),
+                Mockito.anyString());
     }
 
     @Test
