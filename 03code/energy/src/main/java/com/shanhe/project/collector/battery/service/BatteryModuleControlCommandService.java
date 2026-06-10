@@ -21,7 +21,7 @@ public class BatteryModuleControlCommandService {
      * @return 控制命令
      */
     public BatteryModuleControlCommand singleBatteryInternalResistanceTest(int moduleAddress) {
-        validateModuleAddress(moduleAddress);
+        validateCellModuleAddress(moduleAddress);
         return command(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST, moduleAddress);
     }
 
@@ -76,7 +76,7 @@ public class BatteryModuleControlCommandService {
      * @return 控制命令
      */
     public BatteryModuleControlCommand getConnectResistanceVoltage(int moduleAddress) {
-        validateModuleAddress(moduleAddress);
+        validateCellModuleAddress(moduleAddress);
         return command(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE, moduleAddress);
     }
 

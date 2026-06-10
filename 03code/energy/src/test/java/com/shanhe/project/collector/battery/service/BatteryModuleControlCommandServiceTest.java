@@ -96,6 +96,14 @@ class BatteryModuleControlCommandServiceTest {
     }
 
     @Test
+    void shouldRejectGroupModuleAddressForCellOnlyCommands() {
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.singleBatteryInternalResistanceTest(246));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.getConnectResistanceVoltage(246));
+    }
+
+    @Test
     void shouldBuildBroadcastInternalResistanceCoefficientWithoutResponse() {
         BatteryModuleControlCommand command = service.setInternalResistanceCoefficient(0, 0x3F, 0x80, 0x00, 0x00);
 
