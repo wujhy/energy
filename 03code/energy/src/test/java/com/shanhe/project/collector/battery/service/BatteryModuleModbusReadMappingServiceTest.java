@@ -97,6 +97,16 @@ class BatteryModuleModbusReadMappingServiceTest {
     }
 
     @Test
+    void shouldDefaultM460BatteryStateRegisterFieldsToZero() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        Mockito.when(mapper.selectGroup(1)).thenReturn(new BatteryModuleGroupRealtime());
+
+        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper, null, null);
+
+        Assertions.assertArrayEquals(new int[]{0}, service.readHoldingRegisters(1, 411762, 1));
+    }
+
+    @Test
     void shouldRejectUnsupportedAddressAndInvalidQuantity() {
         BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
         Mockito.when(mapper.selectCells(1)).thenReturn(Arrays.asList(cell(1, 2.0d, 100, 25.0d, null)));
@@ -114,6 +124,8 @@ class BatteryModuleModbusReadMappingServiceTest {
                 () -> service.readHoldingRegisters(1, 410004, -1));
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> service.readHoldingRegisters(1, 410248, 2));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.readHoldingRegisters(1, 411489, 1));
     }
 
     @Test
