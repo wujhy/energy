@@ -49,6 +49,33 @@ class BatteryAlarmBitMappingTest {
     }
 
     @Test
+    void shouldMapAllGroup87EffectiveBitsInOrder() {
+        int[][] expected = new int[][]{
+                {1, 5},
+                {1, 4},
+                {1, 3},
+                {1, 2},
+                {1, 1},
+                {1, 0},
+                {2, 7},
+                {2, 6},
+                {2, 5},
+                {2, 4},
+                {2, 3},
+                {2, 2},
+                {2, 1},
+                {2, 0}
+        };
+
+        for (int i = 0; i < expected.length; i++) {
+            BatteryAlarmBitMapping.Group87Bit bit =
+                    BatteryAlarmBitMapping.group87EffectiveIndexToPhysicalBit(i);
+            assertEquals(expected[i][0], bit.getStatusByteNo());
+            assertEquals(expected[i][1], bit.getPhysicalBit());
+        }
+    }
+
+    @Test
     void shouldRejectInvalidInput() {
         assertThrows(IllegalArgumentException.class,
                 () -> BatteryAlarmBitMapping.binaryStringIndexToPhysicalBit(8));
