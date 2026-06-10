@@ -33,7 +33,7 @@ public class BatteryModuleControlCommandService {
      * @return 控制命令
      */
     public BatteryModuleControlCommand singleBatteryBalance(int moduleAddress, int balanceValue) {
-        validateModuleAddress(moduleAddress);
+        validateCellModuleAddress(moduleAddress);
         return command(BatteryDeviceProtocolCode.SINGLE_BATTERY_BALANCE, moduleAddress, balanceValue);
     }
 
@@ -112,7 +112,7 @@ public class BatteryModuleControlCommandService {
      * @return 控制命令
      */
     public BatteryModuleControlCommand setCalibrationParameter(int moduleAddress, int... payloadBytes) {
-        validateModuleAddress(moduleAddress);
+        validateCellModuleAddress(moduleAddress);
         if (payloadBytes == null || (payloadBytes.length != 4 && payloadBytes.length != 6)) {
             throw new IllegalArgumentException("校准参数载荷长度必须为4或6字节");
         }

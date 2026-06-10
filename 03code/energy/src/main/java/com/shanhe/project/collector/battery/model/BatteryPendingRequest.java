@@ -84,6 +84,8 @@ public class BatteryPendingRequest {
      */
     private Integer connectResistanceMaxAddress;
 
+    private boolean connectResistanceFailed;
+
     /**
      * 根据 600 节模块端协议码创建待响应请求。
      *

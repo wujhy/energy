@@ -1067,7 +1067,7 @@ class BatteryCollectorServiceTest {
         service.handleCompletedPendingResponse(state, frame, pendingRequest);
 
         Assertions.assertEquals("GET_CONNECT_STRIP_RESISTANCE_VOLTAGE", state.getLastCompletedModuleCommandName());
-        Assertions.assertTrue(state.isLastCompletedModuleCommandSuccess());
+        Assertions.assertFalse(state.isLastCompletedModuleCommandSuccess());
         Mockito.verify(compatibilityFillService, Mockito.never()).putConnectResistance(
                 Mockito.any(), Mockito.any(), Mockito.any());
     }
@@ -1104,6 +1104,64 @@ class BatteryCollectorServiceTest {
         Assertions.assertEquals(10L, nextCommand.getOptLogId());
         Assertions.assertEquals(Integer.valueOf(10), nextCommand.getConnectResistanceNextAddress());
         Assertions.assertEquals(Integer.valueOf(10), nextCommand.getConnectResistanceMaxAddress());
+    }
+
+    @Test
+    void shouldCarryConnectResistanceFailureAcrossQueuedReads() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        modeStatusService.markRunning(2, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 10);
+        BatteryCollectorChannelConfig channelConfig = newChannelConfig();
+        channelConfig.setBatteryGroup(2);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        BatteryPendingRequest firstRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE,
+                8,
+                new byte[0],
+                false);
+        firstRequest.setOptLogId(10L);
+        firstRequest.setBatteryGroup(2);
+        firstRequest.setMode(BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+        firstRequest.setConnectResistanceNextAddress(9);
+        firstRequest.setConnectResistanceMaxAddress(9);
+        BatteryCollectorFrame shortFrame = new BatteryCollectorFrameCodec().buildRequest(8, 0x91,
+                new byte[]{0x01, 0x02, 0x03});
+
+        service.handleCompletedPendingResponse(state, shortFrame, firstRequest);
+
+        Mockito.verifyNoInteractions(optLogMapper);
+        BatteryModuleControlCommand nextCommand = state.getQueuedModuleCommands().poll();
+        Assertions.assertNotNull(nextCommand);
+        Assertions.assertTrue(nextCommand.isConnectResistanceFailed());
+
+        BatteryPendingRequest finalRequest = BatteryPendingRequest.fromProtocolCode(
+                nextCommand.getProtocolCode(),
+                nextCommand.getAddress(),
+                nextCommand.getPayload(),
+                false);
+        finalRequest.setOptLogId(nextCommand.getOptLogId());
+        finalRequest.setBatteryGroup(nextCommand.getBatteryGroup());
+        finalRequest.setMode(nextCommand.getMode());
+        finalRequest.setConnectResistanceNextAddress(nextCommand.getConnectResistanceNextAddress());
+        finalRequest.setConnectResistanceMaxAddress(nextCommand.getConnectResistanceMaxAddress());
+        finalRequest.setConnectResistanceFailed(nextCommand.isConnectResistanceFailed());
+        BatteryCollectorFrame fullFrame = new BatteryCollectorFrameCodec().buildRequest(9, 0x91,
+                new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
+
+        service.handleCompletedPendingResponse(state, fullFrame, finalRequest);
+
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.FAILED),
+                Mockito.eq(0x91),
+                Mockito.anyString(),
+                Mockito.isNull(),
+                Mockito.eq("0102030405060708"));
+        BatteryModeInfo modeInfo = modeStatusService.get(2);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, modeInfo.getLastMode());
     }
 
     @Test

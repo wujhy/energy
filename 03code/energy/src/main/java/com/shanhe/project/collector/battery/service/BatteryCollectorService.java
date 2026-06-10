@@ -518,6 +518,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         pendingRequest.setOptLogId(command.getOptLogId());
         pendingRequest.setConnectResistanceNextAddress(command.getConnectResistanceNextAddress());
         pendingRequest.setConnectResistanceMaxAddress(command.getConnectResistanceMaxAddress());
+        pendingRequest.setConnectResistanceFailed(command.isConnectResistanceFailed());
         return pendingRequest;
     }
 
@@ -718,14 +719,18 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             return;
         }
         if (BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.name().equals(pendingRequest.getName())) {
+            if (!success) {
+                pendingRequest.setConnectResistanceFailed(true);
+            }
             if (success) {
                 storeConnectResistanceResult(pendingRequest, frame);
             }
             if (!queueNextConnectResistanceVoltageRead(state, pendingRequest)) {
                 // 所有地址完成，按最后一个响应写最终状态
-                String finalStatus = success ? BatteryDeviceStateConstants.CommandStatus.SUCCESS : BatteryDeviceStateConstants.CommandStatus.FAILED;
+                boolean finalSuccess = success && !pendingRequest.isConnectResistanceFailed();
+                String finalStatus = finalSuccess ? BatteryDeviceStateConstants.CommandStatus.SUCCESS : BatteryDeviceStateConstants.CommandStatus.FAILED;
                 updateCommandOptLog(pendingRequest.getOptLogId(), finalStatus, frame.getCommand(), bytesToHex(frame.getPayloadSafe()));
-                markModeStopped(pendingRequest, success);
+                markModeStopped(pendingRequest, finalSuccess);
             }
             return;
         }
@@ -743,6 +748,9 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         BatteryDeviceProtocolCode protocolCode = BatteryDeviceProtocolCode.find(pendingRequest.getResponseCode());
         if (protocolCode == null) {
             return true;
+        }
+        if (protocolCode == BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE) {
+            return frame.getPayloadSafe().length >= 8;
         }
         if (!protocolCode.isStatusResponse() && protocolCode != BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS) {
             return true;
@@ -780,6 +788,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 .optLogId(pendingRequest.getOptLogId())
                 .connectResistanceNextAddress(address + 1)
                 .connectResistanceMaxAddress(maxAddress)
+                .connectResistanceFailed(pendingRequest.isConnectResistanceFailed())
                 .build();
         return state.getQueuedModuleCommands().offer(command);
     }

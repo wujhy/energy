@@ -100,7 +100,11 @@ class BatteryModuleControlCommandServiceTest {
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> service.singleBatteryInternalResistanceTest(246));
         Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.singleBatteryBalance(246, 1));
+        Assertions.assertThrows(IllegalArgumentException.class,
                 () -> service.getConnectResistanceVoltage(246));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.setCalibrationParameter(246, 1, 2, 3, 4));
     }
 
     @Test
