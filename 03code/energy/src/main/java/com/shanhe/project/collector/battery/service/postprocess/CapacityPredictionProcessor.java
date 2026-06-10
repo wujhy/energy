@@ -47,7 +47,11 @@ public class CapacityPredictionProcessor implements BatteryRealtimePostProcessor
 
     @Override
     public boolean shouldProcess(BatteryRealtimePostProcessContext context) {
-        return context.getPackNum() != null && context.getGroup() != null;
+        return context != null
+                && context.getPackNum() != null
+                && context.getGroup() != null
+                && hasText(context.getPollBatchNo())
+                && context.getPollBatchNo().equals(context.getGroup().getPollBatchNo());
     }
 
     @Override
@@ -61,7 +65,7 @@ public class CapacityPredictionProcessor implements BatteryRealtimePostProcessor
         // 从标准实时模型获取当前电池组状态
         Integer statusInt = group.getBatteryPackStatus();
         String currentStatus = statusInt != null ? String.valueOf(statusInt) : null;
-        if (currentStatus == null) {
+        if (currentStatus == null || !isKnownBatteryPackStatus(currentStatus)) {
             return;
         }
 
@@ -87,5 +91,13 @@ public class CapacityPredictionProcessor implements BatteryRealtimePostProcessor
         } catch (Exception e) {
             log.warn("容量预测触发失败, packNum={}", packNum, e);
         }
+    }
+
+    private boolean isKnownBatteryPackStatus(String status) {
+        return BatteryPackStatusEnum.find(status) != null;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 }

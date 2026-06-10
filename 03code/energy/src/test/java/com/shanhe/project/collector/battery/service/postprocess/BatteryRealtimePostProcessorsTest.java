@@ -8,6 +8,7 @@ import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.opt.service.OptLogService;
+import com.shanhe.project.energy.capacity.service.BatteryPredictorService;
 import com.shanhe.project.energy.stat.service.IStatBatteryPackService;
 import com.shanhe.project.energy.stat.service.IStatBatteryResService;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -77,7 +79,9 @@ class BatteryRealtimePostProcessorsTest {
         ReflectionTestUtils.setField(processor, "optLogService", optLogService);
         ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
 
-        processor.process(context(group(99, null), cells()));
+        BatteryRealtimePostProcessContext context = context(group(99, null), cells());
+        assertTrue(processor.shouldProcess(context));
+        processor.process(context);
 
         Mockito.verifyNoInteractions(optLogService);
         Mockito.verifyNoInteractions(reportLogService);
@@ -93,10 +97,94 @@ class BatteryRealtimePostProcessorsTest {
         ReflectionTestUtils.setField(processor, "optLogService", optLogService);
         ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
 
-        processor.process(context(group(6, null), cells()));
+        BatteryRealtimePostProcessContext context = context(group(6, null), cells());
+        assertTrue(processor.shouldProcess(context));
+        processor.process(context);
 
         Mockito.verify(reportLogService).lastCache(1);
         Mockito.verify(optLogService).insertBattery(Mockito.eq(1), Mockito.anyMap(), Mockito.same(oldInfo));
+    }
+
+    @Test
+    void operationLogProcessorShouldRejectMissingOrMismatchedBatch() {
+        OperationLogProcessor processor = new OperationLogProcessor();
+
+        BatteryRealtimePostProcessContext missingBatch = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .group(group(6, null))
+                .cells(cells())
+                .build();
+        assertFalse(processor.shouldProcess(missingBatch));
+
+        BatteryModuleGroupRealtime mismatchedGroup = group(6, null);
+        mismatchedGroup.setPollBatchNo("other-batch");
+        BatteryRealtimePostProcessContext mismatchedBatch = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .pollBatchNo(POLL_BATCH_NO)
+                .group(mismatchedGroup)
+                .cells(cells())
+                .build();
+        assertFalse(processor.shouldProcess(mismatchedBatch));
+    }
+
+    @Test
+    void capacityPredictionProcessorShouldTriggerForKnownStatusInSameBatch() {
+        CapacityPredictionProcessor processor = new CapacityPredictionProcessor();
+        BatteryPredictorService predictorService = Mockito.mock(BatteryPredictorService.class);
+        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
+        BatteryReportLog oldInfo = new BatteryReportLog();
+        Mockito.when(reportLogService.lastCache(1)).thenReturn(oldInfo);
+        ReflectionTestUtils.setField(processor, "batteryPredictorService", predictorService);
+        ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
+
+        BatteryRealtimePostProcessContext backupContext = context(group(5, null), cells());
+        BatteryRealtimePostProcessContext idleContext = context(group(6, null), cells());
+        assertTrue(processor.shouldProcess(backupContext));
+        assertTrue(processor.shouldProcess(idleContext));
+
+        processor.process(backupContext);
+        processor.process(idleContext);
+
+        Mockito.verify(reportLogService).lastCache(1);
+        Mockito.verify(predictorService).doTotalBatteryStep(1, "6", oldInfo);
+    }
+
+    @Test
+    void capacityPredictionProcessorShouldRejectMissingOrMismatchedBatch() {
+        CapacityPredictionProcessor processor = new CapacityPredictionProcessor();
+
+        BatteryRealtimePostProcessContext missingBatch = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .group(group(5, null))
+                .cells(cells())
+                .build();
+        assertFalse(processor.shouldProcess(missingBatch));
+
+        BatteryModuleGroupRealtime mismatchedGroup = group(5, null);
+        mismatchedGroup.setPollBatchNo("other-batch");
+        BatteryRealtimePostProcessContext mismatchedBatch = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .pollBatchNo(POLL_BATCH_NO)
+                .group(mismatchedGroup)
+                .cells(cells())
+                .build();
+        assertFalse(processor.shouldProcess(mismatchedBatch));
+    }
+
+    @Test
+    void capacityPredictionProcessorShouldSkipUnknownStatus() {
+        CapacityPredictionProcessor processor = new CapacityPredictionProcessor();
+        BatteryPredictorService predictorService = Mockito.mock(BatteryPredictorService.class);
+        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
+        ReflectionTestUtils.setField(processor, "batteryPredictorService", predictorService);
+        ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
+
+        BatteryRealtimePostProcessContext context = context(group(99, null), cells());
+        assertTrue(processor.shouldProcess(context));
+        processor.process(context);
+
+        Mockito.verifyNoInteractions(predictorService);
+        Mockito.verifyNoInteractions(reportLogService);
     }
 
     @Test
@@ -180,6 +268,43 @@ class BatteryRealtimePostProcessorsTest {
     }
 
     @Test
+    void voltageRangeProcessorShouldRejectMissingOrMismatchedBatch() {
+        VoltageRangeProcessor processor = new VoltageRangeProcessor();
+        List<BatteryModuleCellRealtime> cells = cells();
+
+        BatteryRealtimePostProcessContext missingBatch = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .cells(cells)
+                .build();
+        assertFalse(processor.shouldProcess(missingBatch));
+
+        cells.get(1).setPollBatchNo("other-batch");
+        BatteryRealtimePostProcessContext mismatchedBatch = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .pollBatchNo(POLL_BATCH_NO)
+                .cells(cells)
+                .build();
+        assertFalse(processor.shouldProcess(mismatchedBatch));
+    }
+
+    @Test
+    void postProcessServiceShouldOrderProcessorsAndContinueAfterFailure() {
+        BatteryRealtimePostProcessService service = new BatteryRealtimePostProcessService();
+        BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .build();
+        List<String> executed = new ArrayList<>();
+        BatteryRealtimePostProcessor first = processor("first", 10, executed, false);
+        BatteryRealtimePostProcessor failing = processor("failing", 20, executed, true);
+        BatteryRealtimePostProcessor afterFailure = processor("afterFailure", 30, executed, false);
+        ReflectionTestUtils.setField(service, "processors", Arrays.asList(afterFailure, failing, first));
+
+        service.execute(context);
+
+        assertEquals(Arrays.asList("first", "failing", "afterFailure"), executed);
+    }
+
+    @Test
     void processorShouldProcessGuardsShouldRejectIncompleteContext() {
         StatisticsProcessor statisticsProcessor = new StatisticsProcessor();
         VoltageRangeProcessor voltageRangeProcessor = new VoltageRangeProcessor();
@@ -227,5 +352,30 @@ class BatteryRealtimePostProcessorsTest {
         second.setPollBatchNo(POLL_BATCH_NO);
 
         return Arrays.asList(first, second);
+    }
+
+    private BatteryRealtimePostProcessor processor(String name,
+                                                   int order,
+                                                   List<String> executed,
+                                                   boolean fail) {
+        return new BatteryRealtimePostProcessor() {
+            @Override
+            public String getName() {
+                return name;
+            }
+
+            @Override
+            public int getOrder() {
+                return order;
+            }
+
+            @Override
+            public void process(BatteryRealtimePostProcessContext context) {
+                executed.add(name);
+                if (fail) {
+                    throw new IllegalStateException("failed");
+                }
+            }
+        };
     }
 }
