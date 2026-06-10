@@ -1,9 +1,21 @@
 package com.shanhe.project.iot.battery;
 
 import com.alibaba.fastjson.JSONObject;
+import com.shanhe.framework.comm.tcp.model.DeviceData;
+import com.shanhe.framework.enums.AlarmLevelEnum;
+import com.shanhe.framework.enums.ItemCode;
+import com.shanhe.project.device.alarm.service.IAlarmLogService;
+import com.shanhe.project.device.config.domain.BatteryReportLog;
+import com.shanhe.project.device.config.domain.Config;
+import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.iot.model.BatteryWarnInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.Map;
 
 class BatteryAlarmHandlerTest {
 
@@ -51,6 +63,40 @@ class BatteryAlarmHandlerTest {
         JSONObject batteryStatus = warnInfo.getDeviceFaultBatteryStatus().getJSONObject(0);
         Assertions.assertEquals(2, batteryStatus.getInteger("batteryNumber"));
         Assertions.assertEquals("10100000", batteryStatus.getString("status"));
+    }
+
+    @Test
+    void shouldUploadSingleBatteryWarnUsingGroup87EffectiveBitMapping() {
+        BatteryAlarmHandler handler = new BatteryAlarmHandler();
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryReportLogService batteryReportLogService = Mockito.mock(BatteryReportLogService.class);
+        BatteryReportLog batteryReportLog = new BatteryReportLog();
+        Mockito.when(batteryReportLogService.lastCache(1)).thenReturn(batteryReportLog);
+        ReflectionTestUtils.setField(handler, "alarmLogService", alarmLogService);
+        ReflectionTestUtils.setField(handler, "batteryReportLogService", batteryReportLogService);
+
+        String payload = "0101" +
+                "4000" +
+                "8000" +
+                "C000" +
+                "024040" +
+                "028000" +
+                "02C000";
+        DeviceData deviceData = new DeviceData();
+        deviceData.setInfo(buildFrame("87", payload));
+
+        handler.uploadBatteryWarnData(new Config(), deviceData);
+
+        ArgumentCaptor<Map<String, String>> warnParamCaptor = ArgumentCaptor.forClass(Map.class);
+        Mockito.verify(alarmLogService).alarmBattery(
+                Mockito.any(Config.class),
+                Mockito.eq(1),
+                Mockito.eq(2),
+                warnParamCaptor.capture(),
+                Mockito.same(batteryReportLog));
+        Assertions.assertEquals(
+                AlarmLevelEnum._1.getDictValue(),
+                warnParamCaptor.getValue().get(ItemCode.DTLJTGJ.getCode()));
     }
 
     private String buildFrame(String command, String payloadHex) {

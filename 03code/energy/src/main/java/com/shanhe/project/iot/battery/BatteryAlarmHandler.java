@@ -84,11 +84,11 @@ public class BatteryAlarmHandler {
         JSONObject abnormal = packStatus.getJSONObject("abnormal");
         JSONObject serious = packStatus.getJSONObject("serious");
         //一般报警
-        String commonlyStatus = commonly.getString("status1").substring(2) + commonly.getString("status2");
+        String commonlyStatus = group87EffectiveStatus(commonly);
         //异常报警
-        String abnormalStatus = abnormal.getString("status1").substring(2) + abnormal.getString("status2");
+        String abnormalStatus = group87EffectiveStatus(abnormal);
         //严重报警
-        String seriousStatus = serious.getString("status1").substring(2) + serious.getString("status2");
+        String seriousStatus = group87EffectiveStatus(serious);
 
         // 最新电池组上报记录
         BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(warnInfo.getBatteryPackNumber());
@@ -124,11 +124,11 @@ public class BatteryAlarmHandler {
                 continue;
             }
             //严重报警
-            seriousStatus1 = batteryStatus.getJSONObject("serious").getString("status1").substring(2) + batteryStatus.getJSONObject("serious").getString("status2");
+            seriousStatus1 = group87EffectiveStatus(batteryStatus.getJSONObject("serious"));
             //异常报警
-            abnormalStatus1 = batteryStatus.getJSONObject("abnormal").getString("status1").substring(2) + batteryStatus.getJSONObject("abnormal").getString("status2");
+            abnormalStatus1 = group87EffectiveStatus(batteryStatus.getJSONObject("abnormal"));
             //一般报警
-            commonlyStatus1 = batteryStatus.getJSONObject("commonly").getString("status1").substring(2) + batteryStatus.getJSONObject("commonly").getString("status2");
+            commonlyStatus1 = group87EffectiveStatus(batteryStatus.getJSONObject("commonly"));
             Integer batteryNumber = batteryStatus.getInteger("batteryNumber");
 
             // 单体电池告警参数
@@ -144,6 +144,15 @@ public class BatteryAlarmHandler {
 
         // 修复平台正在报警，但是设备没有报警的单体记录
         alarmLogService.alarmFix(warnInfo.getBatteryPackNumber(), true, excludeModelNum, BATTERY_WARN_CODE);
+    }
+
+    private static String group87EffectiveStatus(JSONObject status) {
+        if (status == null) {
+            return null;
+        }
+        return BatteryAlarmBitMapping.group87EffectiveStatus(
+                status.getString("status1"),
+                status.getString("status2"));
     }
 
     /**
