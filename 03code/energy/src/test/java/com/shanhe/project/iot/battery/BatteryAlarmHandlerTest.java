@@ -15,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Map;
 
 class BatteryAlarmHandlerTest {
@@ -97,6 +98,186 @@ class BatteryAlarmHandlerTest {
         Assertions.assertEquals(
                 AlarmLevelEnum._1.getDictValue(),
                 warnParamCaptor.getValue().get(ItemCode.DTLJTGJ.getCode()));
+    }
+    @Test
+    void shouldUploadBatteryGroupWarnWithCorrectMappings() {
+        BatteryAlarmHandler handler = new BatteryAlarmHandler();
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryReportLogService batteryReportLogService = Mockito.mock(BatteryReportLogService.class);
+        BatteryReportLog batteryReportLog = new BatteryReportLog();
+        Mockito.when(batteryReportLogService.lastCache(1)).thenReturn(batteryReportLog);
+        ReflectionTestUtils.setField(handler, "alarmLogService", alarmLogService);
+        ReflectionTestUtils.setField(handler, "batteryReportLogService", batteryReportLogService);
+
+        // We want to test all commonly group alarm mappings:
+        // status1 = hex "50" (index 1 = ZWDG)
+        // status2 = hex "01" (index 13 = ZFCDYGG)
+        // commonly = "5001"
+        // abnormal = "6002" (status1 = "60" -> index 0 = ZWDD; status2 = "02" -> index 12 = ZFCDYGD)
+        // serious = "4208" (status1 = "42" -> index 4 = ZDYGF; status2 = "08" -> index 10 = ZSOCDGJ)
+        String payload = "0100" +
+                "5001" +
+                "A002" +
+                "C208";
+        DeviceData deviceData = new DeviceData();
+        deviceData.setInfo(buildFrame("87", payload));
+
+        handler.uploadBatteryWarnData(new Config(), deviceData);
+
+        ArgumentCaptor<Map<String, String>> warnParamCaptor = ArgumentCaptor.forClass(Map.class);
+        // Verify group alarm (modelNum is null)
+        Mockito.verify(alarmLogService, Mockito.times(1)).alarmBattery(
+                Mockito.any(Config.class),
+                Mockito.eq(1),
+                Mockito.isNull(),
+                warnParamCaptor.capture(),
+                Mockito.same(batteryReportLog));
+
+        Map<String, String> warnParams = warnParamCaptor.getValue();
+
+        // Verify commonlyParams maps correctly
+        Assertions.assertEquals(AlarmLevelEnum._1.getDictValue(), warnParams.get(ItemCode.ZWDG.getCode()));
+        Assertions.assertEquals(AlarmLevelEnum._1.getDictValue(), warnParams.get(ItemCode.ZFCDYGG.getCode()));
+
+        // Verify abnormalParams maps correctly
+        Assertions.assertEquals(AlarmLevelEnum._1.getDictValue(), warnParams.get(ItemCode.ZWDD.getCode()));
+        Assertions.assertEquals(AlarmLevelEnum._1.getDictValue(), warnParams.get(ItemCode.ZFCDYGD.getCode()));
+
+        // Verify seriousParams maps correctly
+        Assertions.assertEquals(AlarmLevelEnum._1.getDictValue(), warnParams.get(ItemCode.ZDYGF.getCode()));
+        Assertions.assertEquals(AlarmLevelEnum._1.getDictValue(), warnParams.get(ItemCode.ZSOCDGJ.getCode()));
+    }
+
+    @Test
+    void shouldUploadSingleBatteryWarnWithCorrectMappings() {
+        BatteryAlarmHandler handler = new BatteryAlarmHandler();
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryReportLogService batteryReportLogService = Mockito.mock(BatteryReportLogService.class);
+        BatteryReportLog batteryReportLog = new BatteryReportLog();
+        Mockito.when(batteryReportLogService.lastCache(1)).thenReturn(batteryReportLog);
+        ReflectionTestUtils.setField(handler, "alarmLogService", alarmLogService);
+        ReflectionTestUtils.setField(handler, "batteryReportLogService", batteryReportLogService);
+
+        // Test single battery commonly alarm mappings:
+        // Commonly status1 = hex "60" -> index 0 = DTDCWDD
+        // Commonly status2 = hex "01" -> index 13 = DTDYBJ
+        // Commonly = "6001"
+        // Abnormal = "5002" -> status1 = "50" -> index 1 = DTDCWDG; status2 = "02" -> index 12 = DTDCWDBJ
+        // Serious = "4204" -> status1 = "42" -> index 4 = DTDYGF; status2 = "04" -> index 11 = DTNZBJ
+        String payload = "0101" +
+                "4000" +
+                "8000" +
+                "C000" +
+                "026001" +
+                "029002" +
+                "02C204";
+        DeviceData deviceData = new DeviceData();
+        deviceData.setInfo(buildFrame("87", payload));
+
+        handler.uploadBatteryWarnData(new Config(), deviceData);
+
+        ArgumentCaptor<Map<String, String>> warnParamCaptor = ArgumentCaptor.forClass(Map.class);
+        Mockito.verify(alarmLogService, Mockito.times(1)).alarmBattery(
+                Mockito.any(Config.class),
+                Mockito.eq(1),
+                Mockito.eq(2),
+                warnParamCaptor.capture(),
+                Mockito.same(batteryReportLog));
+
+        Map<String, String> warnParams = warnParamCaptor.getValue();
+
+        // Verify commonlyParams
+        Assertions.assertEquals(AlarmLevelEnum._1.getDictValue(), warnParams.get(ItemCode.DTDCWDD.getCode()));
+        Assertions.assertEquals(AlarmLevelEnum._1.getDictValue(), warnParams.get(ItemCode.DTDYBJ.getCode()));
+
+        // Verify abnormalParams
+        Assertions.assertEquals(AlarmLevelEnum._1.getDictValue(), warnParams.get(ItemCode.DTDCWDG.getCode()));
+        Assertions.assertEquals(AlarmLevelEnum._1.getDictValue(), warnParams.get(ItemCode.DTDCWDBJ.getCode()));
+
+        // Verify seriousParams
+        Assertions.assertEquals(AlarmLevelEnum._1.getDictValue(), warnParams.get(ItemCode.DTDYGF.getCode()));
+        Assertions.assertEquals(AlarmLevelEnum._1.getDictValue(), warnParams.get(ItemCode.DTNZBJ.getCode()));
+    }
+
+    @Test
+    void shouldUploadDeviceFaultWithCorrectMappings() {
+        BatteryAlarmHandler handler = new BatteryAlarmHandler();
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryReportLogService batteryReportLogService = Mockito.mock(BatteryReportLogService.class);
+        BatteryReportLog batteryReportLog = new BatteryReportLog();
+        Mockito.when(batteryReportLogService.lastCache(1)).thenReturn(batteryReportLog);
+        ReflectionTestUtils.setField(handler, "alarmLogService", alarmLogService);
+        ReflectionTestUtils.setField(handler, "batteryReportLogService", batteryReportLogService);
+
+        // dfs = hex "AC" (binary "10101100")
+        // Index 0: ZWLGZ (1)
+        // Index 2: ZTDGJ (1)
+        // Index 3: ZWDCGQ2GZ (0)
+        // Index 4: ZWDCGQ1GZ (1)
+        // Index 5: TXZT (1)
+        String payload = "0100" +
+                "AC";
+        DeviceData deviceData = new DeviceData();
+        deviceData.setInfo(buildFrame("8D", payload));
+
+        handler.deviceFaultAlarmUpload(new Config(), deviceData);
+
+        ArgumentCaptor<Map<String, String>> warnParamCaptor = ArgumentCaptor.forClass(Map.class);
+        Mockito.verify(alarmLogService).alarmBattery(
+                Mockito.any(Config.class),
+                Mockito.eq(1),
+                Mockito.isNull(),
+                warnParamCaptor.capture(),
+                Mockito.same(batteryReportLog));
+
+        Map<String, String> warnParam = warnParamCaptor.getValue();
+        Assertions.assertEquals("1", warnParam.get(ItemCode.ZWLGZ.getCode()));
+        Assertions.assertEquals("1", warnParam.get(ItemCode.ZTDGJ.getCode()));
+        Assertions.assertEquals("0", warnParam.get(ItemCode.ZWDCGQ2GZ.getCode()));
+        Assertions.assertEquals("1", warnParam.get(ItemCode.ZWDCGQ1GZ.getCode()));
+        Assertions.assertEquals("1", warnParam.get(ItemCode.TXZT.getCode()));
+    }
+
+    @Test
+    void shouldUploadSingleBatteryFaultWithCorrectMappings() {
+        BatteryAlarmHandler handler = new BatteryAlarmHandler();
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryReportLogService batteryReportLogService = Mockito.mock(BatteryReportLogService.class);
+        BatteryReportLog batteryReportLog = new BatteryReportLog();
+        Mockito.when(batteryReportLogService.lastCache(1)).thenReturn(batteryReportLog);
+        ReflectionTestUtils.setField(handler, "alarmLogService", alarmLogService);
+        ReflectionTestUtils.setField(handler, "batteryReportLogService", batteryReportLogService);
+
+        // batteryNumber = 2
+        // status = hex "D8" (binary "11011000")
+        // Index 0: DTLJTGJ (1)
+        // Index 1: DTGB (1)
+        // Index 2: DTLYGJ (0)
+        // Index 3: DTWDCGQGZ (1)
+        // Index 4: DTTXZT (1)
+        String payload = "0101" +
+                "02D8" +
+                "00";
+        DeviceData deviceData = new DeviceData();
+        deviceData.setInfo(buildFrame("8D", payload));
+
+        handler.deviceFaultAlarmUpload(new Config(), deviceData);
+
+        ArgumentCaptor<Map<String, String>> warnParamCaptor = ArgumentCaptor.forClass(Map.class);
+        // Verify battery 2 alarm
+        Mockito.verify(alarmLogService).alarmBattery(
+                Mockito.any(Config.class),
+                Mockito.eq(1),
+                Mockito.eq(2),
+                warnParamCaptor.capture(),
+                Mockito.same(batteryReportLog));
+
+        Map<String, String> warnParam = warnParamCaptor.getValue();
+        Assertions.assertEquals("1", warnParam.get(ItemCode.DTLJTGJ.getCode()));
+        Assertions.assertEquals("1", warnParam.get(ItemCode.DTGB.getCode()));
+        Assertions.assertEquals("0", warnParam.get(ItemCode.DTLYGJ.getCode()));
+        Assertions.assertEquals("1", warnParam.get(ItemCode.DTWDCGQGZ.getCode()));
+        Assertions.assertEquals("1", warnParam.get(ItemCode.DTTXZT.getCode()));
     }
 
     private String buildFrame(String command, String payloadHex) {
