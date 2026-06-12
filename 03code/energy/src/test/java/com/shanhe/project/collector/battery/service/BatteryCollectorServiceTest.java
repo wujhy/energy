@@ -1099,10 +1099,13 @@ class BatteryCollectorServiceTest {
     }
 
     @Test
-    void shouldNotWriteConnectResistanceCacheFrom91VoltageResponse() {
+    void shouldNotWriteConnectResistanceCacheFrom91VoltageResponseWhenCurrentIsMissing() {
         BatteryModuleCellCompatibilityFillService compatibilityFillService =
                 Mockito.mock(BatteryModuleCellCompatibilityFillService.class);
         ReflectionTestUtils.setField(service, "compatibilityFillService", compatibilityFillService);
+        // Ensure realtimeMapper is reset to null to simulate missing current
+        ReflectionTestUtils.setField(service, "realtimeMapper", null);
+        
         BatteryCollectorChannelConfig channelConfig = newChannelConfig();
         channelConfig.setBatteryGroup(2);
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
@@ -1115,7 +1118,7 @@ class BatteryCollectorServiceTest {
         pendingRequest.setConnectResistanceNextAddress(9);
         pendingRequest.setConnectResistanceMaxAddress(8);
         BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(8, 0x91,
-                new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
+                new byte[]{0x00, 0x01, (byte) 0xD4, (byte) 0xC0, 0x00, 0x01, (byte) 0xD8, (byte) 0xA8});
 
         service.handleCompletedPendingResponse(state, frame, pendingRequest);
 
@@ -1124,6 +1127,63 @@ class BatteryCollectorServiceTest {
         Assertions.assertTrue(state.isLastCompletedModuleCommandSuccess());
         Mockito.verify(compatibilityFillService, Mockito.never()).putConnectResistance(
                 Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void shouldWriteConnectResistanceCacheFrom91VoltageResponseWhenCurrentIsAvailable() {
+        BatteryModuleCellCompatibilityFillService compatibilityFillService =
+                Mockito.mock(BatteryModuleCellCompatibilityFillService.class);
+        ReflectionTestUtils.setField(service, "compatibilityFillService", compatibilityFillService);
+        
+        com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper realtimeMapper =
+                Mockito.mock(com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper.class);
+        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
+
+        // Mock current in group
+        com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime groupRealtime = 
+                new com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime();
+        groupRealtime.setChargeDischargeCurrent(10.0d); // 10.0 A
+        Mockito.when(realtimeMapper.selectGroup(2)).thenReturn(groupRealtime);
+
+        // Mock existing cell
+        List<com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime> cells = new ArrayList<>();
+        com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime cellRealtime = 
+                new com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime();
+        cellRealtime.setPackNum(2);
+        cellRealtime.setBatNum(8);
+        cells.add(cellRealtime);
+        Mockito.when(realtimeMapper.selectCells(2)).thenReturn(cells);
+
+        BatteryCollectorChannelConfig channelConfig = newChannelConfig();
+        channelConfig.setBatteryGroup(2);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE,
+                8,
+                new byte[0],
+                false);
+        pendingRequest.setBatteryGroup(2);
+        pendingRequest.setConnectResistanceNextAddress(9);
+        pendingRequest.setConnectResistanceMaxAddress(8);
+        
+        // batteryVoltage = 12.0V (0x0001D4C0 = 120000 0.1mV)
+        // testVoltage = 12.1V (0x0001D8A8 = 121000 0.1mV)
+        // deltaV = 0.1V, current = 10.0A -> resistance = 0.1/10.0 * 1,000,000 = 10,000 uΩ
+        BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(8, 0x91,
+                new byte[]{0x00, 0x01, (byte) 0xD4, (byte) 0xC0, 0x00, 0x01, (byte) 0xD8, (byte) 0xA8});
+
+        service.handleCompletedPendingResponse(state, frame, pendingRequest);
+
+        Assertions.assertEquals("GET_CONNECT_STRIP_RESISTANCE_VOLTAGE", state.getLastCompletedModuleCommandName());
+        Assertions.assertEquals(0x91, state.getLastCompletedModuleResponseCode());
+        Assertions.assertTrue(state.isLastCompletedModuleCommandSuccess());
+        
+        // Verify cache fill is invoked with 10000.0 uΩ
+        Mockito.verify(compatibilityFillService).putConnectResistance(2, 8, 10000.0d);
+        
+        // Verify mapper updates the cell
+        Mockito.verify(realtimeMapper).upsertCell(Mockito.argThat(cell -> 
+                cell.getPackNum() == 2 && cell.getBatNum() == 8 && cell.getResistanceRageSlip() == 10000.0d));
     }
 
     @Test

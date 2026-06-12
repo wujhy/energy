@@ -116,6 +116,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     private BatteryModuleCellCompatibilityFillService compatibilityFillService;
 
     /**
+     * 600节模块端标准实时数据 Mapper。
+     */
+    @Resource
+    private com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper realtimeMapper;
+
+    /**
      * 状态去重缓存：key = scopeKey + stateCode，value = 上次写入的 stateValue。
      * 避免短时间内重复写入相同状态。
      */
@@ -794,11 +800,10 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     }
 
     /**
-     * 解析 91 响应帧中的连接条测试电压。
+     * 解析 91 响应帧中的连接条测试电压并计算电阻。
      * <p>
      * 91 响应 8 字节：BatteryVoltage(4B) + TestVoltage(4B)，大端序。
      * 原始值单位：0.1mV（与 BatteryModuleFrameDataParserService 的 ÷10000 换算一致）。
-     * 连接条电阻公式、单位和电流来源仍需按 M460 源码/现场确认后再写入 resistanceRageSlip。
      */
     private void storeConnectResistanceResult(BatteryPendingRequest pendingRequest, BatteryCollectorFrame frame) {
         try {
@@ -813,11 +818,87 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             Integer batteryGroup = pendingRequest.getBatteryGroup();
             int address = pendingRequest.getRequestAddress();
 
-            log.info("连接条测试电压记录, 电池组={}, 地址={}, 电池电压raw={}, 测试电压raw={}（待公式确认后转电阻）",
-                    batteryGroup, address, batteryVoltageRaw, testVoltageRaw);
+            log.info("连接条测试电压记录, 电池组={}, 地址={}, 电池电压raw={}, 测试电压raw={}",
+                     batteryGroup, address, batteryVoltageRaw, testVoltageRaw);
+
+            // 获取实时组电流以计算真实连接条电阻
+            Double current = null;
+            if (realtimeMapper != null) {
+                com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime group = realtimeMapper.selectGroup(batteryGroup);
+                if (group != null) {
+                    if (group.getChargeDischargeCurrent() != null) {
+                        current = group.getChargeDischargeCurrent();
+                    } else {
+                        current = group.getPackCurrent();
+                    }
+                }
+            }
+
+            Double connectBatteryVoltage = batteryVoltageRaw / 10000.0d;
+            Double connectTestVoltage = testVoltageRaw / 10000.0d;
+            Double resistance = calculateConnectResistance(connectTestVoltage, connectBatteryVoltage, current);
+
+            if (resistance != null) {
+                compatibilityFillService.putConnectResistance(batteryGroup, address, resistance);
+                // 同时把计算好的连接条电阻保存到 DB 中的单体实时数据表 (battery_module_cell_realtime) 中
+                if (realtimeMapper != null) {
+                    List<com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime> cells = realtimeMapper.selectCells(batteryGroup);
+                    boolean cellFound = false;
+                    if (cells != null) {
+                        for (com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime cell : cells) {
+                            if (cell.getBatNum() != null && cell.getBatNum() == address) {
+                                cell.setResistanceRageSlip(resistance);
+                                realtimeMapper.upsertCell(cell);
+                                cellFound = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!cellFound) {
+                        com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime newCell = new com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime();
+                        newCell.setPackNum(batteryGroup);
+                        newCell.setBatNum(address);
+                        newCell.setResistanceRageSlip(resistance);
+                        newCell.setCreateTime(new java.util.Date());
+                        realtimeMapper.upsertCell(newCell);
+                    }
+                }
+                log.info("连接条电阻计算成功且已写入, 电池组={}, 地址={}, 电阻={} uΩ",
+                        batteryGroup, address, resistance);
+            } else {
+                log.warn("连接条电阻计算跳过, 缺少输入或电流过低: 电池组={}, 地址={}, 电流={}",
+                        batteryGroup, address, current);
+            }
         } catch (Exception e) {
             log.warn("解析连接条电阻测试失败, 地址={}, 原因={}", pendingRequest.getRequestAddress(), e.getMessage());
         }
+    }
+
+    /**
+     * 计算真实连接条电阻。
+     *
+     * @param testVoltage 测试电压 (V)
+     * @param batteryVoltage 电池电压 (V)
+     * @param current 充放电电流 (A)
+     * @return 连接条电阻 (uΩ)，无法计算时返回 null
+     */
+    public static Double calculateConnectResistance(Double testVoltage, Double batteryVoltage, Double current) {
+        if (testVoltage == null || batteryVoltage == null || current == null) {
+            return null;
+        }
+        double absCurrent = Math.abs(current);
+        if (absCurrent <= 0.1) {
+            return null;
+        }
+        double deltaV = Math.abs(testVoltage - batteryVoltage);
+        double resistance = (deltaV / absCurrent) * 1000000.0d;
+        // 四舍五入保留四位小数以消除浮点数精度误差
+        resistance = Math.round(resistance * 10000.0d) / 10000.0d;
+        // 限制在合理连接条电阻范围（非负且小于1欧姆）
+        if (resistance < 0 || resistance > 1000000.0d) {
+            return null;
+        }
+        return resistance;
     }
 
     /** 无符号 32 位解析（大端序）。 */
