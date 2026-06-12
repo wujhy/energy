@@ -43,15 +43,20 @@ public class BatteryModuleGroupCompatibilityFillService {
         group.setBatteryVoltageRange(group.getVoltageRange());
     }
 
-    /** 根据充放电电流设置电池组状态。 */
+    /** 根据充放电电流和缺省规则设置电池组及内阻测试状态。 */
     private void fillStatus(BatteryModuleGroupRealtime group) {
         if (group.getPackCurrent() == null) {
-            return;
-        }
-        if (group.getPackCurrent() < 0) {
-            group.setBatteryPackStatus(5);
-        } else {
             group.setBatteryPackStatus(null);
+        } else if (group.getPackCurrent() < -0.1) {
+            group.setBatteryPackStatus(5); // BACKUP 备电
+        } else if (group.getPackCurrent() > 0.1) {
+            group.setBatteryPackStatus(1); // CHARGE 充电
+        } else {
+            group.setBatteryPackStatus(0); // MONITOR 监控
+        }
+
+        if (group.getResistanceTestStatus() == null) {
+            group.setResistanceTestStatus(0); // NOT_TESTING 不在内阻测试
         }
     }
 

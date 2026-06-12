@@ -26,6 +26,7 @@ class BatteryModuleGroupCompatibilityFillServiceTest {
         Assertions.assertEquals(25.6d, group.getBatteryAvgTemperature(), 0.0001d);
         Assertions.assertEquals(0.12d, group.getBatteryVoltageRange(), 0.0001d);
         Assertions.assertEquals(5, group.getBatteryPackStatus());
+        Assertions.assertEquals(0, group.getResistanceTestStatus());
         Assertions.assertNull(group.getBatteryPackSoc());
         Assertions.assertNull(group.getBcapacity());
         Assertions.assertNull(group.getCapacity());
@@ -35,13 +36,20 @@ class BatteryModuleGroupCompatibilityFillServiceTest {
     }
 
     @Test
-    void shouldLeaveStatusEmptyWhenNotDischarging() {
-        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
-        group.setPackCurrent(1.0d);
+    void shouldMapStatusCorrectlyBasedOnCurrentDirection() {
+        // Charging current
+        BatteryModuleGroupRealtime group1 = new BatteryModuleGroupRealtime();
+        group1.setPackCurrent(1.0d);
+        service.fillAfterCalculation(null, group1);
+        Assertions.assertEquals(1, group1.getBatteryPackStatus());
+        Assertions.assertEquals(0, group1.getResistanceTestStatus());
 
-        service.fillAfterCalculation(null, group);
-
-        Assertions.assertNull(group.getBatteryPackStatus());
+        // Zero / Idle current
+        BatteryModuleGroupRealtime group2 = new BatteryModuleGroupRealtime();
+        group2.setPackCurrent(0.0d);
+        service.fillAfterCalculation(null, group2);
+        Assertions.assertEquals(0, group2.getBatteryPackStatus());
+        Assertions.assertEquals(0, group2.getResistanceTestStatus());
     }
 
     @Test
