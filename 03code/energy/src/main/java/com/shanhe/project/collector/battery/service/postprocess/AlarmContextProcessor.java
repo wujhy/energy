@@ -3,10 +3,14 @@ package com.shanhe.project.collector.battery.service.postprocess;
 import com.shanhe.project.collector.battery.model.BatteryModuleAlarmContext;
 import com.shanhe.project.collector.battery.service.BatteryModuleAlarmAdaptService;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import com.shanhe.framework.enums.ItemCode;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,6 +24,26 @@ import java.util.Map;
 @Slf4j
 @Component
 public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
+
+    private static final List<String> ALL_CELL_ALARM_CODES = Arrays.asList(
+            ItemCode.DTDCWDD.getCode(),
+            ItemCode.DTDCWDG.getCode(),
+            ItemCode.DTNZGX.getCode(),
+            ItemCode.DTNZGD.getCode(),
+            ItemCode.DTDYGF.getCode(),
+            ItemCode.DTDYGC.getCode(),
+            ItemCode.DTLJTGJ.getCode(),
+            ItemCode.DTDCKL.getCode(),
+            ItemCode.DTFCDYD.getCode(),
+            ItemCode.DTFCDYG.getCode(),
+            ItemCode.DTNZBJ.getCode(),
+            ItemCode.DTDCWDBJ.getCode(),
+            ItemCode.DTDYBJ.getCode(),
+            ItemCode.DTGB.getCode(),
+            ItemCode.DTLYGJ.getCode(),
+            ItemCode.DTWDCGQGZ.getCode(),
+            ItemCode.DTTXZT.getCode()
+    );
 
     @Resource
     private BatteryModuleAlarmAdaptService alarmAdaptService;
@@ -102,23 +126,38 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
 
     private void handleAlarmContext(BatteryRealtimePostProcessContext context,
                                     BatteryModuleAlarmContext alarmContext) {
-        if (alarmLogService == null || alarmContext == null || alarmContext.isEmpty()) {
+        if (alarmLogService == null || alarmContext == null) {
             return;
         }
         Integer packNum = alarmContext.getPackNum() == null ? context.getPackNum() : alarmContext.getPackNum();
+        if (packNum == null) {
+            return;
+        }
+
         if (alarmContext.getPackWarnParam() != null && !alarmContext.getPackWarnParam().isEmpty()) {
             alarmLogService.alarmBatteryValue(null, packNum, null, alarmContext.getPackWarnParam());
         }
-        if (alarmContext.getCellWarnParam() == null || alarmContext.getCellWarnParam().isEmpty()) {
-            return;
-        }
-        for (Map.Entry<Integer, Map<String, String>> entry : alarmContext.getCellWarnParam().entrySet()) {
-            Map<String, String> warnParam = entry.getValue();
-            if (warnParam == null || warnParam.isEmpty()) {
-                continue;
+
+        if (alarmContext.getCellWarnParam() != null && !alarmContext.getCellWarnParam().isEmpty()) {
+            for (Map.Entry<Integer, Map<String, String>> entry : alarmContext.getCellWarnParam().entrySet()) {
+                Map<String, String> warnParam = entry.getValue();
+                if (warnParam == null || warnParam.isEmpty()) {
+                    continue;
+                }
+                alarmLogService.alarmBatteryValue(null, packNum, entry.getKey(), warnParam);
             }
-            alarmLogService.alarmBatteryValue(null, packNum, entry.getKey(), warnParam);
         }
+
+        // 恢复本轮未上报数据的单体电池的告警/故障
+        List<Integer> activeCellNums = new ArrayList<>();
+        if (context.getCells() != null) {
+            for (com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime cell : context.getCells()) {
+                if (cell != null && cell.getBatNum() != null) {
+                    activeCellNums.add(cell.getBatNum());
+                }
+            }
+        }
+        alarmLogService.alarmFix(packNum, true, activeCellNums, ALL_CELL_ALARM_CODES);
     }
 
 }

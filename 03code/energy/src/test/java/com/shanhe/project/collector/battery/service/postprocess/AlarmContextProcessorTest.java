@@ -22,7 +22,7 @@ class AlarmContextProcessorTest {
     private static final String POLL_BATCH_NO = "batch-1";
 
     @Test
-    void processShouldBuildContextAndSkipAlarmServiceWhenAlarmContextIsEmpty() {
+    void processShouldBuildContextAndCallAlarmFixWhenAlarmContextIsEmpty() {
         AlarmContextProcessor processor = newProcessor();
         BatteryModuleAlarmAdaptService alarmAdaptService = Mockito.mock(BatteryModuleAlarmAdaptService.class);
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
@@ -37,7 +37,7 @@ class AlarmContextProcessorTest {
 
         Assertions.assertSame(emptyAlarmContext, context.getAlarmContext());
         Mockito.verify(alarmAdaptService).buildContext(context.getGroup(), context.getCells());
-        Mockito.verifyNoInteractions(alarmLogService);
+        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.eq(Arrays.asList(1, 2)), Mockito.anyList());
     }
 
     @Test
@@ -56,6 +56,7 @@ class AlarmContextProcessorTest {
         Mockito.verifyNoInteractions(alarmAdaptService);
         Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
                 Mockito.isNull(), Mockito.same(alarmContext.getPackWarnParam()));
+        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.eq(Collections.emptyList()), Mockito.anyList());
     }
 
     @Test
@@ -74,6 +75,7 @@ class AlarmContextProcessorTest {
         Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
                 Mockito.eq(2), warnParamCaptor.capture());
         Assertions.assertEquals("1", warnParamCaptor.getValue().get("DTDYGC"));
+        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.eq(Collections.emptyList()), Mockito.anyList());
         Mockito.verifyNoMoreInteractions(alarmLogService);
     }
 
@@ -101,6 +103,7 @@ class AlarmContextProcessorTest {
                 Mockito.isNull(), warnParamCaptor.capture());
         Assertions.assertEquals("1", warnParamCaptor.getValue().get(ItemCode.ZDYGC.getCode()));
         Assertions.assertEquals("1", warnParamCaptor.getValue().get(ItemCode.TXZT.getCode()));
+        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.eq(Arrays.asList(1, 2)), Mockito.anyList());
         Assertions.assertSame(realtimeContext, context.getAlarmContext());
     }
 
@@ -131,6 +134,7 @@ class AlarmContextProcessorTest {
         Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
                 Mockito.eq(2), Mockito.argThat(params ->
                         "2.1".equals(params.get(ItemCode.DTDYGC.getCode()))));
+        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.eq(Arrays.asList(1, 2)), Mockito.anyList());
         Mockito.verifyNoMoreInteractions(alarmLogService);
         Assertions.assertSame(realtimeContext, context.getAlarmContext());
     }
@@ -155,6 +159,7 @@ class AlarmContextProcessorTest {
 
         Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
                 Mockito.isNull(), Mockito.argThat(params -> "1".equals(params.get(ItemCode.TXZT.getCode()))));
+        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.eq(Collections.emptyList()), Mockito.anyList());
         Assertions.assertNotNull(context.getAlarmContext());
     }
 
