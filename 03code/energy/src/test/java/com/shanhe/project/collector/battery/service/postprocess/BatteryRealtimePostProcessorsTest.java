@@ -228,7 +228,7 @@ class BatteryRealtimePostProcessorsTest {
         ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
 
         BatteryRealtimePostProcessContext context = context(group(6, null), cells());
-        assertTrue(processor.shouldProcess(context));
+        assertFalse(processor.shouldProcess(context));
 
         processor.process(context);
 
@@ -243,8 +243,13 @@ class BatteryRealtimePostProcessorsTest {
         BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
         BatteryReportLog oldInfo = new BatteryReportLog();
         Mockito.when(reportLogService.lastCache(1)).thenReturn(oldInfo);
+        IBatteryPackService batteryPackService = Mockito.mock(IBatteryPackService.class);
+        BatteryPack pack = new BatteryPack();
+        pack.setBatSinSize(2);
+        Mockito.when(batteryPackService.selectBatteryInfoByPackNum(1)).thenReturn(pack);
         ReflectionTestUtils.setField(processor, "statBatteryResService", statBatteryResService);
         ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
+        ReflectionTestUtils.setField(processor, "batteryPackService", batteryPackService);
 
         List<BatteryModuleCellRealtime> cells = cells();
         cells.get(0).setResistanceRageSlip(9000.0d);
@@ -261,6 +266,50 @@ class BatteryRealtimePostProcessorsTest {
         List<BatteryMonitor> adaptedCells = batteryListCaptor.getValue();
         assertEquals(110, adaptedCells.get(0).getResistance());
         assertNull(adaptedCells.get(0).getResistancerageslip());
+    }
+
+    @Test
+    void resistanceStatisticsProcessorShouldSkipIncompleteCellCountOrResistance() {
+        ResistanceStatisticsProcessor processor = new ResistanceStatisticsProcessor();
+        IStatBatteryResService statBatteryResService = Mockito.mock(IStatBatteryResService.class);
+        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
+        IBatteryPackService batteryPackService = Mockito.mock(IBatteryPackService.class);
+        BatteryPack pack = new BatteryPack();
+        pack.setBatSinSize(2);
+        Mockito.when(batteryPackService.selectBatteryInfoByPackNum(1)).thenReturn(pack);
+        ReflectionTestUtils.setField(processor, "statBatteryResService", statBatteryResService);
+        ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
+        ReflectionTestUtils.setField(processor, "batteryPackService", batteryPackService);
+
+        processor.process(context(group(6, 7), Arrays.asList(cells().get(0))));
+        Mockito.verifyNoInteractions(statBatteryResService);
+        Mockito.verifyNoInteractions(reportLogService);
+
+        List<BatteryModuleCellRealtime> cells = cells();
+        cells.get(1).setResistance(null);
+        processor.process(context(group(6, 7), cells));
+
+        Mockito.verifyNoInteractions(statBatteryResService);
+        Mockito.verifyNoInteractions(reportLogService);
+    }
+
+    @Test
+    void resistanceStatisticsProcessorShouldSkipDuplicateBatch() {
+        ResistanceStatisticsProcessor processor = new ResistanceStatisticsProcessor();
+        IStatBatteryResService statBatteryResService = Mockito.mock(IStatBatteryResService.class);
+        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
+        BatteryReportLog oldInfo = new BatteryReportLog();
+        Mockito.when(reportLogService.lastCache(1)).thenReturn(oldInfo);
+        ReflectionTestUtils.setField(processor, "statBatteryResService", statBatteryResService);
+        ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
+
+        BatteryRealtimePostProcessContext context = context(group(6, 7), cells());
+
+        processor.process(context);
+        processor.process(context);
+
+        Mockito.verify(statBatteryResService, Mockito.times(1))
+                .init(Mockito.eq(1), Mockito.anyMap(), Mockito.anyList(), Mockito.same(oldInfo));
     }
 
     @Test
