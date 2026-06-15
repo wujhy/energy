@@ -2,7 +2,6 @@ package com.shanhe.project.collector.battery.service.postprocess;
 
 import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
-import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.energy.capacity.service.BatteryPredictorService;
 import lombok.extern.slf4j.Slf4j;
@@ -29,11 +28,10 @@ public class CapacityPredictionProcessor implements BatteryRealtimePostProcessor
     @Resource
     private BatteryPredictorService batteryPredictorService;
 
-    @Resource
-    private BatteryReportLogService batteryReportLogService;
-
     /** 上次电池组状态缓存：packNum → batteryPackStatus */
     private final Map<Integer, String> lastStatusCache = new ConcurrentHashMap<>();
+
+    private final Map<Integer, BatteryReportLog> lastReportLogCache = new ConcurrentHashMap<>();
 
     @Override
     public String getName() {
@@ -68,23 +66,26 @@ public class CapacityPredictionProcessor implements BatteryRealtimePostProcessor
         }
 
         // 检查状态是否发生变化
+        BatteryReportLog currentInfo = RealtimeToReportLogAdapter.adapt(packNum, group, context.getCells());
         String lastStatus = lastStatusCache.get(packNum);
+        BatteryReportLog oldInfo = lastReportLogCache.get(packNum);
         if (Objects.equals(currentStatus, lastStatus)) {
+            lastReportLogCache.put(packNum, currentInfo);
             return;
         }
         lastStatusCache.put(packNum, currentStatus);
+        lastReportLogCache.put(packNum, currentInfo);
 
         // 状态从备电切换到其他状态时，触发容量预测
         if (BatteryPackStatusEnum.isCode(lastStatus, BatteryPackStatusEnum.BACKUP)
                 && !BatteryPackStatusEnum.isCode(currentStatus, BatteryPackStatusEnum.BACKUP)) {
-            triggerCapacityPrediction(packNum, currentStatus);
+            triggerCapacityPrediction(packNum, currentStatus, oldInfo, currentInfo);
         }
     }
 
-    private void triggerCapacityPrediction(Integer packNum, String newStatus) {
+    private void triggerCapacityPrediction(Integer packNum, String newStatus, BatteryReportLog oldInfo, BatteryReportLog currentInfo) {
         try {
-            BatteryReportLog oldInfo = batteryReportLogService.lastCache(packNum);
-            batteryPredictorService.doTotalBatteryStep(packNum, newStatus, oldInfo);
+            batteryPredictorService.doTotalBatteryStep(packNum, newStatus, oldInfo, currentInfo);
             log.info("容量预测已触发, packNum={}, newStatus={}", packNum, newStatus);
         } catch (Exception e) {
             log.warn("容量预测触发失败, packNum={}", packNum, e);

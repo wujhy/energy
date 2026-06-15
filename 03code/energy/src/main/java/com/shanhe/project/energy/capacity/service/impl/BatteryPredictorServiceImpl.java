@@ -65,6 +65,13 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
     @Async
     @Override
     public void doTotalBatteryStep(Integer packNum, String batteryStatus, BatteryReportLog oldInfo) {
+        BatteryReportLog currentInfo = batteryReportLogService.lastCache(packNum);
+        doTotalBatteryStep(packNum, batteryStatus, oldInfo, currentInfo);
+    }
+
+    @Async
+    @Override
+    public void doTotalBatteryStep(Integer packNum, String batteryStatus, BatteryReportLog oldInfo, BatteryReportLog currentInfo) {
         if (oldInfo == null) {
             return;
         }
@@ -96,7 +103,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         }
 
         log.error("放电结束，开始预估电池容量==========================");
-        PreBatteryGroup preBatteryGroup = calcPredictorBatCapacity(packNum, optLog.getCreateTime(), endTime);
+        PreBatteryGroup preBatteryGroup = calcPredictorBatCapacity(packNum, optLog.getCreateTime(), endTime, currentInfo);
         if (preBatteryGroup == null) {
             return;
         }
@@ -106,7 +113,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
     }
 
     /** 计算电池组预估容量。 */
-    private PreBatteryGroup calcPredictorBatCapacity(Integer packNum, Date startTime, Date endTime) {
+    private PreBatteryGroup calcPredictorBatCapacity(Integer packNum, Date startTime, Date endTime, BatteryReportLog packInfo) {
         int diffMills = DateUtils.differentMillsByMillisecond(startTime, endTime);
         // 30分钟
         if (diffMills < 30) {
@@ -120,7 +127,6 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
             return null;
         }
         // 查询所有单体数据
-        BatteryReportLog packInfo = batteryReportLogService.lastCache(packNum);
         if (packInfo == null) {
             log.error("Redis找不到电池组实时数据!");
             return null;

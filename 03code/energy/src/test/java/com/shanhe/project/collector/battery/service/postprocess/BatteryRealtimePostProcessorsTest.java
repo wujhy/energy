@@ -158,11 +158,7 @@ class BatteryRealtimePostProcessorsTest {
     void capacityPredictionProcessorShouldTriggerForKnownStatusInSameBatch() {
         CapacityPredictionProcessor processor = new CapacityPredictionProcessor();
         BatteryPredictorService predictorService = Mockito.mock(BatteryPredictorService.class);
-        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
-        BatteryReportLog oldInfo = new BatteryReportLog();
-        Mockito.when(reportLogService.lastCache(1)).thenReturn(oldInfo);
         ReflectionTestUtils.setField(processor, "batteryPredictorService", predictorService);
-        ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
 
         BatteryRealtimePostProcessContext backupContext = context(group(5, null), cells());
         BatteryRealtimePostProcessContext idleContext = context(group(6, null), cells());
@@ -172,8 +168,13 @@ class BatteryRealtimePostProcessorsTest {
         processor.process(backupContext);
         processor.process(idleContext);
 
-        Mockito.verify(reportLogService).lastCache(1);
-        Mockito.verify(predictorService).doTotalBatteryStep(1, "6", oldInfo);
+        ArgumentCaptor<BatteryReportLog> oldInfoCaptor = ArgumentCaptor.forClass(BatteryReportLog.class);
+        ArgumentCaptor<BatteryReportLog> currentInfoCaptor = ArgumentCaptor.forClass(BatteryReportLog.class);
+        Mockito.verify(predictorService).doTotalBatteryStep(Mockito.eq(1), Mockito.eq("6"),
+                oldInfoCaptor.capture(), currentInfoCaptor.capture());
+        assertEquals(5, oldInfoCaptor.getValue().getPackParam().get("batteryPackStatus"));
+        assertEquals(6, currentInfoCaptor.getValue().getPackParam().get("batteryPackStatus"));
+        assertEquals(2, currentInfoCaptor.getValue().getBatteryList().size());
     }
 
     @Test
@@ -207,16 +208,13 @@ class BatteryRealtimePostProcessorsTest {
     void capacityPredictionProcessorShouldSkipUnknownStatus() {
         CapacityPredictionProcessor processor = new CapacityPredictionProcessor();
         BatteryPredictorService predictorService = Mockito.mock(BatteryPredictorService.class);
-        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
         ReflectionTestUtils.setField(processor, "batteryPredictorService", predictorService);
-        ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
 
         BatteryRealtimePostProcessContext context = context(group(99, null), cells());
         assertTrue(processor.shouldProcess(context));
         processor.process(context);
 
         Mockito.verifyNoInteractions(predictorService);
-        Mockito.verifyNoInteractions(reportLogService);
     }
 
     @Test

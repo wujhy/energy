@@ -20,4 +20,14 @@ public interface BatteryPredictorService {
      */
     void doTotalBatteryStep(Integer packNum, String batteryStatus, BatteryReportLog oldInfo);
 
+    /**
+     * Run capacity prediction with caller-provided current realtime data.
+     *
+     * @param packNum battery pack number
+     * @param batteryStatus current battery pack status
+     * @param oldInfo previous report data
+     * @param currentInfo current realtime data
+     */
+    void doTotalBatteryStep(Integer packNum, String batteryStatus, BatteryReportLog oldInfo, BatteryReportLog currentInfo);
+
 }
