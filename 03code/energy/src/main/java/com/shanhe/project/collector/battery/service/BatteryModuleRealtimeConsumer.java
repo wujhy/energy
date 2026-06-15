@@ -82,6 +82,12 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
     @Resource
     private BatteryModuleCellCompatibilityFillService compatibilityFillService;
 
+    /**
+     * 标准实时有效快照服务。
+     */
+    @Resource
+    private BatteryModuleRealtimeSnapshotService snapshotService;
+
     @Override
     public void consume(BatteryCollectorChannelConfig channelConfig,
                         BatteryCollectorFrame frame,
@@ -152,8 +158,10 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
             }
             if (!context.getCells().isEmpty() || !context.getGroups().isEmpty()) {
                 BatteryModuleGroupRealtime calculation = calculateIfEnabled(channelConfig, context);
+                com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot realtimeSnapshot =
+                        refreshRealtimeSnapshot(channelConfig, context, calculation);
                 refreshBatteryOnlineCache(channelConfig);
-                submitPostProcess(channelConfig, context, calculation);
+                submitPostProcess(channelConfig, context, calculation, realtimeSnapshot);
             }
         } catch (Exception e) {
             log.warn("刷新蓄电池模块实时数据批次失败, 通道={}, 批次={}",
@@ -165,7 +173,8 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
 
     void submitPostProcess(BatteryCollectorChannelConfig channelConfig,
                            BatteryModulePollContext context,
-                           BatteryModuleGroupRealtime calculation) {
+                           BatteryModuleGroupRealtime calculation,
+                           com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot realtimeSnapshot) {
         if (context == null) {
             return;
         }
@@ -175,25 +184,27 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
                 .cells(new ArrayList<>(context.getCells()))
                 .groups(new ArrayList<>(context.getGroups()))
                 .build();
-        postProcessExecutor.execute(() -> runPostProcess(channelConfig, snapshot, calculation));
+        postProcessExecutor.execute(() -> runPostProcess(channelConfig, snapshot, calculation, realtimeSnapshot));
     }
 
     void runPostProcess(BatteryCollectorChannelConfig channelConfig,
                         BatteryModulePollContext context,
-                        BatteryModuleGroupRealtime calculation) {
-        executePostProcessPipeline(channelConfig, context, calculation);
+                        BatteryModuleGroupRealtime calculation,
+                        com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot realtimeSnapshot) {
+        executePostProcessPipeline(channelConfig, context, calculation, realtimeSnapshot);
     }
 
     /** 执行后处理流水线。 */
     private void executePostProcessPipeline(BatteryCollectorChannelConfig channelConfig,
                                              BatteryModulePollContext context,
-                                             BatteryModuleGroupRealtime calculation) {
+                                             BatteryModuleGroupRealtime calculation,
+                                             com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot realtimeSnapshot) {
         if (postProcessService == null || context == null) {
             return;
         }
         try {
             BatteryRealtimePostProcessContext postContext =
-                    buildPostProcessContext(channelConfig, context, calculation);
+                    buildPostProcessContext(channelConfig, context, calculation, realtimeSnapshot);
             postProcessService.execute(postContext);
             context.setAlarmContext(postContext.getAlarmContext());
         } catch (Exception e) {
@@ -203,15 +214,33 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
 
     private BatteryRealtimePostProcessContext buildPostProcessContext(BatteryCollectorChannelConfig channelConfig,
                                                                       BatteryModulePollContext context,
-                                                                      BatteryModuleGroupRealtime calculation) {
+                                                                      BatteryModuleGroupRealtime calculation,
+                                                                      com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot realtimeSnapshot) {
         return BatteryRealtimePostProcessContext.builder()
                 .packNum(channelConfig == null ? null : channelConfig.getBatteryGroup())
                 .source("collector")
                 .pollBatchNo(context.getPollBatchNo())
-                .cells(context.getCells())
-                .group(calculation)
+                .cells(realtimeSnapshot == null ? context.getCells() : realtimeSnapshot.getCells())
+                .group(realtimeSnapshot == null ? calculation : realtimeSnapshot.getGroup())
                 .channelConfig(channelConfig)
+                .realtimeSnapshot(realtimeSnapshot)
                 .build();
+    }
+
+    private com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot refreshRealtimeSnapshot(
+            BatteryCollectorChannelConfig channelConfig,
+            BatteryModulePollContext context,
+            BatteryModuleGroupRealtime calculation) {
+        if (snapshotService == null || channelConfig == null || channelConfig.getBatteryGroup() == null) {
+            return null;
+        }
+        try {
+            return snapshotService.refreshAfterPoll(channelConfig.getBatteryGroup(), context, calculation);
+        } catch (Exception e) {
+            log.warn("刷新蓄电池标准实时快照失败, 通道={}, 电池组={}",
+                    channelConfig.getName(), channelConfig.getBatteryGroup(), e);
+            return null;
+        }
     }
 
     void refreshBatteryOnlineCache(BatteryCollectorChannelConfig channelConfig) {

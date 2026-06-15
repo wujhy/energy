@@ -6,9 +6,11 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.UNSIGNED_SHORT_MAX;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.protocol.BatteryModuleStatusRegisterCodec;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -57,12 +59,24 @@ public class BatteryModuleModbusReadMappingService {
     /** 采集配置，用于按 packNum 解析通道名称。 */
     private final BatteryCollectorProperties properties;
 
+    /** 标准实时有效快照服务。 */
+    private final BatteryModuleRealtimeSnapshotService snapshotService;
+
     public BatteryModuleModbusReadMappingService(BatteryModuleRealtimeMapper realtimeMapper,
                                                   BatteryDeviceStateService batteryDeviceStateService,
                                                   BatteryCollectorProperties properties) {
+        this(realtimeMapper, batteryDeviceStateService, properties, null);
+    }
+
+    @Autowired
+    public BatteryModuleModbusReadMappingService(BatteryModuleRealtimeMapper realtimeMapper,
+                                                  BatteryDeviceStateService batteryDeviceStateService,
+                                                  BatteryCollectorProperties properties,
+                                                  BatteryModuleRealtimeSnapshotService snapshotService) {
         this.realtimeMapper = realtimeMapper;
         this.batteryDeviceStateService = batteryDeviceStateService;
         this.properties = properties;
+        this.snapshotService = snapshotService;
     }
 
     /**
@@ -102,8 +116,9 @@ public class BatteryModuleModbusReadMappingService {
      */
     private ModbusReadSnapshot loadSnapshot(Integer packNum) {
         String channelName = resolveChannelName(packNum);
-        List<BatteryModuleCellRealtime> cells = realtimeMapper.selectCells(packNum);
-        BatteryModuleGroupRealtime group = realtimeMapper.selectGroup(packNum);
+        BatteryModuleRealtimeSnapshot realtimeSnapshot = snapshotService == null ? null : snapshotService.getSnapshot(packNum);
+        List<BatteryModuleCellRealtime> cells = realtimeSnapshot == null ? realtimeMapper.selectCells(packNum) : realtimeSnapshot.getCells();
+        BatteryModuleGroupRealtime group = realtimeSnapshot == null ? realtimeMapper.selectGroup(packNum) : realtimeSnapshot.getGroup();
         return new ModbusReadSnapshot(cells, group, packNum, channelName);
     }
 

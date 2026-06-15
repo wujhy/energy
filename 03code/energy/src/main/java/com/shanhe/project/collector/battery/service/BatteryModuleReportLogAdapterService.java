@@ -30,6 +30,9 @@ public class BatteryModuleReportLogAdapterService {
     @Resource
     private BatteryModuleRealtimeMapper realtimeMapper;
 
+    @Resource
+    private BatteryModuleRealtimeSnapshotService snapshotService;
+
     /**
      * 构建兼容旧 BatteryReportLog 的实时数据对象。
      *
@@ -37,8 +40,10 @@ public class BatteryModuleReportLogAdapterService {
      * @return 兼容旧实时上报结构的数据对象
      */
     public BatteryReportLog buildReportLog(Integer packNum) {
-        BatteryModuleGroupRealtime group = realtimeMapper.selectGroup(packNum);
-        List<BatteryModuleCellRealtime> cells = realtimeMapper.selectCells(packNum);
+        com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot snapshot =
+                snapshotService == null ? null : snapshotService.getSnapshot(packNum);
+        BatteryModuleGroupRealtime group = snapshot == null ? realtimeMapper.selectGroup(packNum) : snapshot.getGroup();
+        List<BatteryModuleCellRealtime> cells = snapshot == null ? realtimeMapper.selectCells(packNum) : snapshot.getCells();
         return buildReportLog(packNum, group, cells);
     }
 

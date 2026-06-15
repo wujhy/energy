@@ -29,6 +29,9 @@ public class BatteryModuleRealtimeAdapterService {
     @Resource
     private BatteryModuleRealtimeMapper realtimeMapper;
 
+    @Resource
+    private BatteryModuleRealtimeSnapshotService snapshotService;
+
     /**
      * 判断标准实时数据源是否启用。
      *
@@ -49,7 +52,9 @@ public class BatteryModuleRealtimeAdapterService {
             return null;
         }
         try {
-            List<BatteryModuleCellRealtime> cells = realtimeMapper.selectCells(packNum);
+            com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot snapshot =
+                    snapshotService == null ? null : snapshotService.getSnapshot(packNum);
+            List<BatteryModuleCellRealtime> cells = snapshot == null ? realtimeMapper.selectCells(packNum) : snapshot.getCells();
             return (cells != null && !cells.isEmpty()) ? cells : null;
         } catch (Exception e) {
             log.warn("查询标准单体实时数据失败, packNum={}", packNum, e);
@@ -68,7 +73,9 @@ public class BatteryModuleRealtimeAdapterService {
             return null;
         }
         try {
-            return realtimeMapper.selectGroup(packNum);
+            com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot snapshot =
+                    snapshotService == null ? null : snapshotService.getSnapshot(packNum);
+            return snapshot == null ? realtimeMapper.selectGroup(packNum) : snapshot.getGroup();
         } catch (Exception e) {
             log.warn("查询标准组实时数据失败, packNum={}", packNum, e);
             return null;

@@ -4,6 +4,7 @@ import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -40,6 +41,29 @@ class BatteryModuleRealtimeAdapterServiceTest {
         Assertions.assertEquals(1, service.getCellRealtime(1).size());
         Assertions.assertNotNull(service.getGroupRealtime(1));
         Assertions.assertEquals(1, service.getGroupRealtime(1).getPackNum());
+    }
+
+    @Test
+    void shouldPreferSnapshotWhenEnabledAndSnapshotExists() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        BatteryModuleCellRealtime cell = new BatteryModuleCellRealtime();
+        cell.setBatNum(3);
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackNum(1);
+        Mockito.when(snapshotService.getSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
+                .packNum(1)
+                .cells(Arrays.asList(cell))
+                .group(group)
+                .build());
+
+        BatteryModuleRealtimeAdapterService service = newService(true, mapper);
+        ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
+
+        Assertions.assertEquals(3, service.getCellRealtime(1).get(0).getBatNum());
+        Assertions.assertSame(group, service.getGroupRealtime(1));
+        Mockito.verify(mapper, Mockito.never()).selectCells(1);
+        Mockito.verify(mapper, Mockito.never()).selectGroup(1);
     }
 
     @Test

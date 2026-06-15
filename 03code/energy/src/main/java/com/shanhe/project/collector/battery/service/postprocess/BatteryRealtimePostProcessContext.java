@@ -4,6 +4,7 @@ import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleAlarmContext;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
 import lombok.Builder;
 import lombok.Data;
@@ -38,6 +39,9 @@ public class BatteryRealtimePostProcessContext {
 
     /** 采集通道配置。 */
     private BatteryCollectorChannelConfig channelConfig;
+
+    /** 标准实时有效快照。 */
+    private BatteryModuleRealtimeSnapshot realtimeSnapshot;
 
     /** 告警候选上下文。 */
     private BatteryModuleAlarmContext alarmContext;
