@@ -116,6 +116,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     private BatteryModuleCellCompatibilityFillService compatibilityFillService;
 
     /**
+     * 标准实时有效快照服务。
+     */
+    @Resource
+    private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
+
+    /**
      * 600节模块端标准实时数据 Mapper。
      */
     @Resource
@@ -1820,6 +1826,14 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         state.getActiveModuleAddresses().clear();
         state.getModuleAddressMissCounts().clear();
         state.getFullDiscoveryRequested().set(true);
+        clearRealtimeSnapshot(state);
+    }
+
+    private void clearRealtimeSnapshot(BatteryCollectorChannelState state) {
+        if (realtimeSnapshotService == null || state == null || state.getConfig() == null) {
+            return;
+        }
+        realtimeSnapshotService.evict(state.getConfig().getBatteryGroup());
     }
 
     @Override

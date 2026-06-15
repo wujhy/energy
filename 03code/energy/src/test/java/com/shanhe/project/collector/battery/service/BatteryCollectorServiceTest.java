@@ -207,7 +207,10 @@ class BatteryCollectorServiceTest {
     void shouldResetModuleAddressCacheForSelectedChannel() {
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
         channelConfig.setName("battery-group-1");
+        channelConfig.setBatteryGroup(1);
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        BatteryModuleRealtimeSnapshotService realtimeSnapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        ReflectionTestUtils.setField(service, "realtimeSnapshotService", realtimeSnapshotService);
         state.getActiveModuleAddresses().add(8);
         state.getModuleAddressMissCounts().put(8, 2);
         state.getFullDiscoveryRequested().set(false);
@@ -220,6 +223,7 @@ class BatteryCollectorServiceTest {
         Assertions.assertTrue(state.getActiveModuleAddresses().isEmpty());
         Assertions.assertTrue(state.getModuleAddressMissCounts().isEmpty());
         Assertions.assertTrue(state.getFullDiscoveryRequested().get());
+        Mockito.verify(realtimeSnapshotService).evict(1);
     }
 
     @Test
@@ -245,6 +249,8 @@ class BatteryCollectorServiceTest {
                 (List<BatteryCollectorChannelState>) ReflectionTestUtils.getField(service, "channelStates");
         channelStates.add(groupOneState);
         channelStates.add(groupTwoState);
+        BatteryModuleRealtimeSnapshotService realtimeSnapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        ReflectionTestUtils.setField(service, "realtimeSnapshotService", realtimeSnapshotService);
 
         Assertions.assertTrue(service.resetModuleAddressCacheByBatteryGroup(1));
 
@@ -254,6 +260,8 @@ class BatteryCollectorServiceTest {
         Assertions.assertFalse(groupTwoState.getActiveModuleAddresses().isEmpty());
         Assertions.assertFalse(groupTwoState.getModuleAddressMissCounts().isEmpty());
         Assertions.assertFalse(groupTwoState.getFullDiscoveryRequested().get());
+        Mockito.verify(realtimeSnapshotService).evict(1);
+        Mockito.verify(realtimeSnapshotService, Mockito.never()).evict(2);
     }
 
     @Test

@@ -5,6 +5,7 @@ import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.service.BatteryCollectorService;
 import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
+import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.Config;
@@ -74,6 +75,8 @@ public class RestoreServiceImpl implements RestoreService {
     private BatteryCollectorService batteryCollectorService;
     @Resource
     private com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService compatibilityFillService;
+    @Resource
+    private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
 
     /**
      * 恢复出厂设置
@@ -126,6 +129,7 @@ public class RestoreServiceImpl implements RestoreService {
         batteryCollectorService.resetModuleAddressCacheByBatteryGroup(null);
         batteryCollectorService.clearDeviceStateDedupCacheByBatteryGroup(null);
         compatibilityFillService.clearConnectResistanceCache(null);
+        realtimeSnapshotService.evictAll();
 
         // 系统操作记录
         operLogService.cleanOperLog();
@@ -200,6 +204,7 @@ public class RestoreServiceImpl implements RestoreService {
         batteryCollectorService.resetModuleAddressCacheByBatteryGroup(batterySetVO.getPackNum());
         batteryCollectorService.clearDeviceStateDedupCacheByBatteryGroup(batterySetVO.getPackNum());
         compatibilityFillService.clearConnectResistanceCache(batterySetVO.getPackNum());
+        realtimeSnapshotService.evict(batterySetVO.getPackNum());
 
     }
 

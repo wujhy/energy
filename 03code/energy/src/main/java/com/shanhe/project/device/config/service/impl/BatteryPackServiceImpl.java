@@ -9,6 +9,7 @@ import com.shanhe.common.utils.uuid.IdUtils;
 import com.shanhe.framework.enums.BatteryModelEnum;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.YesNoEnum;
+import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.mapper.BatteryPackMapper;
@@ -41,6 +42,8 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
     private IAlarmLogService alarmLogService;
     @Resource
     private IConfigAttributeService configAttributeService;
+    @Resource
+    private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
 
     CacheKeyEnum packInfoCache = CacheKeyEnum.BATTERY_PACK_INFO;
 
@@ -181,6 +184,7 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
     @Override
     public void deleteDefaultDevicePacks() {
         batteryPackMapper.deleteDefaultDevicePacks();
+        realtimeSnapshotService.evictAll();
     }
 
     /**
@@ -193,7 +197,19 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         if (packIds == null || packIds.isEmpty()) {
             return;
         }
+        List<Integer> packNums = new ArrayList<>();
+        List<BatteryPack> batteryPacks = batteryPackMapper.selectBatteryPackByPackIds(packIds);
+        if (batteryPacks != null) {
+            for (BatteryPack batteryPack : batteryPacks) {
+                if (batteryPack != null && batteryPack.getPackNum() != null) {
+                    packNums.add(batteryPack.getPackNum());
+                }
+            }
+        }
         batteryPackMapper.deleteBatteryPackByBatPackIds(packIds);
+        for (Integer packNum : packNums) {
+            realtimeSnapshotService.evict(packNum);
+        }
     }
 
     /**
@@ -256,6 +272,7 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
 
         // 删除包
         batteryPackMapper.deleteBatteryPackByBatPackIds(Lists.newArrayList(id));
+        realtimeSnapshotService.evict(batteryPack.getPackNum());
         // 更新缓存
         updateCache();
 

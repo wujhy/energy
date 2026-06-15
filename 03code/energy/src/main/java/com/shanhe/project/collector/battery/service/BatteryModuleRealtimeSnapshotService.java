@@ -92,6 +92,17 @@ public class BatteryModuleRealtimeSnapshotService {
         CacheUtils.remove(CacheKeyEnum.BATTERY_REPORT.getCache(), snapshotKey(packNum));
     }
 
+    /**
+     * 删除全部标准实时快照缓存。
+     */
+    public void evictAll() {
+        for (String key : CacheUtils.getCacheKeys(CacheKeyEnum.BATTERY_REPORT.getCache())) {
+            if (key != null && key.startsWith("battery:module:snapshot:")) {
+                CacheUtils.remove(CacheKeyEnum.BATTERY_REPORT.getCache(), key);
+            }
+        }
+    }
+
     BatteryModuleRealtimeSnapshot buildSnapshot(Integer packNum,
                                                 BatteryModulePollContext context,
                                                 List<BatteryModuleCellRealtime> persistedCells,

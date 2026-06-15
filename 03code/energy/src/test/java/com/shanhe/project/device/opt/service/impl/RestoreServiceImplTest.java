@@ -5,6 +5,7 @@ import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.service.BatteryCollectorService;
 import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
+import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.Config;
@@ -49,6 +50,7 @@ class RestoreServiceImplTest {
         BatteryCollectorService batteryCollectorService = Mockito.mock(BatteryCollectorService.class);
         com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService compatibilityFillService =
                 Mockito.mock(com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService.class);
+        BatteryModuleRealtimeSnapshotService realtimeSnapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
 
         Config config = new Config();
         config.setConfigId(Constants.DEFAULT_CONFIG_ID);
@@ -73,6 +75,7 @@ class RestoreServiceImplTest {
         ReflectionTestUtils.setField(service, "batteryModeStatusService", batteryModeStatusService);
         ReflectionTestUtils.setField(service, "batteryCollectorService", batteryCollectorService);
         ReflectionTestUtils.setField(service, "compatibilityFillService", compatibilityFillService);
+        ReflectionTestUtils.setField(service, "realtimeSnapshotService", realtimeSnapshotService);
 
         BatterySetVO request = new BatterySetVO();
         request.setConfigId(99L);
@@ -95,6 +98,7 @@ class RestoreServiceImplTest {
         Mockito.verify(batteryCollectorService).resetModuleAddressCacheByBatteryGroup(2);
         Mockito.verify(batteryCollectorService).clearDeviceStateDedupCacheByBatteryGroup(2);
         Mockito.verify(compatibilityFillService).clearConnectResistanceCache(2);
+        Mockito.verify(realtimeSnapshotService).evict(2);
     }
 
     @Test
@@ -116,6 +120,7 @@ class RestoreServiceImplTest {
         BatteryCollectorService batteryCollectorService = Mockito.mock(BatteryCollectorService.class);
         com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService compatibilityFillService =
                 Mockito.mock(com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService.class);
+        BatteryModuleRealtimeSnapshotService realtimeSnapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
         IOperLogService operLogService = Mockito.mock(IOperLogService.class);
         IBatteryPackService batteryPackService = Mockito.mock(IBatteryPackService.class);
         IHostService hostService = Mockito.mock(IHostService.class);
@@ -140,6 +145,7 @@ class RestoreServiceImplTest {
         ReflectionTestUtils.setField(service, "batteryModeStatusService", batteryModeStatusService);
         ReflectionTestUtils.setField(service, "batteryCollectorService", batteryCollectorService);
         ReflectionTestUtils.setField(service, "compatibilityFillService", compatibilityFillService);
+        ReflectionTestUtils.setField(service, "realtimeSnapshotService", realtimeSnapshotService);
         ReflectionTestUtils.setField(service, "operLogService", operLogService);
         ReflectionTestUtils.setField(service, "batteryPackService", batteryPackService);
         ReflectionTestUtils.setField(service, "hostService", hostService);
@@ -152,5 +158,6 @@ class RestoreServiceImplTest {
         Mockito.verify(batteryCollectorService).resetModuleAddressCacheByBatteryGroup(null);
         Mockito.verify(batteryCollectorService).clearDeviceStateDedupCacheByBatteryGroup(null);
         Mockito.verify(compatibilityFillService).clearConnectResistanceCache(null);
+        Mockito.verify(realtimeSnapshotService).evictAll();
     }
 }
