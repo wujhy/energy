@@ -4,6 +4,9 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Modbus RTU 从站配置。
  *
@@ -38,4 +41,8 @@ public class ModbusRtuProperties {
 
     /** 读超时(ms)。 */
     private Integer readTimeoutMs = 1000;
+
+    private Integer maxFrameBufferSize = 512;
+
+    private Map<Integer, Integer> stationPackMap = new HashMap<>();
 }

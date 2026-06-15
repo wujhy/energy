@@ -271,3 +271,6 @@ battery-collector:
     stopBits: 1
     parity: 0
     readTimeoutMs: 1000
+    maxFrameBufferSize: 512
+    # stationPackMap:
+    #   1: 1

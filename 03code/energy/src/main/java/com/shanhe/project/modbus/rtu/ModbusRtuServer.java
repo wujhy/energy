@@ -11,6 +11,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * Modbus RTU 从站服务。
@@ -31,6 +32,7 @@ public class ModbusRtuServer implements ApplicationRunner {
     private static final int FUNC_READ_HOLDING_REGISTERS = 0x03;
     /** Modbus 功能码：写单个寄存器。 */
     private static final int FUNC_WRITE_SINGLE_REGISTER = 0x06;
+    private static final int FUNC_WRITE_MULTIPLE_REGISTERS = 0x10;
 
     /** Modbus 异常码：非法功能码。 */
     private static final int EXCEPTION_ILLEGAL_FUNCTION = 0x01;
@@ -53,6 +55,7 @@ public class ModbusRtuServer implements ApplicationRunner {
     private volatile boolean running;
     private Thread serverThread;
     private SerialPort serialPort;
+    private ModbusRtuFrameParser frameParser;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -93,6 +96,7 @@ public class ModbusRtuServer implements ApplicationRunner {
             }
             log.info("Modbus RTU 从站串口已打开: {}", modbusRtuProperties.getPortName());
 
+            frameParser = new ModbusRtuFrameParser(modbusRtuProperties.getMaxFrameBufferSize());
             byte[] buffer = new byte[256];
             while (running) {
                 int available = serialPort.bytesAvailable();
@@ -102,7 +106,10 @@ public class ModbusRtuServer implements ApplicationRunner {
                 }
                 int read = serialPort.readBytes(buffer, Math.min(available, buffer.length));
                 if (read > 0) {
-                    processFrame(buffer, read);
+                    List<byte[]> frames = frameParser.append(buffer, read);
+                    for (byte[] frame : frames) {
+                        processFrame(frame, frame.length);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -118,7 +125,13 @@ public class ModbusRtuServer implements ApplicationRunner {
         if (length < 4) {
             return; // 最小帧：站号 + 功能码 + CRC(2)
         }
+        if (!ModbusRtuFrameParser.isValidCrc(buffer)) {
+            return;
+        }
         int stationAddress = buffer[0] & 0xFF;
+        if (stationAddress == 0) {
+            return;
+        }
         if (stationAddress != modbusRtuProperties.getStationAddress()) {
             return; // 非本站请求
         }
@@ -131,6 +144,9 @@ public class ModbusRtuServer implements ApplicationRunner {
                 break;
             case FUNC_WRITE_SINGLE_REGISTER:
                 processWriteSingleRegister(stationAddress, functionCode, packNum, buffer, length);
+                break;
+            case FUNC_WRITE_MULTIPLE_REGISTERS:
+                sendException(stationAddress, functionCode, EXCEPTION_ILLEGAL_FUNCTION);
                 break;
             default:
                 sendException(stationAddress, functionCode, EXCEPTION_ILLEGAL_FUNCTION);
@@ -145,6 +161,10 @@ public class ModbusRtuServer implements ApplicationRunner {
         }
         int startAddress = ((buffer[2] & 0xFF) << 8) | (buffer[3] & 0xFF);
         int quantity = ((buffer[4] & 0xFF) << 8) | (buffer[5] & 0xFF);
+        if (quantity <= 0 || quantity > 125) {
+            sendException(stationAddress, functionCode, EXCEPTION_ILLEGAL_DATA_VALUE);
+            return;
+        }
         int referenceAddress = startAddress + 1;
 
         try {
@@ -203,7 +223,7 @@ public class ModbusRtuServer implements ApplicationRunner {
         response[3] = (byte) (registerAddress & 0xFF);
         response[4] = (byte) ((value >> 8) & 0xFF);
         response[5] = (byte) (value & 0xFF);
-        int crc = calculateCrc(response, 6);
+        int crc = ModbusRtuFrameParser.calculateCrc(response, 6);
         response[6] = (byte) (crc & 0xFF);
         response[7] = (byte) ((crc >> 8) & 0xFF);
         writeResponse(response);
@@ -211,6 +231,10 @@ public class ModbusRtuServer implements ApplicationRunner {
 
     /** 从站号解析电池组号：低 4 位为电池组号。 */
     private Integer resolvePackNumFromStation(int stationAddress) {
+        if (modbusRtuProperties.getStationPackMap() != null
+                && modbusRtuProperties.getStationPackMap().containsKey(stationAddress)) {
+            return modbusRtuProperties.getStationPackMap().get(stationAddress);
+        }
         int packNum = stationAddress & 0x0F;
         return packNum > 0 ? packNum : null;
     }
@@ -225,7 +249,7 @@ public class ModbusRtuServer implements ApplicationRunner {
             response[3 + i * 2] = (byte) ((values[i] >> 8) & 0xFF);
             response[4 + i * 2] = (byte) (values[i] & 0xFF);
         }
-        int crc = calculateCrc(response, response.length - 2);
+        int crc = ModbusRtuFrameParser.calculateCrc(response, response.length - 2);
         response[response.length - 2] = (byte) (crc & 0xFF);
         response[response.length - 1] = (byte) ((crc >> 8) & 0xFF);
         writeResponse(response);
@@ -236,7 +260,7 @@ public class ModbusRtuServer implements ApplicationRunner {
         response[0] = (byte) stationAddress;
         response[1] = (byte) (functionCode | 0x80);
         response[2] = (byte) exceptionCode;
-        int crc = calculateCrc(response, 3);
+        int crc = ModbusRtuFrameParser.calculateCrc(response, 3);
         response[3] = (byte) (crc & 0xFF);
         response[4] = (byte) ((crc >> 8) & 0xFF);
         writeResponse(response);
@@ -251,22 +275,6 @@ public class ModbusRtuServer implements ApplicationRunner {
         } catch (Exception e) {
             log.warn("Modbus RTU 写入响应失败: {}", e.getMessage());
         }
-    }
-
-    /** Modbus CRC-16 计算。 */
-    private int calculateCrc(byte[] data, int length) {
-        int crc = 0xFFFF;
-        for (int i = 0; i < length; i++) {
-            crc ^= (data[i] & 0xFF);
-            for (int j = 0; j < 8; j++) {
-                if ((crc & 0x0001) != 0) {
-                    crc = (crc >> 1) ^ 0xA001;
-                } else {
-                    crc >>= 1;
-                }
-            }
-        }
-        return crc;
     }
 
     private void closePort() {
