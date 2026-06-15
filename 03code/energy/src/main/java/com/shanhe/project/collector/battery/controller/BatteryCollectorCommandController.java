@@ -9,6 +9,7 @@ import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
 import com.shanhe.project.collector.battery.service.BatteryCollectorService;
+import com.shanhe.project.collector.battery.service.BatteryCurrentStateService;
 import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import lombok.Data;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -41,6 +42,8 @@ public class BatteryCollectorCommandController extends BaseController {
     @Resource
     private BatteryCollectorService collectorService;
     @Resource
+    private BatteryCurrentStateService batteryCurrentStateService;
+    @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
     @Resource
     private com.shanhe.project.collector.battery.mapper.BatteryModuleFrameLogMapper frameLogMapper;
@@ -58,6 +61,11 @@ public class BatteryCollectorCommandController extends BaseController {
     @GetMapping("/metrics")
     public AjaxResult metrics() {
         return success(collectorService.getMetrics());
+    }
+
+    @GetMapping("/currentState")
+    public AjaxResult currentState(Integer packNum) {
+        return success(batteryCurrentStateService.getCurrentState(packNum));
     }
 
     /**
