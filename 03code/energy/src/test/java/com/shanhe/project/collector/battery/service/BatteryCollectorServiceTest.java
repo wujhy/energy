@@ -3,11 +3,14 @@ package com.shanhe.project.collector.battery.service;
 import com.fazecast.jSerialComm.SerialPort;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
+import com.shanhe.project.collector.battery.model.BatteryCollectorChannelMetrics;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelSnapshot;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelState;
 import com.shanhe.project.collector.battery.model.BatteryCollectorFrame;
+import com.shanhe.project.collector.battery.model.BatteryCollectorMetrics;
 import com.shanhe.project.collector.battery.model.BatteryCollectorRunState;
 import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.collector.battery.model.BatteryPendingRequest;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
@@ -25,7 +28,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -200,6 +206,104 @@ class BatteryCollectorServiceTest {
         Assertions.assertTrue(snapshot.getLastCompletedModuleCommandSuccess());
         Assertions.assertEquals(300L, snapshot.getLastCompletedModuleCommandTime());
         Assertions.assertEquals(1, snapshot.getQueuedModuleCommandCount());
+    }
+
+    @Test
+    void shouldReturnEmptyCollectorMetrics() {
+        BatteryCollectorMetrics metrics = service.getMetrics();
+
+        Assertions.assertNotNull(metrics.getGeneratedAt());
+        Assertions.assertEquals(0, metrics.getChannelCount());
+        Assertions.assertEquals(0, metrics.getEnabledChannelCount());
+        Assertions.assertEquals(0, metrics.getOpenedChannelCount());
+        Assertions.assertEquals(0, metrics.getTotalQueuedModuleCommandCount());
+        Assertions.assertTrue(metrics.getChannels().isEmpty());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldBuildCollectorMetricsFromRunningChannelAndCachedSnapshot() {
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setName("battery-group-1");
+        channelConfig.setPortName("ttyS9");
+        channelConfig.setBatteryGroup(1);
+        channelConfig.setDeviceAddress(1);
+        channelConfig.setEnabled(true);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        state.setRunState(BatteryCollectorRunState.WAIT_RESPONSE);
+        state.setLastSendTime(100L);
+        state.setLastReceiveTime(200L);
+        state.setLastPollTime(250L);
+        state.setLastTimeoutTime(260L);
+        state.setTimeoutCount(3);
+        state.setCurrentRetryCount(1);
+        state.setCurrentPollBatchNo("battery-group-1-100");
+        state.setCurrentPollStartedAt(100L);
+        state.setCurrentPollAddress(8);
+        state.setPollRoundCount(2L);
+        state.setCurrentFullDiscovery(true);
+        state.setLastFullDiscoveryTime(90L);
+        state.setLastCompletedModuleCommandName("SET_MODULE_ADDRESS");
+        state.setLastCompletedModuleCommandSuccess(true);
+        state.setLastCompletedModuleCommandTime(300L);
+        state.getActiveModuleAddresses().add(8);
+        state.getActiveModuleAddresses().add(246);
+        state.setPendingCommand(BatteryPendingRequest.command(0x01, 0x81, new byte[0], "MODULE_INFO"));
+        state.getQueuedModuleCommands().offer(BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST)
+                .address(8)
+                .requestCode(0x02)
+                .responseCode(0x82)
+                .payload(new byte[0])
+                .build());
+        List<BatteryCollectorChannelState> channelStates =
+                (List<BatteryCollectorChannelState>) ReflectionTestUtils.getField(service, "channelStates");
+        channelStates.add(state);
+
+        Date refreshedAt = new Date(500L);
+        BatteryModuleRealtimeSnapshot snapshot = BatteryModuleRealtimeSnapshot.builder()
+                .packNum(1)
+                .pollBatchNo("batch-1")
+                .cells(Arrays.asList(
+                        new com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime(),
+                        new com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime()))
+                .currentBatchCellNums(new LinkedHashSet<>(Arrays.asList(1, 2)))
+                .staleCellNums(new LinkedHashSet<>(Collections.singletonList(3)))
+                .missingCellNums(new LinkedHashSet<>(Collections.singletonList(4)))
+                .refreshedAt(refreshedAt)
+                .build();
+        BatteryModuleRealtimeSnapshotService realtimeSnapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        Mockito.when(realtimeSnapshotService.getCachedSnapshot(1)).thenReturn(snapshot);
+        ReflectionTestUtils.setField(service, "realtimeSnapshotService", realtimeSnapshotService);
+
+        BatteryCollectorMetrics metrics = service.getMetrics();
+
+        Assertions.assertEquals(1, metrics.getChannelCount());
+        Assertions.assertEquals(1, metrics.getEnabledChannelCount());
+        Assertions.assertEquals(0, metrics.getOpenedChannelCount());
+        Assertions.assertEquals(1, metrics.getRunningChannelCount());
+        Assertions.assertEquals(2, metrics.getTotalActiveModuleAddressCount());
+        Assertions.assertEquals(1, metrics.getTotalQueuedModuleCommandCount());
+        Assertions.assertEquals(3, metrics.getTotalTimeoutCount());
+        Assertions.assertEquals(2, metrics.getTotalSnapshotCellCount());
+        Assertions.assertEquals(1, metrics.getTotalSnapshotStaleCellCount());
+        Assertions.assertEquals(1, metrics.getTotalSnapshotMissingCellCount());
+        BatteryCollectorChannelMetrics channel = metrics.getChannels().get(0);
+        Assertions.assertEquals("battery-group-1", channel.getName());
+        Assertions.assertEquals(1, channel.getBatteryGroup());
+        Assertions.assertTrue(channel.getEnabled());
+        Assertions.assertThrows(NoSuchFieldException.class,
+                () -> BatteryCollectorChannelMetrics.class.getDeclaredField("portName"));
+        Assertions.assertThrows(NoSuchFieldException.class,
+                () -> BatteryCollectorChannelMetrics.class.getDeclaredField("deviceAddress"));
+        Assertions.assertEquals(BatteryCollectorRunState.WAIT_RESPONSE, channel.getRunState());
+        Assertions.assertEquals("MODULE_INFO", channel.getPendingCommandName());
+        Assertions.assertEquals("SET_MODULE_ADDRESS", channel.getLastCompletedModuleCommandName());
+        Assertions.assertEquals("batch-1", channel.getSnapshotPollBatchNo());
+        Assertions.assertEquals(refreshedAt, channel.getSnapshotRefreshedAt());
+        Assertions.assertTrue(channel.getSnapshotDataReady());
+        Mockito.verify(realtimeSnapshotService).getCachedSnapshot(1);
+        Mockito.verify(realtimeSnapshotService, Mockito.never()).getSnapshot(Mockito.any());
     }
 
     @Test

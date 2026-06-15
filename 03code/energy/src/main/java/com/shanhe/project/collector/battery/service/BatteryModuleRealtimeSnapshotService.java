@@ -80,6 +80,14 @@ public class BatteryModuleRealtimeSnapshotService {
         return rebuildFromRealtime(packNum);
     }
 
+    public BatteryModuleRealtimeSnapshot getCachedSnapshot(Integer packNum) {
+        if (packNum == null) {
+            return null;
+        }
+        Object value = CacheUtils.get(CacheKeyEnum.BATTERY_REPORT.getCache(), snapshotKey(packNum));
+        return value instanceof BatteryModuleRealtimeSnapshot ? (BatteryModuleRealtimeSnapshot) value : null;
+    }
+
     /**
      * 删除快照缓存。
      *

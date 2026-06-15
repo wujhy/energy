@@ -55,6 +55,11 @@ public class BatteryCollectorCommandController extends BaseController {
         return success(collectorService.getChannelSnapshots());
     }
 
+    @GetMapping("/metrics")
+    public AjaxResult metrics() {
+        return success(collectorService.getMetrics());
+    }
+
     /**
      * 重置模块地址缓存，强制下一轮全量发现。
      */
