@@ -46,7 +46,7 @@ public class SysConst {
     /**
      * 用户管理-账号初始密码
      */
-    public static String initPassword = "888888";
+    public static String initPassword = "shanHe@168";
     /**
      * 主机管理-账号初始密码
      */

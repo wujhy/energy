@@ -183,59 +183,68 @@ public class BatteryPackHandler {
             log.error("上传蓄电池实时数据出错，无单体数据！电池组：{}，info={}", packNum, deviceData.getInfo());
             return;
         }
-        Date date = new Date();
-        // 设备在线
-        CacheUtils.put(String.format(CacheKeyEnum.CONFIG_ONLINE.getKey(), deviceData.getC0(), deviceData.getC1(), deviceData.getC2()), date);
+        refreshConfigOnlineCache(deviceData);
+        BatteryReportLog oldInfo = loadRecentOldReportLog(config, packNum);
+        saveReportLog(packNum, packMap, batteryList);
+        executePostSaveProcesses(config, packNum, batteryPack, packMap, batteryList, oldInfo);
+    }
 
-        // 获取旧状态并确保类型安全
-        String batteryPackStatus = Objects.toString(packMap.get("batteryPackStatus"), null);
+    private void refreshConfigOnlineCache(DeviceData deviceData) {
+        CacheUtils.put(String.format(CacheKeyEnum.CONFIG_ONLINE.getKey(),
+                deviceData.getC0(), deviceData.getC1(), deviceData.getC2()), new Date());
+    }
 
-
-        BatteryReportLog oldInfo = null;
+    private BatteryReportLog loadRecentOldReportLog(Config config, Integer packNum) {
         try {
-            oldInfo = batteryReportLogService.lastCache(packNum);
-            // 超过 5 分钟，不做联动
-            if (null == oldInfo || null == oldInfo.getCreateTime() || System.currentTimeMillis() - oldInfo.getCreateTime().getTime() > 5 * 60 * 1000) {
-                oldInfo = null;
+            BatteryReportLog oldInfo = batteryReportLogService.lastCache(packNum);
+            if (oldInfo == null || oldInfo.getCreateTime() == null) {
+                return null;
             }
-
+            return System.currentTimeMillis() - oldInfo.getCreateTime().getTime() > 5 * 60 * 1000
+                    ? null
+                    : oldInfo;
         } catch (Exception e) {
             log.error("获取电池组信息异常 imei {} 电池组编号 {} ", config.getConfigId(), packNum, e);
+            return null;
         }
+    }
 
+    private void saveReportLog(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList) {
         boolean isInsert = dataService.isInsert(packNum + "");
-        // 实时记录
         batteryReportLogService.insert(packNum, packMap, batteryList, isInsert);
+    }
 
+    private void executePostSaveProcesses(Config config,
+                                          Integer packNum,
+                                          BatteryPack batteryPack,
+                                          Map<String, Object> packMap,
+                                          List<BatteryMonitor> batteryList,
+                                          BatteryReportLog oldInfo) {
+        String batteryPackStatus = Objects.toString(packMap.get("batteryPackStatus"), null);
         try {
-            // 统计电池过程
             batteryPredictorService.doTotalBatteryStep(packNum, batteryPackStatus, oldInfo);
         } catch (Exception e) {
             log.error("统计电池过程异常 imei {} 电池组编号 {} ", config.getConfigId(), packNum, e);
         }
 
-        // 保存蓄电池组状态
         try {
             optLogService.insertBattery(packNum, packMap, oldInfo);
         } catch (Exception e) {
             log.error("保存操作日志异常 imei {} 电池组编号 {} ", config.getConfigId(), packNum, e);
         }
 
-        // 数据迁移
         try {
             statBatteryPackService.insertList(packNum, packMap, batteryList);
         } catch (Exception e) {
             log.error("数据迁移异常 imei {} 电池组编号 {} ", config.getConfigId(), packNum, e);
         }
 
-        // 结束内阻测试，生成一次内阻值
         try {
             statBatteryResService.init(packNum, packMap, batteryList, oldInfo);
         } catch (Exception e) {
             log.error("电池组内阻计算异常 imei {} 电池组编号 {} ", config.getConfigId(), packNum, e);
         }
 
-        // 浮充结束，存储最后一次的电压极差值
         try {
             updateVoltageRange(batteryPack, packMap, batteryList, oldInfo);
         } catch (Exception e) {
