@@ -95,3 +95,22 @@ The following remain real field or hardware confirmations and should not be gues
 - Verification:
   - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryModuleModbusReadMappingServiceTest,ModbusRtuServerTest" test`
   - `git diff --check`
+
+## 8. Execution result: TASK-BAT-M460-VERIFY-ALARM-001
+
+- Date: 2026-06-16
+- Status: completed
+- M460 source findings:
+  - `alarm.h` defines `Battery_Array_Alarm_Real_Result` as group-level commonly/abnormal/critical bytes followed by repeated monomer alarm structs.
+  - `server.c` `Server_Get_Battery_Array_Warning_State_Function` copies `Battery_Array_Alarm_Real_Result` directly into the 87 payload with `memcpy`; no bit reordering is performed by M460.
+  - `alarm.h` `BATTERY_TYPE_MAKE` uses the high 2 bits of status byte 1 as alarm level/type markers, so effective 87 alarm bits are status1 low 6 bits plus status2 8 bits.
+  - 8D fault payload uses device fault result structures and the same byte-level physical-bit orientation; energy's binary-string index must continue to reverse physical bit order for hex string parsing.
+- Energy findings:
+  - `BatteryAlarmBitMapping` already centralizes physical-bit to binary-string-index conversion and 87 effective-bit slicing.
+  - `BatteryAlarmHandler` tests already cover group 87, single-cell 87, group 8D, and single-cell 8D mappings to item codes.
+  - New collector/postprocess alarm flow remains standard-model based and does not consume old 87/8D payload directly.
+- Added regression coverage:
+  - 87 decoder now has a payload-order test matching the M460 struct copy layout: group commonly/abnormal/critical pairs first, then each monomer's commonly/abnormal/critical triplets.
+- Verification:
+  - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryAlarmBitMappingTest,BatteryAlarmHandlerTest,AlarmContextProcessorTest,BatteryModuleAlarmAdaptServiceTest" test`
+  - `git diff --check`

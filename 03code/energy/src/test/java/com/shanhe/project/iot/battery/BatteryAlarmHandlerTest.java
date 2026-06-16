@@ -49,6 +49,42 @@ class BatteryAlarmHandlerTest {
     }
 
     @Test
+    void shouldDecodeBatteryWarnPayloadInM460StructCopyOrder() {
+        String payload = "0101" +
+                "5001" +
+                "A002" +
+                "C408" +
+                "036010" +
+                "03A020" +
+                "03C340";
+
+        BatteryWarnInfo warnInfo = BatteryAlarmHandler.toWarnDecoder(buildFrame("87", payload));
+
+        Assertions.assertNotNull(warnInfo);
+        Assertions.assertEquals("01000000000001", BatteryAlarmBitMapping.group87EffectiveStatus(
+                warnInfo.getPackStatus().getJSONObject("commonly").getString("status1"),
+                warnInfo.getPackStatus().getJSONObject("commonly").getString("status2")));
+        Assertions.assertEquals("10000000000010", BatteryAlarmBitMapping.group87EffectiveStatus(
+                warnInfo.getPackStatus().getJSONObject("abnormal").getString("status1"),
+                warnInfo.getPackStatus().getJSONObject("abnormal").getString("status2")));
+        Assertions.assertEquals("00010000001000", BatteryAlarmBitMapping.group87EffectiveStatus(
+                warnInfo.getPackStatus().getJSONObject("serious").getString("status1"),
+                warnInfo.getPackStatus().getJSONObject("serious").getString("status2")));
+
+        JSONObject batteryStatus = warnInfo.getPackBatteryStatus().getJSONObject(0);
+        Assertions.assertEquals(3, batteryStatus.getInteger("batteryNumber"));
+        Assertions.assertEquals("10000000010000", BatteryAlarmBitMapping.group87EffectiveStatus(
+                batteryStatus.getJSONObject("commonly").getString("status1"),
+                batteryStatus.getJSONObject("commonly").getString("status2")));
+        Assertions.assertEquals("10000000100000", BatteryAlarmBitMapping.group87EffectiveStatus(
+                batteryStatus.getJSONObject("abnormal").getString("status1"),
+                batteryStatus.getJSONObject("abnormal").getString("status2")));
+        Assertions.assertEquals("00001101000000", BatteryAlarmBitMapping.group87EffectiveStatus(
+                batteryStatus.getJSONObject("serious").getString("status1"),
+                batteryStatus.getJSONObject("serious").getString("status2")));
+    }
+
+    @Test
     void shouldDecodeDeviceFaultFrame() {
         String payload = "0101" +
                 "02A0" +
