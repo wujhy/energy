@@ -3,6 +3,8 @@ package com.shanhe.project.energy.stat.service.impl;
 import com.shanhe.project.device.config.domain.BatteryMonitor;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
+import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
+import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.energy.stat.domain.DevBatteryMonomer;
@@ -33,6 +35,10 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
     private IBatteryPackService batteryPackService;
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    @Resource
+    private BatteryCollectorProperties batteryCollectorProperties;
+    @Resource
+    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
     @Resource
     private ClientReportService clientReportService;
 
@@ -65,7 +71,7 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
             throw new RuntimeException("请先配置电池组信息");
         }
 
-        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(packNum);
+        BatteryReportLog batteryReportLog = resolveBatteryReportLog(packNum);
         if (batteryReportLog == null) {
             throw new RuntimeException("暂无无上报数据");
         }
@@ -115,7 +121,7 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
     @Override
     public Double getMaxResistance(Integer packNum) {
         // 查询所有单体数据
-        BatteryReportLog packInfo = batteryReportLogService.lastCache(packNum);
+        BatteryReportLog packInfo = resolveBatteryReportLog(packNum);
         if (packInfo == null || null == packInfo.getBatteryList()) {
             return 0.0;
         }
@@ -153,6 +159,27 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
         }
 
         return max == null ? 0.0 : max;
+    }
+
+    BatteryReportLog resolveBatteryReportLog(Integer packNum) {
+        if (batteryCollectorProperties != null
+                && Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
+            try {
+                BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
+                if (isUsableBatteryReportLog(realtimeLog)) {
+                    return realtimeLog;
+                }
+            } catch (Exception ignored) {
+                // Fall back to legacy cache below.
+            }
+        }
+        return batteryReportLogService.lastCache(packNum);
+    }
+
+    private boolean isUsableBatteryReportLog(BatteryReportLog log) {
+        return log != null
+                && log.getBatteryList() != null
+                && !log.getBatteryList().isEmpty();
     }
 
     /**
