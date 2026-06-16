@@ -5,6 +5,9 @@ import com.shanhe.common.utils.spring.SpringUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.enums.YesNoEnum;
+import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
+import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
+import com.shanhe.project.device.config.domain.BatteryMonitor;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
@@ -26,6 +29,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 class DeviceOnlineJobTest {
 
@@ -66,6 +71,47 @@ class DeviceOnlineJobTest {
     }
 
     @Test
+    void shouldUseRealtimeReportLogForOnlineAlarmContextWhenEnabled() {
+        DeviceOnlineJob job = newJob(pack(1, YesNoEnum.YES.getDictValue()));
+        IAlarmLogService alarmLogService = (IAlarmLogService) ReflectionTestUtils.getField(job, "alarmLogService");
+        BatteryReportLogService reportLogService = (BatteryReportLogService) ReflectionTestUtils.getField(job, "batteryReportLogService");
+        BatteryModuleReportLogAdapterService adapterService =
+                (BatteryModuleReportLogAdapterService) ReflectionTestUtils.getField(job, "batteryModuleReportLogAdapterService");
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        properties.setJsonTcpRealtimeSourceEnabled(true);
+        ReflectionTestUtils.setField(job, "batteryCollectorProperties", properties);
+        BatteryReportLog realtimeLog = reportLog("realtime");
+        Mockito.when(adapterService.buildReportLog(1)).thenReturn(realtimeLog);
+        CacheUtils.put(CacheKeyEnum.BATTERY_ONLINE.getCache(),
+                String.format(CacheKeyEnum.BATTERY_ONLINE.getKey(), 1),
+                new Date());
+
+        job.cmdDevice();
+
+        Mockito.verify(alarmLogService).alarmBattery(Mockito.any(Config.class), Mockito.eq(1), Mockito.isNull(),
+                Mockito.argThat(params -> "0".equals(params.get(ItemCode.TXZT.getCode()))), Mockito.same(realtimeLog));
+        Mockito.verifyNoInteractions(reportLogService);
+    }
+
+    @Test
+    void shouldFallbackToOldCacheWhenRealtimeReportLogUnavailable() {
+        DeviceOnlineJob job = newJob(pack(1, YesNoEnum.YES.getDictValue()));
+        BatteryReportLogService reportLogService = (BatteryReportLogService) ReflectionTestUtils.getField(job, "batteryReportLogService");
+        BatteryModuleReportLogAdapterService adapterService =
+                (BatteryModuleReportLogAdapterService) ReflectionTestUtils.getField(job, "batteryModuleReportLogAdapterService");
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        properties.setJsonTcpRealtimeSourceEnabled(true);
+        ReflectionTestUtils.setField(job, "batteryCollectorProperties", properties);
+        BatteryReportLog oldLog = reportLog("old");
+        Mockito.when(adapterService.buildReportLog(1)).thenReturn(new BatteryReportLog());
+        Mockito.when(reportLogService.lastCache(1)).thenReturn(oldLog);
+
+        BatteryReportLog result = job.resolveBatteryReportLog(1);
+
+        org.junit.jupiter.api.Assertions.assertSame(oldLog, result);
+    }
+
+    @Test
     void shouldIgnoreDisabledBatteryPackWhenCheckingOnlineStatus() {
         DeviceOnlineJob job = newJob(
                 pack(1, YesNoEnum.YES.getDictValue()),
@@ -94,6 +140,7 @@ class DeviceOnlineJobTest {
         IBatteryPackService batteryPackService = Mockito.mock(IBatteryPackService.class);
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
         BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
+        BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
 
         Config config = new Config();
         Mockito.when(configService.selectDefaultConfig()).thenReturn(config);
@@ -104,6 +151,7 @@ class DeviceOnlineJobTest {
         ReflectionTestUtils.setField(job, "batteryPackService", batteryPackService);
         ReflectionTestUtils.setField(job, "alarmLogService", alarmLogService);
         ReflectionTestUtils.setField(job, "batteryReportLogService", reportLogService);
+        ReflectionTestUtils.setField(job, "batteryModuleReportLogAdapterService", adapterService);
         ReflectionTestUtils.setField(job, "isStart", false);
         ReflectionTestUtils.setField(job, "maxOffline", 5);
         return job;
@@ -114,5 +162,14 @@ class DeviceOnlineJobTest {
         pack.setPackNum(packNum);
         pack.setIsEnabled(isEnabled);
         return pack;
+    }
+
+    private BatteryReportLog reportLog(String source) {
+        BatteryReportLog reportLog = new BatteryReportLog();
+        Map<String, Object> packParam = new LinkedHashMap<>();
+        packParam.put("source", source);
+        reportLog.setPackParam(packParam);
+        reportLog.setBatteryList(Collections.singletonList(new BatteryMonitor()));
+        return reportLog;
     }
 }

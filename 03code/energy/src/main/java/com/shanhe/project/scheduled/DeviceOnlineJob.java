@@ -5,9 +5,11 @@ import com.shanhe.common.utils.DateUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.enums.YesNoEnum;
+import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
+import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
@@ -51,6 +53,10 @@ public class DeviceOnlineJob {
     private IAlarmLogService alarmLogService;
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    @Resource
+    private BatteryCollectorProperties batteryCollectorProperties;
+    @Resource
+    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
 
@@ -141,9 +147,32 @@ public class DeviceOnlineJob {
     private void syncBatteryOfflineAlarm(Config config, Integer packNum, boolean offline) {
         Map<String, String> warnParam = new HashMap<>(1);
         warnParam.put(ItemCode.TXZT.getCode(), offline ? "1" : "0");
-        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(packNum);
+        BatteryReportLog batteryReportLog = resolveBatteryReportLog(packNum);
         alarmLogService.alarmBattery(config, packNum, null, warnParam, batteryReportLog);
         persistOnlineState(packNum, offline);
+    }
+
+    BatteryReportLog resolveBatteryReportLog(Integer packNum) {
+        if (batteryCollectorProperties != null
+                && Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
+            try {
+                BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
+                if (isUsableBatteryReportLog(realtimeLog)) {
+                    return realtimeLog;
+                }
+            } catch (Exception e) {
+                log.warn("标准实时数据构建设备在线告警上下文失败, packNum={}, fallback=oldCache", packNum, e);
+            }
+        }
+        return batteryReportLogService.lastCache(packNum);
+    }
+
+    private boolean isUsableBatteryReportLog(BatteryReportLog log) {
+        return log != null
+                && log.getPackParam() != null
+                && !log.getPackParam().isEmpty()
+                && log.getBatteryList() != null
+                && !log.getBatteryList().isEmpty();
     }
 
     /** 持久化电池组在线/离线状态到 battery_device_state。 */
