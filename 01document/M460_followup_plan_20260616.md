@@ -201,3 +201,28 @@ The following remain real field or hardware confirmations and should not be gues
 - Verification:
   - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryCollectorServiceTest,BatteryCollectorRuntimeViewServiceTest" test`
   - `git diff --check`
+
+## 13. Execution result: TASK-BAT-COLLECTOR-STRUCT-002 slice 2
+
+- Date: 2026-06-16
+- Status: completed slice; parent task remains planned for further command/polling splits.
+- Changed files:
+  - `BatteryCollectorCacheService`
+  - `BatteryCollectorService`
+  - `BatteryCollectorCacheServiceTest`
+  - `BatteryCollectorServiceTest`
+- Behavior change: none intended. `BatteryCollectorService` still exposes the same reset and dedup-cache facade methods, while cache mutation details moved into `BatteryCollectorCacheService`.
+- Scope:
+  - Extracted module address cache reset by channel.
+  - Extracted module address cache reset by battery group.
+  - Extracted realtime snapshot eviction coupled to address-cache reset.
+  - Extracted device-state dedup cache cleanup by battery group.
+  - Kept polling, command queue, timeout, and protocol logging logic inside `BatteryCollectorService` for later slices.
+- Added regression coverage:
+  - Selected channel reset clears active addresses, miss counts, full-discovery flag, and evicts only that pack snapshot.
+  - Selected battery group reset does not touch other groups.
+  - Dedup cache cleanup removes pack-scope and channel-scope keys for the selected group only.
+  - Missing battery group clears all dedup cache entries.
+- Verification:
+  - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryCollectorServiceTest,BatteryCollectorCacheServiceTest" test`
+  - `git diff --check`

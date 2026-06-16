@@ -40,6 +40,7 @@ class BatteryCollectorServiceTest {
 
     BatteryCollectorServiceTest() {
         ReflectionTestUtils.setField(service, "runtimeViewService", new BatteryCollectorRuntimeViewService());
+        ReflectionTestUtils.setField(service, "cacheService", new BatteryCollectorCacheService());
     }
 
     private BatteryModeStatusService newModeStatusService() {

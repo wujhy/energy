@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -122,6 +121,8 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
     @Resource
     private BatteryCollectorRuntimeViewService runtimeViewService;
+    @Resource
+    private BatteryCollectorCacheService cacheService;
 
     /**
      * 600节模块端标准实时数据 Mapper。
@@ -675,7 +676,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 return;
             }
             markModeStopped(pendingRequest, true);
-            resetModuleAddressCache(state);
+            cacheService.resetModuleAddressCache(state, realtimeSnapshotService);
             log.info("自动编号成功后蓄电池模块地址缓存已重置, 通道={}",
                     state.getConfig() == null ? null : state.getConfig().getName());
             return;
@@ -698,7 +699,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         }
         markModeStopped(pendingRequest, success);
         if (success && shouldResetModuleAddressCacheAfterCommand(pendingRequest)) {
-            resetModuleAddressCache(state);
+            cacheService.resetModuleAddressCache(state, realtimeSnapshotService);
             log.info("地址命令成功后蓄电池模块地址缓存已重置, 通道={}, 命令={}",
                     state.getConfig() == null ? null : state.getConfig().getName(),
                     pendingRequest.getName());
@@ -891,7 +892,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         BatteryModuleControlCommand stopGroupCommand = autoSetAddressCommand(pendingRequest, GROUP_MODULE_ADDRESS, stopPayload, false);
         stopGroupCommand.setMode(pendingRequest.getMode());
         state.getQueuedModuleCommands().offer(stopGroupCommand);
-        resetModuleAddressCache(state);
+        cacheService.resetModuleAddressCache(state, realtimeSnapshotService);
         log.info("自动编号成功后蓄电池模块地址缓存已重置, 通道={}",
                 state.getConfig() == null ? null : state.getConfig().getName());
         return true;
@@ -1700,15 +1701,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
      * @return 是否匹配到通道
      */
     public boolean resetModuleAddressCache(String channelName) {
-        boolean matched = false;
-        for (BatteryCollectorChannelState state : new ArrayList<>(channelStates)) {
-            if (channelName == null || channelName.trim().isEmpty()
-                    || channelName.equals(state.getConfig().getName())) {
-                resetModuleAddressCache(state);
-                matched = true;
-            }
-        }
-        return matched;
+        return cacheService.resetModuleAddressCache(channelStates, realtimeSnapshotService, channelName);
     }
 
     /**
@@ -1718,15 +1711,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
      * @return 是否匹配到通道
      */
     public boolean resetModuleAddressCacheByBatteryGroup(Integer batteryGroup) {
-        boolean matched = false;
-        for (BatteryCollectorChannelState state : new ArrayList<>(channelStates)) {
-            BatteryCollectorChannelConfig config = state == null ? null : state.getConfig();
-            if (batteryGroup == null || (config != null && Objects.equals(batteryGroup, config.getBatteryGroup()))) {
-                resetModuleAddressCache(state);
-                matched = true;
-            }
-        }
-        return matched;
+        return cacheService.resetModuleAddressCacheByBatteryGroup(channelStates, realtimeSnapshotService, batteryGroup);
     }
 
     /**
@@ -1736,54 +1721,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
      * @return 清理的缓存条目数
      */
     public int clearDeviceStateDedupCacheByBatteryGroup(Integer batteryGroup) {
-        if (batteryGroup == null) {
-            int size = lastStateValues.size();
-            lastStateValues.clear();
-            return size;
-        }
-        int before = lastStateValues.size();
-        String packPrefix = batteryGroup + ":";
-        List<String> channelPrefixes = new ArrayList<>();
-        for (BatteryCollectorChannelState state : new ArrayList<>(channelStates)) {
-            BatteryCollectorChannelConfig config = state == null ? null : state.getConfig();
-            if (config != null && Objects.equals(batteryGroup, config.getBatteryGroup())
-                    && config.getName() != null && !config.getName().trim().isEmpty()) {
-                channelPrefixes.add(config.getName() + ":");
-            }
-        }
-        lastStateValues.keySet().removeIf(key ->
-                key != null && (key.startsWith(packPrefix) || startsWithAny(key, channelPrefixes)));
-        return before - lastStateValues.size();
-    }
-
-    private boolean startsWithAny(String value, List<String> prefixes) {
-        if (value == null || prefixes == null || prefixes.isEmpty()) {
-            return false;
-        }
-        for (String prefix : prefixes) {
-            if (value.startsWith(prefix)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** 重置通道的模块地址缓存。 */
-    private void resetModuleAddressCache(BatteryCollectorChannelState state) {
-        if (state == null) {
-            return;
-        }
-        state.getActiveModuleAddresses().clear();
-        state.getModuleAddressMissCounts().clear();
-        state.getFullDiscoveryRequested().set(true);
-        clearRealtimeSnapshot(state);
-    }
-
-    private void clearRealtimeSnapshot(BatteryCollectorChannelState state) {
-        if (realtimeSnapshotService == null || state == null || state.getConfig() == null) {
-            return;
-        }
-        realtimeSnapshotService.evict(state.getConfig().getBatteryGroup());
+        return cacheService.clearDeviceStateDedupCacheByBatteryGroup(lastStateValues, channelStates, batteryGroup);
     }
 
     @Override
