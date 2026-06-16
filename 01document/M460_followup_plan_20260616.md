@@ -51,3 +51,25 @@ The following remain real field or hardware confirmations and should not be gues
 - Verification:
   - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryModuleRealtimeConsumerTest,BatteryRealtimePostProcessorsTest" test`
   - `git diff --check`
+
+## 6. Execution result: TASK-BAT-M460-VERIFY-STATE-001
+
+- Date: 2026-06-16
+- Status: completed
+- M460 source findings:
+  - `rs485.h` defines `BatteryStatus` as the low 4 bits in the status byte and `InternalResistanceTestStatus` as an independent byte.
+  - `rs485.c`, `modbus.c`, and `server.c` build `Battery_State_Register` as `(temp << 8) | Status->InternalResistanceTestStatus`.
+  - `rs485.c` and `server.c` output the high byte first, then the low byte for item 36.
+- Energy findings:
+  - `BatteryModuleStatusRegisterCodec` already matches the M460 register layout and masks the high byte to 4 bits plus low byte to 8 bits.
+  - `BatteryModuleModbusReadMappingService` uses that codec for register `411762`; missing status fields intentionally read as `0` for Modbus output compatibility.
+  - `BatteryModuleRealtimeConsumer.buildGroup` does not parse or invent `batteryPackStatus`/`resistanceTestStatus` from the 600 `01/81` group frame.
+  - `BatteryModuleGroupCalculationService` only carries status fields forward when they already exist on the fresh group realtime record.
+  - `BatteryModuleGroupCompatibilityFillService` may still derive compatibility status after group calculation from current direction and default resistance-test status, matching the earlier `POSTPIPE-006` compatibility strategy; this is not treated as a raw 600 frame source.
+- Added regression coverage:
+  - Raw group frame build leaves M460 status fields null.
+  - Group calculation does not create status fields when no source exists.
+  - Group calculation copies status fields only from a fresh group module record.
+- Verification:
+  - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryModuleRealtimeConsumerTest,BatteryModuleGroupCalculationServiceTest,BatteryModuleModbusReadMappingServiceTest,BatteryModuleStatusRegisterCodecTest,RealtimeToReportLogAdapterTest" test`
+  - `git diff --check`

@@ -120,6 +120,24 @@ class BatteryModuleRealtimeConsumerTest {
     }
 
     @Test
+    void shouldNotInventM460StatusFieldsFromGroupFrame() {
+        BatteryModuleFrameData data = BatteryModuleFrameData.builder()
+                .type(BatteryModuleDataType.ARRAY_MODULE_INFO)
+                .moduleAddress(246)
+                .success(true)
+                .responseFlag(0)
+                .chargeDischargeCurrent(12.3d)
+                .floatCurrent(0.123d)
+                .externalVoltage(123.45d)
+                .build();
+
+        BatteryModuleGroupRealtime realtime = consumer.buildGroup(channelConfig(), data);
+
+        Assertions.assertNull(realtime.getBatteryPackStatus());
+        Assertions.assertNull(realtime.getResistanceTestStatus());
+    }
+
+    @Test
     void shouldKeepPreviousGroupRawValuesWhenFailedGroupUpsertWritesNulls() throws IOException {
         String xml = new String(Files.readAllBytes(Paths.get(
                 "src/main/resources/mybatis/collector/BatteryModuleRealtimeMapper.xml")), StandardCharsets.UTF_8);

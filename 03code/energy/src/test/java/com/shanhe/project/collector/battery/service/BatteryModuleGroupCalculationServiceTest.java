@@ -55,6 +55,8 @@ class BatteryModuleGroupCalculationServiceTest {
         Assertions.assertEquals(30, calculation.getResistanceRange());
         Assertions.assertEquals(123.4d, calculation.getExternalVoltage(), 0.0001d);
         Assertions.assertTrue(calculation.getGroupModuleFresh());
+        Assertions.assertNull(calculation.getBatteryPackStatus());
+        Assertions.assertNull(calculation.getResistanceTestStatus());
     }
 
     @Test
@@ -115,7 +117,33 @@ class BatteryModuleGroupCalculationServiceTest {
         Assertions.assertNull(calculation.getFloatCurrent());
         Assertions.assertNull(calculation.getEnvironmentTemperature1());
         Assertions.assertNull(calculation.getEnvironmentTemperature2());
+        Assertions.assertNull(calculation.getBatteryPackStatus());
+        Assertions.assertNull(calculation.getResistanceTestStatus());
         Assertions.assertEquals(new Date(900_000L), calculation.getLatestGroupUpdateTime());
+    }
+
+    @Test
+    void shouldCopyExistingM460StatusFieldsFromFreshGroupModuleOnly() {
+        Date now = new Date(1_000_000L);
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackCurrent(1.2d);
+        group.setCreateTime(new Date(999_000L));
+        group.setPollBatchNo("batch-1");
+        group.setGroupModuleFresh(Boolean.TRUE);
+        group.setBatteryPackStatus(6);
+        group.setResistanceTestStatus(2);
+
+        BatteryModuleGroupRealtime calculation = service.buildCalculation(
+                1,
+                Arrays.asList(cell(1, 2.10d, 100, 25.0d, 999_000L)),
+                group,
+                now,
+                "batch-1",
+                new Date(990_000L),
+                180_000L);
+
+        Assertions.assertEquals(6, calculation.getBatteryPackStatus());
+        Assertions.assertEquals(2, calculation.getResistanceTestStatus());
     }
 
     @Test
