@@ -73,3 +73,25 @@ The following remain real field or hardware confirmations and should not be gues
 - Verification:
   - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryModuleRealtimeConsumerTest,BatteryModuleGroupCalculationServiceTest,BatteryModuleModbusReadMappingServiceTest,BatteryModuleStatusRegisterCodecTest,RealtimeToReportLogAdapterTest" test`
   - `git diff --check`
+
+## 7. Execution result: TASK-BAT-M460-VERIFY-MODBUS-001
+
+- Date: 2026-06-16
+- Status: completed
+- M460 source findings:
+  - `modbus.c` serves read requests from cached battery array data and returns Modbus exception semantics when the requested data is not ready.
+  - `modbus.c` uses `Battery_State_Register` for the group state register, matching the state-register verification in section 6.
+  - Alarm and fault values in M460 are produced by the alarm pipeline and then exposed as cached register/payload data; energy keeps those as standard alarm/device-state sources instead of reading old 980 payload directly.
+- Energy findings:
+  - `BatteryModuleModbusReadMappingService.readHoldingRegisters` loads one `ModbusReadSnapshot` per request, then resolves all requested registers from that in-memory snapshot.
+  - If neither cell nor group realtime data exists, the service throws `IllegalStateException`; the RTU layer maps this to the existing Modbus exception path.
+  - After data is ready, missing cells, missing group fields, and unsupported optional values resolve to `0`, matching the M460 empty-register compatibility behavior.
+  - Register `411762` uses `BatteryModuleStatusRegisterCodec` for `(batteryPackStatus << 8) | resistanceTestStatus`.
+  - Device-state registers `411483..411488` read `battery_device_state` and return `0` when status or state service is absent.
+  - When `BatteryModuleRealtimeSnapshotService` is available, Modbus reads use the cached realtime snapshot and avoid mapper queries, which is the intended high-frequency request path.
+- Added regression coverage:
+  - A multi-register read loads mapper cells/group only once.
+  - A snapshot-backed read uses `BatteryModuleRealtimeSnapshotService` and does not query `BatteryModuleRealtimeMapper`.
+- Verification:
+  - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryModuleModbusReadMappingServiceTest,ModbusRtuServerTest" test`
+  - `git diff --check`

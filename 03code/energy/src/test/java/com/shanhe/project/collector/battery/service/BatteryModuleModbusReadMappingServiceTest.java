@@ -7,6 +7,7 @@ import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -492,6 +493,46 @@ class BatteryModuleModbusReadMappingServiceTest {
         // 单体 1 和 245 的温度 (25+50)*10=750, (30+50)*10=800
         Assertions.assertArrayEquals(new int[]{750}, service.readHoldingRegisters(1, 410500, 1));
         Assertions.assertArrayEquals(new int[]{800}, service.readHoldingRegisters(1, 410744, 1));
+    }
+
+    @Test
+    void shouldLoadMapperSnapshotOnlyOncePerReadRequest() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        Mockito.when(mapper.selectCells(1)).thenReturn(Arrays.asList(
+                cell(1, 2.0d, 100, 25.0d, null),
+                cell(2, 2.1d, 110, 26.0d, null)
+        ));
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setExternalVoltage(48.0d);
+        Mockito.when(mapper.selectGroup(1)).thenReturn(group);
+
+        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper, null, null);
+
+        Assertions.assertArrayEquals(new int[]{2000, 2100, 0}, service.readHoldingRegisters(1, 410004, 3));
+
+        Mockito.verify(mapper, Mockito.times(1)).selectCells(1);
+        Mockito.verify(mapper, Mockito.times(1)).selectGroup(1);
+    }
+
+    @Test
+    void shouldUseRealtimeSnapshotServiceWithoutMapperQueries() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setExternalVoltage(48.0d);
+        Mockito.when(snapshotService.getSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
+                .packNum(1)
+                .cells(Collections.singletonList(cell(1, 2.0d, 100, 25.0d, null)))
+                .group(group)
+                .build());
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, null, null, snapshotService);
+
+        Assertions.assertArrayEquals(new int[]{2000, 0, 0},
+                service.readHoldingRegisters(1, 410004, 3));
+
+        Mockito.verify(snapshotService, Mockito.times(1)).getSnapshot(1);
+        Mockito.verifyNoInteractions(mapper);
     }
 
     private BatteryModuleCellRealtime cell(int batNum,
