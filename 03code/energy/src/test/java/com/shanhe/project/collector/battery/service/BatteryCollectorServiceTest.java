@@ -4,7 +4,6 @@ import com.fazecast.jSerialComm.SerialPort;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelMetrics;
-import com.shanhe.project.collector.battery.model.BatteryCollectorChannelSnapshot;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelState;
 import com.shanhe.project.collector.battery.model.BatteryCollectorFrame;
 import com.shanhe.project.collector.battery.model.BatteryCollectorMetrics;
@@ -38,6 +37,10 @@ import java.util.Map;
 class BatteryCollectorServiceTest {
 
     private final BatteryCollectorService service = new BatteryCollectorService();
+
+    BatteryCollectorServiceTest() {
+        ReflectionTestUtils.setField(service, "runtimeViewService", new BatteryCollectorRuntimeViewService());
+    }
 
     private BatteryModeStatusService newModeStatusService() {
         BatteryModeStatusService modeStatusService = new BatteryModeStatusService();
@@ -145,67 +148,6 @@ class BatteryCollectorServiceTest {
         channelConfig.setExpectedCellCount(600);
 
         Assertions.assertEquals(245, service.resolveExpectedCellCount(channelConfig));
-    }
-
-    @Test
-    void shouldBuildChannelSnapshot() {
-        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
-        channelConfig.setName("battery-group-1");
-        channelConfig.setPortName("ttyS9");
-        channelConfig.setBatteryGroup(1);
-        channelConfig.setDeviceAddress(1);
-        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
-        state.setRunState(BatteryCollectorRunState.WAIT_RESPONSE);
-        state.setLastSendTime(100L);
-        state.setLastReceiveTime(200L);
-        state.setTimeoutCount(3);
-        state.setCurrentPollBatchNo("battery-group-1-100");
-        state.setCurrentPollStartedAt(100L);
-        state.setCurrentPollAddress(8);
-        state.setPollRoundCount(2L);
-        state.setCurrentFullDiscovery(true);
-        state.setLastFullDiscoveryTime(90L);
-        state.setLastCompletedModuleCommandName("SET_MODULE_ADDRESS");
-        state.setLastCompletedModuleResponseCode(0x88);
-        state.setLastCompletedModuleCommandSuccess(true);
-        state.setLastCompletedModuleCommandTime(300L);
-        state.getActiveModuleAddresses().add(8);
-        state.getActiveModuleAddresses().add(246);
-        state.setPendingCommand(BatteryPendingRequest.command(0x01, 0x81, new byte[0], "MODULE_INFO"));
-        state.getQueuedModuleCommands().offer(BatteryModuleControlCommand.builder()
-                .protocolCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST)
-                .address(8)
-                .requestCode(0x02)
-                .responseCode(0x82)
-                .payload(new byte[0])
-                .build());
-
-        BatteryCollectorChannelSnapshot snapshot = service.buildSnapshot(state);
-
-        Assertions.assertEquals("battery-group-1", snapshot.getName());
-        Assertions.assertEquals("ttyS9", snapshot.getPortName());
-        Assertions.assertEquals(1, snapshot.getBatteryGroup());
-        Assertions.assertFalse(snapshot.getOpened());
-        Assertions.assertEquals(BatteryCollectorRunState.WAIT_RESPONSE, snapshot.getRunState());
-        Assertions.assertEquals(100L, snapshot.getLastSendTime());
-        Assertions.assertEquals(200L, snapshot.getLastReceiveTime());
-        Assertions.assertEquals(3, snapshot.getTimeoutCount());
-        Assertions.assertEquals("battery-group-1-100", snapshot.getCurrentPollBatchNo());
-        Assertions.assertEquals(100L, snapshot.getCurrentPollStartedAt());
-        Assertions.assertEquals(8, snapshot.getCurrentPollAddress());
-        Assertions.assertEquals(2L, snapshot.getPollRoundCount());
-        Assertions.assertTrue(snapshot.getCurrentFullDiscovery());
-        Assertions.assertEquals(90L, snapshot.getLastFullDiscoveryTime());
-        Assertions.assertEquals(2, snapshot.getActiveModuleAddressCount());
-        Assertions.assertEquals("8,246", snapshot.getActiveModuleAddresses());
-        Assertions.assertEquals("MODULE_INFO", snapshot.getPendingCommandName());
-        Assertions.assertEquals(0x01, snapshot.getPendingRequestCode());
-        Assertions.assertEquals(0x81, snapshot.getPendingResponseCode());
-        Assertions.assertEquals("SET_MODULE_ADDRESS", snapshot.getLastCompletedModuleCommandName());
-        Assertions.assertEquals(0x88, snapshot.getLastCompletedModuleResponseCode());
-        Assertions.assertTrue(snapshot.getLastCompletedModuleCommandSuccess());
-        Assertions.assertEquals(300L, snapshot.getLastCompletedModuleCommandTime());
-        Assertions.assertEquals(1, snapshot.getQueuedModuleCommandCount());
     }
 
     @Test

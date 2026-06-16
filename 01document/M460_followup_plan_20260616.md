@@ -179,3 +179,25 @@ The following remain real field or hardware confirmations and should not be gues
 - Verification:
   - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryModuleRealtimeConsumerTest,BatteryRealtimePostProcessContextFactoryTest,BatteryRealtimePostProcessorsTest" test`
   - `git diff --check`
+
+## 12. Execution result: TASK-BAT-COLLECTOR-STRUCT-002 slice 1
+
+- Date: 2026-06-16
+- Status: completed slice; parent task remains planned for further command/polling splits.
+- Changed files:
+  - `BatteryCollectorRuntimeViewService`
+  - `BatteryCollectorService`
+  - `BatteryCollectorRuntimeViewServiceTest`
+  - `BatteryCollectorServiceTest`
+- Behavior change: none intended. Status and metrics endpoints still call `BatteryCollectorService`, but DTO construction has moved into `BatteryCollectorRuntimeViewService`.
+- Scope:
+  - Extracted channel status snapshot construction.
+  - Extracted collector/channel metrics construction and cached realtime snapshot metric fill.
+  - Kept polling, command queue, timeout, address-cache, and protocol logging logic inside `BatteryCollectorService` for later smaller slices.
+- Added regression coverage:
+  - Channel snapshot maps runtime state, pending command, active addresses, and queued command count.
+  - Metrics aggregate channel counts, active address counts, queue counts, timeout counts, and cached realtime snapshot freshness counts.
+  - `BatteryCollectorService.getMetrics` remains covered as the public facade.
+- Verification:
+  - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryCollectorServiceTest,BatteryCollectorRuntimeViewServiceTest" test`
+  - `git diff --check`

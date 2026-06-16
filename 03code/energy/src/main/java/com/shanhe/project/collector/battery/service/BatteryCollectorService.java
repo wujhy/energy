@@ -7,16 +7,14 @@ import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtoco
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
-import com.shanhe.project.collector.battery.model.BatteryCollectorChannelSnapshot;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelState;
 import com.shanhe.project.collector.battery.model.BatteryCollectorFrame;
 import com.shanhe.project.collector.battery.model.BatteryCollectorMetrics;
-import com.shanhe.project.collector.battery.model.BatteryCollectorChannelMetrics;
+import com.shanhe.project.collector.battery.model.BatteryCollectorChannelSnapshot;
 import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.model.BatteryPendingRequest;
 import com.shanhe.project.collector.battery.model.BatteryCollectorRunState;
 import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
-import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.framework.enums.BatteryTestEnum;
@@ -39,7 +37,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -123,6 +120,8 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
      */
     @Resource
     private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
+    @Resource
+    private BatteryCollectorRuntimeViewService runtimeViewService;
 
     /**
      * 600节模块端标准实时数据 Mapper。
@@ -196,168 +195,11 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
      * @return 通道状态列表
      */
     public List<BatteryCollectorChannelSnapshot> getChannelSnapshots() {
-        List<BatteryCollectorChannelSnapshot> snapshots = new ArrayList<>();
-        for (BatteryCollectorChannelState state : new ArrayList<>(channelStates)) {
-            snapshots.add(buildSnapshot(state));
-        }
-        return snapshots;
+        return runtimeViewService.getChannelSnapshots(channelStates);
     }
 
     public BatteryCollectorMetrics getMetrics() {
-        BatteryCollectorMetrics metrics = new BatteryCollectorMetrics();
-        metrics.setGeneratedAt(System.currentTimeMillis());
-        metrics.setChannelCount(0);
-        metrics.setEnabledChannelCount(0);
-        metrics.setOpenedChannelCount(0);
-        metrics.setRunningChannelCount(0);
-        metrics.setTotalActiveModuleAddressCount(0);
-        metrics.setTotalQueuedModuleCommandCount(0);
-        metrics.setTotalTimeoutCount(0);
-        metrics.setTotalSnapshotCellCount(0);
-        metrics.setTotalSnapshotStaleCellCount(0);
-        metrics.setTotalSnapshotMissingCellCount(0);
-        List<BatteryCollectorChannelMetrics> channels = new ArrayList<>();
-        for (BatteryCollectorChannelState state : new ArrayList<>(channelStates)) {
-            BatteryCollectorChannelMetrics channel = buildChannelMetrics(state);
-            channels.add(channel);
-            metrics.setChannelCount(metrics.getChannelCount() + 1);
-            if (Boolean.TRUE.equals(channel.getEnabled())) {
-                metrics.setEnabledChannelCount(metrics.getEnabledChannelCount() + 1);
-            }
-            if (Boolean.TRUE.equals(channel.getOpened())) {
-                metrics.setOpenedChannelCount(metrics.getOpenedChannelCount() + 1);
-            }
-            if (channel.getRunState() != null) {
-                metrics.setRunningChannelCount(metrics.getRunningChannelCount() + 1);
-            }
-            metrics.setTotalActiveModuleAddressCount(metrics.getTotalActiveModuleAddressCount()
-                    + safeInt(channel.getActiveModuleAddressCount()));
-            metrics.setTotalQueuedModuleCommandCount(metrics.getTotalQueuedModuleCommandCount()
-                    + safeInt(channel.getQueuedModuleCommandCount()));
-            metrics.setTotalTimeoutCount(metrics.getTotalTimeoutCount() + safeInt(channel.getTimeoutCount()));
-            metrics.setTotalSnapshotCellCount(metrics.getTotalSnapshotCellCount()
-                    + safeInt(channel.getSnapshotCellCount()));
-            metrics.setTotalSnapshotStaleCellCount(metrics.getTotalSnapshotStaleCellCount()
-                    + safeInt(channel.getSnapshotStaleCellCount()));
-            metrics.setTotalSnapshotMissingCellCount(metrics.getTotalSnapshotMissingCellCount()
-                    + safeInt(channel.getSnapshotMissingCellCount()));
-        }
-        metrics.setChannels(channels);
-        return metrics;
-    }
-
-    BatteryCollectorChannelMetrics buildChannelMetrics(BatteryCollectorChannelState state) {
-        BatteryCollectorChannelMetrics metrics = new BatteryCollectorChannelMetrics();
-        if (state == null) {
-            return metrics;
-        }
-        BatteryCollectorChannelConfig config = state.getConfig();
-        metrics.setName(config == null ? null : config.getName());
-        metrics.setBatteryGroup(config == null ? null : config.getBatteryGroup());
-        metrics.setEnabled(config == null ? null : Boolean.TRUE.equals(config.getEnabled()));
-        metrics.setOpened(Boolean.TRUE.equals(state.getOpened().get())
-                && state.getSerialPort() != null
-                && state.getSerialPort().isOpen());
-        metrics.setRunState(state.getRunState());
-        metrics.setLastReceiveTime(state.getLastReceiveTime());
-        metrics.setLastSendTime(state.getLastSendTime());
-        metrics.setLastPollTime(state.getLastPollTime());
-        metrics.setLastTimeoutTime(state.getLastTimeoutTime());
-        metrics.setTimeoutCount(state.getTimeoutCount());
-        metrics.setCurrentRetryCount(state.getCurrentRetryCount());
-        metrics.setCurrentPollBatchNo(state.getCurrentPollBatchNo());
-        metrics.setCurrentPollStartedAt(state.getCurrentPollStartedAt());
-        metrics.setCurrentPollAddress(state.getCurrentPollAddress());
-        metrics.setPollRoundCount(state.getPollRoundCount());
-        metrics.setCurrentFullDiscovery(state.isCurrentFullDiscovery());
-        metrics.setLastFullDiscoveryTime(state.getLastFullDiscoveryTime());
-        metrics.setActiveModuleAddressCount(state.getActiveModuleAddresses().size());
-        metrics.setQueuedModuleCommandCount(state.getQueuedModuleCommands().size());
-        metrics.setLastCompletedModuleCommandName(state.getLastCompletedModuleCommandName());
-        metrics.setLastCompletedModuleCommandSuccess(state.isLastCompletedModuleCommandSuccess());
-        metrics.setLastCompletedModuleCommandTime(state.getLastCompletedModuleCommandTime());
-        metrics.setReceiveBufferSize(state.getReceiveBuffer().size());
-        BatteryPendingRequest pendingRequest = state.getPendingCommand();
-        if (pendingRequest != null) {
-            metrics.setPendingCommandName(pendingRequest.getName());
-            metrics.setPendingAutoPoll(pendingRequest.isAutoPoll());
-        }
-        fillSnapshotMetrics(metrics, config);
-        return metrics;
-    }
-
-    private void fillSnapshotMetrics(BatteryCollectorChannelMetrics metrics, BatteryCollectorChannelConfig config) {
-        if (metrics == null || realtimeSnapshotService == null || config == null || config.getBatteryGroup() == null) {
-            return;
-        }
-        BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService.getCachedSnapshot(config.getBatteryGroup());
-        if (snapshot == null) {
-            return;
-        }
-        metrics.setSnapshotCellCount(snapshot.getCells().size());
-        metrics.setSnapshotCurrentBatchCellCount(snapshot.getCurrentBatchCellNums().size());
-        metrics.setSnapshotStaleCellCount(snapshot.getStaleCellNums().size());
-        metrics.setSnapshotMissingCellCount(snapshot.getMissingCellNums().size());
-        metrics.setSnapshotPollBatchNo(snapshot.getPollBatchNo());
-        metrics.setSnapshotPollStartedAt(snapshot.getPollStartedAt());
-        metrics.setSnapshotRefreshedAt(snapshot.getRefreshedAt());
-        metrics.setSnapshotDataReady(snapshot.isDataReady());
-    }
-
-    private int safeInt(Integer value) {
-        return value == null ? 0 : value;
-    }
-
-    BatteryCollectorChannelSnapshot buildSnapshot(BatteryCollectorChannelState state) {
-        BatteryCollectorChannelSnapshot snapshot = new BatteryCollectorChannelSnapshot();
-        if (state == null) {
-            return snapshot;
-        }
-        BatteryCollectorChannelConfig config = state.getConfig();
-        snapshot.setName(config == null ? null : config.getName());
-        snapshot.setPortName(config == null ? null : config.getPortName());
-        snapshot.setBatteryGroup(config == null ? null : config.getBatteryGroup());
-        snapshot.setDeviceAddress(config == null ? null : config.getDeviceAddress());
-        snapshot.setOpened(Boolean.TRUE.equals(state.getOpened().get())
-                && state.getSerialPort() != null
-                && state.getSerialPort().isOpen());
-        snapshot.setRunState(state.getRunState());
-        snapshot.setLastReceiveTime(state.getLastReceiveTime());
-        snapshot.setLastSendTime(state.getLastSendTime());
-        snapshot.setLastPollTime(state.getLastPollTime());
-        snapshot.setLastTimeoutTime(state.getLastTimeoutTime());
-        snapshot.setTimeoutCount(state.getTimeoutCount());
-        snapshot.setCurrentRetryCount(state.getCurrentRetryCount());
-        snapshot.setLastRequestCode(state.getLastRequestCode());
-        snapshot.setExpectedResponseCode(state.getExpectedResponseCode());
-        snapshot.setLastResponseCode(state.getLastResponseCode());
-        snapshot.setLastPendingCompletedAt(state.getLastPendingCompletedAt());
-        snapshot.setLastPendingTimedOut(state.isLastPendingTimedOut());
-        snapshot.setLastCompletedModuleCommandName(state.getLastCompletedModuleCommandName());
-        snapshot.setLastCompletedModuleResponseCode(state.getLastCompletedModuleResponseCode());
-        snapshot.setLastCompletedModuleCommandSuccess(state.isLastCompletedModuleCommandSuccess());
-        snapshot.setLastCompletedModuleCommandTime(state.getLastCompletedModuleCommandTime());
-        snapshot.setCurrentPollBatchNo(state.getCurrentPollBatchNo());
-        snapshot.setCurrentPollStartedAt(state.getCurrentPollStartedAt());
-        snapshot.setCurrentPollAddress(state.getCurrentPollAddress());
-        snapshot.setPollRoundCount(state.getPollRoundCount());
-        snapshot.setCurrentFullDiscovery(state.isCurrentFullDiscovery());
-        snapshot.setLastFullDiscoveryTime(state.getLastFullDiscoveryTime());
-        List<Integer> activeAddresses = sortedActiveModuleAddresses(state);
-        snapshot.setActiveModuleAddressCount(activeAddresses.size());
-        snapshot.setActiveModuleAddresses(activeAddresses.stream()
-                .map(String::valueOf)
-                .collect(Collectors.joining(",")));
-        snapshot.setReceiveBufferSize(state.getReceiveBuffer().size());
-        BatteryPendingRequest pendingRequest = state.getPendingCommand();
-        if (pendingRequest != null) {
-            snapshot.setPendingCommandName(pendingRequest.getName());
-            snapshot.setPendingRequestCode(pendingRequest.getRequestCode());
-            snapshot.setPendingResponseCode(pendingRequest.getResponseCode());
-            snapshot.setPendingAutoPoll(pendingRequest.isAutoPoll());
-        }
-        snapshot.setQueuedModuleCommandCount(state.getQueuedModuleCommands().size());
-        return snapshot;
+        return runtimeViewService.getMetrics(channelStates, realtimeSnapshotService);
     }
 
     /**
