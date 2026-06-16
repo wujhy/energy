@@ -114,3 +114,27 @@ The following remain real field or hardware confirmations and should not be gues
 - Verification:
   - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryAlarmBitMappingTest,BatteryAlarmHandlerTest,AlarmContextProcessorTest,BatteryModuleAlarmAdaptServiceTest" test`
   - `git diff --check`
+
+## 9. Execution result: TASK-BAT-M460-VERIFY-CAPACITY-001
+
+- Date: 2026-06-16
+- Status: completed
+- M460 source findings:
+  - M460 group SOC comes from `SOC_tableSox.averageSoc_perc` and is written as one-decimal percent.
+  - M460 SOH/capacity/backup/discharge values depend on `Verify_Capacity_Array_Type`, `Verify_Capacity_Data_Type`, configured rated capacity, discharge current, and capacity-test flags.
+  - When capacity test is active, M460 uses measured `Array_Capacity`, `Array_Support_Time`, `Time_Array_Capacity`, and `Discharge_Time`; otherwise it falls back to configured rated capacity plus `StateOfHealth`.
+  - These inputs are not fully present in the 600 `01/81` group frame currently parsed by energy.
+- Energy findings:
+  - `CapacityPredictionProcessor` correctly stays in the postprocess pipeline and delegates to the existing `BatteryPredictorService`, instead of implementing SOC/SOH/capacity math in the collector polling thread.
+  - `BatteryModuleGroupCompatibilityFillService` copies group SOH/capacity/backup/discharge values only from `PreBatteryGroupService.lastCache`.
+  - `BatteryModuleCellCompatibilityFillService` copies cell capacity only from `PreBatteryGroup.mapBattery`.
+  - `BatteryModuleReportLogAdapterService` and realtime adapters do not synthesize SOC/SOH/capacity when compatibility fields are missing.
+- Decision:
+  - Keep M460-style capacity prediction as postprocess/cache-backed behavior for now.
+  - Do not port `soc.c`/`capacity.c` algorithms into `BatteryModuleRealtimeConsumer`, frame parsing, or the polling loop until the equivalent inputs and state-machine transitions are explicitly modeled.
+- Added regression coverage:
+  - Cell capacity is filled only when the prediction cache has the matching `CAP_BAT + batNum` entry.
+  - Missing prediction cache leaves cell capacity null.
+- Verification:
+  - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryModuleCellCompatibilityFillServiceTest,BatteryModuleGroupCompatibilityFillServiceTest,BatteryModuleReportLogAdapterServiceTest,BatteryRealtimePostProcessorsTest" test`
+  - `git diff --check`
