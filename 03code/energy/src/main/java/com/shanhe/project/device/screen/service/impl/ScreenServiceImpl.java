@@ -3,9 +3,12 @@ package com.shanhe.project.device.screen.service.impl;
 import cn.hutool.core.date.DateUtil;
 import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.enums.YesNoEnum;
+import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
+import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.*;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
+import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IConfigAttributeService;
 import com.shanhe.project.device.config.service.IConfigService;
 import com.shanhe.project.device.host.domain.Host;
@@ -15,8 +18,13 @@ import com.shanhe.project.system.user.domain.Index;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 首页Service接口
@@ -37,6 +45,12 @@ public class ScreenServiceImpl implements ScreenService {
     private IAlarmLogService alarmLogService;
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    @Resource
+    private BatteryCollectorProperties batteryCollectorProperties;
+    @Resource
+    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
+    @Resource
+    private IBatteryPackService batteryPackService;
 
     /**
      * 获取首页主数据
@@ -139,7 +153,55 @@ public class ScreenServiceImpl implements ScreenService {
      */
     @Override
     public List<BatteryReportLogIndex> batteryList() {
+        if (batteryCollectorProperties != null
+                && Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
+            return realtimeBatteryList();
+        }
         return batteryReportLogService.batteryList();
+    }
+
+    private List<BatteryReportLogIndex> realtimeBatteryList() {
+        List<BatteryReportLogIndex> legacyList = batteryReportLogService.batteryList();
+        Map<Integer, BatteryReportLogIndex> legacyMap = legacyList == null ? java.util.Collections.emptyMap()
+                : legacyList.stream()
+                .filter(item -> item != null && item.getPackNum() != null)
+                .collect(Collectors.toMap(BatteryReportLogIndex::getPackNum, Function.identity(), (v1, v2) -> v2));
+
+        List<BatteryPack> packs = batteryPackService.selectBatteryPackListCache(YesNoEnum.YES.getDictValue());
+        if (packs == null || packs.isEmpty()) {
+            return legacyList == null ? new ArrayList<>() : legacyList;
+        }
+
+        List<BatteryReportLogIndex> result = new ArrayList<>();
+        for (BatteryPack pack : packs) {
+            if (pack == null || pack.getPackNum() == null) {
+                continue;
+            }
+            BatteryReportLogIndex index = buildRealtimeIndex(pack, legacyMap.get(pack.getPackNum()));
+            if (index != null) {
+                result.add(index);
+            }
+        }
+        result.sort(Comparator.comparingInt(BatteryReportLogIndex::getPackNum));
+        return result;
+    }
+
+    private BatteryReportLogIndex buildRealtimeIndex(BatteryPack pack, BatteryReportLogIndex fallback) {
+        try {
+            BatteryReportLog reportLog = batteryModuleReportLogAdapterService.buildReportLog(pack.getPackNum());
+            if (reportLog == null || reportLog.getPackParam() == null || reportLog.getPackParam().isEmpty()) {
+                return fallback;
+            }
+            BatteryReportLogIndex index = new BatteryReportLogIndex();
+            index.setPackNum(pack.getPackNum());
+            index.setConfigId(pack.getConfigId() == null ? Constants.DEFAULT_CONFIG_ID : pack.getConfigId());
+            index.setAlarm(alarmLogService.isAlarmByCache(pack.getPackNum()));
+            index.setCreateTime(reportLog.getCreateTime());
+            index.setPackParam(reportLog.getPackParam());
+            return index;
+        } catch (Exception ignored) {
+            return fallback;
+        }
     }
 
     /**
