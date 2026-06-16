@@ -138,3 +138,26 @@ The following remain real field or hardware confirmations and should not be gues
 - Verification:
   - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryModuleCellCompatibilityFillServiceTest,BatteryModuleGroupCompatibilityFillServiceTest,BatteryModuleReportLogAdapterServiceTest,BatteryRealtimePostProcessorsTest" test`
   - `git diff --check`
+
+## 10. Execution result: TASK-BAT-M460-VERIFY-COMMAND-001
+
+- Date: 2026-06-16
+- Status: completed
+- M460 source findings:
+  - `rs485.h` defines the module-side command matrix as `01/81`, `02/82`, `03/83`, `08/88`, `0A`, `0F`, `11/91`, `12/92`, `18/A8`, and `76/F6`.
+  - `protocol_package.c` handles upper `SYS_CONNECT_RESISTANCE_TEST` by starting connection-resistance flow and then using module-side `11/91` voltage reads per cell.
+  - `protocol_package.c` handles `SYS_AUTOMATIC_SET_SUBMODULE_ADDRESS` as a multi-step `18/A8` flow, with stop frames sent after the final cell response.
+  - Upper aggregate internal-resistance coefficient codes `19/99` are not module-side protocol codes; the module command is `12/92`.
+- Energy findings:
+  - `BatteryDeviceProtocolCode` matches the M460 module-side command matrix, including no-response commands for `0A`/`0F` and status-response commands for `02/82`, `03/83`, `08/88`, `12/92`, and `76/F6`.
+  - `BatteryCollectorService.processQueuedModuleCommand` sends no-response commands without pending response and sends response commands through the pending-request path.
+  - `CONNECT_STRIP_RESISTANCE_TEST` keeps mode running after the `0F` start frame and queues `GET_CONNECT_STRIP_RESISTANCE_VOLTAGE` reads until the configured max address.
+  - `AUTO_SET_MODULE_ADDRESS` keeps the mode running across intermediate `18/A8` responses, queues next address steps, and only stops after the stop-group frame path.
+  - `BatteryCollectorCommandService` converts the old integer internal-resistance coefficient to the M460 module float payload and keeps aggregate `19/99` out of `BatteryDeviceProtocolCode`.
+- Added regression coverage:
+  - Full M460 module-side command matrix is asserted in `BatteryDeviceProtocolCodeTest`.
+  - Request and response lookup coverage now includes all command pairs, not only common responses.
+  - Aggregate `19/99` internal-resistance coefficient codes are explicitly rejected as module-side protocol codes.
+- Verification:
+  - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryDeviceProtocolCodeTest,BatteryModuleControlCommandServiceTest,BatteryCollectorCommandServiceTest,BatteryCollectorServiceTest" test`
+  - `git diff --check`
