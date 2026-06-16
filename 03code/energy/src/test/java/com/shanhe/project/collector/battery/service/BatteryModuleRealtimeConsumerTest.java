@@ -6,10 +6,7 @@ import com.shanhe.project.collector.battery.model.BatteryModuleDataType;
 import com.shanhe.project.collector.battery.model.BatteryModuleFrameData;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
-import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
-import com.shanhe.project.collector.battery.model.BatteryRealtimePostProcessRequest;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
-import com.shanhe.project.collector.battery.service.postprocess.BatteryRealtimePostProcessContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -168,64 +165,6 @@ class BatteryModuleRealtimeConsumerTest {
     void shouldOnlyCalculateAfterGroupRealtimeSaved() {
         Assertions.assertFalse(consumer.shouldCalculateAfterSave(BatteryModuleDataType.SINGLE_MODULE_INFO));
         Assertions.assertTrue(consumer.shouldCalculateAfterSave(BatteryModuleDataType.ARRAY_MODULE_INFO));
-    }
-
-    @Test
-    void shouldBuildPostProcessContextFromPollContextWhenSnapshotMissing() {
-        BatteryModuleCellRealtime cell = cell(3, 0);
-        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
-        group.setPackNum(1);
-        BatteryModulePollContext pollContext = BatteryModulePollContext.builder()
-                .pollBatchNo("batch-2")
-                .pollStartedAt(new Date(2000L))
-                .cells(Collections.singletonList(cell))
-                .groups(Collections.singletonList(group))
-                .build();
-
-        BatteryRealtimePostProcessContext postContext = consumer.buildPostProcessContext(
-                BatteryRealtimePostProcessRequest.builder()
-                        .channelConfig(channelConfig())
-                        .pollContext(pollContext)
-                        .calculation(group)
-                        .build());
-
-        Assertions.assertEquals(1, postContext.getPackNum());
-        Assertions.assertEquals("collector", postContext.getSource());
-        Assertions.assertEquals("batch-2", postContext.getPollBatchNo());
-        Assertions.assertSame(pollContext.getCells(), postContext.getCells());
-        Assertions.assertSame(group, postContext.getGroup());
-        Assertions.assertNull(postContext.getRealtimeSnapshot());
-    }
-
-    @Test
-    void shouldPreferRealtimeSnapshotWhenBuildingPostProcessContext() {
-        BatteryModuleCellRealtime pollCell = cell(3, 0);
-        BatteryModuleCellRealtime snapshotCell = cell(4, 1);
-        BatteryModuleGroupRealtime calculation = new BatteryModuleGroupRealtime();
-        calculation.setPackNum(1);
-        BatteryModuleGroupRealtime snapshotGroup = new BatteryModuleGroupRealtime();
-        snapshotGroup.setPackNum(1);
-        BatteryModuleRealtimeSnapshot realtimeSnapshot = BatteryModuleRealtimeSnapshot.builder()
-                .packNum(1)
-                .cells(Collections.singletonList(snapshotCell))
-                .group(snapshotGroup)
-                .build();
-        BatteryModulePollContext pollContext = BatteryModulePollContext.builder()
-                .pollBatchNo("batch-3")
-                .cells(Collections.singletonList(pollCell))
-                .build();
-
-        BatteryRealtimePostProcessContext postContext = consumer.buildPostProcessContext(
-                BatteryRealtimePostProcessRequest.builder()
-                        .channelConfig(channelConfig())
-                        .pollContext(pollContext)
-                        .calculation(calculation)
-                        .realtimeSnapshot(realtimeSnapshot)
-                        .build());
-
-        Assertions.assertSame(realtimeSnapshot.getCells(), postContext.getCells());
-        Assertions.assertSame(snapshotGroup, postContext.getGroup());
-        Assertions.assertSame(realtimeSnapshot, postContext.getRealtimeSnapshot());
     }
 
     private BatteryCollectorChannelConfig channelConfig() {

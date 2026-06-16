@@ -21,7 +21,7 @@ self-verification tasks when they can be checked against local M460 source code 
 |---|---|---|---|
 | P0 | `TASK-BAT-COLLECTOR-STRUCT-001` | Completed 2026-06-16 | Introduce a request object for `BatteryModuleRealtimeConsumer` postprocess flow so the main path does not carry repeated parameter groups. Behavior remains unchanged. |
 | P1 | `TASK-BAT-COLLECTOR-STRUCT-002` | Planned | Split `BatteryCollectorService` by responsibility after current behavior is stable: polling loop, command queue, channel/device state, metrics/snapshot, and protocol logging. Keep public API stable and move one responsibility per commit. |
-| P1 | `TASK-BAT-COLLECTOR-STRUCT-003` | Planned | Move realtime postprocess context construction into a small builder/factory if more processors require extra inputs. Avoid expanding `BatteryModuleRealtimeConsumer` with business rules. |
+| P1 | `TASK-BAT-COLLECTOR-STRUCT-003` | Completed 2026-06-16 | Move realtime postprocess context construction into a small builder/factory if more processors require extra inputs. Avoid expanding `BatteryModuleRealtimeConsumer` with business rules. |
 
 ## 3. Priority execution order
 
@@ -160,4 +160,22 @@ The following remain real field or hardware confirmations and should not be gues
   - Aggregate `19/99` internal-resistance coefficient codes are explicitly rejected as module-side protocol codes.
 - Verification:
   - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryDeviceProtocolCodeTest,BatteryModuleControlCommandServiceTest,BatteryCollectorCommandServiceTest,BatteryCollectorServiceTest" test`
+  - `git diff --check`
+
+## 11. Execution result: TASK-BAT-COLLECTOR-STRUCT-003
+
+- Date: 2026-06-16
+- Status: completed
+- Changed files:
+  - `BatteryRealtimePostProcessContextFactory`
+  - `BatteryModuleRealtimeConsumer`
+  - `BatteryRealtimePostProcessContextFactoryTest`
+  - `BatteryModuleRealtimeConsumerTest`
+- Behavior change: none intended. `BatteryModuleRealtimeConsumer` still controls flush, snapshot refresh, and asynchronous postprocess submission, while request snapshotting and `BatteryRealtimePostProcessContext` construction now live in a focused factory.
+- Added regression coverage:
+  - Async postprocess request snapshot copies poll cells/groups before execution.
+  - Context construction falls back to poll-context cells/calculation when no realtime snapshot exists.
+  - Context construction prefers `BatteryModuleRealtimeSnapshot` cells/group when available.
+- Verification:
+  - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryModuleRealtimeConsumerTest,BatteryRealtimePostProcessContextFactoryTest,BatteryRealtimePostProcessorsTest" test`
   - `git diff --check`

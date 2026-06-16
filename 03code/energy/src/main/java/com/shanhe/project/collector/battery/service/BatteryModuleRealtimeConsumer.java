@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -76,6 +75,8 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
      */
     @Resource
     private BatteryRealtimePostProcessService postProcessService;
+    @Resource
+    private BatteryRealtimePostProcessContextFactory postProcessContextFactory = new BatteryRealtimePostProcessContextFactory();
 
     /**
      * 单体兼容字段缓存填充服务。
@@ -178,25 +179,11 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
     }
 
     void submitPostProcess(BatteryRealtimePostProcessRequest request) {
-        if (request == null) {
+        BatteryRealtimePostProcessRequest snapshotRequest =
+                postProcessContextFactory.snapshotRequest(request);
+        if (snapshotRequest == null) {
             return;
         }
-        BatteryModulePollContext context = request.getPollContext();
-        if (context == null) {
-            return;
-        }
-        BatteryModulePollContext snapshot = BatteryModulePollContext.builder()
-                .pollBatchNo(context.getPollBatchNo())
-                .pollStartedAt(context.getPollStartedAt())
-                .cells(new ArrayList<>(context.getCells()))
-                .groups(new ArrayList<>(context.getGroups()))
-                .build();
-        BatteryRealtimePostProcessRequest snapshotRequest = BatteryRealtimePostProcessRequest.builder()
-                .channelConfig(request.getChannelConfig())
-                .pollContext(snapshot)
-                .calculation(request.getCalculation())
-                .realtimeSnapshot(request.getRealtimeSnapshot())
-                .build();
         postProcessExecutor.execute(() -> runPostProcess(snapshotRequest));
     }
 
@@ -212,29 +199,13 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
         }
         try {
             BatteryRealtimePostProcessContext postContext =
-                    buildPostProcessContext(request);
+                    postProcessContextFactory.buildContext(request);
             postProcessService.execute(postContext);
             context.setAlarmContext(postContext.getAlarmContext());
         } catch (Exception e) {
             BatteryCollectorChannelConfig channelConfig = request.getChannelConfig();
             log.warn("后处理流水线执行失败, 通道={}", channelConfig == null ? null : channelConfig.getName(), e);
         }
-    }
-
-    BatteryRealtimePostProcessContext buildPostProcessContext(BatteryRealtimePostProcessRequest request) {
-        BatteryCollectorChannelConfig channelConfig = request.getChannelConfig();
-        BatteryModulePollContext context = request.getPollContext();
-        com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot realtimeSnapshot =
-                request.getRealtimeSnapshot();
-        return BatteryRealtimePostProcessContext.builder()
-                .packNum(channelConfig == null ? null : channelConfig.getBatteryGroup())
-                .source("collector")
-                .pollBatchNo(context.getPollBatchNo())
-                .cells(realtimeSnapshot == null ? context.getCells() : realtimeSnapshot.getCells())
-                .group(realtimeSnapshot == null ? request.getCalculation() : realtimeSnapshot.getGroup())
-                .channelConfig(channelConfig)
-                .realtimeSnapshot(realtimeSnapshot)
-                .build();
     }
 
     private com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot refreshRealtimeSnapshot(
