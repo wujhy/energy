@@ -6,6 +6,7 @@ import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.device.alarm.domain.AlarmLog;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
@@ -44,10 +45,12 @@ class BatteryCurrentStateServiceTest {
         BatteryCurrentStateService service = newService();
         IBatteryPackService batteryPackService = Mockito.mock(IBatteryPackService.class);
         BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
         BatteryDeviceStateService deviceStateService = Mockito.mock(BatteryDeviceStateService.class);
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
         ReflectionTestUtils.setField(service, "batteryPackService", batteryPackService);
         ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
+        ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
         ReflectionTestUtils.setField(service, "batteryDeviceStateService", deviceStateService);
         ReflectionTestUtils.setField(service, "alarmLogService", alarmLogService);
 
@@ -62,10 +65,14 @@ class BatteryCurrentStateServiceTest {
         group.setDataFresh(true);
         group.setCellCount(2);
         group.setOnlineCellCount(2);
-        Mockito.when(realtimeMapper.selectGroup(1)).thenReturn(group);
         BatteryModuleCellRealtime cellTwo = cell(1, 2, 2.12d);
         BatteryModuleCellRealtime cellOne = cell(1, 1, 2.10d);
-        Mockito.when(realtimeMapper.selectCells(1)).thenReturn(Arrays.asList(cellTwo, cellOne));
+        Mockito.when(snapshotService.getSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
+                .packNum(1)
+                .batSinSize(2)
+                .group(group)
+                .cells(Arrays.asList(cellTwo, cellOne))
+                .build());
         BatteryDeviceState deviceState = new BatteryDeviceState();
         deviceState.setPackNum(1);
         deviceState.setStateCode(BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN);
@@ -93,6 +100,34 @@ class BatteryCurrentStateServiceTest {
         Assertions.assertEquals(1, state.getDeviceStates().size());
         Assertions.assertEquals(1, state.getAlarms().size());
         Assertions.assertEquals("batteryOvercharge", state.getAlarms().get(0).getItemCode());
+        Mockito.verify(realtimeMapper, Mockito.never()).selectGroup(1);
+        Mockito.verify(realtimeMapper, Mockito.never()).selectCells(1);
+    }
+
+    @Test
+    void shouldFallbackToRealtimeTablesWhenSnapshotIsMissing() {
+        BatteryCurrentStateService service = newServiceWithPack(1, 2);
+        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
+        ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
+
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackNum(1);
+        group.setPollBatchNo("batch-db");
+        group.setDataFresh(true);
+        Mockito.when(snapshotService.getSnapshot(1)).thenReturn(null);
+        Mockito.when(realtimeMapper.selectGroup(1)).thenReturn(group);
+        Mockito.when(realtimeMapper.selectCells(1)).thenReturn(Arrays.asList(cell(1, 1, 2.10d), cell(1, 2, 2.11d)));
+
+        BatteryCurrentState state = service.getCurrentState(1);
+
+        Assertions.assertEquals(BatteryCurrentState.FRESHNESS_FRESH, state.getFreshness());
+        Assertions.assertEquals("batch-db", state.getLastPollBatchNo());
+        Assertions.assertEquals(2, state.getCells().size());
+        Mockito.verify(snapshotService).getSnapshot(1);
+        Mockito.verify(realtimeMapper).selectGroup(1);
+        Mockito.verify(realtimeMapper).selectCells(1);
     }
 
     @Test

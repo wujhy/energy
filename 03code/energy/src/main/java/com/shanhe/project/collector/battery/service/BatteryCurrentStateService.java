@@ -8,6 +8,7 @@ import com.shanhe.project.collector.battery.model.BatteryCurrentState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.device.alarm.domain.AlarmLog;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
@@ -34,6 +35,8 @@ public class BatteryCurrentStateService {
     @Resource
     private BatteryModuleRealtimeMapper realtimeMapper;
     @Resource
+    private BatteryModuleRealtimeSnapshotService snapshotService;
+    @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
     @Resource
     private IAlarmLogService alarmLogService;
@@ -50,9 +53,9 @@ public class BatteryCurrentStateService {
         state.setPackId(pack.getPackId());
         state.setExpectedCellCount(pack.getBatSinSize());
 
-        BatteryModuleGroupRealtime group = realtimeMapper == null ? null : realtimeMapper.selectGroup(packNum);
-        List<BatteryModuleCellRealtime> cells = realtimeMapper == null
-                ? Collections.emptyList() : safeCells(realtimeMapper.selectCells(packNum));
+        BatteryModuleRealtimeSnapshot snapshot = snapshotService == null ? null : snapshotService.getSnapshot(packNum);
+        BatteryModuleGroupRealtime group = snapshot == null ? readGroup(packNum) : snapshot.getGroup();
+        List<BatteryModuleCellRealtime> cells = snapshot == null ? readCells(packNum) : snapshot.getCells();
         state.setGroup(toGroupState(group));
         state.setCells(toCellStates(cells));
         state.setDeviceStates(batteryDeviceStateService == null
@@ -62,6 +65,14 @@ public class BatteryCurrentStateService {
         state.setLastPollBatchNo(resolveLastPollBatchNo(group, cells));
         state.setFreshness(resolveFreshness(pack.getBatSinSize(), group, cells));
         return state;
+    }
+
+    private BatteryModuleGroupRealtime readGroup(Integer packNum) {
+        return realtimeMapper == null ? null : realtimeMapper.selectGroup(packNum);
+    }
+
+    private List<BatteryModuleCellRealtime> readCells(Integer packNum) {
+        return realtimeMapper == null ? Collections.emptyList() : safeCells(realtimeMapper.selectCells(packNum));
     }
 
     private String resolveFreshness(Integer expectedCellCount,
