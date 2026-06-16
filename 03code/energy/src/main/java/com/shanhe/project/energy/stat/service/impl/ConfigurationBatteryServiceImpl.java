@@ -6,6 +6,8 @@ import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.enums.YesNoEnum;
+import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
+import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.device.alarm.domain.AlarmLog;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryMonitor;
@@ -55,6 +57,10 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     private IConfigAttributeService configAttributeService;
     @Resource
     private PreBatteryGroupService preBatteryGroupService;
+    @Resource
+    private BatteryCollectorProperties batteryCollectorProperties;
+    @Resource
+    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
 
     @Override
     public BatteryHealthReport getBatteryHealthReport(Integer packNum) {
@@ -71,7 +77,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
 
         Map<String, List<AlarmLog>> logMap = populateAlarmInfo(batteryHealthReport, packNum);
 
-        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(packNum);
+        BatteryReportLog batteryReportLog = resolveBatteryReportLog(packNum);
         populateBackupDuration(batteryHealthReport, batteryReportLog);
 
         List<EvaluationFactors> evaluationFactorsList = buildEvaluationFactors(
@@ -85,6 +91,29 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         batteryHealthReport.setAssessAdvice(getAssessAdvice(batteryHealthReport));
 
         return batteryHealthReport;
+    }
+
+    BatteryReportLog resolveBatteryReportLog(Integer packNum) {
+        if (batteryCollectorProperties != null
+                && Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
+            try {
+                BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
+                if (isUsableBatteryReportLog(realtimeLog)) {
+                    return realtimeLog;
+                }
+            } catch (Exception e) {
+                log.warn("标准实时数据构建健康报告上下文失败, packNum={}, fallback=oldCache", packNum, e);
+            }
+        }
+        return batteryReportLogService.lastCache(packNum);
+    }
+
+    private boolean isUsableBatteryReportLog(BatteryReportLog log) {
+        return log != null
+                && log.getPackParam() != null
+                && !log.getPackParam().isEmpty()
+                && log.getBatteryList() != null
+                && !log.getBatteryList().isEmpty();
     }
 
     @Override
