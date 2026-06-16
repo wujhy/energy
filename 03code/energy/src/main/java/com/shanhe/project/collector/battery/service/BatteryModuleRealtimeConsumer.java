@@ -12,6 +12,7 @@ import com.shanhe.project.collector.battery.model.BatteryModuleFrameData;
 import com.shanhe.project.collector.battery.model.BatteryModuleFrameSummary;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
+import com.shanhe.project.collector.battery.model.BatteryRealtimePostProcessRequest;
 import com.shanhe.project.collector.battery.service.postprocess.BatteryRealtimePostProcessContext;
 import com.shanhe.project.collector.battery.service.postprocess.BatteryRealtimePostProcessService;
 import lombok.extern.slf4j.Slf4j;
@@ -161,7 +162,12 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
                 com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot realtimeSnapshot =
                         refreshRealtimeSnapshot(channelConfig, context, calculation);
                 refreshBatteryOnlineCache(channelConfig);
-                submitPostProcess(channelConfig, context, calculation, realtimeSnapshot);
+                submitPostProcess(BatteryRealtimePostProcessRequest.builder()
+                        .channelConfig(channelConfig)
+                        .pollContext(context)
+                        .calculation(calculation)
+                        .realtimeSnapshot(realtimeSnapshot)
+                        .build());
             }
         } catch (Exception e) {
             log.warn("刷新蓄电池模块实时数据批次失败, 通道={}, 批次={}",
@@ -171,10 +177,11 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
         }
     }
 
-    void submitPostProcess(BatteryCollectorChannelConfig channelConfig,
-                           BatteryModulePollContext context,
-                           BatteryModuleGroupRealtime calculation,
-                           com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot realtimeSnapshot) {
+    void submitPostProcess(BatteryRealtimePostProcessRequest request) {
+        if (request == null) {
+            return;
+        }
+        BatteryModulePollContext context = request.getPollContext();
         if (context == null) {
             return;
         }
@@ -184,44 +191,47 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
                 .cells(new ArrayList<>(context.getCells()))
                 .groups(new ArrayList<>(context.getGroups()))
                 .build();
-        postProcessExecutor.execute(() -> runPostProcess(channelConfig, snapshot, calculation, realtimeSnapshot));
+        BatteryRealtimePostProcessRequest snapshotRequest = BatteryRealtimePostProcessRequest.builder()
+                .channelConfig(request.getChannelConfig())
+                .pollContext(snapshot)
+                .calculation(request.getCalculation())
+                .realtimeSnapshot(request.getRealtimeSnapshot())
+                .build();
+        postProcessExecutor.execute(() -> runPostProcess(snapshotRequest));
     }
 
-    void runPostProcess(BatteryCollectorChannelConfig channelConfig,
-                        BatteryModulePollContext context,
-                        BatteryModuleGroupRealtime calculation,
-                        com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot realtimeSnapshot) {
-        executePostProcessPipeline(channelConfig, context, calculation, realtimeSnapshot);
+    void runPostProcess(BatteryRealtimePostProcessRequest request) {
+        executePostProcessPipeline(request);
     }
 
     /** 执行后处理流水线。 */
-    private void executePostProcessPipeline(BatteryCollectorChannelConfig channelConfig,
-                                             BatteryModulePollContext context,
-                                             BatteryModuleGroupRealtime calculation,
-                                             com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot realtimeSnapshot) {
+    private void executePostProcessPipeline(BatteryRealtimePostProcessRequest request) {
+        BatteryModulePollContext context = request == null ? null : request.getPollContext();
         if (postProcessService == null || context == null) {
             return;
         }
         try {
             BatteryRealtimePostProcessContext postContext =
-                    buildPostProcessContext(channelConfig, context, calculation, realtimeSnapshot);
+                    buildPostProcessContext(request);
             postProcessService.execute(postContext);
             context.setAlarmContext(postContext.getAlarmContext());
         } catch (Exception e) {
+            BatteryCollectorChannelConfig channelConfig = request.getChannelConfig();
             log.warn("后处理流水线执行失败, 通道={}", channelConfig == null ? null : channelConfig.getName(), e);
         }
     }
 
-    private BatteryRealtimePostProcessContext buildPostProcessContext(BatteryCollectorChannelConfig channelConfig,
-                                                                      BatteryModulePollContext context,
-                                                                      BatteryModuleGroupRealtime calculation,
-                                                                      com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot realtimeSnapshot) {
+    BatteryRealtimePostProcessContext buildPostProcessContext(BatteryRealtimePostProcessRequest request) {
+        BatteryCollectorChannelConfig channelConfig = request.getChannelConfig();
+        BatteryModulePollContext context = request.getPollContext();
+        com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot realtimeSnapshot =
+                request.getRealtimeSnapshot();
         return BatteryRealtimePostProcessContext.builder()
                 .packNum(channelConfig == null ? null : channelConfig.getBatteryGroup())
                 .source("collector")
                 .pollBatchNo(context.getPollBatchNo())
                 .cells(realtimeSnapshot == null ? context.getCells() : realtimeSnapshot.getCells())
-                .group(realtimeSnapshot == null ? calculation : realtimeSnapshot.getGroup())
+                .group(realtimeSnapshot == null ? request.getCalculation() : realtimeSnapshot.getGroup())
                 .channelConfig(channelConfig)
                 .realtimeSnapshot(realtimeSnapshot)
                 .build();
