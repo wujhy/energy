@@ -520,7 +520,7 @@ class BatteryModuleModbusReadMappingServiceTest {
         BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
         group.setExternalVoltage(48.0d);
-        Mockito.when(snapshotService.getSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
                 .packNum(1)
                 .cells(Collections.singletonList(cell(1, 2.0d, 100, 25.0d, null)))
                 .group(group)
@@ -531,7 +531,24 @@ class BatteryModuleModbusReadMappingServiceTest {
         Assertions.assertArrayEquals(new int[]{2000, 0, 0},
                 service.readHoldingRegisters(1, 410004, 3));
 
-        Mockito.verify(snapshotService, Mockito.times(1)).getSnapshot(1);
+        Mockito.verify(snapshotService, Mockito.times(1)).getCachedSnapshot(1);
+        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
+        Mockito.verifyNoInteractions(mapper);
+    }
+
+    @Test
+    void shouldNotQueryMapperWhenInjectedSnapshotCacheMisses() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(null);
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(mapper, null, null, snapshotService);
+
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> service.readHoldingRegisters(1, 410004, 1));
+
+        Mockito.verify(snapshotService, Mockito.times(1)).getCachedSnapshot(1);
+        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
         Mockito.verifyNoInteractions(mapper);
     }
 

@@ -116,9 +116,15 @@ public class BatteryModuleModbusReadMappingService {
      */
     private ModbusReadSnapshot loadSnapshot(Integer packNum) {
         String channelName = resolveChannelName(packNum);
-        BatteryModuleRealtimeSnapshot realtimeSnapshot = snapshotService == null ? null : snapshotService.getSnapshot(packNum);
-        List<BatteryModuleCellRealtime> cells = realtimeSnapshot == null ? realtimeMapper.selectCells(packNum) : realtimeSnapshot.getCells();
-        BatteryModuleGroupRealtime group = realtimeSnapshot == null ? realtimeMapper.selectGroup(packNum) : realtimeSnapshot.getGroup();
+        if (snapshotService != null) {
+            BatteryModuleRealtimeSnapshot realtimeSnapshot = snapshotService.getCachedSnapshot(packNum);
+            if (realtimeSnapshot == null) {
+                return new ModbusReadSnapshot(null, null, packNum, channelName);
+            }
+            return new ModbusReadSnapshot(realtimeSnapshot.getCells(), realtimeSnapshot.getGroup(), packNum, channelName);
+        }
+        List<BatteryModuleCellRealtime> cells = realtimeMapper.selectCells(packNum);
+        BatteryModuleGroupRealtime group = realtimeMapper.selectGroup(packNum);
         return new ModbusReadSnapshot(cells, group, packNum, channelName);
     }
 
