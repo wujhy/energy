@@ -6,9 +6,11 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorChannelState;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
+import com.shanhe.project.device.opt.mapper.OptLogMapper;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.HashMap;
@@ -23,6 +25,15 @@ class BatteryCollectorCommandServiceTest {
         BatteryModeStatusService modeStatusService = new BatteryModeStatusService();
         ReflectionTestUtils.setField(modeStatusService, "cacheAccessor", new TestCacheAccessor());
         return modeStatusService;
+    }
+
+    private BatteryCollectorService newCollectorService(BatteryModeStatusService modeStatusService) {
+        BatteryCollectorService collectorService = new BatteryCollectorService();
+        ReflectionTestUtils.setField(collectorService, "batteryModeStatusService", modeStatusService);
+        BatteryCollectorCommandLogService commandLogService = new BatteryCollectorCommandLogService();
+        ReflectionTestUtils.setField(commandLogService, "optLogMapper", Mockito.mock(OptLogMapper.class));
+        ReflectionTestUtils.setField(collectorService, "commandLogService", commandLogService);
+        return collectorService;
     }
 
     private static class TestCacheAccessor implements BatteryModeStatusService.CacheAccessor {
@@ -325,15 +336,14 @@ class BatteryCollectorCommandServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldQueueMappedModuleCommandWhenCollectorChannelExists() {
-        BatteryCollectorService collectorService = new BatteryCollectorService();
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        BatteryCollectorService collectorService = newCollectorService(modeStatusService);
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
         channelConfig.setName("battery-rs485-1");
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
         List<BatteryCollectorChannelState> channelStates =
                 (List<BatteryCollectorChannelState>) ReflectionTestUtils.getField(collectorService, "channelStates");
         channelStates.add(state);
-        BatteryModeStatusService modeStatusService = newModeStatusService();
-        ReflectionTestUtils.setField(collectorService, "batteryModeStatusService", modeStatusService);
         ReflectionTestUtils.setField(service, "collectorService", collectorService);
 
         BatteryCollectorCommandResult result = service.singleInternalResistanceTest(
@@ -362,15 +372,14 @@ class BatteryCollectorCommandServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldQueueConnectResistanceTestWhenCollectorChannelExists() {
-        BatteryCollectorService collectorService = new BatteryCollectorService();
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        BatteryCollectorService collectorService = newCollectorService(modeStatusService);
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
         channelConfig.setName("battery-rs485-1");
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
         List<BatteryCollectorChannelState> channelStates =
                 (List<BatteryCollectorChannelState>) ReflectionTestUtils.getField(collectorService, "channelStates");
         channelStates.add(state);
-        BatteryModeStatusService modeStatusService = newModeStatusService();
-        ReflectionTestUtils.setField(collectorService, "batteryModeStatusService", modeStatusService);
         ReflectionTestUtils.setField(service, "collectorService", collectorService);
 
         BatteryCollectorCommandResult result = service.connectResistanceTest(

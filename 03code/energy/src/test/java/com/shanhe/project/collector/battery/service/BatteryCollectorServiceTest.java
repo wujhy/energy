@@ -37,10 +37,29 @@ import java.util.Map;
 class BatteryCollectorServiceTest {
 
     private final BatteryCollectorService service = new BatteryCollectorService();
+    private final BatteryCollectorCommandLogService commandLogService = new BatteryCollectorCommandLogService();
+    private final BatteryCollectorDeviceStateService collectorDeviceStateService = new BatteryCollectorDeviceStateService();
 
     BatteryCollectorServiceTest() {
         ReflectionTestUtils.setField(service, "runtimeViewService", new BatteryCollectorRuntimeViewService());
         ReflectionTestUtils.setField(service, "cacheService", new BatteryCollectorCacheService());
+        ReflectionTestUtils.setField(service, "protocolLogService", new BatteryCollectorProtocolLogService());
+        ReflectionTestUtils.setField(service, "commandLogService", commandLogService);
+        ReflectionTestUtils.setField(service, "collectorDeviceStateService", collectorDeviceStateService);
+    }
+
+    private void injectCommandLogMapper(OptLogMapper optLogMapper) {
+        ReflectionTestUtils.setField(commandLogService, "optLogMapper", optLogMapper);
+    }
+
+    private void injectCollectorDeviceStateService(BatteryDeviceStateService stateService) {
+        ReflectionTestUtils.setField(collectorDeviceStateService, "batteryDeviceStateService", stateService);
+    }
+
+    private BatteryCollectorDeviceStateService newCollectorDeviceStateService(BatteryDeviceStateService stateService) {
+        BatteryCollectorDeviceStateService service = new BatteryCollectorDeviceStateService();
+        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+        return service;
     }
 
     private BatteryModeStatusService newModeStatusService() {
@@ -330,7 +349,7 @@ class BatteryCollectorServiceTest {
         channelStates.add(groupTwoState);
 
         Map<String, String> lastStateValues =
-                (Map<String, String>) ReflectionTestUtils.getField(service, "lastStateValues");
+                (Map<String, String>) ReflectionTestUtils.getField(collectorDeviceStateService, "lastStateValues");
         lastStateValues.put("1:GROUP_246_FRESHNESS", "fresh");
         lastStateValues.put("battery-group-1:CHANNEL_OPEN", "open");
         lastStateValues.put("battery-group-1:8:MODULE_ACTIVE", "active");
@@ -454,7 +473,7 @@ class BatteryCollectorServiceTest {
         properties.setModuleAddressCacheEnabled(true);
         ReflectionTestUtils.setField(service, "properties", properties);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+        injectCollectorDeviceStateService(stateService);
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
         channelConfig.setName("battery-group-1");
         channelConfig.setBatteryGroup(1);
@@ -480,7 +499,7 @@ class BatteryCollectorServiceTest {
         properties.setModuleAddressCacheEnabled(false);
         ReflectionTestUtils.setField(service, "properties", properties);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+        ReflectionTestUtils.setField(service, "collectorDeviceStateService", newCollectorDeviceStateService(stateService));
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
         channelConfig.setName("battery-group-1");
         channelConfig.setBatteryGroup(1);
@@ -501,14 +520,14 @@ class BatteryCollectorServiceTest {
     @Test
     void shouldDeduplicateChannelOpenAndPersistRecoveryBoundary() {
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+        injectCollectorDeviceStateService(stateService);
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(newChannelConfig());
 
-        ReflectionTestUtils.invokeMethod(service, "persistSerialPortState", state, true);
-        ReflectionTestUtils.invokeMethod(service, "persistSerialPortState", state, true);
-        ReflectionTestUtils.invokeMethod(service, "persistSerialPortState", state, false);
-        ReflectionTestUtils.invokeMethod(service, "persistSerialPortState", state, false);
-        ReflectionTestUtils.invokeMethod(service, "persistSerialPortState", state, true);
+        collectorDeviceStateService.persistSerialPortState(state, true);
+        collectorDeviceStateService.persistSerialPortState(state, true);
+        collectorDeviceStateService.persistSerialPortState(state, false);
+        collectorDeviceStateService.persistSerialPortState(state, false);
+        collectorDeviceStateService.persistSerialPortState(state, true);
 
         ArgumentCaptor<BatteryDeviceState> captor = ArgumentCaptor.forClass(BatteryDeviceState.class);
         Mockito.verify(stateService, Mockito.times(3)).upsert(captor.capture());
@@ -522,13 +541,13 @@ class BatteryCollectorServiceTest {
     @Test
     void shouldDeduplicateChannelErrorAndClearAfterOpen() {
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+        injectCollectorDeviceStateService(stateService);
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(newChannelConfig());
 
-        ReflectionTestUtils.invokeMethod(service, "persistChannelError", state, new IllegalStateException("open failed"));
-        ReflectionTestUtils.invokeMethod(service, "persistChannelError", state, new IllegalStateException("open failed"));
-        ReflectionTestUtils.invokeMethod(service, "persistSerialPortState", state, true);
-        ReflectionTestUtils.invokeMethod(service, "persistSerialPortState", state, true);
+        collectorDeviceStateService.persistChannelError(state, new IllegalStateException("open failed"));
+        collectorDeviceStateService.persistChannelError(state, new IllegalStateException("open failed"));
+        collectorDeviceStateService.persistSerialPortState(state, true);
+        collectorDeviceStateService.persistSerialPortState(state, true);
 
         ArgumentCaptor<BatteryDeviceState> captor = ArgumentCaptor.forClass(BatteryDeviceState.class);
         Mockito.verify(stateService, Mockito.times(3)).upsert(captor.capture());
@@ -548,7 +567,7 @@ class BatteryCollectorServiceTest {
         properties.setModuleAddressCacheEnabled(true);
         ReflectionTestUtils.setField(service, "properties", properties);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+        injectCollectorDeviceStateService(stateService);
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(newChannelConfig());
         BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
                 BatteryDeviceProtocolCode.MODULE_INFO,
@@ -556,8 +575,8 @@ class BatteryCollectorServiceTest {
                 new byte[0],
                 true);
 
-        ReflectionTestUtils.invokeMethod(service, "persistModuleTimeout", state, pendingRequest);
-        ReflectionTestUtils.invokeMethod(service, "persistModuleTimeout", state, pendingRequest);
+        collectorDeviceStateService.persistModuleTimeout(state, pendingRequest);
+        collectorDeviceStateService.persistModuleTimeout(state, pendingRequest);
         ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 8, true);
         ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 8, true);
 
@@ -579,7 +598,7 @@ class BatteryCollectorServiceTest {
         properties.setModuleAddressMissThreshold(2);
         ReflectionTestUtils.setField(service, "properties", properties);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+        injectCollectorDeviceStateService(stateService);
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(newChannelConfig());
 
         ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 8, true);
@@ -603,7 +622,7 @@ class BatteryCollectorServiceTest {
         properties.setModuleAddressCacheEnabled(false);
         ReflectionTestUtils.setField(service, "properties", properties);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+        injectCollectorDeviceStateService(stateService);
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(newChannelConfig());
 
         ReflectionTestUtils.invokeMethod(service, "updateModuleAddressCache", state, 246, false);
@@ -624,16 +643,11 @@ class BatteryCollectorServiceTest {
 
     @Test
     void shouldOnlyTreatModuleAndPackStateCacheKeysAsHighCardinality() {
-        Boolean channelOpen = ReflectionTestUtils.invokeMethod(service,
-                "isHighCardinalityStateCacheKey", "battery-group-1:CHANNEL_OPEN");
-        Boolean channelError = ReflectionTestUtils.invokeMethod(service,
-                "isHighCardinalityStateCacheKey", "battery-group-1:CHANNEL_ERROR");
-        Boolean moduleTimeout = ReflectionTestUtils.invokeMethod(service,
-                "isHighCardinalityStateCacheKey", "battery-group-1:8:MODULE_TIMEOUT");
-        Boolean moduleActive = ReflectionTestUtils.invokeMethod(service,
-                "isHighCardinalityStateCacheKey", "battery-group-1:8:MODULE_ACTIVE");
-        Boolean group246 = ReflectionTestUtils.invokeMethod(service,
-                "isHighCardinalityStateCacheKey", "1:GROUP_246_FRESHNESS");
+        Boolean channelOpen = collectorDeviceStateService.isHighCardinalityStateCacheKey("battery-group-1:CHANNEL_OPEN");
+        Boolean channelError = collectorDeviceStateService.isHighCardinalityStateCacheKey("battery-group-1:CHANNEL_ERROR");
+        Boolean moduleTimeout = collectorDeviceStateService.isHighCardinalityStateCacheKey("battery-group-1:8:MODULE_TIMEOUT");
+        Boolean moduleActive = collectorDeviceStateService.isHighCardinalityStateCacheKey("battery-group-1:8:MODULE_ACTIVE");
+        Boolean group246 = collectorDeviceStateService.isHighCardinalityStateCacheKey("1:GROUP_246_FRESHNESS");
 
         Assertions.assertFalse(Boolean.TRUE.equals(channelOpen));
         Assertions.assertFalse(Boolean.TRUE.equals(channelError));
@@ -715,7 +729,7 @@ class BatteryCollectorServiceTest {
     @SuppressWarnings("unchecked")
     void shouldCreateCommandOptLogWithExplicitModuleCommandFields() {
         OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
-        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+        injectCommandLogMapper(optLogMapper);
         BatteryModeStatusService modeStatusService = newModeStatusService();
         ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
@@ -764,7 +778,7 @@ class BatteryCollectorServiceTest {
     @Test
     void shouldCreateCommandOptLogWithNullRequestPayloadForEmptyPayload() {
         OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
-        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+        injectCommandLogMapper(optLogMapper);
         ReflectionTestUtils.setField(service, "batteryModeStatusService", newModeStatusService());
         BatteryCollectorChannelConfig channelConfig = newChannelConfig();
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
@@ -838,7 +852,12 @@ class BatteryCollectorServiceTest {
         ReflectionTestUtils.setField(recordingService, "properties", properties);
         ReflectionTestUtils.setField(recordingService, "frameCodec", new BatteryCollectorFrameCodec());
         ReflectionTestUtils.setField(recordingService, "realtimeConsumer", Mockito.mock(BatteryModuleRealtimeConsumer.class));
-        ReflectionTestUtils.setField(recordingService, "batteryDeviceStateService", Mockito.mock(BatteryDeviceStateService.class));
+        ReflectionTestUtils.setField(recordingService, "protocolLogService", new BatteryCollectorProtocolLogService());
+        ReflectionTestUtils.setField(recordingService, "collectorDeviceStateService",
+                newCollectorDeviceStateService(Mockito.mock(BatteryDeviceStateService.class)));
+        BatteryCollectorCommandLogService recordingCommandLogService = new BatteryCollectorCommandLogService();
+        ReflectionTestUtils.setField(recordingCommandLogService, "optLogMapper", Mockito.mock(OptLogMapper.class));
+        ReflectionTestUtils.setField(recordingService, "commandLogService", recordingCommandLogService);
         ReflectionTestUtils.setField(recordingService, "running", true);
 
         BatteryCollectorChannelConfig channelConfig = newChannelConfig();
@@ -1267,7 +1286,7 @@ class BatteryCollectorServiceTest {
     @Test
     void shouldQueueNextConnectResistanceReadWithoutUpdatingOptLogForIntermediate91Response() {
         OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
-        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+        injectCommandLogMapper(optLogMapper);
         BatteryCollectorChannelConfig channelConfig = newChannelConfig();
         channelConfig.setBatteryGroup(2);
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
@@ -1301,7 +1320,7 @@ class BatteryCollectorServiceTest {
     @Test
     void shouldCarryConnectResistanceFailureAcrossQueuedReads() {
         OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
-        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+        injectCommandLogMapper(optLogMapper);
         BatteryModeStatusService modeStatusService = newModeStatusService();
         ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
         modeStatusService.markRunning(2, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 10);
@@ -1359,7 +1378,7 @@ class BatteryCollectorServiceTest {
     @Test
     void shouldUpdateOptLogOnlyWhenFinalConnectResistance91ResponseCompletes() {
         OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
-        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+        injectCommandLogMapper(optLogMapper);
         BatteryModeStatusService modeStatusService = newModeStatusService();
         ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
         modeStatusService.markRunning(2, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 10);
@@ -1398,7 +1417,7 @@ class BatteryCollectorServiceTest {
     @Test
     void shouldUpdateCommandOptLogWithResponsePayloadOnCompletedModuleCommand() {
         OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
-        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+        injectCommandLogMapper(optLogMapper);
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
         BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
                 BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
@@ -1423,7 +1442,7 @@ class BatteryCollectorServiceTest {
     @Test
     void shouldRecordTimedOutModuleCommandAsFailed() {
         OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
-        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+        injectCommandLogMapper(optLogMapper);
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
         BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
                 BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,

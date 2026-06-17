@@ -226,3 +226,115 @@ The following remain real field or hardware confirmations and should not be gues
 - Verification:
   - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryCollectorServiceTest,BatteryCollectorCacheServiceTest" test`
   - `git diff --check`
+
+## 14. Execution result: TASK-BAT-COLLECTOR-STRUCT-002 slice 3
+
+- Date: 2026-06-16
+- Status: completed slice; parent task remains planned for further command/polling, state persistence, and command-log splits.
+- Changed files:
+  - `BatteryCollectorProtocolLogService`
+  - `BatteryCollectorService`
+  - `BatteryCollectorProtocolLogServiceTest`
+  - `BatteryCollectorServiceTest`
+- Behavior change: none intended. Protocol send/receive logs and poll summary logs keep the same trigger points, while log formatting and debug-channel filtering now live in a focused protocol log service.
+- Scope:
+  - Extracted protocol tx/rx/retry logging from the main collector flow.
+  - Extracted poll summary logging and command-list summarization.
+  - Kept the public collector service API unchanged.
+  - Added Chinese class and method comments for the new protocol log service and its tests.
+- Added regression coverage:
+  - Protocol logs are skipped when debug logging is disabled.
+  - Debug channel filtering suppresses non-selected channels.
+  - Matching debug channels emit protocol logs.
+  - Poll summary keeps long completed-command list truncation.
+- Verification:
+  - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryCollectorServiceTest,BatteryCollectorProtocolLogServiceTest" test`
+
+## 15. Execution result: TASK-BAT-COLLECTOR-STRUCT-002 slice 4
+
+- Date: 2026-06-16
+- Status: completed slice; parent task remains planned for further command/polling and state persistence splits.
+- Changed files:
+  - `BatteryCollectorCommandLogService`
+  - `BatteryCollectorService`
+  - `BatteryCollectorCommandLogServiceTest`
+  - `BatteryCollectorServiceTest`
+- Behavior change: none intended. Explicit module command opt-log creation and status updates keep the same call sites and field mapping, while mapper interaction and timestamp formatting moved into a focused command log service.
+- Scope:
+  - Extracted command opt-log creation for queued 600-module commands.
+  - Extracted command opt-log status updates for rejected, success, failed, and timeout outcomes.
+  - Kept module command queueing and response handling in `BatteryCollectorService`.
+  - Added Chinese class and method comments for the new command log service.
+- Added regression coverage:
+  - Command opt-log field mapping for module command creation.
+  - Empty request payload remains null in the opt-log record.
+  - Timeout status writes the expected error message.
+  - Null opt-log id skips update.
+- Verification:
+  - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryCollectorServiceTest,BatteryCollectorProtocolLogServiceTest,BatteryCollectorCommandLogServiceTest" test`
+
+## 16. Execution result: TASK-BAT-COLLECTOR-STRUCT-002 slice 5
+
+- Date: 2026-06-16
+- Status: completed slice; parent task remains planned for further command/polling splits and final dead-code cleanup.
+- Changed files:
+  - `BatteryCollectorDeviceStateService`
+  - `BatteryCollectorService`
+  - `BatteryCollectorDeviceStateServiceTest`
+  - `BatteryCollectorServiceTest`
+- Behavior change: none intended. Device-state persistence, deduplication, module timeout recovery, module active state, and group-246 freshness state keep the same value mapping and call sites, while state construction and dedup cache ownership moved into a focused device-state service.
+- Scope:
+  - Extracted channel error/open/timeout state persistence.
+  - Extracted module timeout, module active, and group-246 freshness state persistence.
+  - Moved device-state dedup cache ownership out of `BatteryCollectorService`.
+  - Kept polling, command execution, and address-cache mutation in `BatteryCollectorService`.
+  - Added Chinese class and method comments for the new device-state service.
+- Added regression coverage:
+  - Serial-port state deduplication and recovery boundary.
+  - Channel error deduplication and clear-after-open behavior.
+  - Module timeout deduplication and recovered status after response.
+  - Battery-group-scoped dedup cache cleanup.
+  - High-cardinality state-cache key classification.
+- Verification:
+  - `mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryCollectorServiceTest,BatteryCollectorCacheServiceTest,BatteryCollectorDeviceStateServiceTest,BatteryCollectorProtocolLogServiceTest,BatteryCollectorCommandLogServiceTest" test`
+
+## 17. Functional-first execution plan update
+
+- Date: 2026-06-17
+- Decision: switch the next execution focus from structural refactoring to feature delivery. Keep already completed structure slices, but postpone additional collector main-flow splits, dead-code cleanup, and directory reshaping unless they are necessary to implement a functional task safely.
+- Directory rule for new functions: if a feature adds meaningful behavior, create or reuse a focused service/package by capability instead of expanding `BatteryCollectorService`.
+  - External read/cache features: `collector/battery/service/snapshot` or focused `*Snapshot*Service`.
+  - JSON/TCP adaptation features: `collector/battery/service/jsontcp` or focused adapter services.
+  - Modbus mapping/read features: existing `BatteryModuleModbusReadMappingService` plus focused helper classes only when register groups grow.
+  - Postprocess features: existing `collector/battery/service/postprocess`.
+  - Command/control features: existing command services; avoid putting new command semantics into the polling loop.
+
+### 17.1 Functional priority queue
+
+| Priority | Task | Status | Scope |
+|---|---|---|---|
+| P0 | `TASK-BAT-FUNC-SNAPSHOT-001` | Planned | Finish the external-read realtime snapshot path: after collection persists realtime data, refresh a high-frequency readable cache; read paths should prefer fresh cache and fall back by freshness rules. |
+| P0 | `TASK-BAT-FUNC-FRESHNESS-001` | Planned | Lock the cell freshness rule: when current round misses cells, fill missing modelNum entries from the previous valid round, limited by `BatteryPack.batSinSize`; select by modelNum order and do not renumber cells. |
+| P0 | `TASK-BAT-FUNC-MODBUS-CACHE-001` | Planned | Ensure Modbus high-frequency reads use the snapshot/cache path without repeated mapper hits; preserve first-data-not-ready exception and zero-fill-after-ready behavior. |
+| P1 | `TASK-BAT-FUNC-JSONTCP-001` | Planned | Compare JSON/TCP exposed fields with the standard realtime model, then implement guarded read-source switching behind `jsonTcpRealtimeSourceEnabled`; keep fallback to old compatible data. |
+| P1 | `TASK-BAT-FUNC-STATUS-001` | Planned | Use `battery_device_state` and realtime snapshot consistently for channel/module/group status exposed to page, JSON/TCP, and Modbus; avoid temporary in-memory caches as external contracts. |
+| P1 | `TASK-BAT-FUNC-ALARM-001` | Planned | Complete alarm output consistency from standard alarm/postprocess results to external reads; do not reintroduce old 87/8D payload parsing into new read paths. |
+| P2 | `TASK-BAT-FUNC-CAPACITY-001` | Planned | Keep SOC/SOH/capacity values postprocess/cache-backed; only add feature work where existing predictor/cache inputs are present and testable. |
+| P2 | `TASK-BAT-FUNC-COMMAND-001` | Planned | Fill any remaining command result/status gaps found by functional tests, especially opt-log and mode-state consistency for JSON/TCP and future Modbus control entry points. |
+
+### 17.2 Refactor backlog, explicitly postponed
+
+| Priority | Task | Status | Scope |
+|---|---|---|---|
+| P3 | `TASK-BAT-COLLECTOR-STRUCT-002-CLEANUP` | Deferred | Remove old private methods and unused fields left in `BatteryCollectorService` after service extraction; do this only after current functional slices are stable. |
+| P3 | `TASK-BAT-COLLECTOR-STRUCT-002-POLLING` | Deferred | Split polling-loop orchestration from `BatteryCollectorService`; postpone unless a functional change needs it. |
+| P3 | `TASK-BAT-COLLECTOR-STRUCT-002-COMMANDQUEUE` | Deferred | Split command queue execution from `BatteryCollectorService`; postpone unless command feature work becomes risky without it. |
+| P3 | `TASK-BAT-DIR-STRUCT-001` | Deferred | Broader package/directory reshaping; only apply incrementally when adding new feature files, not as a standalone reshuffle. |
+
+### 17.3 Next recommended task
+
+Start with `TASK-BAT-FUNC-SNAPSHOT-001` and `TASK-BAT-FUNC-FRESHNESS-001` as one small functional slice if the existing snapshot service already has the needed extension points. If the current code requires larger changes, split them:
+
+1. `TASK-BAT-FUNC-FRESHNESS-001A`: add unit-tested cell merge/fill helper with `batSinSize` and modelNum ordering.
+2. `TASK-BAT-FUNC-SNAPSHOT-001A`: wire the helper into snapshot refresh after realtime persistence.
+3. `TASK-BAT-FUNC-MODBUS-CACHE-001A`: verify Modbus reads consume the refreshed snapshot under high-frequency access.
