@@ -168,7 +168,7 @@ public class BatteryModuleRealtimeSnapshotService {
 
         merged = sorted(merged);
         Map<Integer, BatteryModuleCellRealtime> cellMap = toCellMap(merged);
-        Set<Integer> missingNums = resolveMissingNums(batSinSize, merged.size());
+        Set<Integer> missingNums = resolveMissingNums(batSinSize, merged.size(), staleNums);
         return BatteryModuleRealtimeSnapshot.builder()
                 .packNum(packNum)
                 .batSinSize(batSinSize)
@@ -206,7 +206,7 @@ public class BatteryModuleRealtimeSnapshotService {
                     .cellMap(cellMap)
                     .currentBatchCellNums(Collections.emptySet())
                     .staleCellNums(Collections.emptySet())
-                    .missingCellNums(resolveMissingNums(batSinSize, selected.size()))
+                    .missingCellNums(resolveMissingNums(batSinSize, selected.size(), Collections.emptySet()))
                     .cellMissCounts(missCounts)
                     .refreshedAt(new Date())
                     .build();
@@ -273,14 +273,15 @@ public class BatteryModuleRealtimeSnapshotService {
         return new ArrayList<>(cells.subList(0, batSinSize));
     }
 
-    private Set<Integer> resolveMissingNums(Integer batSinSize, int selectedSize) {
-        if (batSinSize == null || batSinSize <= selectedSize) {
+    /**
+     * 解析当前仍缺失的单体编号。
+     * batSinSize 只表示组内单体数量，不代表单体编号必须落在 1..batSinSize；
+     * 因此不能凭数量反推编号，只能记录已经明确连续缺采的历史编号。
+     */
+    private Set<Integer> resolveMissingNums(Integer batSinSize, int selectedSize, Set<Integer> staleNums) {
+        if (batSinSize == null || batSinSize <= 0 || selectedSize >= batSinSize) {
             return Collections.emptySet();
         }
-        Set<Integer> missing = new LinkedHashSet<>();
-        for (int i = selectedSize + 1; i <= batSinSize; i++) {
-            missing.add(i);
-        }
-        return missing;
+        return staleNums == null ? Collections.emptySet() : new LinkedHashSet<>(staleNums);
     }
 }

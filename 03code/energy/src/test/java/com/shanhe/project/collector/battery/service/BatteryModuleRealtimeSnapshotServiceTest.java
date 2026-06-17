@@ -95,6 +95,32 @@ class BatteryModuleRealtimeSnapshotServiceTest {
         Assertions.assertEquals(Arrays.asList(2, 4, 6), nums(snapshot.getCells()));
     }
 
+    @Test
+    void shouldNotTreatBatSinSizeAsModelNumRangeWhenResolvingMissingCells() {
+        BatteryModulePollContext current = BatteryModulePollContext.builder()
+                .pollBatchNo("batch-2")
+                .cells(Arrays.asList(cell(2), cell(4), cell(6)))
+                .groups(Collections.emptyList())
+                .build();
+        BatteryModuleRealtimeSnapshot previous = BatteryModuleRealtimeSnapshot.builder()
+                .packNum(1)
+                .batSinSize(3)
+                .cells(Arrays.asList(cell(2), cell(4), cell(6)))
+                .cellMap(map(Arrays.asList(cell(2), cell(4), cell(6))))
+                .cellMissCounts(Collections.emptyMap())
+                .build();
+
+        BatteryModuleRealtimeSnapshot snapshot = service.buildSnapshot(
+                1,
+                current,
+                Arrays.asList(cell(2), cell(4), cell(6)),
+                null,
+                previous);
+
+        Assertions.assertEquals(Arrays.asList(2, 4, 6), nums(snapshot.getCells()));
+        Assertions.assertTrue(snapshot.getMissingCellNums().isEmpty());
+    }
+
     private BatteryModuleCellRealtime cell(int batNum) {
         BatteryModuleCellRealtime cell = new BatteryModuleCellRealtime();
         cell.setPackNum(1);
