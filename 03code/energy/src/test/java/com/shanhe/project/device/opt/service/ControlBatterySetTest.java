@@ -1,8 +1,13 @@
 package com.shanhe.project.device.opt.service;
 
 import com.shanhe.framework.web.domain.AjaxResult;
+import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
+import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
+import com.shanhe.project.device.config.domain.BatteryMonitor;
+import com.shanhe.project.device.config.domain.BatteryReportLog;
+import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.device.host.service.IHostService;
 import com.shanhe.project.device.opt.vo.BatterySetVO;
 import org.junit.jupiter.api.Assertions;
@@ -14,6 +19,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -162,5 +168,84 @@ class ControlBatterySetTest {
         Assertions.assertEquals(1, violations.size());
         request.setBuzzerStatus(1);
         Assertions.assertTrue(validator.validate(request, BatterySetVO.cmd39.class).isEmpty());
+    }
+
+    @Test
+    void shouldUseRealtimeResistanceValueWhenSwitchEnabled() {
+        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
+        BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
+        Mockito.when(reportLogService.resistanceValue(1)).thenReturn(50L);
+        Mockito.when(adapterService.buildReportLog(1)).thenReturn(reportLog(100, 120));
+        ControlBatterySet service = resistanceValueService(true, reportLogService, adapterService);
+
+        AjaxResult result = service.resistanceValue(request(1));
+
+        Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertEquals(110L, result.get(AjaxResult.DATA_TAG));
+        Mockito.verify(adapterService).buildReportLog(1);
+        Mockito.verify(reportLogService, Mockito.never()).resistanceValue(1);
+    }
+
+    @Test
+    void shouldFallbackLegacyResistanceValueWhenRealtimeHasNoCells() {
+        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
+        BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
+        Mockito.when(reportLogService.resistanceValue(1)).thenReturn(60L);
+        Mockito.when(adapterService.buildReportLog(1)).thenReturn(new BatteryReportLog());
+        ControlBatterySet service = resistanceValueService(true, reportLogService, adapterService);
+
+        AjaxResult result = service.resistanceValue(request(1));
+
+        Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertEquals(60L, result.get(AjaxResult.DATA_TAG));
+        Mockito.verify(adapterService).buildReportLog(1);
+        Mockito.verify(reportLogService).resistanceValue(1);
+    }
+
+    @Test
+    void shouldKeepLegacyResistanceValueWhenRealtimeSwitchDisabled() {
+        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
+        BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
+        Mockito.when(reportLogService.resistanceValue(1)).thenReturn(70L);
+        ControlBatterySet service = resistanceValueService(false, reportLogService, adapterService);
+
+        AjaxResult result = service.resistanceValue(request(1));
+
+        Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertEquals(70L, result.get(AjaxResult.DATA_TAG));
+        Mockito.verifyNoInteractions(adapterService);
+        Mockito.verify(reportLogService).resistanceValue(1);
+    }
+
+    private ControlBatterySet resistanceValueService(boolean realtimeEnabled,
+                                                     BatteryReportLogService reportLogService,
+                                                     BatteryModuleReportLogAdapterService adapterService) {
+        ControlBatterySet service = new ControlBatterySet();
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        properties.setJsonTcpRealtimeSourceEnabled(realtimeEnabled);
+        ReflectionTestUtils.setField(service, "batteryCollectorProperties", properties);
+        ReflectionTestUtils.setField(service, "batteryReportLogService", reportLogService);
+        ReflectionTestUtils.setField(service, "batteryModuleReportLogAdapterService", adapterService);
+        return service;
+    }
+
+    private BatterySetVO request(Integer packNum) {
+        BatterySetVO request = new BatterySetVO();
+        request.setPackNum(packNum);
+        return request;
+    }
+
+    private BatteryReportLog reportLog(Integer... resistances) {
+        BatteryReportLog reportLog = new BatteryReportLog();
+        reportLog.setBatteryList(Arrays.asList(Arrays.stream(resistances)
+                .map(this::monitor)
+                .toArray(BatteryMonitor[]::new)));
+        return reportLog;
+    }
+
+    private BatteryMonitor monitor(Integer resistance) {
+        BatteryMonitor monitor = new BatteryMonitor();
+        monitor.setResistance(resistance);
+        return monitor;
     }
 }

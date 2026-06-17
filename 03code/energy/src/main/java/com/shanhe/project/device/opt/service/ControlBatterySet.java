@@ -3,11 +3,15 @@ package com.shanhe.project.device.opt.service;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.consts.SysConst;
 import com.shanhe.framework.web.domain.AjaxResult;
+import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
+import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.UNSIGNED_SHORT_MAX;
+import com.shanhe.project.device.config.domain.BatteryMonitor;
 import com.shanhe.project.device.config.domain.BatteryPack;
+import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.device.config.domain.ConfigAttribute;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.device.config.service.IBatteryPackService;
@@ -40,6 +44,10 @@ public class ControlBatterySet extends ControlBase {
 
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    @Resource
+    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
+    @Resource
+    private BatteryCollectorProperties batteryCollectorProperties;
     @Resource
     private IConfigAttributeService configAttributeService;
     @Resource
@@ -190,7 +198,7 @@ public class ControlBatterySet extends ControlBase {
      * @return 基准值
      */
     public AjaxResult resistanceValue(BatterySetVO batterySetVO) {
-        return AjaxResult.success(batteryReportLogService.resistanceValue(batterySetVO.getPackNum()));
+        return AjaxResult.success(getCurrentResistanceValue(batterySetVO.getPackNum()));
     }
 
     /**
@@ -413,6 +421,40 @@ public class ControlBatterySet extends ControlBase {
     /**
      * 清除编号数据
      */
+    /**
+     * 读取内阻基准页使用的当前平均内阻。
+     * <p>
+     * 标准实时切源开启时优先按 600 实时快照单体内阻计算，缺少单体数据时回退旧上报缓存。
+     */
+    private Long getCurrentResistanceValue(Integer packNum) {
+        if (Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
+            try {
+                Long realtimeValue = averageResistance(batteryModuleReportLogAdapterService.buildReportLog(packNum));
+                if (realtimeValue != null) {
+                    return realtimeValue;
+                }
+            } catch (Exception e) {
+                log.warn("读取标准实时内阻基准数据失败, packNum={}", packNum, e);
+            }
+        }
+        return batteryReportLogService.resistanceValue(packNum);
+    }
+
+    /** 按旧上报缓存语义计算单体平均内阻，空内阻按 0 参与平均。 */
+    private Long averageResistance(BatteryReportLog reportLog) {
+        if (reportLog == null || reportLog.getBatteryList() == null || reportLog.getBatteryList().isEmpty()) {
+            return null;
+        }
+        double resistanceValue = 0;
+        for (BatteryMonitor battery : reportLog.getBatteryList()) {
+            if (battery != null && battery.getResistance() != null) {
+                resistanceValue += battery.getResistance();
+            }
+        }
+        return Math.round(resistanceValue / reportLog.getBatteryList().size());
+    }
+
+    /** 清除指定电池组的编号状态缓存。 */
     public AjaxResult clearModelNum(Integer packNum) {
         batteryModeStatusService.clear(packNum);
         return AjaxResult.success();
