@@ -51,7 +51,7 @@ class BatteryModuleRealtimeAdapterServiceTest {
         cell.setBatNum(3);
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
         group.setPackNum(1);
-        Mockito.when(snapshotService.getSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
                 .packNum(1)
                 .cells(Arrays.asList(cell))
                 .group(group)
@@ -62,8 +62,26 @@ class BatteryModuleRealtimeAdapterServiceTest {
 
         Assertions.assertEquals(3, service.getCellRealtime(1).get(0).getBatNum());
         Assertions.assertSame(group, service.getGroupRealtime(1));
+        Mockito.verify(snapshotService, Mockito.times(2)).getCachedSnapshot(1);
+        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
         Mockito.verify(mapper, Mockito.never()).selectCells(1);
         Mockito.verify(mapper, Mockito.never()).selectGroup(1);
+    }
+
+    @Test
+    void shouldReturnNullWithoutMapperQueryWhenSnapshotCacheMisses() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(null);
+
+        BatteryModuleRealtimeAdapterService service = newService(true, mapper);
+        ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
+
+        Assertions.assertNull(service.getCellRealtime(1));
+        Assertions.assertNull(service.getGroupRealtime(1));
+        Mockito.verify(snapshotService, Mockito.times(2)).getCachedSnapshot(1);
+        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
+        Mockito.verifyNoInteractions(mapper);
     }
 
     @Test

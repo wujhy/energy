@@ -53,7 +53,10 @@ public class BatteryModuleRealtimeAdapterService {
         }
         try {
             com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot snapshot =
-                    snapshotService == null ? null : snapshotService.getSnapshot(packNum);
+                    snapshotService == null ? null : snapshotService.getCachedSnapshot(packNum);
+            if (snapshotService != null && snapshot == null) {
+                return null;
+            }
             List<BatteryModuleCellRealtime> cells = snapshot == null ? realtimeMapper.selectCells(packNum) : snapshot.getCells();
             return (cells != null && !cells.isEmpty()) ? cells : null;
         } catch (Exception e) {
@@ -74,7 +77,10 @@ public class BatteryModuleRealtimeAdapterService {
         }
         try {
             com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot snapshot =
-                    snapshotService == null ? null : snapshotService.getSnapshot(packNum);
+                    snapshotService == null ? null : snapshotService.getCachedSnapshot(packNum);
+            if (snapshotService != null && snapshot == null) {
+                return null;
+            }
             return snapshot == null ? realtimeMapper.selectGroup(packNum) : snapshot.getGroup();
         } catch (Exception e) {
             log.warn("查询标准组实时数据失败, packNum={}", packNum, e);

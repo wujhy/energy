@@ -6,8 +6,12 @@ import com.shanhe.project.device.config.domain.BatteryMonitor;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.shanhe.common.constant.Constants;
+import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -84,6 +88,46 @@ class BatteryModuleReportLogAdapterServiceTest {
         Assertions.assertTrue(reportLog.getBatteryList().isEmpty());
         Assertions.assertEquals("{}", reportLog.getPackData());
         Assertions.assertEquals("[]", reportLog.getMonitorData());
+    }
+
+    @Test
+    void shouldBuildFromCachedSnapshotWithoutMapperQueries() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackVoltage(220.0d);
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
+                .packNum(1)
+                .group(group)
+                .cells(Arrays.asList(cell(1, 2.10d, 100, 25.0d)))
+                .build());
+        ReflectionTestUtils.setField(service, "realtimeMapper", mapper);
+        ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
+
+        BatteryReportLog reportLog = service.buildReportLog(1);
+
+        Assertions.assertEquals("220.0", reportLog.getPackParam().get("packVoltage"));
+        Assertions.assertEquals(1, reportLog.getBatteryList().size());
+        Mockito.verify(snapshotService).getCachedSnapshot(1);
+        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
+        Mockito.verifyNoInteractions(mapper);
+    }
+
+    @Test
+    void shouldReturnEmptyShapeWithoutMapperQueryWhenSnapshotCacheMisses() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(null);
+        ReflectionTestUtils.setField(service, "realtimeMapper", mapper);
+        ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
+
+        BatteryReportLog reportLog = service.buildReportLog(1);
+
+        Assertions.assertTrue(reportLog.getPackParam().isEmpty());
+        Assertions.assertTrue(reportLog.getBatteryList().isEmpty());
+        Mockito.verify(snapshotService).getCachedSnapshot(1);
+        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
+        Mockito.verifyNoInteractions(mapper);
     }
 
     @Test

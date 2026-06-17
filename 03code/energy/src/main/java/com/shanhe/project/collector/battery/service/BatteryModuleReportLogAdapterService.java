@@ -41,7 +41,10 @@ public class BatteryModuleReportLogAdapterService {
      */
     public BatteryReportLog buildReportLog(Integer packNum) {
         com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot snapshot =
-                snapshotService == null ? null : snapshotService.getSnapshot(packNum);
+                snapshotService == null ? null : snapshotService.getCachedSnapshot(packNum);
+        if (snapshotService != null && snapshot == null) {
+            return buildReportLog(packNum, null, null);
+        }
         BatteryModuleGroupRealtime group = snapshot == null ? realtimeMapper.selectGroup(packNum) : snapshot.getGroup();
         List<BatteryModuleCellRealtime> cells = snapshot == null ? realtimeMapper.selectCells(packNum) : snapshot.getCells();
         return buildReportLog(packNum, group, cells);
