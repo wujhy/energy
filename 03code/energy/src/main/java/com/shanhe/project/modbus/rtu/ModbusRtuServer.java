@@ -3,6 +3,8 @@ package com.shanhe.project.modbus.rtu;
 import com.fazecast.jSerialComm.SerialPort;
 import com.shanhe.project.collector.battery.service.BatteryModuleModbusReadMappingService;
 import com.shanhe.project.modbus.config.ModbusRtuProperties;
+import com.shanhe.project.modbus.service.ModbusIllegalDataAddressException;
+import com.shanhe.project.modbus.service.ModbusIllegalDataValueException;
 import com.shanhe.project.modbus.service.ModbusWriteMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -202,13 +204,12 @@ public class ModbusRtuServer implements ApplicationRunner {
             } else {
                 sendException(stationAddress, functionCode, EXCEPTION_SLAVE_DEVICE_FAILURE);
             }
+        } catch (ModbusIllegalDataValueException e) {
+            sendException(stationAddress, functionCode, EXCEPTION_ILLEGAL_DATA_VALUE);
+        } catch (ModbusIllegalDataAddressException e) {
+            sendException(stationAddress, functionCode, EXCEPTION_ILLEGAL_DATA_ADDRESS);
         } catch (IllegalArgumentException e) {
-            String msg = e.getMessage();
-            if (msg != null && (msg.contains("超出范围") || msg.contains("无效"))) {
-                sendException(stationAddress, functionCode, EXCEPTION_ILLEGAL_DATA_VALUE);
-            } else {
-                sendException(stationAddress, functionCode, EXCEPTION_ILLEGAL_DATA_ADDRESS);
-            }
+            sendException(stationAddress, functionCode, EXCEPTION_ILLEGAL_DATA_VALUE);
         } catch (Exception e) {
             log.warn("Modbus RTU 写入异常: {}", e.getMessage());
             sendException(stationAddress, functionCode, EXCEPTION_SLAVE_DEVICE_FAILURE);

@@ -41,11 +41,11 @@ class ModbusWriteMappingServiceTest {
     void shouldRejectUnsupportedWriteRegister() {
         ModbusWriteMappingService service = service(Mockito.mock(BatteryCollectorCommandService.class));
 
-        Assertions.assertThrows(IllegalArgumentException.class,
+        Assertions.assertThrows(ModbusIllegalDataAddressException.class,
                 () -> service.writeSingleRegister(1, 404901, 1));
-        Assertions.assertThrows(IllegalArgumentException.class,
+        Assertions.assertThrows(ModbusIllegalDataAddressException.class,
                 () -> service.writeSingleRegister(1, 404902, 1));
-        Assertions.assertThrows(IllegalArgumentException.class,
+        Assertions.assertThrows(ModbusIllegalDataAddressException.class,
                 () -> service.writeSingleRegister(1, 410004, 1));
     }
 
@@ -54,9 +54,9 @@ class ModbusWriteMappingServiceTest {
         BatteryCollectorCommandService commandService = Mockito.mock(BatteryCollectorCommandService.class);
         ModbusWriteMappingService service = service(commandService);
 
-        Assertions.assertThrows(IllegalArgumentException.class,
+        Assertions.assertThrows(ModbusIllegalDataAddressException.class,
                 () -> service.writeSingleRegister(1, 404921, 8));
-        Assertions.assertThrows(IllegalArgumentException.class,
+        Assertions.assertThrows(ModbusIllegalDataAddressException.class,
                 () -> service.writeSingleRegister(1, 404922, 8));
         Mockito.verifyNoInteractions(commandService);
     }
@@ -65,15 +65,15 @@ class ModbusWriteMappingServiceTest {
     void shouldRejectInvalidRegisterValuePackNumAndModelNum() {
         ModbusWriteMappingService service = service(Mockito.mock(BatteryCollectorCommandService.class));
 
-        Assertions.assertThrows(IllegalArgumentException.class,
+        Assertions.assertThrows(ModbusIllegalDataValueException.class,
                 () -> service.writeSingleRegister(null, 404915, 0x0101));
-        Assertions.assertThrows(IllegalArgumentException.class,
+        Assertions.assertThrows(ModbusIllegalDataValueException.class,
                 () -> service.writeSingleRegister(1, 404915, -1));
-        Assertions.assertThrows(IllegalArgumentException.class,
+        Assertions.assertThrows(ModbusIllegalDataValueException.class,
                 () -> service.writeSingleRegister(1, 404915, 0x1_0000));
-        Assertions.assertThrows(IllegalArgumentException.class,
+        Assertions.assertThrows(ModbusIllegalDataValueException.class,
                 () -> service.writeSingleRegister(1, 404915, 0x0100));
-        Assertions.assertThrows(IllegalArgumentException.class,
+        Assertions.assertThrows(ModbusIllegalDataValueException.class,
                 () -> service.writeSingleRegister(1, 404915, 0x01F6));
     }
 
@@ -83,7 +83,7 @@ class ModbusWriteMappingServiceTest {
         Mockito.when(commandService.resolveChannelName(1)).thenReturn(null);
         ModbusWriteMappingService service = service(commandService);
 
-        Assertions.assertThrows(IllegalArgumentException.class,
+        Assertions.assertThrows(ModbusIllegalDataAddressException.class,
                 () -> service.writeSingleRegister(1, 404915, 0x0101));
     }
 

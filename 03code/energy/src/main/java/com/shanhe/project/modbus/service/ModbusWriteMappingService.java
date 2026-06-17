@@ -42,15 +42,15 @@ public class ModbusWriteMappingService {
      */
     public boolean writeSingleRegister(Integer packNum, int referenceAddress, int value) {
         if (packNum == null || packNum <= 0) {
-            throw new IllegalArgumentException("电池组编号无效");
+            throw new ModbusIllegalDataValueException("电池组编号无效");
         }
         if (value < 0 || value > UNSIGNED_SHORT_MAX) {
-            throw new IllegalArgumentException("写入值超出范围: " + value);
+            throw new ModbusIllegalDataValueException("写入值超出范围: " + value);
         }
         if (referenceAddress == BALANCE_REGISTER) {
             return writeBalance(packNum, value);
         }
-        throw new IllegalArgumentException("不支持的写寄存器地址: " + referenceAddress);
+        throw new ModbusIllegalDataAddressException("不支持的写寄存器地址: " + referenceAddress);
     }
 
     /** 写单体均衡控制。 */
@@ -58,11 +58,11 @@ public class ModbusWriteMappingService {
         int balanceValue = (value >> 8) & 0xFF;
         int modelNum = value & 0xFF;
         if (modelNum < 1 || modelNum > 245) {
-            throw new IllegalArgumentException("单体地址超出范围: " + modelNum);
+            throw new ModbusIllegalDataValueException("单体地址超出范围: " + modelNum);
         }
         String channelName = commandService.resolveChannelName(packNum);
         if (channelName == null) {
-            throw new IllegalArgumentException("未找到电池组 " + packNum + " 对应的采集通道");
+            throw new ModbusIllegalDataAddressException("未找到电池组 " + packNum + " 对应的采集通道");
         }
         BatteryCollectorCommandResult result = commandService.singleBatteryBalance(
                 channelName, packNum, modelNum, balanceValue, null);
