@@ -89,6 +89,42 @@ class AlarmLogServiceImplTest {
     }
 
     @Test
+    void shouldAppendCommunicationStateAlarmsToCacheAlarmListAndBatteryAlarmNum() {
+        Mockito.when(batteryDeviceStateService.selectList(Mockito.any(BatteryDeviceState.class))).thenReturn(Arrays.asList(
+                state(2, null, BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, "stale",
+                        BatteryDeviceStateConstants.StateLevel.WARN),
+                state(3, null, BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, "open failed",
+                        BatteryDeviceStateConstants.StateLevel.ERROR)));
+
+        List<AlarmLog> alarmLogs = service.cacheAlarmList();
+
+        Assertions.assertEquals(2, alarmLogs.size());
+        Assertions.assertEquals(2L, service.batteryAlarmNum());
+        Assertions.assertTrue(alarmLogs.stream().anyMatch(log -> Integer.valueOf(2).equals(log.getPackNum())
+                && ItemCode.TXZT.getCode().equals(log.getItemCode())));
+        Assertions.assertTrue(alarmLogs.stream().anyMatch(log -> Integer.valueOf(3).equals(log.getPackNum())
+                && ItemCode.DTTXZT.getCode().equals(log.getItemCode())));
+    }
+
+    @Test
+    void shouldNotDoubleCountStateAlarmWhenSameCachedAlarmExistsInBatteryAlarmNum() {
+        AlarmLog cachedAlarm = new AlarmLog();
+        cachedAlarm.setPackNum(2);
+        cachedAlarm.setModelNum(null);
+        cachedAlarm.setItemCode(ItemCode.TXZT.getCode());
+        cachedAlarm.setStatus(YesNoEnum.NO.getDictValue());
+        CacheUtils.put(CacheKeyEnum.ALARM.getCache(),
+                String.format(CacheKeyEnum.ALARM.getKey(), 2, null, ItemCode.TXZT.getCode()),
+                cachedAlarm);
+        Mockito.when(batteryDeviceStateService.selectList(Mockito.any(BatteryDeviceState.class))).thenReturn(Collections.singletonList(
+                state(2, null, BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, "stale",
+                        BatteryDeviceStateConstants.StateLevel.WARN)));
+
+        Assertions.assertEquals(1L, service.batteryAlarmNum());
+        Assertions.assertEquals(1, service.cacheAlarmList().size());
+    }
+
+    @Test
     void shouldIgnoreRecoveredCommunicationStates() {
         Mockito.when(batteryDeviceStateService.selectByPackNum(2)).thenReturn(Arrays.asList(
                 state(2, null, BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, "cleared",

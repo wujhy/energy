@@ -141,19 +141,10 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
      */
     @Override
     public Long batteryAlarmNum() {
-        Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
-        long num = 0L;
-        String prefix = "alarm:";
-        for (String key : keys) {
-            if (!StrUtil.startWith(key, prefix)) {
-                continue;
-            }
-            AlarmLog alarmLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
-            if (Objects.equals(alarmLog.getStatus(), YesNoEnum.NO.getDictValue())) {
-                num++;
-            }
-        }
-        return num;
+        return selectBatteryAlarmLogListCache(null).stream()
+                .filter(alarmLog -> alarmLog != null
+                        && Objects.equals(alarmLog.getStatus(), YesNoEnum.NO.getDictValue()))
+                .count();
     }
 
     /**
@@ -220,9 +211,15 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     public List<AlarmLog> cacheAlarmList() {
         List<AlarmLog> alarmLogList = new ArrayList<>();
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
+        Set<String> existingKeys = new HashSet<>();
         for (String key : keys) {
-            alarmLogList.add((AlarmLog) CacheUtils.get(alarmCache.getCache(), key));
+            AlarmLog alarmLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
+            alarmLogList.add(alarmLog);
+            if (alarmLog != null && StrUtil.startWith(key, "alarm:")) {
+                existingKeys.add(communicationAlarmKey(alarmLog));
+            }
         }
+        alarmLogList.addAll(buildStateCommunicationAlarms(null, existingKeys));
         return alarmLogList;
     }
 
