@@ -67,7 +67,7 @@ class BatteryCurrentStateServiceTest {
         group.setOnlineCellCount(2);
         BatteryModuleCellRealtime cellTwo = cell(1, 2, 2.12d);
         BatteryModuleCellRealtime cellOne = cell(1, 1, 2.10d);
-        Mockito.when(snapshotService.getSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
                 .packNum(1)
                 .batSinSize(2)
                 .group(group)
@@ -102,6 +102,8 @@ class BatteryCurrentStateServiceTest {
         Assertions.assertEquals("batteryOvercharge", state.getAlarms().get(0).getItemCode());
         Mockito.verify(realtimeMapper, Mockito.never()).selectGroup(1);
         Mockito.verify(realtimeMapper, Mockito.never()).selectCells(1);
+        Mockito.verify(snapshotService).getCachedSnapshot(1);
+        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
     }
 
     @Test
@@ -116,7 +118,7 @@ class BatteryCurrentStateServiceTest {
         group.setPackNum(1);
         group.setPollBatchNo("batch-db");
         group.setDataFresh(true);
-        Mockito.when(snapshotService.getSnapshot(1)).thenReturn(null);
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(null);
         Mockito.when(realtimeMapper.selectGroup(1)).thenReturn(group);
         Mockito.when(realtimeMapper.selectCells(1)).thenReturn(Arrays.asList(cell(1, 1, 2.10d), cell(1, 2, 2.11d)));
 
@@ -125,7 +127,8 @@ class BatteryCurrentStateServiceTest {
         Assertions.assertEquals(BatteryCurrentState.FRESHNESS_FRESH, state.getFreshness());
         Assertions.assertEquals("batch-db", state.getLastPollBatchNo());
         Assertions.assertEquals(2, state.getCells().size());
-        Mockito.verify(snapshotService).getSnapshot(1);
+        Mockito.verify(snapshotService).getCachedSnapshot(1);
+        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
         Mockito.verify(realtimeMapper).selectGroup(1);
         Mockito.verify(realtimeMapper).selectCells(1);
     }
