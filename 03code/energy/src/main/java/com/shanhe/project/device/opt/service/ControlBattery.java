@@ -9,6 +9,8 @@ import com.shanhe.common.utils.DateUtils;
 import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.enums.*;
 import com.shanhe.framework.web.domain.AjaxResult;
+import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
+import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.device.alarm.domain.AlarmLog;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.*;
@@ -49,6 +51,10 @@ public class ControlBattery extends ControlBase {
     private ClientReportService clientReportService;
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    @Resource
+    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
+    @Resource
+    private BatteryCollectorProperties batteryCollectorProperties;
     @Resource
     private ControlBatterySet controlBatterySet;
     @Resource
@@ -124,7 +130,7 @@ public class ControlBattery extends ControlBase {
         Config config = this.getConfig(opt);
         BatteryTestEnum testEnum = BatteryTestEnum.find(opt.getTestType());
 
-        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(opt.getPackNum());
+        BatteryReportLog batteryReportLog = getCurrentReportLog(opt.getPackNum());
         if (null == batteryReportLog) {
             return AjaxResult.error("暂无上报数据", 0);
         }
@@ -243,7 +249,7 @@ public class ControlBattery extends ControlBase {
         // 停止内阻测试
         if (Objects.equals(opt.getTestType(), BatteryTestEnum._1.getDictValue())) {
 
-            BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(opt.getPackNum());
+            BatteryReportLog batteryReportLog = getCurrentReportLog(opt.getPackNum());
 
             // 无数据上报结束
             if (null == batteryReportLog || null == batteryReportLog.getPackParam()) {
@@ -300,6 +306,25 @@ public class ControlBattery extends ControlBase {
             throw new ServiceException("该电池组不允许测试！");
         }
         return config;
+    }
+
+    /**
+     * 读取测试控制前置判断使用的当前上报数据。
+     * <p>
+     * 标准实时切源开启时优先读取 600 实时快照适配结果，缺少组参数时回退旧上报缓存。
+     */
+    private BatteryReportLog getCurrentReportLog(Integer packNum) {
+        if (Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
+            try {
+                BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
+                if (realtimeLog != null && realtimeLog.getPackParam() != null && !realtimeLog.getPackParam().isEmpty()) {
+                    return realtimeLog;
+                }
+            } catch (Exception e) {
+                log.warn("读取标准实时控制判断数据失败, packNum={}", packNum, e);
+            }
+        }
+        return batteryReportLogService.lastCache(packNum);
     }
 
     /**
