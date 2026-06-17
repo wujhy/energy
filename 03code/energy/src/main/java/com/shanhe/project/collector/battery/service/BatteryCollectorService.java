@@ -224,9 +224,9 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             BatteryCollectorChannelConfig config = state.getConfig();
             if (config != null && channelName.equals(config.getName())) {
                 applyCommandChannelContext(config, command);
-                markModeRunning(command);
                 Long optLogId = commandLogService.createCommandOptLog(config, command);
                 command.setOptLogId(optLogId);
+                markModeRunning(command);
                 if (!state.getQueuedModuleCommands().offer(command)) {
                     markModeStopped(command, false);
                     commandLogService.updateCommandOptLog(optLogId, BatteryDeviceStateConstants.CommandStatus.REJECTED, null, null);
@@ -267,7 +267,8 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         batteryModeStatusService.markRunning(
                 command.getBatteryGroup(),
                 command.getMode(),
-                command.getAddress());
+                command.getAddress(),
+                command.getOptLogId());
     }
 
     /** 校验通道配置的名称、串口、地址和电池组编号是否有效。 */
@@ -1091,7 +1092,8 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 command.getBatteryGroup(),
                 command.getMode(),
                 modeAddress(command),
-                success);
+                success,
+                command.getOptLogId());
     }
 
     private boolean shouldStopModeAfterNoResponseCommand(BatteryModuleControlCommand command) {
@@ -1126,7 +1128,8 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 pendingRequest.getBatteryGroup(),
                 pendingRequest.getMode(),
                 pendingRequest.getRequestAddress(),
-                success);
+                success,
+                pendingRequest.getOptLogId());
     }
 
     /** 记录已完成模块命令的状态。 */

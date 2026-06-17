@@ -776,6 +776,43 @@ class BatteryCollectorServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void shouldPersistRunningWorkModeWithCommandOptLogId() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        injectCommandLogMapper(optLogMapper);
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        ReflectionTestUtils.setField(modeStatusService, "batteryDeviceStateService", stateService);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setName("battery-group-1");
+        channelConfig.setConfigId(1L);
+        channelConfig.setBatteryGroup(2);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        List<BatteryCollectorChannelState> channelStates =
+                (List<BatteryCollectorChannelState>) ReflectionTestUtils.getField(service, "channelStates");
+        channelStates.add(state);
+
+        boolean queued = service.submitModuleCommand("battery-group-1", BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST)
+                .address(8)
+                .requestCode(0x02)
+                .responseCode(0x82)
+                .payload(new byte[]{0x01})
+                .mode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE)
+                .build());
+
+        Assertions.assertTrue(queued);
+        ArgumentCaptor<OptLog> optLogCaptor = ArgumentCaptor.forClass(OptLog.class);
+        Mockito.verify(optLogMapper).insert(optLogCaptor.capture());
+        ArgumentCaptor<BatteryDeviceState> stateCaptor = ArgumentCaptor.forClass(BatteryDeviceState.class);
+        Mockito.verify(stateService).upsert(stateCaptor.capture());
+        Assertions.assertEquals(optLogCaptor.getValue().getId(), stateCaptor.getValue().getOptLogId());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateCode.WORK_MODE, stateCaptor.getValue().getStateCode());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateLevel.RUNNING, stateCaptor.getValue().getStateLevel());
+    }
+
+    @Test
     void shouldCreateCommandOptLogWithNullRequestPayloadForEmptyPayload() {
         OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
         injectCommandLogMapper(optLogMapper);

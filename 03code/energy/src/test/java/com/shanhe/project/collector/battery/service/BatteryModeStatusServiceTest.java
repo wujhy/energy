@@ -1,8 +1,12 @@
 package com.shanhe.project.collector.battery.service;
 
+import com.shanhe.project.collector.battery.model.BatteryDeviceState;
+import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.HashMap;
@@ -54,6 +58,22 @@ class BatteryModeStatusServiceTest {
         Assertions.assertEquals(2, modeInfo.getLastPackNum());
         Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, modeInfo.getLastMode());
         Assertions.assertEquals(8, modeInfo.getLastAddress());
+    }
+
+    @Test
+    void shouldPersistWorkModeWithOptLogId() {
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+
+        service.markRunning(2, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8, 123L);
+        service.markStopped(2, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8, true, 123L);
+
+        ArgumentCaptor<BatteryDeviceState> captor = ArgumentCaptor.forClass(BatteryDeviceState.class);
+        Mockito.verify(stateService, Mockito.times(2)).upsert(captor.capture());
+        Assertions.assertEquals(123L, captor.getAllValues().get(0).getOptLogId());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateLevel.RUNNING, captor.getAllValues().get(0).getStateLevel());
+        Assertions.assertEquals(123L, captor.getAllValues().get(1).getOptLogId());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateLevel.NORMAL, captor.getAllValues().get(1).getStateLevel());
     }
 
     @Test

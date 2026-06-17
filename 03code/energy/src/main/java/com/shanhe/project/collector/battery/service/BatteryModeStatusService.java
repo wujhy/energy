@@ -100,6 +100,18 @@ public class BatteryModeStatusService {
      * @param address 目标模块地址
      */
     public void markRunning(Integer packNum, int mode, Integer address) {
+        markRunning(packNum, mode, address, null);
+    }
+
+    /**
+     * 标记指定电池组进入测试/维护运行状态，并关联操作日志。
+     *
+     * @param packNum 电池组编号
+     * @param mode 工作模式类型
+     * @param address 目标模块地址
+     * @param optLogId 操作日志ID
+     */
+    public void markRunning(Integer packNum, int mode, Integer address, Long optLogId) {
         BatteryModeInfo batteryModeInfo = new BatteryModeInfo();
         batteryModeInfo.setPackNum(packNum);
         batteryModeInfo.setResult(0);
@@ -107,7 +119,7 @@ public class BatteryModeStatusService {
         batteryModeInfo.setStatus(STATUS_RUNNING);
         batteryModeInfo.setAddress(address);
         cacheAccessor.put(cacheKeyEnum.getCache(), key(), batteryModeInfo);
-        persistModeState(packNum, mode, address, String.valueOf(mode), BatteryDeviceStateConstants.StateLevel.RUNNING, null);
+        persistModeState(packNum, mode, address, String.valueOf(mode), BatteryDeviceStateConstants.StateLevel.RUNNING, optLogId);
     }
 
     /**
@@ -119,6 +131,19 @@ public class BatteryModeStatusService {
      * @param success 是否成功
      */
     public void markStopped(Integer packNum, int mode, Integer address, boolean success) {
+        markStopped(packNum, mode, address, success, null);
+    }
+
+    /**
+     * 标记指定电池组测试/维护已停止，并关联操作日志。
+     *
+     * @param packNum 电池组编号
+     * @param mode 工作模式类型
+     * @param address 目标模块地址
+     * @param success 是否成功
+     * @param optLogId 操作日志ID
+     */
+    public void markStopped(Integer packNum, int mode, Integer address, boolean success, Long optLogId) {
         BatteryModeInfo previous = getStored();
         BatteryModeInfo batteryModeInfo = new BatteryModeInfo();
         batteryModeInfo.setPackNum(packNum);
@@ -139,7 +164,7 @@ public class BatteryModeStatusService {
         }
         cacheAccessor.put(cacheKeyEnum.getCache(), key(), batteryModeInfo);
         persistModeState(packNum, MODE_IDLE, address, String.valueOf(MODE_IDLE),
-                success ? BatteryDeviceStateConstants.StateLevel.NORMAL : BatteryDeviceStateConstants.StateLevel.WARN, null);
+                success ? BatteryDeviceStateConstants.StateLevel.NORMAL : BatteryDeviceStateConstants.StateLevel.WARN, optLogId);
     }
 
     /**
@@ -181,6 +206,9 @@ public class BatteryModeStatusService {
 
     /** 将工作模式状态持久化到 battery_device_state。 */
     private void persistModeState(Integer packNum, int mode, Integer address, String stateValue, String stateLevel, Long optLogId) {
+        if (batteryDeviceStateService == null) {
+            return;
+        }
         try {
             BatteryDeviceState state = new BatteryDeviceState();
             state.setScopeType(BatteryDeviceStateConstants.ScopeType.PACK);
