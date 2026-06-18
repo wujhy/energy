@@ -2,11 +2,19 @@ package com.shanhe.project.collector.battery.postprocess;
 
 
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
-import com.shanhe.project.collector.battery.service.BatteryModuleCompatReportLogSyncService;
+import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
+import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
+import com.shanhe.project.device.config.domain.BatteryMonitor;
+import com.shanhe.project.device.config.domain.BatteryReportLog;
+import com.shanhe.project.device.config.service.BatteryReportLogService;
+import com.shanhe.project.iot.service.DataService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 兼容历史报告同步处理器。
@@ -21,7 +29,13 @@ public class CompatReportLogSyncProcessor implements BatteryRealtimePostProcesso
     private BatteryCollectorProperties properties;
 
     @Resource
-    private BatteryModuleCompatReportLogSyncService compatReportLogSyncService;
+    private BatteryModuleReportLogAdapterService adapterService;
+
+    @Resource
+    private BatteryReportLogService batteryReportLogService;
+
+    @Resource
+    private DataService dataService;
 
     @Override
     public String getName() {
@@ -38,7 +52,6 @@ public class CompatReportLogSyncProcessor implements BatteryRealtimePostProcesso
         return context != null
                 && properties != null
                 && Boolean.TRUE.equals(properties.getCompatReportLogEnabled())
-                && compatReportLogSyncService != null
                 && context.getChannelConfig() != null
                 && context.getGroup() != null
                 && context.getCells() != null
@@ -49,10 +62,7 @@ public class CompatReportLogSyncProcessor implements BatteryRealtimePostProcesso
     @Override
     public void process(BatteryRealtimePostProcessContext context) {
         try {
-            compatReportLogSyncService.sync(
-                    context.getChannelConfig(),
-                    context.getGroup(),
-                    context.getCells());
+            sync(context.getChannelConfig(), context.getGroup(), context.getCells());
         } catch (Exception e) {
             log.warn("同步蓄电池模块兼容报告日志失败, 通道={}, 电池组={}",
                     context.getChannelConfig() == null ? null : context.getChannelConfig().getName(),
@@ -61,4 +71,29 @@ public class CompatReportLogSyncProcessor implements BatteryRealtimePostProcesso
         }
     }
 
+    /**
+     * 同步本轮采集结果到旧 dev_battery_report_log 历史链路。
+     */
+    private void sync(BatteryCollectorChannelConfig channelConfig,
+                      BatteryModuleGroupRealtime group,
+                      List<BatteryModuleCellRealtime> cells) {
+        if (channelConfig == null || channelConfig.getBatteryGroup() == null) {
+            return;
+        }
+        BatteryReportLog reportLog = adapterService.buildReportLog(
+                channelConfig.getBatteryGroup(), group, cells);
+        if (reportLog == null) {
+            return;
+        }
+        List<BatteryMonitor> batteryList = reportLog.getBatteryList();
+        if (batteryList == null || batteryList.isEmpty()
+                || reportLog.getPackParam() == null || reportLog.getPackParam().isEmpty()) {
+            return;
+        }
+        boolean isInsert = dataService.isInsert(channelConfig.getBatteryGroup() + "");
+        batteryReportLogService.insert(channelConfig.getBatteryGroup(),
+                reportLog.getPackParam(), batteryList, isInsert);
+        log.debug("同步蓄电池模块实时数据到历史记录, 电池组={}, 是否插入={}",
+                channelConfig.getBatteryGroup(), isInsert);
+    }
 }
