@@ -1,5 +1,6 @@
 package com.shanhe.project.collector.battery.service;
 
+import com.shanhe.project.collector.battery.realtime.BatteryModuleGroupCompatibilityFillService;
 import com.shanhe.common.constant.Constants;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;

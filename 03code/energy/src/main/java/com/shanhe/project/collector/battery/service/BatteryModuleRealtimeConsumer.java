@@ -4,6 +4,7 @@ import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
+import com.shanhe.project.collector.battery.realtime.BatteryModuleGroupCalculationService;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryCollectorFrame;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
