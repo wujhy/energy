@@ -1408,31 +1408,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return resolvePositiveInt(properties.getRequestGapMs(), 120);
     }
 
-    int resolveBaudRate(BatteryCollectorChannelConfig config) {
-        Integer value = config == null ? null : config.getBaudRate();
-        return resolvePositiveInt(value, 9600);
-    }
-
-    int resolveDataBits(BatteryCollectorChannelConfig config) {
-        Integer value = config == null ? null : config.getDataBits();
-        return value == null || value < 5 || value > 8 ? 8 : value;
-    }
-
-    int resolveStopBits(BatteryCollectorChannelConfig config) {
-        Integer value = config == null ? null : config.getStopBits();
-        return value == null || value < 1 || value > 3 ? 1 : value;
-    }
-
-    int resolveParity(BatteryCollectorChannelConfig config) {
-        Integer value = config == null ? null : config.getParity();
-        return value == null || value < 0 || value > 4 ? 0 : value;
-    }
-
-    int resolvePortTimeoutMs(BatteryCollectorChannelConfig config) {
-        Integer value = config == null ? null : config.getTimeoutMs();
-        return resolvePositiveInt(value, 1000);
-    }
-
     int resolveModuleAddressStart(BatteryCollectorChannelConfig config) {
         Integer value = config == null ? null : config.getModuleAddressStart();
         int start = value == null || value < 1 || value > 246 ? 1 : value;

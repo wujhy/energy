@@ -147,11 +147,6 @@ class BatteryCollectorServiceTest {
 
         Assertions.assertEquals(300, service.resolveLoopDelayMs());
         Assertions.assertEquals(120, service.resolveRequestGapMs());
-        Assertions.assertEquals(9600, service.resolveBaudRate(channelConfig));
-        Assertions.assertEquals(8, service.resolveDataBits(channelConfig));
-        Assertions.assertEquals(1, service.resolveStopBits(channelConfig));
-        Assertions.assertEquals(0, service.resolveParity(channelConfig));
-        Assertions.assertEquals(1000, service.resolvePortTimeoutMs(channelConfig));
         Assertions.assertEquals(1, service.resolveModuleAddressStart(channelConfig));
         Assertions.assertEquals(246, service.resolveModuleAddressEnd(channelConfig));
         Assertions.assertEquals(3000L, service.resolvePollIntervalMs(channelConfig));
