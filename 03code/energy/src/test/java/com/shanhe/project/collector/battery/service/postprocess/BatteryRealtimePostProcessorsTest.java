@@ -2,6 +2,11 @@ package com.shanhe.project.collector.battery.service.postprocess;
 
 import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessor;
 import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessContext;
+import com.shanhe.project.collector.battery.postprocess.ResistanceStatisticsProcessor;
+import com.shanhe.project.collector.battery.postprocess.OperationLogProcessor;
+import com.shanhe.project.collector.battery.postprocess.CompatReportLogSyncProcessor;
+import com.shanhe.project.collector.battery.postprocess.CapacityPredictionProcessor;
+import com.shanhe.project.collector.battery.postprocess.AlarmContextProcessor;
 import com.shanhe.project.collector.battery.postprocess.StatisticsProcessor;
 import com.shanhe.project.collector.battery.postprocess.OnlineStatusProcessor;
 import com.shanhe.project.collector.battery.postprocess.VoltageRangeProcessor;
