@@ -1,5 +1,6 @@
 package com.shanhe.project.collector.battery.service.postprocess;
 
+import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessContext;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;

@@ -1,6 +1,5 @@
-package com.shanhe.project.collector.battery.service.postprocess;
+package com.shanhe.project.collector.battery.postprocess;
 
-import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessor;
 
 import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.energy.stat.service.IStatBatteryPackService;

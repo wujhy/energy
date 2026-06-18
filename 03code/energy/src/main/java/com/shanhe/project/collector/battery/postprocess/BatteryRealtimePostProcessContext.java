@@ -1,4 +1,4 @@
-package com.shanhe.project.collector.battery.service.postprocess;
+package com.shanhe.project.collector.battery.postprocess;
 
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleAlarmContext;

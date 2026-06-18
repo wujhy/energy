@@ -1,5 +1,8 @@
 package com.shanhe.project.collector.battery.service.postprocess;
 
+import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessContext;
+import com.shanhe.project.collector.battery.postprocess.RealtimeToReportLogAdapter;
+import com.shanhe.project.collector.battery.postprocess.PostProcessBatchGuard;
 import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessor;
 
 import com.shanhe.project.device.config.domain.BatteryReportLog;
@@ -110,7 +113,7 @@ public class ResistanceStatisticsProcessor implements BatteryRealtimePostProcess
             BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
             return batteryPack == null ? null : batteryPack.getBatSinSize();
         } catch (Exception e) {
-            log.debug("鑾峰彇鐢垫睜缁勫崟浣撴暟澶辫触, packNum={}", packNum, e);
+            log.debug("获取电池组单体数失败, packNum={}", packNum, e);
             return null;
         }
     }

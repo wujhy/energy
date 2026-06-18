@@ -4,7 +4,7 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
 import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.collector.battery.model.BatteryRealtimePostProcessRequest;
-import com.shanhe.project.collector.battery.service.postprocess.BatteryRealtimePostProcessContext;
+import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessContext;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

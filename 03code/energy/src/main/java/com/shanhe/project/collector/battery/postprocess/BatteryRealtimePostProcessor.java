@@ -1,6 +1,5 @@
 package com.shanhe.project.collector.battery.postprocess;
 
-import com.shanhe.project.collector.battery.service.postprocess.BatteryRealtimePostProcessContext;
 
 /**
  * 实时数据后处理器接口。
