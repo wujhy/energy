@@ -144,6 +144,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     private com.shanhe.project.collector.battery.runtime.BatteryCollectorPollingService pollingService;
 
     /**
+     * 命令队列执行服务。
+     */
+    @Resource
+    private com.shanhe.project.collector.battery.command.BatteryCollectorCommandQueueService commandQueueService;
+
+    /**
      * 600节模块端标准实时数据 Mapper。
      */
     @Resource
@@ -469,23 +475,9 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return true;
     }
 
-    /** 将控制命令转换为等待响应的待处理请求。 */
+    /** 将控制命令转换为等待响应的待处理请求。已委托 commandQueueService。 */
     private BatteryPendingRequest pendingFromCommand(BatteryModuleControlCommand command) {
-        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
-                command.getProtocolCode(),
-                command.getAddress(),
-                command.getPayload() == null ? new byte[0] : command.getPayload(),
-                false);
-        pendingRequest.setConfigId(command.getConfigId());
-        pendingRequest.setBatteryGroup(command.getBatteryGroup());
-        pendingRequest.setMode(command.getMode());
-        pendingRequest.setAutoAddressBatteryCount(command.getAutoAddressBatteryCount());
-        pendingRequest.setAutoAddressBatterySpecification(command.getAutoAddressBatterySpecification());
-        pendingRequest.setOptLogId(command.getOptLogId());
-        pendingRequest.setConnectResistanceNextAddress(command.getConnectResistanceNextAddress());
-        pendingRequest.setConnectResistanceMaxAddress(command.getConnectResistanceMaxAddress());
-        pendingRequest.setConnectResistanceFailed(command.isConnectResistanceFailed());
-        return pendingRequest;
+        return commandQueueService.pendingFromCommand(command);
     }
 
     /** 向指定地址发送轮询命令并设置等待状态。 */
@@ -713,27 +705,9 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         }
     }
 
-    /** 判断响应帧是否表示操作成功。 */
+    /** 判断响应帧是否表示操作成功。已委托 commandQueueService。 */
     private boolean isSuccessResponse(BatteryCollectorFrame frame, BatteryPendingRequest pendingRequest) {
-        BatteryDeviceProtocolCode protocolCode = BatteryDeviceProtocolCode.find(pendingRequest.getResponseCode());
-        if (protocolCode == null) {
-            return true;
-        }
-        if (protocolCode == BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE) {
-            return frame.getPayloadSafe().length >= 8;
-        }
-        if (!protocolCode.isStatusResponse() && protocolCode != BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS) {
-            return true;
-        }
-        byte[] payload = frame.getPayloadSafe();
-        if (protocolCode == BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS) {
-            if (payload.length < 3) {
-                return false;
-            }
-            return pendingRequest.getRequestAddress() != GROUP_MODULE_ADDRESS || (payload[0] & 0xFF) == START_SET_ADDRESS;
-        }
-        // payload[0]==0 表示模块应答成功
-        return payload.length > 0 && (payload[0] & 0xFF) == 0;
+        return commandQueueService.isSuccessResponse(frame, pendingRequest);
     }
 
     /** 排队下一个连接条电阻测试电压读取命令。返回 true 表示已排队，false 表示测试完成。 */

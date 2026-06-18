@@ -16,6 +16,7 @@ import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
 import com.shanhe.project.collector.battery.runtime.BatteryCollectorPollingService;
+import com.shanhe.project.collector.battery.command.BatteryCollectorCommandQueueService;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.device.opt.domain.OptLog;
 import com.shanhe.project.device.opt.mapper.OptLogMapper;
@@ -52,6 +53,7 @@ class BatteryCollectorServiceTest {
         ReflectionTestUtils.setField(pollingService, "protocolLogService", new BatteryCollectorProtocolLogService());
         ReflectionTestUtils.setField(pollingService, "realtimeConsumer", Mockito.mock(BatteryModuleRealtimeConsumer.class));
         ReflectionTestUtils.setField(service, "pollingService", pollingService);
+        ReflectionTestUtils.setField(service, "commandQueueService", new BatteryCollectorCommandQueueService());
     }
 
     private void injectCommandLogMapper(OptLogMapper optLogMapper) {
@@ -867,6 +869,7 @@ class BatteryCollectorServiceTest {
     void shouldBreakImmediateModuleCommandProcessingWhenWriteFails() {
         RecordingBatteryCollectorService recordingService = new RecordingBatteryCollectorService();
         ReflectionTestUtils.setField(recordingService, "frameCodec", new BatteryCollectorFrameCodec());
+        ReflectionTestUtils.setField(recordingService, "commandQueueService", new BatteryCollectorCommandQueueService());
         ReflectionTestUtils.setField(recordingService, "running", true);
         recordingService.failWrites = true;
         BatteryCollectorChannelConfig channelConfig = newChannelConfig();
@@ -896,6 +899,7 @@ class BatteryCollectorServiceTest {
         ReflectionTestUtils.setField(recordingService, "frameCodec", new BatteryCollectorFrameCodec());
         ReflectionTestUtils.setField(recordingService, "realtimeConsumer", Mockito.mock(BatteryModuleRealtimeConsumer.class));
         ReflectionTestUtils.setField(recordingService, "protocolLogService", new BatteryCollectorProtocolLogService());
+        ReflectionTestUtils.setField(recordingService, "commandQueueService", new BatteryCollectorCommandQueueService());
         ReflectionTestUtils.setField(recordingService, "collectorDeviceStateService",
                 newCollectorDeviceStateService(Mockito.mock(BatteryDeviceStateService.class)));
         BatteryCollectorCommandLogService recordingCommandLogService = new BatteryCollectorCommandLogService();
