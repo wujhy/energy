@@ -138,6 +138,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     private BatteryCollectorFrameIoService frameIoService;
 
     /**
+     * 轮询循环编排服务。
+     */
+    @Resource
+    private com.shanhe.project.collector.battery.runtime.BatteryCollectorPollingService pollingService;
+
+    /**
      * 600节模块端标准实时数据 Mapper。
      */
     @Resource
@@ -354,22 +360,13 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         collectorDeviceStateService.persistSerialPortState(state, true);
     }
 
-    /** 满足轮询间隔条件时触发一次轮询。 */
+    /** 满足轮询间隔条件时触发一次轮询。已委托 pollingService。 */
     private void pollIfNecessary(BatteryCollectorChannelState state) {
-        if (state.getPendingCommand() != null) {
-            return;
-        }
-        long now = System.currentTimeMillis();
-        long gap = resolveRequestGapMs();
-        if (state.getLastSendTime() > 0 && now - state.getLastSendTime() < gap) {
-            return;
-        }
-        long interval = resolvePollIntervalMs(state.getConfig());
-        if (state.getLastPollTime() > 0 && now - state.getLastPollTime() < interval) {
-            return;
-        }
-        pollOnce(state);
-        state.setLastPollTime(now);
+        pollingService.pollIfNecessary(state,
+                address -> sendCommand(state, BatteryDeviceProtocolCode.MODULE_INFO, address),
+                () -> waitForPendingComplete(state),
+                s -> processQueuedModuleCommand(s),
+                () -> checkTimeout(state));
     }
 
     /** 执行一轮01/81全量或增量采集。 */

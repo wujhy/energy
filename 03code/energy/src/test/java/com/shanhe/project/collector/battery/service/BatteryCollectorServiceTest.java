@@ -15,6 +15,7 @@ import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
+import com.shanhe.project.collector.battery.runtime.BatteryCollectorPollingService;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.device.opt.domain.OptLog;
 import com.shanhe.project.device.opt.mapper.OptLogMapper;
@@ -46,6 +47,11 @@ class BatteryCollectorServiceTest {
         ReflectionTestUtils.setField(service, "protocolLogService", new BatteryCollectorProtocolLogService());
         ReflectionTestUtils.setField(service, "commandLogService", commandLogService);
         ReflectionTestUtils.setField(service, "collectorDeviceStateService", collectorDeviceStateService);
+        BatteryCollectorPollingService pollingService = new BatteryCollectorPollingService();
+        ReflectionTestUtils.setField(pollingService, "properties", new BatteryCollectorProperties());
+        ReflectionTestUtils.setField(pollingService, "protocolLogService", new BatteryCollectorProtocolLogService());
+        ReflectionTestUtils.setField(pollingService, "realtimeConsumer", Mockito.mock(BatteryModuleRealtimeConsumer.class));
+        ReflectionTestUtils.setField(service, "pollingService", pollingService);
     }
 
     private void injectCommandLogMapper(OptLogMapper optLogMapper) {
