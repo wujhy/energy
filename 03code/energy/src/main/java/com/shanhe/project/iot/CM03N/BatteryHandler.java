@@ -14,7 +14,11 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 
 /**
- * 蓄电池总处理类
+ * 蓄电池总处理类（旧兼容入口）
+ *
+ * <p>本类为旧 JSON/TCP/CM03N 兼容入口，只做旧协议上报分发，
+ * 不承载新采集能力、新算法、新告警或新控制能力。
+ * 新能力一律进入 {@code com.shanhe.project.collector.battery}。</p>
  *
  * @author wjh
  * @since 2025/4/9

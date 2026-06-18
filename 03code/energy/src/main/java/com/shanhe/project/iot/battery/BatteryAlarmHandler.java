@@ -19,7 +19,11 @@ import javax.annotation.Resource;
 import java.util.*;
 
 /**
- * 电池报警记录数据
+ * 电池报警记录数据（旧兼容入口）
+ *
+ * <p>本类为旧 JSON/TCP 87/8D 告警上报兼容入口，只做旧协议告警解析和兼容写入，
+ * 不承载新采集链路的告警生成能力。
+ * 新告警能力一律进入 {@code com.shanhe.project.collector.battery.service.postprocess}。</p>
  *
  * @author wjh
  * @since 2026-05-25

@@ -14,7 +14,11 @@ import javax.annotation.Resource;
 import java.util.Objects;
 
 /**
- * 电池组操作响应信息
+ * 电池组操作响应信息（旧兼容入口）
+ *
+ * <p>本类为旧 JSON/TCP 操作响应兼容入口，只做旧协议响应缓存和兼容回包，
+ * 不承载新控制能力。
+ * 新控制能力一律进入 {@code com.shanhe.project.collector.battery.service.BatteryCollectorCommandService}。</p>
  *
  * @author wjh
  * @since 2026-05-25

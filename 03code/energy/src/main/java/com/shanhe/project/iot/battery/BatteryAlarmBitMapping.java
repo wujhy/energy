@@ -1,7 +1,11 @@
 package com.shanhe.project.iot.battery;
 
 /**
- * M460 87/8D alarm bit mapping helpers.
+ * M460 87/8D alarm bit mapping helpers（旧兼容工具类）
+ *
+ * <p>本类为旧 JSON/TCP 87/8D 告警 bit 映射工具，
+ * 仅服务于旧 {@code BatteryAlarmHandler} 的兼容解析链路。
+ * 新告警能力一律进入 {@code com.shanhe.project.collector.battery}。</p>
  *
  * <p>energy parses one status byte with {@code CodingUtil.hexString2binaryString},
  * so index 0 points to physical bit7 and index 7 points to physical bit0.</p>

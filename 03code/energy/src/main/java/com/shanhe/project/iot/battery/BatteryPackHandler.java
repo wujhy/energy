@@ -30,7 +30,11 @@ import javax.annotation.Resource;
 import java.util.*;
 
 /**
- * 蓄电池数据处理类
+ * 蓄电池数据处理类（旧兼容入口）
+ *
+ * <p>本类为旧 JSON/TCP 82 实时上报兼容入口，只做旧协议数据解析和兼容历史写入，
+ * 不承载新采集能力、新算法或新实时模型。
+ * 新能力一律进入 {@code com.shanhe.project.collector.battery}。</p>
  *
  * @author wjh
  * @since 2026-05-25

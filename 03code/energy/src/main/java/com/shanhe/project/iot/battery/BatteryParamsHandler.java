@@ -22,7 +22,11 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * 上传电池组报警参数
+ * 上传电池组报警参数（旧兼容入口）
+ *
+ * <p>本类为旧 JSON/TCP 报警参数上报兼容入口，只做旧协议参数解析和兼容缓存，
+ * 不承载新采集或新告警参数能力。
+ * 新能力一律进入 {@code com.shanhe.project.collector.battery}。</p>
  *
  * @author wjh
  * @since 2026-05-25
