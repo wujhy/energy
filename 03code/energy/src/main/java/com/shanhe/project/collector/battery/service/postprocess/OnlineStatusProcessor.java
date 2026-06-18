@@ -1,5 +1,7 @@
 package com.shanhe.project.collector.battery.service.postprocess;
 
+import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessor;
+
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import lombok.extern.slf4j.Slf4j;

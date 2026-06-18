@@ -1,5 +1,6 @@
-package com.shanhe.project.collector.battery.service.postprocess;
+package com.shanhe.project.collector.battery.postprocess;
 
+import com.shanhe.project.collector.battery.service.postprocess.BatteryRealtimePostProcessContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

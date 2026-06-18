@@ -15,7 +15,7 @@ import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
 import com.shanhe.project.collector.battery.model.BatteryRealtimePostProcessRequest;
 import com.shanhe.project.collector.battery.service.postprocess.BatteryRealtimePostProcessContext;
-import com.shanhe.project.collector.battery.service.postprocess.BatteryRealtimePostProcessService;
+import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

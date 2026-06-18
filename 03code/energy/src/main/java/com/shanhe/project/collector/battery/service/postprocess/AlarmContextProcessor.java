@@ -1,5 +1,7 @@
 package com.shanhe.project.collector.battery.service.postprocess;
 
+import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessor;
+
 import com.shanhe.project.collector.battery.model.BatteryModuleAlarmContext;
 import com.shanhe.project.collector.battery.service.BatteryModuleAlarmAdaptService;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
