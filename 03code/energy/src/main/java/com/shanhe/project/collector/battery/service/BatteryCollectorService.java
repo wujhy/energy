@@ -17,6 +17,7 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorRunState;
 import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
 import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
+import com.shanhe.project.collector.battery.runtime.BatteryCollectorFrameIoService;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.opt.domain.OptLog;
@@ -129,6 +130,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     private BatteryCollectorCommandLogService commandLogService;
     @Resource
     private BatteryCollectorDeviceStateService collectorDeviceStateService;
+
+    /**
+     * 串口帧收发协调服务。
+     */
+    @Resource
+    private BatteryCollectorFrameIoService frameIoService;
 
     /**
      * 600节模块端标准实时数据 Mapper。
@@ -339,15 +346,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             return;
         }
         BatteryCollectorChannelConfig config = state.getConfig();
-        SerialPort serialPort = SerialPort.getCommPort(config.getPortName());
-        serialPort.setComPortParameters(resolveBaudRate(config), resolveDataBits(config),
-                resolveStopBits(config), resolveParity(config));
-        serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING,
-                resolvePortTimeoutMs(config), resolvePortTimeoutMs(config));
-        serialPort.setFlowControl(SerialPort.FLOW_CONTROL_DISABLED);
-        if (!serialPort.openPort()) {
-            throw new IllegalStateException("打开串口失败: " + config.getPortName());
-        }
+        SerialPort serialPort = frameIoService.openSerialPort(config);
         state.setSerialPort(serialPort);
         state.getOpened().set(true);
         state.setRunState(BatteryCollectorRunState.READ);
@@ -592,10 +591,14 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return true;
     }
 
+    /** @deprecated 使用 {@code frameIoService.isSerialPortOpen} 替代。 */
+    @Deprecated
     protected boolean isSerialPortOpen(SerialPort serialPort) {
-        return serialPort != null && serialPort.isOpen();
+        return frameIoService.isSerialPortOpen(serialPort);
     }
 
+    /** @deprecated 使用 {@code frameIoService.writeFrameBytes} 替代。 */
+    @Deprecated
     protected int writeSerialBytes(SerialPort serialPort, byte[] bytes) {
         return serialPort.writeBytes(bytes, bytes.length);
     }
@@ -999,23 +1002,9 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 && frame.getAddress() == pendingRequest.getRequestAddress();
     }
 
-    /** 接收缓冲区超限时截断保留尾部。 */
+    /** 接收缓冲区超限时截断保留尾部。已委托 frameIoService.trimBuffer。 */
     private void trimReceiveBufferIfNecessary(BatteryCollectorChannelState state) {
-        int limit = resolveReceiveBufferLimit(state.getConfig());
-        ByteArrayOutputStream receiveBuffer = state.getReceiveBuffer();
-        if (receiveBuffer.size() <= limit) {
-            return;
-        }
-        byte[] data = receiveBuffer.toByteArray();
-        int keep = Math.min(limit / 2, data.length);
-        byte[] tail = new byte[keep];
-        System.arraycopy(data, data.length - keep, tail, 0, keep);
-        receiveBuffer.reset();
-        receiveBuffer.write(tail, 0, tail.length);
-        log.warn("蓄电池采集接收缓冲区已截断, 通道={}, 限制={}, 保留={}",
-                state.getConfig().getName(),
-                limit,
-                keep);
+        frameIoService.trimBuffer(state.getReceiveBuffer(), resolveReceiveBufferLimit(state.getConfig()));
     }
 
     /** 检测当前等待命令是否超时，超时则重试或放弃。 */
@@ -1361,15 +1350,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
 
     /** 静默关闭串口并重置通道状态。 */
     private void closeQuietly(BatteryCollectorChannelState state) {
-        SerialPort serialPort = state.getSerialPort();
-        if (serialPort != null) {
-            try {
-                if (serialPort.isOpen()) {
-                    serialPort.closePort();
-                }
-            } catch (Exception ignored) {
-            }
-        }
+        frameIoService.closeQuietly(state.getSerialPort());
         boolean wasOpened = state.getOpened().get();
         state.getOpened().set(false);
         state.setSerialPort(null);
@@ -1440,16 +1421,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         if (bytes == null || bytes.length == 0) {
             return null;
         }
-        return bytesToHex(bytes, bytes.length);
+        return BatteryCollectorFrameIoService.bytesToHex(bytes, bytes.length);
     }
 
     /** 将字节数组转为十六进制字符串。 */
     private String bytesToHex(byte[] bytes, int length) {
-        StringBuilder builder = new StringBuilder(length * 2);
-        for (int i = 0; i < length; i++) {
-            builder.append(String.format("%02X", bytes[i]));
-        }
-        return builder.toString();
+        return BatteryCollectorFrameIoService.bytesToHex(bytes, length);
     }
 
     int resolveLoopDelayMs() {
