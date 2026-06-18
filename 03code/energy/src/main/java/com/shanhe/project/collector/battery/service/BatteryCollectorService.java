@@ -18,6 +18,7 @@ import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
 import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.runtime.BatteryCollectorFrameIoService;
+import com.shanhe.project.collector.battery.state.BatteryCollectorDeviceStateService;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;

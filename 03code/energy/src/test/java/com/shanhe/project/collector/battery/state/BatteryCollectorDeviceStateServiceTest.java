@@ -1,5 +1,6 @@
-package com.shanhe.project.collector.battery.service;
+package com.shanhe.project.collector.battery.state;
 
+import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
