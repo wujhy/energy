@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 /**
  * 蓄电池命令队列执行服务。
  *
- * <p>只负责命令队列的核心逻辑：待处理请求构造、响应匹配判断。
- * 不负责帧 I/O、业务回调或日志持久化。</p>
+ * <p>负责命令队列的核心逻辑：待处理请求构造、响应匹配判断、命令完成和超时处理。
+ * 不负责帧 I/O（由 BatteryCollectorFrameIoService 处理）和日志持久化（由 BatteryCollectorCommandLogService 处理）。</p>
  */
 @Slf4j
 @Component
@@ -89,5 +89,68 @@ public class BatteryCollectorCommandQueueService {
         }
         // payload[0]==0 表示模块应答成功
         return payload.length > 0 && (payload[0] & 0xFF) == 0;
+    }
+
+    /**
+     * 从队列中取出一条待执行的命令。
+     *
+     * @param state 通道状态
+     * @return 取出的命令，队列为空返回 null
+     */
+    public BatteryModuleControlCommand dequeueCommand(BatteryCollectorChannelState state) {
+        if (state.getPendingCommand() != null) {
+            return null;
+        }
+        return state.getQueuedModuleCommands().poll();
+    }
+
+    /**
+     * 将命令重新入队（发送失败时使用）。
+     *
+     * @param state 通道状态
+     * @param command 待重新入队的命令
+     */
+    public void requeueCommand(BatteryCollectorChannelState state, BatteryModuleControlCommand command) {
+        if (state != null && command != null) {
+            state.getQueuedModuleCommands().offer(command);
+        }
+    }
+
+    /**
+     * 判断命令是否为无响应命令（发送后不等待响应）。
+     *
+     * @param command 控制命令
+     * @return 是否无响应
+     */
+    public boolean isNoResponseCommand(BatteryModuleControlCommand command) {
+        return command != null && command.getResponseCode() == null;
+    }
+
+    /**
+     * 判断命令是否需要在无响应命令发送成功后停止工作模式。
+     *
+     * @param command 控制命令
+     * @return 是否应停止模式
+     */
+    public boolean shouldStopModeAfterNoResponseCommand(BatteryModuleControlCommand command) {
+        if (command == null || command.getMode() == null) {
+            return false;
+        }
+        // 连接条测试模式不在无响应命令后停止
+        if (command.getMode() == 10) { // MODE_CONNECT_RESISTANCE
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 判断命令成功后是否需要重置模块地址缓存。
+     *
+     * @param pendingRequest 待处理请求
+     * @return 是否需要重置
+     */
+    public boolean shouldResetModuleAddressCacheAfterCommand(BatteryPendingRequest pendingRequest) {
+        String name = pendingRequest.getName();
+        return BatteryDeviceProtocolCode.SET_MODULE_ADDRESS.name().equals(name);
     }
 }

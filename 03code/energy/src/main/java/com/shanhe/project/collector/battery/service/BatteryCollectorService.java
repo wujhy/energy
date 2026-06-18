@@ -18,9 +18,7 @@ import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
 import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.runtime.BatteryCollectorFrameIoService;
-import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.device.config.service.IBatteryPackService;
-import com.shanhe.project.device.opt.domain.OptLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.ApplicationArguments;
@@ -30,7 +28,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.ByteArrayOutputStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -96,12 +93,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
      */
     @Resource
     private BatteryModeStatusService batteryModeStatusService;
-
-    /**
-     * 操作日志 Mapper。
-     */
-    @Resource
-    private com.shanhe.project.device.opt.mapper.OptLogMapper optLogMapper;
 
     /**
      * 设备状态服务，用于持久化通道运行状态。
@@ -448,12 +439,9 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         }
     }
 
-    /** 取出一条排队的控制命令并下发。 */
+    /** 取出一条排队的控制命令并下发。已委托 commandQueueService 做队列和判断。 */
     private boolean processQueuedModuleCommand(BatteryCollectorChannelState state) {
-        if (state.getPendingCommand() != null) {
-            return false;
-        }
-        BatteryModuleControlCommand command = state.getQueuedModuleCommands().poll();
+        BatteryModuleControlCommand command = commandQueueService.dequeueCommand(state);
         if (command == null) {
             return false;
         }
@@ -461,15 +449,15 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 command.getAddress(),
                 command.getRequestCode(),
                 command.getPayload() == null ? new byte[0] : command.getPayload());
-        if (command.getResponseCode() == null) {
+        if (commandQueueService.isNoResponseCommand(command)) {
             if (!writeFrameWithoutPending(state, request, command)) {
-                state.getQueuedModuleCommands().offer(command);
+                commandQueueService.requeueCommand(state, command);
                 return false;
             }
             return true;
         }
         if (!writeFrame(state, request, pendingFromCommand(command), BatteryCollectorRunState.WAIT_COMMAND_RESPONSE)) {
-            state.getQueuedModuleCommands().offer(command);
+            commandQueueService.requeueCommand(state, command);
             return false;
         }
         return true;
@@ -847,9 +835,9 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 | (long) (payload[offset + 3] & 0xFF);
     }
 
+    /** 已委托 commandQueueService。 */
     private boolean shouldResetModuleAddressCacheAfterCommand(BatteryPendingRequest pendingRequest) {
-        String name = pendingRequest.getName();
-        return BatteryDeviceProtocolCode.SET_MODULE_ADDRESS.name().equals(name);
+        return commandQueueService.shouldResetModuleAddressCacheAfterCommand(pendingRequest);
     }
 
     /** 自动编号完成后排队下一步或发送停止命令。 */
@@ -1056,14 +1044,9 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 command.getOptLogId());
     }
 
+    /** 已委托 commandQueueService。 */
     private boolean shouldStopModeAfterNoResponseCommand(BatteryModuleControlCommand command) {
-        if (command == null || command.getMode() == null) {
-            return false;
-        }
-        if (command.getMode() == BatteryModeStatusService.MODE_CONNECT_RESISTANCE) {
-            return false;
-        }
-        return true;
+        return commandQueueService.shouldStopModeAfterNoResponseCommand(command);
     }
 
     /** 获取模式关联的模块地址，自动编号场景取电池数量。 */
@@ -1101,55 +1084,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         state.setLastCompletedModuleResponseCode(responseCode);
         state.setLastCompletedModuleCommandSuccess(success);
         state.setLastCompletedModuleCommandTime(System.currentTimeMillis());
-    }
-
-    /** 创建600模块命令操作日志。 */
-    private Long createCommandOptLog(BatteryCollectorChannelConfig config, BatteryModuleControlCommand command) {
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String now = sdf.format(new Date());
-            OptLog optLog = new OptLog();
-            optLog.setId(com.shanhe.common.utils.uuid.IdUtils.getSnowflakeId());
-            optLog.setConfigId(config == null ? null : config.getConfigId());
-            optLog.setPackNum(command.getBatteryGroup());
-            optLog.setType(BatteryTestEnum._99.getDictValue());
-            optLog.setContent(command.getDescription());
-            optLog.setCreateTimeStr(now);
-            optLog.setSource(BatteryDeviceStateConstants.Source.COLLECTOR);
-            optLog.setChannelName(config == null ? null : config.getName());
-            optLog.setTargetType("module");
-            optLog.setTargetAddress(command.getAddress());
-            optLog.setMode(command.getMode());
-            optLog.setStatus(BatteryDeviceStateConstants.CommandStatus.PENDING);
-            optLog.setRequestCode(command.getRequestCode());
-            optLog.setResponseCode(command.getResponseCode());
-            optLog.setProtocolCode(command.getProtocolCode() == null ? null : command.getProtocolCode().name());
-            optLog.setCommandName(command.getProtocolCode() == null ? null : command.getProtocolCode().getDescription());
-            optLog.setRequestPayload(bytesToHex(command.getPayload()));
-            optLog.setStartedAt(now);
-            optLogMapper.insert(optLog);
-            return optLog.getId();
-        } catch (Exception e) {
-            log.warn("创建600模块命令日志失败, 通道={}, 命令={}, 原因={}",
-                    config == null ? null : config.getName(),
-                    command.getProtocolCode(), e.getMessage());
-            return null;
-        }
-    }
-
-    /** 更新600模块命令操作日志状态。 */
-    private void updateCommandOptLog(Long optLogId, String status, Integer responseCode, String responsePayload) {
-        if (optLogId == null) {
-            return;
-        }
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String now = sdf.format(new Date());
-            String errorMessage = BatteryDeviceStateConstants.CommandStatus.TIMEOUT.equals(status) ? "命令响应超时" : null;
-            optLogMapper.updateCommandStatus(optLogId, status, responseCode, now, errorMessage, responsePayload);
-        } catch (Exception e) {
-            log.warn("更新600模块命令日志失败, 日志ID={}, 原因={}", optLogId, e.getMessage());
-        }
     }
 
     /** 持久化通道异常到 battery_device_state。 */
@@ -1350,41 +1284,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 state.getConfig().getPortName(),
                 stage,
                 message);
-    }
-
-    /** 输出本轮轮询汇总日志。 */
-    private void logPollSummary(BatteryCollectorChannelState state, boolean fullDiscovery,
-                                List<String> polledCommands, List<String> completedCommands) {
-        if (polledCommands.isEmpty()) {
-            return;
-        }
-        String waiting = state.getPendingCommand() == null
-                ? "-"
-                : String.format("%02X/%02X",
-                state.getPendingCommand().getRequestCode(),
-                state.getPendingCommand().getResponseCode());
-        log.info("蓄电池采集轮询汇总, 通道={}, 运行状态={}, 全量发现={}, 轮询数={}, 完成数={}, 活跃地址数={}, 已完成={}, 等待中={}, 超时次数={}",
-                state.getConfig().getName(),
-                state.getRunState(),
-                fullDiscovery,
-                polledCommands.size(),
-                completedCommands.size(),
-                state.getActiveModuleAddresses().size(),
-                summarizeCommands(completedCommands),
-                waiting,
-                state.getTimeoutCount());
-    }
-
-    /** 将命令列表格式化为摘要字符串。 */
-    private String summarizeCommands(List<String> commands) {
-        if (commands.isEmpty()) {
-            return "-";
-        }
-        int limit = 32;
-        if (commands.size() <= limit) {
-            return String.join(",", commands);
-        }
-        return String.join(",", commands.subList(0, limit)) + ",...+" + (commands.size() - limit);
     }
 
     /** 将字节数组转为十六进制字符串（null 安全）。 */
