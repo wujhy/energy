@@ -474,27 +474,21 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 pendingRequest,
                 !connectResistanceVoltageResponse,
                 bytesToHex(frame.getPayloadSafe()));
-        if (BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.name().equals(pendingRequest.getName())) {
-            if (!success) {
-                log.warn("自动编号失败, 通道={}, 地址={}, 响应={}",
-                        state.getConfig() == null ? null : state.getConfig().getName(),
-                        String.format("%02X", pendingRequest.getRequestAddress()),
-                        String.format("%02X", frame.getCommand()));
-                commandQueueService.markModeStopped(pendingRequest, false);
-                return;
-            }
-            if (commandQueueService.queueNextAutoSetAddressStep(
-                    state,
-                    frame,
-                    pendingRequest,
-                    this::markModeRunning,
-                    () -> cacheService.resetModuleAddressCache(state, realtimeSnapshotService))) {
-                return;
-            }
-            commandQueueService.markModeStopped(pendingRequest, true);
-            cacheService.resetModuleAddressCache(state, realtimeSnapshotService);
-            log.info("自动编号成功后蓄电池模块地址缓存已重置, 通道={}",
-                    state.getConfig() == null ? null : state.getConfig().getName());
+        boolean autoSetAddressResponse =
+                BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.name().equals(pendingRequest.getName());
+        if (autoSetAddressResponse && !success) {
+            log.warn("自动编号失败, 通道={}, 地址={}, 响应={}",
+                    state.getConfig() == null ? null : state.getConfig().getName(),
+                    String.format("%02X", pendingRequest.getRequestAddress()),
+                    String.format("%02X", frame.getCommand()));
+        }
+        if (commandQueueService.handleAutoSetAddressResponse(
+                state,
+                frame,
+                pendingRequest,
+                success,
+                this::markModeRunning,
+                () -> cacheService.resetModuleAddressCache(state, realtimeSnapshotService))) {
             return;
         }
         if (BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.name().equals(pendingRequest.getName())) {

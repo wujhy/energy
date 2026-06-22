@@ -118,6 +118,8 @@ git diff --check
 
 执行者：Codex。
 
+状态：已完成。已新增 `BatteryCollectorCommandQueueService.handleAutoSetAddressResponse`，收拢自动编号响应后的后续步骤排队、模式停止和地址缓存重置协调；`BatteryCollectorService` 仅保留失败日志和回调传入。
+
 允许修改：
 
 1. `03code/energy/src/main/java/com/shanhe/project/collector/battery/service/BatteryCollectorService.java`
@@ -138,6 +140,8 @@ mvn "-DskipTests" compile
 mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryCollectorServiceTest,BatteryCollectorCommandLogServiceTest" test
 git diff --check
 ```
+
+实际验证：以上命令已通过。
 
 ### TASK-CODEX-EXTERNAL-001：外部读取缓存边界复核
 

@@ -381,6 +381,48 @@ public class BatteryCollectorCommandQueueService {
         return true;
     }
 
+    /**
+     * 处理自动编号响应后的模式状态、后续步骤排队和地址缓存重置。
+     *
+     * @param state 通道状态
+     * @param frame 响应帧
+     * @param pendingRequest 当前自动编号请求
+     * @param success 当前响应是否成功
+     * @param modeRunningCallback 后续等待响应命令的模式运行中回调
+     * @param addressCacheResetCallback 地址缓存重置回调
+     * @return true 表示当前响应属于自动编号且已处理
+     */
+    public boolean handleAutoSetAddressResponse(BatteryCollectorChannelState state,
+                                                BatteryCollectorFrame frame,
+                                                BatteryPendingRequest pendingRequest,
+                                                boolean success,
+                                                Consumer<BatteryModuleControlCommand> modeRunningCallback,
+                                                Runnable addressCacheResetCallback) {
+        if (pendingRequest == null
+                || !BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.name().equals(pendingRequest.getName())) {
+            return false;
+        }
+        if (!success) {
+            markModeStopped(pendingRequest, false);
+            return true;
+        }
+        if (queueNextAutoSetAddressStep(
+                state,
+                frame,
+                pendingRequest,
+                modeRunningCallback,
+                addressCacheResetCallback)) {
+            return true;
+        }
+        markModeStopped(pendingRequest, true);
+        if (addressCacheResetCallback != null) {
+            addressCacheResetCallback.run();
+        }
+        log.info("自动编号成功后蓄电池模块地址缓存已重置, 通道={}",
+                state == null || state.getConfig() == null ? null : state.getConfig().getName());
+        return true;
+    }
+
     /** 构造并排队自动编号的下一步命令。 */
     private boolean offerAutoSetAddressStep(BatteryCollectorChannelState state,
                                             BatteryPendingRequest pendingRequest,
