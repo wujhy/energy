@@ -145,14 +145,71 @@ git diff --check
 
 ### TASK-CODEX-EXTERNAL-001：外部读取缓存边界复核
 
-只审查，不改代码。对象：
+状态：已完成审查，暂不直接改 Java。对象：
 
 1. `BatteryModuleModbusReadMappingService`
 2. `BatteryAlarmHandler`
 3. `BatteryPackHandler`
 4. 页面当前状态查询相关 service
 
-输出查询入口清单、是否绕过实时缓存、是否需要另拆代码任务。
+审查结论：
+
+1. Modbus 读取入口 `BatteryModuleModbusReadMappingService.loadSnapshot` 已优先使用 `BatteryModuleRealtimeSnapshotService.getCachedSnapshot(packNum)`；当构造器未注入 snapshotService 时才回退 `BatteryModuleRealtimeMapper.selectCells/selectGroup`。高频 Modbus 读取不应再主动走 `BatteryReportLogService.lastCache`。
+2. 页面当前态入口 `/collector/battery/currentState` 走 `BatteryCurrentStateService.getCurrentState`，已优先读 `BatteryModuleRealtimeSnapshotService.getCachedSnapshot`，缓存未命中时才回退实时表。
+3. 大屏和设备控制部分入口已通过 `BatteryModuleReportLogAdapterService.buildReportLog(packNum)` 使用实时快照适配旧 `BatteryReportLog` 结构；例如 `BatteryReportLogController`、`ScreenServiceImpl`、`ControlBattery`、`ControlBatterySet`。
+4. 旧 JSON/TCP/CM03N 入口 `BatteryPackHandler`、`BatteryAlarmHandler` 仍属于旧上报处理链路：`BatteryPackHandler` 会解析上报并写 `BatteryReportLog`，`BatteryAlarmHandler` 告警关联数据仍读取 `BatteryReportLogService.lastCache`。这不是只读查询入口，但会影响旧链路告警/统计拿到的上下文是否来自最新实时快照。
+5. `BatteryModuleRealtimeSnapshotService` 的快照合并已按 batSinSize 限制数量、按单体编号排序补前一轮缺额，并以连续缺采两轮作为 stale 判断；当前外部读取应优先复用该快照，不应重新实现新鲜度规则。
+
+后续候选任务：
+
+#### TASK-CODEX-EXTERNAL-002：旧 JSON/TCP 告警上下文切实时适配
+
+执行者：Codex。
+
+允许修改：
+
+1. `03code/energy/src/main/java/com/shanhe/project/iot/battery/BatteryAlarmHandler.java`
+2. `03code/energy/src/main/java/com/shanhe/project/collector/battery/service/BatteryModuleReportLogAdapterService.java`（仅必要时）
+3. 必要时调整 `BatteryAlarmHandlerTest`
+
+要求：
+
+1. 仅将 `BatteryAlarmHandler` 中用于告警上下文的 `BatteryReportLogService.lastCache` 优先切到 `BatteryModuleReportLogAdapterService.buildReportLog(packNum)`。
+2. 保留旧 `lastCache` 作为实时适配为空或缺少组参数时的回退。
+3. 不改告警位解析、告警编码、`alarmFix` 逻辑。
+4. 不改 JSON/TCP 上报写库链路。
+
+验证：
+
+```powershell
+mvn "-DskipTests" compile
+mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryAlarmHandlerTest" test
+git diff --check
+```
+
+#### TASK-CODEX-EXTERNAL-003：旧 JSON/TCP 实时上报后处理 oldInfo 切实时适配
+
+执行者：Codex。
+
+允许修改：
+
+1. `03code/energy/src/main/java/com/shanhe/project/iot/battery/BatteryPackHandler.java`
+2. 必要时调整 `BatteryPackHandlerTest`
+
+要求：
+
+1. 仅调整 `loadRecentOldReportLog`，优先使用 `BatteryModuleReportLogAdapterService.buildReportLog(packNum)` 作为 oldInfo。
+2. 保留 5 分钟内旧 `BatteryReportLogService.lastCache` 回退，避免实时快照未建立时旧链路失去上下文。
+3. 不改上报解析、写 `BatteryReportLog`、容量预测、操作日志、统计服务调用顺序。
+4. 不把旧 JSON/TCP 链路改造成新主链路。
+
+验证：
+
+```powershell
+mvn "-DskipTests" compile
+mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryPackHandlerTest" test
+git diff --check
+```
 
 ### TASK-CODEX-M460-001：M460 剩余能力复核
 
