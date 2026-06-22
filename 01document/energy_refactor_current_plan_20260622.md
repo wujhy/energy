@@ -2,7 +2,7 @@
 
 更新时间：2026-06-22
 
-本文由 Codex 维护，作为后续重构执行的权威入口。历史文件 `energy_refactor_plan_20260618.md` 保留归档价值，但后续执行以本文和 `energy_project_directory_audit_20260618.md` 为准。
+本文由 Codex 维护，作为后续重构执行的权威入口。其他 AI 只执行本文拆出的明确代码任务，不负责文档统筹、目录盘点、架构判断。
 
 ## 1. 分工规则
 
@@ -13,7 +13,7 @@ Codex 负责：
 3. 高引用门面是否迁包的决策。
 4. `BatteryCollectorService` 主流程继续拆分的审查。
 
-其他 AI 只执行 Codex 拆出的明确代码任务，且任务必须满足：
+其他 AI 只执行明确任务：
 
 1. 只改 1 到 3 个明确文件。
 2. 指定类名、方法名和允许修改范围。
@@ -21,28 +21,26 @@ Codex 负责：
 4. 不提交 `03code/energy/sql/rysqlite3.db`。
 5. 不提交 `.codegraph/`。
 6. 不使用 PowerShell `Get-Content` / `Set-Content` 写中文文件。
+7. 不自行新增 README 类任务。
+8. 不自行做目录盘点、计划修订、架构判断。
+9. 不自行移动高引用类。
 
 ## 2. 已完成状态
 
 | 任务 | 状态 | 结果 |
 |---|---|---|
-| `TASK-REF-DIR-001` | 已完成 | 已建立 `collector/battery` 包职责说明 |
 | `TASK-REF-COLLECTOR-001` | 已完成 | 已抽取 `BatteryCollectorPollingService` |
 | `TASK-REF-COLLECTOR-002` | 已完成 | 已抽取 `BatteryCollectorFrameIoService` |
 | `TASK-REF-COLLECTOR-003-TIMEOUT` | 已完成 | 已抽取 `BatteryCollectorTimeoutService` |
-| `TASK-REF-COMMAND-001` | 已完成 | 已抽取 `BatteryCollectorCommandQueueService` 基础能力 |
-| `TASK-REF-COMMAND-001B` | 已完成 | 已补齐出队、发送协调、完成回调、超时收尾 |
+| `TASK-REF-COMMAND-001/001B` | 已完成 | 已抽取命令队列执行、完成回调和超时收尾 |
 | 连接条电阻流程拆分 | 已完成 | 已新增 `BatteryConnectResistanceCommandProcessor` |
 | `TASK-REF-POSTPROCESS-001` | 已完成 | 后处理主代码已迁入 `collector/battery/postprocess` |
 | `TASK-REF-STATE-001` | 部分完成 | `BatteryCollectorDeviceStateService` 已迁入 `state`，高引用状态门面保留 |
 | `TASK-REF-REALTIME-001` | 部分完成 | 组级计算与兼容填充已迁入 `realtime`，高引用实时门面保留 |
-| `TASK-REF-CONSOLIDATE-001` | 已完成 | 兼容历史同步薄服务已收缩 |
-| `TASK-REF-CONSOLIDATE-002` | 已完成 | 已盘点，无其他立即收缩候选 |
-| `TASK-REF-EXTERNAL-001` | 已完成 | 已补外部读取边界说明 |
-| `TASK-REF-SCHEDULED-001` | 已完成 | 已补定时任务归属说明 |
+| `TASK-REF-CONSOLIDATE-001/002` | 已完成 | 已收缩兼容历史同步薄服务，暂无其他立即收缩候选 |
 | `TASK-REF-ENERGY-DIR-001` | 已完成 | 已重写项目级目录盘点文档 |
 
-## 3. 当前不执行的迁包
+## 3. 暂不迁移的高引用门面
 
 以下类第一轮保留原包名，不交给其他 AI 迁移：
 
@@ -60,25 +58,15 @@ Codex 负责：
 12. `BatteryReportLogService`
 13. `BatteryReportLogServiceImpl`
 
-原因：这些类是跨模块门面或高引用服务，涉及页面、旧 iot、Modbus、sync、scheduled、device 等边界。迁包收益不足，破坏面大。
+## 4. Codex 统筹任务
 
-## 4. 后续任务池
+### TASK-CODEX-PLAN-001：清理历史计划过期描述
 
-### TASK-REF-DOC-001：清理历史计划过期描述
+只由 Codex 执行。修正 `energy_refactor_plan_20260618.md` 中 `COMMAND-001B`、`COLLECTOR-003-TIMEOUT`、测试适配等过期描述。
 
-执行者：Codex。
+### TASK-CODEX-COLLECTOR-001：主流程剩余职责审查
 
-目标：
-
-1. 将 `energy_refactor_plan_20260618.md` 中 `COMMAND-001B`、`COLLECTOR-003-TIMEOUT` 的旧状态修正。
-2. 删除或标注“测试仍需适配”等过期结论。
-3. 保留历史任务卡，不重写整篇文档。
-
-### TASK-REF-COLLECTOR-004：主流程剩余职责审查
-
-执行者：Codex。
-
-只审查，不改代码：
+只审查，不改代码。对象：
 
 1. `BatteryCollectorService.readOnce`
 2. `BatteryCollectorService.handleCompletedPendingResponse`
@@ -86,255 +74,352 @@ Codex 负责：
 4. `BatteryCollectorService.writeFrameWithoutPending`
 5. `BatteryCollectorService.closeQuietly`
 
-输出：是否值得继续抽取、影响面、停止条件、验证命令。
+输出是否值得继续抽取、影响面、停止条件、验证命令。
 
-### TASK-REF-README-001：补齐 collector/battery README
+### TASK-CODEX-EXTERNAL-001：外部读取缓存边界复核
 
-执行者：可交给其他 AI。
-
-允许修改：
-
-1. `03code/energy/src/main/java/com/shanhe/project/collector/battery/README.md`
-
-要求：
-
-1. 补充 `runtime`、`command`、`state`、`postprocess`、`realtime` 的当前职责。
-2. 不改 Java。
-3. 不新增测试。
-
-验证：
-
-```powershell
-git diff --check 03code/energy/src/main/java/com/shanhe/project/collector/battery/README.md
-```
-
-### TASK-REF-README-002：补齐 runtime 包说明
-
-执行者：可交给其他 AI。
-
-允许修改：
-
-1. `03code/energy/src/main/java/com/shanhe/project/collector/battery/runtime/README.md`
-
-若文件不存在，可以新增。
-
-要求：
-
-1. 说明 `BatteryCollectorFrameIoService`、`BatteryCollectorPollingService`、`BatteryCollectorTimeoutService` 的职责。
-2. 写清三者不负责的内容：
-   - 不负责业务命令选择。
-   - 不负责后处理。
-   - 不负责页面/Modbus 查询。
-3. 不改 Java。
-
-验证：
-
-```powershell
-git diff --check 03code/energy/src/main/java/com/shanhe/project/collector/battery/runtime/README.md
-```
-
-### TASK-REF-README-003：补齐 command 包说明
-
-执行者：可交给其他 AI。
-
-允许修改：
-
-1. `03code/energy/src/main/java/com/shanhe/project/collector/battery/command/README.md`
-
-若文件不存在，可以新增。
-
-要求：
-
-1. 说明 `BatteryCollectorCommandQueueService` 的边界。
-2. 说明 `BatteryConnectResistanceCommandProcessor` 只处理连接条电阻 0F/11/91 流程。
-3. 明确 `BatteryCollectorCommandLogService` 第一轮保留在 `service` 包。
-4. 不改 Java。
-
-验证：
-
-```powershell
-git diff --check 03code/energy/src/main/java/com/shanhe/project/collector/battery/command/README.md
-```
-
-### TASK-REF-TEST-001：测试包名整理评估
-
-执行者：Codex。
-
-目标：只评估是否需要移动测试 package，不直接改测试。
-
-审查对象：
-
-1. `BatteryCollectorServiceTest`
-2. `BatteryCollectorCommandLogServiceTest`
-3. `BatteryDeviceStateServiceTest`
-4. `BatteryModuleGroupCalculationServiceTest` 的删除历史
-
-输出：
-
-1. 哪些测试仍应保留在 `service` 测试包。
-2. 哪些新增 runtime/command 测试值得补。
-3. 哪些测试不需要补，避免过度测试。
-
-### TASK-REF-TEST-002：补一个核心 runtime 超时测试
-
-执行者：可交给其他 AI。
-
-前置条件：必须先由 Codex 完成 `TASK-REF-TEST-001` 并明确允许。
-
-允许新增：
-
-1. `03code/energy/src/test/java/com/shanhe/project/collector/battery/runtime/BatteryCollectorTimeoutServiceTest.java`
-
-只覆盖核心行为：
-
-1. 未超时不调用重试。
-2. 超时且未达到最大重试次数时调用重试 writer。
-3. 达到最大重试次数时清理 pending 并递增 timeoutCount。
-
-禁止：
-
-1. 不 mock 串口。
-2. 不测每个私有方法。
-3. 不修改主代码。
-
-验证：
-
-```powershell
-mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryCollectorTimeoutServiceTest,BatteryCollectorServiceTest,BatteryCollectorCommandLogServiceTest" test
-```
-
-### TASK-REF-COLLECTOR-005：响应完成分派审查
-
-执行者：Codex。
-
-目标：审查 `BatteryCollectorService.handleCompletedPendingResponse` 是否值得拆成更小 processor。
-
-审查维度：
-
-1. 普通命令响应。
-2. 自动编号响应。
-3. 连接条电阻响应。
-4. 地址缓存重置副作用。
-5. 模式状态停止副作用。
-
-输出：
-
-1. 是否需要新增 `BatteryAutoAddressCommandProcessor`。
-2. 是否继续保留在 `BatteryCollectorService`。
-3. 如果拆，明确允许修改文件和验证命令。
-
-### TASK-REF-COLLECTOR-006：串口读取分派审查
-
-执行者：Codex。
-
-目标：审查 `BatteryCollectorService.readOnce` 是否继续拆分。
-
-当前默认结论：暂不拆。
-
-只有满足以下条件才新建代码任务：
-
-1. 能保持 `BatteryCollectorService` 外部行为不变。
-2. 不改变 receive buffer 截断策略。
-3. 不改变 `moduleFrameDispatcher.dispatch` 调用顺序。
-4. 不改变 pending 匹配规则。
-
-### TASK-REF-CLEANUP-002：删除过期注释和无效 README 断言
-
-执行者：可交给其他 AI。
-
-允许修改：
-
-1. `03code/energy/src/main/java/com/shanhe/project/collector/battery/README.md`
-2. `03code/energy/src/main/java/com/shanhe/project/collector/battery/postprocess/README.md`
-3. `03code/energy/src/main/java/com/shanhe/project/collector/battery/realtime/README.md`
-
-要求：
-
-1. 只删除与当前代码明显矛盾的句子。
-2. 不新增架构判断。
-3. 不改 Java。
-
-验证：
-
-```powershell
-git diff --check 03code/energy/src/main/java/com/shanhe/project/collector/battery/README.md 03code/energy/src/main/java/com/shanhe/project/collector/battery/postprocess/README.md 03code/energy/src/main/java/com/shanhe/project/collector/battery/realtime/README.md
-```
-
-### TASK-REF-EXTERNAL-002：外部读取缓存边界复核
-
-执行者：Codex。
-
-目标：复核 JSON/TCP、Modbus、页面查询是否都通过实时缓存/快照读取，不直接访问过期后处理表。
-
-审查对象：
+只审查，不改代码。对象：
 
 1. `BatteryModuleModbusReadMappingService`
 2. `BatteryAlarmHandler`
 3. `BatteryPackHandler`
 4. 页面当前状态查询相关 service
 
-输出：
+输出查询入口清单、是否绕过实时缓存、是否需要另拆代码任务。
 
-1. 查询入口清单。
-2. 是否存在绕过实时缓存的路径。
-3. 如需改代码，另拆明确任务。
+### TASK-CODEX-M460-001：M460 剩余能力复核
 
-### TASK-REF-M460-001：M460 剩余能力复核
+只做盘点和任务拆分，不改 Java。更新 M460 未整合能力文档。
 
-执行者：Codex。
+## 5. 可交给其他 AI 的代码层任务
 
-目标：复核 M460 能力是否仍有未整合项，更新 `M460未整合能力全局盘点_20260618.md`。
+这些任务面向整个 `energy` 项目的代码层重构，重点是“类放到合适位置、公共能力抽取、重复逻辑收缩”。测试和 README 后续再统一补。
 
-要求：
+### TASK-AI-CHECK-001：检查测试中反射旧私有方法残留
 
-1. 只做盘点和任务拆分。
-2. 不改 Java。
-3. 每个未整合能力写清旧入口、energy 当前入口、是否需要整合、优先级。
+只检查，不改代码。
 
-### TASK-REF-DATA-001：禁止提交本地数据库文件
+执行：
 
-执行者：可交给其他 AI。
+```powershell
+rg "ReflectionTestUtils.invokeMethod\(.*(pollOnce|updateModuleAddressCache|processQueuedModuleCommand|handleTimedOutPendingRequest|shouldStopModeAfterNoResponseCommand)" 03code/energy/src/test/java
+```
 
-目标：避免 `03code/energy/sql/rysqlite3.db` 反复出现在工作树。
+输出：无命中写“无残留”；有命中列文件和行号，交给 Codex 判断。
+
+### TASK-AI-CHECK-002：检查 collector/battery/service 剩余类清单
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg --files 03code/energy/src/main/java/com/shanhe/project/collector/battery/service
+```
+
+输出：按“门面保留 / 可评估 / 不确定”三类列出，不做迁包建议。
+
+### TASK-AI-CHECK-003：检查是否仍引用已删除薄服务
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "BatteryModuleCompatReportLogSyncService|collector\.battery\.service\.BatteryModuleGroupCalculationService|collector\.battery\.service\.BatteryModuleGroupCompatibilityFillService|collector\.battery\.service\.BatteryCollectorDeviceStateService" 03code/energy/src/main/java 03code/energy/src/test/java
+```
+
+输出命中列表，交给 Codex 判断是否需要修复。
+
+### TASK-AI-CHECK-004：盘点 util/helper 候选重复逻辑
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "new SimpleDateFormat|DateTimeFormatter|bytesToHex|toHex|split\(|StringUtils\.isBlank|CollectionUtils|CacheUtils|CodingUtil" 03code/energy/src/main/java/com/shanhe/project -n
+```
+
+输出：按“日期格式化 / 十六进制转换 / 字符串判空 / 缓存访问 / 其他”分类列出候选，不新增工具类。
+
+### TASK-AI-CHECK-005：盘点 device/opt 中蓄电池控制类引用面
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "ControlBattery|ControlBatterySet" 03code/energy/src/main/java 03code/energy/src/test/java -n
+```
+
+输出：列出调用方，并标注是否跨 `controller`、`sync`、`modbus`、`iot`。不得提出迁包结论。
+
+### TASK-AI-CHECK-006：盘点 BatteryReportLogService 引用面
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "BatteryReportLogService|BatteryReportLogServiceImpl" 03code/energy/src/main/java 03code/energy/src/test/java -n
+```
+
+输出：列出调用方，并标注是否跨 `iot`、`collector`、`scheduled`、`device`。不得提出迁包结论。
+
+### TASK-AI-CHECK-007：盘点 energy/stat 与 energy/capacity 交叉引用
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "com\.shanhe\.project\.energy\.(stat|capacity)" 03code/energy/src/main/java/com/shanhe/project/energy -n
+```
+
+输出：列出 `stat` 引用 `capacity`、`capacity` 引用 `stat` 的位置。不得合并目录。
+
+### TASK-AI-CHECK-008：盘点 sync/handler 中蓄电池相关 handler 边界
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "Battery|battery|蓄电池" 03code/energy/src/main/java/com/shanhe/project/sync/handler -n
+```
+
+输出：列出 handler、方法名、依赖服务。不得移动 handler。
+
+### TASK-AI-CHECK-009：盘点 scheduled 中蓄电池相关定时任务
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "Battery|battery|蓄电池|BatteryReport|BatteryPack" 03code/energy/src/main/java/com/shanhe/project/scheduled -n
+```
+
+输出：列出任务类、触发方法、依赖服务。不得修改 cron 或业务逻辑。
+
+### TASK-AI-FIX-001：清理明显未使用 import
+
+前置条件：必须先运行编译确认当前代码通过。
 
 允许修改：
 
-1. `.gitignore`
+1. `03code/energy/src/main/java/com/shanhe/project/collector/battery/service/BatteryCollectorService.java`
+2. `03code/energy/src/test/java/com/shanhe/project/collector/battery/service/BatteryCollectorServiceTest.java`
 
-前置条件：Codex 先确认该数据库文件是否应纳入版本管理。未确认前不得执行。
+要求：只删除 IDE/编译器明确提示的未使用 import；不改方法体；不改注释；不格式化全文件。
 
 验证：
 
 ```powershell
-git status --short
+mvn "-DskipTests" compile
+git diff --check
 ```
 
-### TASK-REF-CODEGRAPH-001：codegraph 使用说明
+### TASK-AI-FIX-002：收缩单一调用的测试 helper 重复创建
 
-执行者：可交给其他 AI。
+前置条件：Codex 明确指出重复位置后执行。
 
 允许修改：
 
-1. `01document/energy_refactor_current_plan_20260622.md`
+1. `03code/energy/src/test/java/com/shanhe/project/collector/battery/service/BatteryCollectorServiceTest.java`
+
+要求：只抽取重复测试 helper；不改断言语义；不新增生产代码。
+
+验证：
+
+```powershell
+mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryCollectorServiceTest" test
+```
+
+### TASK-AI-RELOC-001：迁移低引用纯模型类前置检查
+
+只检查，不改代码。
+
+候选包：
+
+1. `collector/battery/model`
+2. `collector/battery/protocol`
+3. `collector/battery/command`
+
+执行：
+
+```powershell
+rg "BatteryCollectorCommandResult|BatteryAggregateCommandDefinition" 03code/energy/src/main/java 03code/energy/src/test/java -n
+```
+
+输出引用面，交给 Codex 判断是否拆迁包任务。
+
+### TASK-AI-COMMON-001：公共日期格式化工具抽取前置检查
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "new SimpleDateFormat|DateTimeFormatter|DateUtil|parseDate|formatDate" 03code/energy/src/main/java/com/shanhe/project -n
+```
+
+输出重复模式和候选调用点，不新增工具类。
+
+### TASK-AI-COMMON-002：协议十六进制工具复用检查
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "bytesToHex|toHex|hexTo|String\.format\(\"%02X\"" 03code/energy/src/main/java/com/shanhe/project -n
+```
+
+输出重复实现位置，交给 Codex 判断是否统一到现有协议工具。
+
+### TASK-AI-CHECK-010：盘点 collector/battery/service 薄服务候选
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "class |interface |public .*\\(" 03code/energy/src/main/java/com/shanhe/project/collector/battery/service -n
+```
+
+输出：按类列出 public 方法数量、是否仅转调 mapper/service、调用方数量。不得删除类，不得迁包。
+
+### TASK-AI-CHECK-011：盘点 device/config 下蓄电池历史模型边界
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "BatteryReportLog|BatteryPack|DevBatteryOpt|BatteryMonitor|MonitorData" 03code/energy/src/main/java 03code/energy/src/main/resources -n
+```
+
+输出：列出 domain、mapper、xml、controller、service 的引用链，标注是否涉及 MyBatis namespace/resultMap。不得移动 domain 或 mapper。
+
+### TASK-AI-CHECK-012：盘点 device/opt 命令控制边界
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "CmdBatteryControlService|ControlBattery|ControlBatterySet|RestoreService|OptBattery" 03code/energy/src/main/java 03code/energy/src/test/java -n
+```
+
+输出：列出页面 controller、service、sync、modbus、collector 的引用关系。不得改控制流程。
+
+### TASK-AI-CHECK-013：盘点 iot legacy 蓄电池入口
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "Battery|battery|蓄电池|BatteryReport|BatteryPack" 03code/energy/src/main/java/com/shanhe/project/iot -n
+```
+
+输出：列出 handler、入口方法、依赖 service、是否读取实时缓存或历史表。不得移动 `iot` 代码。
+
+### TASK-AI-CHECK-014：盘点 modbus 蓄电池读取入口
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "Battery|battery|BatteryModule|BatteryPack|BatteryReport" 03code/energy/src/main/java/com/shanhe/project/modbus 03code/energy/src/main/java/com/shanhe/project/collector/battery/service/BatteryModuleModbusReadMappingService.java -n
+```
+
+输出：列出 Modbus 地址映射、调用服务、是否依赖实时缓存。不得修改寄存器地址。
+
+### TASK-AI-CHECK-015：盘点缓存 key 拼接重复逻辑
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "String\\.format\\(|CacheUtils|getKey\\(|cacheName|CACHE|cache" 03code/energy/src/main/java/com/shanhe/project -n
+```
+
+输出：按业务域列出缓存 key 构造方式，标注是否有配置号、packNum、moduleAddress 维度。不得新增缓存工具。
+
+### TASK-AI-CHECK-016：盘点电池编号排序/截断逻辑
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "batSinSize|modelNum|moduleAddress|sort|Comparator|limit\\(|subList" 03code/energy/src/main/java/com/shanhe/project -n
+```
+
+输出：列出涉及电池组单体数量、编号排序、截断补齐的代码位置，标注是否影响 JSON/TCP、Modbus、页面查询。不得改排序逻辑。
+
+### TASK-AI-CHECK-017：盘点 mapper XML 与 Java 包迁移风险
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "com\\.shanhe\\.project\\.(device|collector|energy|sync|iot|modbus)" 03code/energy/src/main/resources/mybatis 03code/energy/src/main/java -n
+```
+
+输出：列出 XML namespace、resultType、parameterType 中直接引用 Java 全限定名的位置。不得修改 XML。
+
+### TASK-AI-FIX-003：收缩单方法薄服务的前置代码任务模板
+
+仅在 Codex 明确指定某个类后执行。不得自行选择目标。
+
+允许修改范围由 Codex 单独给出，默认最多 3 个文件：
+
+1. 薄服务类。
+2. 唯一调用方。
+3. 对应测试或配置文件。
 
 要求：
 
-1. 补充”执行代码任务前优先用 codegraph 或 rg 查引用面”。
-2. 不改其他文档。
-3. 不改 Java。
+1. 只把薄服务的唯一 public 方法内联到唯一调用方。
+2. 保留原方法中文注释中的有效业务说明。
+3. 不改变事务注解、异步注解、缓存注解语义。
+4. 若发现调用方不唯一、存在 AOP 注解或 Spring 循环依赖风险，立即停止。
 
-**CODEGRAPH-001 执行结果（2026-06-22）：**
+验证：
 
-执行代码任务前必须先查引用面：
+```powershell
+mvn "-DskipTests" compile
+git diff --check
+```
 
-1. 优先使用 `codegraph_callers`、`codegraph_impact`、`codegraph_explore` 确认影响面。
-2. 若 codegraph MCP 未集成，退回使用 `rg -l “ClassName”` 搜索引用。
-3. 不能只凭”引用文件数少”决定迁包；还要看是否跨 `device`、`modbus`、`sync`、`scheduled`、`iot` 等边界。
-4. 影响超过 20 个业务文件的类不迁移，改为保留原门面。
+### TASK-AI-FIX-004：低风险工具复用代码任务模板
 
-## 5. 暂不执行任务
+仅在 Codex 明确指定旧实现和目标工具方法后执行。不得自行新增工具类。
 
-以下任务暂不执行，除非 Codex 重新开任务：
+允许修改范围由 Codex 单独给出，默认最多 2 个文件。
+
+要求：
+
+1. 只替换完全等价的重复代码。
+2. 保留大小写、分隔符、空值处理语义。
+3. 不跨协议复用专用工具。
+4. 若输出格式无法证明一致，立即停止。
+
+验证：
+
+```powershell
+mvn "-DskipTests" compile
+git diff --check
+```
+
+## 6. 暂不执行任务
 
 1. 批量迁移 `service` 包剩余类。
 2. 移动 `BatteryModuleRealtimeSnapshotService`。
@@ -346,8 +431,13 @@ git status --short
 8. 合并 `energy/stat` 与 `energy/capacity`。
 9. 拆分 `sync/handler`。
 10. 拆分 `monitor` 包。
+11. 新增多个 README 刷文档数量。
+12. 未经 Codex 确认就抽公共工具类。
+13. 弱 AI 自行把 `device`、`iot`、`sync`、`modbus` 中的蓄电池类迁入 `collector`。
+14. 弱 AI 自行删除看似无用的 service、domain、mapper。
+15. 弱 AI 自行修改 MyBatis XML namespace、resultMap、parameterType。
 
-## 6. 固定验证命令
+## 7. 固定验证命令
 
 代码任务完成后执行：
 
@@ -362,5 +452,3 @@ git diff --check
 ```powershell
 git diff --check
 ```
-
-乱码扫描由 Codex 执行，避免把扫描规则自身写入普通任务文档后造成误报。

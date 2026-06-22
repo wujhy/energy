@@ -1,156 +1,221 @@
 # energy 项目级目录盘点
 
-更新时间：2026-06-18
+更新时间：2026-06-22
 
-## 1. 顶级包文件统计
+本文由 Codex 维护，用于全局统筹目录重构。其他 AI 不应修改本文件；其他 AI 只执行本文拆出的、边界明确的代码任务。
 
-| 包 | 文件数 | 主要职责 |
+## 1. 当前结论
+
+`03code/energy` 目录整体按业务域划分，暂不建议继续做项目级大迁包。
+
+当前优先级：
+
+1. 保持已完成的 `collector/battery` 重构结果稳定。
+2. 不移动高引用门面类，尤其是跨 `device`、`iot`、`sync`、`modbus`、`scheduled` 的类。
+3. 后续若要继续目录调整，必须按单个类或单个小包拆任务，先列引用面、停止条件和验证命令。
+
+## 2. 顶级包职责
+
+| 包 | 职责 | 结论 |
 |---|---|---|
-| collector | 82 | 蓄电池采集（已重构，子包结构清晰） |
-| device | 63 | 设备配置、告警、操作、屏幕 |
-| energy | 34 | 能源统计和容量预测 |
-| iot | 15 | 旧 JSON/TCP/CM03N 兼容入口 |
-| sync | 27 | 数据同步 |
-| modbus | 6 | Modbus RTU 和映射 |
-| monitor | 15 | 系统监控 |
-| scheduled | 8 | 定时任务 |
-| system | 14 | 系统用户、文件、字典 |
-| common | 1 | 通用基础能力 |
+| `collector` | 蓄电池采集、实时缓存、后处理、外部读取适配 | `collector/battery` 已完成主要拆分，继续以稳定为主 |
+| `device` | 设备配置、告警、操作、屏幕、历史兼容服务 | 高引用门面较多，第一轮不做迁包 |
+| `energy` | 能源统计、容量预测 | `stat` 与 `capacity` 职责清晰，暂不合并 |
+| `iot` | 旧 JSON/TCP/CM03N 兼容入口 | 标记为 legacy，禁止新增主业务 |
+| `sync` | 数据同步 controller、handler、job、service | 当前按同步域聚合，暂不拆 |
+| `modbus` | Modbus RTU 与读写映射 | 外部协议边界，暂不迁移 |
+| `scheduled` | 定时任务 | 已补归属说明，暂不迁包 |
+| `monitor` | 操作日志、服务监控、缓存管理 | 规模小，暂不拆 |
+| `system` | 用户、字典、文件 | 保持现状 |
+| `common` | 通用基础能力 | 暂无立即抽取任务 |
 
-## 2. 各包目录结构和职责
+## 3. collector/battery 现状
 
-### collector（已重构）
+已完成的主要边界：
 
-子包结构清晰，职责边界已通过前序重构任务冻结。不再需要项目级调整。
+| 包 | 关键类 | 职责 |
+|---|---|---|
+| `runtime` | `BatteryCollectorFrameIoService` | 串口打开、关闭、写字节、收包 buffer 裁剪 |
+| `runtime` | `BatteryCollectorPollingService` | 自动轮询编排、地址列表、地址缓存更新 |
+| `runtime` | `BatteryCollectorTimeoutService` | pending 超时判断、重试、最终超时收尾 |
+| `command` | `BatteryCollectorCommandQueueService` | 命令出队、pending 构造、完成快照、模式停止、命令日志更新 |
+| `command` | `BatteryConnectResistanceCommandProcessor` | 连接条电阻 0F/11/91 流程推进和结果写入 |
+| `state` | `BatteryCollectorDeviceStateService` | 采集运行态持久化去重 |
+| `postprocess` | `*Processor`、`BatteryRealtimePostProcessService` | 采集入库后的实时后处理 |
+| `realtime` | group 计算与兼容填充 | 组级实时数据计算与旧字段兼容 |
 
-### device
+保留在 `service` 包的高引用或门面类：
 
+| 类 | 保留原因 |
+|---|---|
+| `BatteryCollectorService` | 采集主流程门面，仍持有串口读写、响应分派入口 |
+| `BatteryCollectorCommandService` | 外部命令入口门面 |
+| `BatteryCollectorCommandLogService` | opt-log 持久化服务，命令服务依赖 |
+| `BatteryModuleRealtimeSnapshotService` | 页面、Modbus、device、collector 多方读取 |
+| `BatteryDeviceStateService` / `impl` | 告警、定时任务、Modbus、恢复链路依赖 |
+| `BatteryModeStatusService` | 旧 iot、device、命令链路依赖 |
+
+## 4. 候选项
+
+以下候选只允许由 Codex 继续统筹，不直接交给弱 AI 做目录迁移。
+
+### 4.1 `device/opt` 中的蓄电池控制入口
+
+候选类：
+
+- `device/opt/service/ControlBattery.java`
+- `device/opt/service/ControlBatterySet.java`
+
+结论：第一轮不迁移。
+
+原因：它们是旧页面、设备操作、同步、Modbus 之间的跨模块门面。移动 package 收益小，破坏面大。
+
+### 4.2 `device/config` 中的历史兼容服务
+
+候选类：
+
+- `device/config/service/BatteryReportLogService.java`
+- `device/config/service/impl/BatteryReportLogServiceImpl.java`
+
+结论：第一轮不迁移。
+
+原因：该服务被 iot、collector、scheduled、device 多处引用，并绑定 mapper namespace 与历史 SQL 语义。目录迁移收益不足。
+
+### 4.3 `collector/battery/service` 剩余门面
+
+可后续评估，但不立即迁移：
+
+- `BatteryModuleCellCompatibilityFillService`
+- `BatteryModuleRealtimeAdapterService`
+- `BatteryModuleReportLogAdapterService`
+- `BatteryCurrentStateService`
+
+规则：只允许先做引用面核验和 README 说明；不得为了减少 `service` 文件数量强行迁包。
+
+## 5. 已完成任务状态
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| `TASK-REF-DIR-001` | 已完成 | 已建立 `collector/battery` 包职责说明 |
+| `TASK-REF-COLLECTOR-001` | 已完成 | 已抽取轮询编排 |
+| `TASK-REF-COLLECTOR-002` | 已完成 | 已抽取最小串口帧 I/O |
+| `TASK-REF-COLLECTOR-003-TIMEOUT` | 已完成 | 已新增 `BatteryCollectorTimeoutService` |
+| `TASK-REF-COMMAND-001` | 已完成 | 已抽取命令队列基础能力 |
+| `TASK-REF-COMMAND-001B` | 已完成 | 已补齐出队、发送协调、完成回调、超时完成 |
+| `TASK-REF-POSTPROCESS-001` | 已完成 | 后处理主代码已迁入 `collector/battery/postprocess` |
+| `TASK-REF-STATE-001` | 部分完成 | `BatteryCollectorDeviceStateService` 已迁入 `state`，高引用状态门面保留 |
+| `TASK-REF-CONSOLIDATE-001` | 已完成 | 已收缩 `BatteryModuleCompatReportLogSyncService` |
+| `TASK-REF-CONSOLIDATE-002` | 已完成 | 已盘点，无其他立即收缩候选 |
+| `TASK-REF-SCHEDULED-001` | 已完成 | 已补定时任务归属说明 |
+| `TASK-REF-EXTERNAL-001` | 已完成 | 已补外部读取适配边界说明 |
+| `TASK-REF-ENERGY-DIR-001` | 已完成 | 本文完成项目级目录盘点 |
+
+## 6. 后续任务池
+
+以下不是“必须立即执行”的任务，只在有明确收益时继续。
+
+### TASK-REF-DOC-001：同步主计划状态
+
+类型：文档任务，仅 Codex 执行。
+
+内容：
+
+1. 修正 `energy_refactor_plan_20260618.md` 中 `COMMAND-001B`、`COLLECTOR-003-TIMEOUT` 的过期描述。
+2. 删除“测试仍需适配”的过期结论。
+3. 保留高引用门面不迁移的规则。
+
+### TASK-REF-COLLECTOR-004：主流程剩余职责审查
+
+类型：代码审查/计划任务，仅 Codex 执行。
+
+只审查，不改代码：
+
+- `BatteryCollectorService.readOnce`
+- `BatteryCollectorService.handleCompletedPendingResponse`
+- `BatteryCollectorService.writeFrame`
+- `BatteryCollectorService.writeFrameWithoutPending`
+- `BatteryCollectorService.closeQuietly`
+
+输出：是否值得继续抽取、风险点、验证命令。
+
+### TASK-REF-CODE-AUDIT-001：盘点可收缩的薄服务
+
+类型：代码审查任务，可交给其他 AI 做初筛，Codex 负责结论。
+
+只检查，不改代码：
+
+- `collector/battery/service`
+- `device/config/service`
+- `device/opt/service`
+- `energy/stat/service`
+- `energy/capacity/service`
+
+输出：
+
+1. 服务类名。
+2. public 方法数。
+3. 每个 public 方法是否只是直接转调另一个 service / mapper。
+4. 调用方数量。
+5. 不提出迁移或删除结论，交给 Codex 判断。
+
+### TASK-REF-CODE-AUDIT-002：盘点可归入功能包的模型类
+
+类型：代码审查任务，可交给其他 AI 做初筛，Codex 负责结论。
+
+只检查，不改代码：
+
+- `collector/battery/model`
+- `device/config/domain`
+- `device/opt/domain`
+- `energy/stat/domain`
+- `energy/capacity/vo`
+- `sync/domain`
+
+输出：
+
+1. 模型类名。
+2. 是否只被单一业务包引用。
+3. 是否跨 controller / service / mapper / xml 使用。
+4. 是否涉及 JSON 字段名、MyBatis resultMap、序列化。
+5. 不提出迁包结论，交给 Codex 判断。
+
+### TASK-REF-CODE-AUDIT-003：盘点公共工具抽取候选
+
+类型：代码审查任务，可交给其他 AI 做初筛，Codex 负责结论。
+
+只检查，不改代码：
+
+- 日期格式化与解析。
+- 十六进制转换。
+- 缓存 key 拼接。
+- 电池编号、组号、单体号排序和截断。
+- JSON 解析与字段安全读取。
+
+输出：
+
+1. 重复代码所在文件和方法。
+2. 现有工具类是否已经覆盖。
+3. 是否属于协议专用能力。
+4. 是否适合抽到 `collector/battery/protocol`、`collector/battery/model`、`common` 或保留原地。
+5. 不新增工具类。
+
+## 7. 交给其他 AI 的规则
+
+其他 AI 只执行边界明确的代码开发任务，必须满足：
+
+1. 任务只允许改 1 到 3 个文件。
+2. 必须给出精确文件路径和方法名。
+3. 必须给出停止条件。
+4. 必须给出验证命令。
+5. 不允许做目录盘点、计划修订、全局架构判断。
+6. 不允许使用 PowerShell `Get-Content` / `Set-Content` 写中文文件。
+7. 不允许提交 `rysqlite3.db`、`.codegraph/`。
+8. 不允许新增 README 或纯文档任务，除非 Codex 明确指定。
+
+固定验证：
+
+```powershell
+mvn "-DskipTests" compile
+mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryCollectorServiceTest,BatteryCollectorCommandLogServiceTest" test
+git diff --check
 ```
-device/alarm       告警（controller/domain/mapper/service）
-device/config      设备配置（controller/domain/mapper/service）
-device/host        主机信息（controller/domain/mapper/service）
-device/opt         设备操作（cmd/controller/domain/mapper/service/vo）
-device/screen      大屏（controller/service）
-```
-
-职责边界清晰，按业务域分层。无明显混放问题。
-
-### energy
-
-```
-energy/capacity    容量预测（mapper/service/tool/vo）
-energy/stat        能源统计（controller/domain/mapper/service/vo）
-```
-
-职责边界清晰。`capacity` 与 `stat` 独立。
-
-### iot
-
-```
-iot/CM03N          旧 CM03N 上报入口
-iot/battery        旧蓄电池 JSON/TCP 兼容入口
-iot/data           数据工厂和启动
-iot/model          IoT 模型
-iot/service        数据服务
-```
-
-旧兼容入口，已在 LEGACY-001 中标记。不新增业务。
-
-### sync
-
-```
-sync/common        通用同步工具
-sync/consts        同步常量
-sync/controller    同步控制器
-sync/domain        同步领域模型
-sync/handler       同步处理器
-sync/scheduled     同步定时任务
-sync/service       同步服务
-```
-
-职责边界清晰。
-
-### modbus
-
-```
-modbus/config      Modbus 配置
-modbus/rtu         RTU 从站运行
-modbus/service     Modbus 写映射服务
-```
-
-职责边界清晰。
-
-### monitor
-
-```
-monitor/operlog    操作日志
-monitor/server     服务器监控
-monitor/cache      缓存管理
-```
-
-职责边界清晰。
-
-### scheduled
-
-```
-scheduled/         定时任务（设备在线、数据上报、日志清理、缓存等）
-```
-
-已在 SCHEDULED-001 中梳理归属。
-
-### system
-
-```
-system/dict        字典
-system/file        文件
-system/user        用户
-```
-
-职责边界清晰。
-
-## 3. 候选迁移清单
-
-基于目录盘点，以下为潜在的目录优化候选。按优先级排序：
-
-### 候选 1：device/opt 内 ControlBattery/ControlBatterySet 归属
-
-- **现状**：`device/opt/service/ControlBattery.java` 和 `ControlBatterySet.java` 是蓄电池控制入口，与 `device/opt` 下的其他操作（`ControlBase`、`ControlSwitch`、`RestoreService`）混放。
-- **引用面**：ControlBatterySet 被 controller、sync、modbus 多处引用。
-- **建议**：第一轮不迁移。它们是跨模块门面，保留原包名。
-- **禁止事项**：不改 URL、不改方法签名。
-
-### 候选 2：device/config 下 BatteryReportLogService 归属
-
-- **现状**：`device/config/service/BatteryReportLogService.java` 是旧兼容历史服务，与配置服务混放。
-- **引用面**：被 iot、collector、scheduled、device 多处引用。
-- **建议**：第一轮不迁移。高引用门面，保留原包名。
-- **禁止事项**：不改 mapper namespace、不改 SQL。
-
-### 候选 3：energy/stat 与 energy/capacity 合并评估
-
-- **现状**：`energy/stat`（统计）和 `energy/capacity`（容量预测）在同一个顶级包下，职责不同但有数据依赖。
-- **建议**：保持现状。两个子包职责清晰，无混放问题。
-
-### 候选 4：sync 包内 handler 归属
-
-- **现状**：`sync/handler/` 下有 `BatterySyncHandler.java`、`HostHandler.java`、`AttributeHandler.java` 等，职责各异。
-- **建议**：第一轮不迁移。handler 按设备类型分，当前结构可接受。
-
-### 候选 5：monitor 包归属
-
-- **现状**：`monitor/` 下有操作日志、服务器监控、缓存管理，职责各异但规模小。
-- **建议**：保持现状。文件数少（15），不值得拆分。
-
-## 4. 结论
-
-当前 `03code/energy` 项目级目录结构基本合理。主要的目录混乱问题（`collector/battery/service` 职责过宽）已通过前序重构任务解决。其余包按业务域分层，无明显混放点。
-
-**无需立即执行目录迁移的候选**。后续如有功能开发需要调整目录，按 `TASK-REF-ENERGY-DIR-002` 规则小步执行。
-
-## 5. 三类候选总结
-
-| 类型 | 候选数 | 立即执行 | 保留观察 |
-|---|---|---|---|
-| 目录迁移 | 2 | 0 | 2（ControlBattery、BatteryReportLogService） |
-| 薄服务收缩 | 0 | 0 | 0（已在 CONSOLIDATE-002 盘点） |
-| 公共能力提取 | 0 | 0 | 0（已在 COMMON-001 盘点） |
