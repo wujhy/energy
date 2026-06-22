@@ -22,6 +22,9 @@ import java.util.List;
  * 连接条电阻测试命令处理器。
  *
  * <p>负责 0F 启动命令后的 11/91 读电压排队、91 响应解析、电阻计算、缓存和实时表写入。</p>
+ *
+ * @author wjh
+ * @since 2026-06-18
  */
 @Slf4j
 @Component

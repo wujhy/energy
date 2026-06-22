@@ -8,6 +8,9 @@ import java.util.List;
  * 后处理批次守卫工具类。
  *
  * <p>提供批次号一致性和非空校验，用于后处理器的 {@code shouldProcess} 前置判断。</p>
+ *
+ * @author wjh
+ * @since 2026-06-18
  */
 public final class PostProcessBatchGuard {
 

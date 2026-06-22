@@ -19,6 +19,9 @@ import javax.annotation.Resource;
  * 蓄电池采集 pending 超时协调服务。
  *
  * <p>只负责判断是否超时、触发重试、最终超时收尾和状态持久化；实际串口写入由调用方回调完成。</p>
+ *
+ * @author wjh
+ * @since 2026-06-18
  */
 @Slf4j
 @Component

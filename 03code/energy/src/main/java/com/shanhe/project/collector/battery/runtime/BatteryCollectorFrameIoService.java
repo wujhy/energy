@@ -16,6 +16,9 @@ import java.io.ByteArrayOutputStream;
  *
  * <p>只负责与串口/帧的底层交互：帧发送、字节接收、接收缓冲管理。
  * 不负责业务数据解释、命令队列、超时判断或状态持久化。</p>
+ *
+ * @author wjh
+ * @since 2026-06-18
  */
 @Slf4j
 @Component

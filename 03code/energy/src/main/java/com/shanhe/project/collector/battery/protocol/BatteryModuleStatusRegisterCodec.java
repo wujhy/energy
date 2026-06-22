@@ -2,6 +2,9 @@ package com.shanhe.project.collector.battery.protocol;
 
 /**
  * M460 电池组状态寄存器编码工具。
+ *
+ * @author wjh
+ * @since 2026-06-18
  */
 public final class BatteryModuleStatusRegisterCodec {
 

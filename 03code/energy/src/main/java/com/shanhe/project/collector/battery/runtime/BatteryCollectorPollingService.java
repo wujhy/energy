@@ -23,6 +23,9 @@ import java.util.List;
  *
  * <p>只负责轮询编排：什么时候轮询、按什么顺序遍历地址、什么时候触发全量发现。
  * 不负责帧 I/O、命令队列、超时判断或状态持久化。</p>
+ *
+ * @author wjh
+ * @since 2026-06-18
  */
 @Slf4j
 @Component

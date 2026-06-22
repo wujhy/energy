@@ -23,6 +23,9 @@ import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtoco
  *
  * <p>负责命令队列的核心逻辑：待处理请求构造、响应匹配判断、命令完成和超时处理。
  * 不负责帧 I/O（由 BatteryCollectorFrameIoService 处理）。</p>
+ *
+ * @author wjh
+ * @since 2026-06-18
  */
 @Slf4j
 @Component

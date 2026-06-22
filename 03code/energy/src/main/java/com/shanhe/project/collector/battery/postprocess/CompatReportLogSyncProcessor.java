@@ -20,6 +20,9 @@ import java.util.List;
  * 兼容历史报告同步处理器。
  *
  * <p>将标准实时模型同步到旧 dev_battery_report_log 过渡表，统一纳入后处理流水线。</p>
+ *
+ * @author wjh
+ * @since 2026-06-18
  */
 @Slf4j
 @Component
