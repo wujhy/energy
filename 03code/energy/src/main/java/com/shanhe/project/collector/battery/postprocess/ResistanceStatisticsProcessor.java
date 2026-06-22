@@ -88,6 +88,7 @@ public class ResistanceStatisticsProcessor implements BatteryRealtimePostProcess
         }
     }
 
+    /** 校验本轮单体内阻是否完整：数量达标且每个单体都有内阻值。 */
     private boolean isCompleteResistanceBatch(BatteryRealtimePostProcessContext context) {
         Integer expectedCellCount = resolveExpectedCellCount(context.getPackNum());
         if (expectedCellCount != null && expectedCellCount > 0 && context.getCells().size() < expectedCellCount) {
@@ -101,6 +102,7 @@ public class ResistanceStatisticsProcessor implements BatteryRealtimePostProcess
         return true;
     }
 
+    /** 从电池组配置读取期望单体数量。 */
     private Integer resolveExpectedCellCount(Integer packNum) {
         if (batteryPackService == null || packNum == null) {
             return null;

@@ -105,6 +105,7 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
         }
     }
 
+    /** 将通信告警上下文合并到目标上下文，不覆盖已有的单体告警参数。 */
     private void mergeAlarmContext(BatteryModuleAlarmContext target, BatteryModuleAlarmContext source) {
         if (target == null || source == null || source.isEmpty()) {
             return;
@@ -125,6 +126,7 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
         }
     }
 
+    /** 将告警上下文提交给告警服务，并恢复本轮未上报单体的告警。 */
     private void handleAlarmContext(BatteryRealtimePostProcessContext context,
                                     BatteryModuleAlarmContext alarmContext) {
         if (alarmLogService == null || alarmContext == null) {

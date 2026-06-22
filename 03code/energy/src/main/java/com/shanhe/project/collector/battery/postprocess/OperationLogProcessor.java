@@ -67,6 +67,7 @@ public class OperationLogProcessor implements BatteryRealtimePostProcessor {
         }
     }
 
+    /** 判断电池组状态是否为已知枚举值，未知状态跳过操作日志写入。 */
     private boolean isKnownBatteryPackStatus(String status) {
         return BatteryPackStatusEnum.find(status) != null;
     }
