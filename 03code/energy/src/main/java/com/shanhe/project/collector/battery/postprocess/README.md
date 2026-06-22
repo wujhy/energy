@@ -20,12 +20,6 @@
 | OperationLogProcessor | postprocess | 操作日志处理器 |
 | ResistanceStatisticsProcessor | postprocess | 内阻统计处理器 |
 
-## 迁移顺序
-
-1. 上下文/工具类（低风险）
-2. 低副作用 processor（VoltageRange、OnlineStatus、Statistics）
-3. 外部依赖 processor（Alarm、Capacity、CompatReport、OperationLog、Resistance）
-
 ## 禁止事项
 
 - 不修改 SOC/SOH/容量算法
