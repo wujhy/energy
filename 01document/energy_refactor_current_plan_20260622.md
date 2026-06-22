@@ -221,7 +221,106 @@ git diff --check
 
 ### TASK-CODEX-M460-001：M460 剩余能力复核
 
-只做盘点和任务拆分，不改 Java。更新 M460 未整合能力文档。
+状态：已完成复核，本轮只更新计划，不改 Java。
+
+当前结论：
+
+1. 已基本完成或已有明确落点：
+   - 600 模块轮询、响应分发、pending 超时和命令队列协调。
+   - 实时快照、batSinSize 限制、按单体编号补前一轮缺额、连续缺采新鲜度。
+   - Modbus 高频读的实时快照优先路径。
+   - 页面当前态、大屏/控制判断、旧 JSON/TCP 告警上下文和 oldInfo 的实时适配优先路径。
+   - 600 命令矩阵中自动编号、均衡、单体内阻、连接条电阻等基础命令入口。
+2. 仍未完成且属于功能开发优先级：
+   - `OptBatteryController` / `dev_battery_opt` 测试计划闭环：保存计划、到点调度、立即执行、停止、互斥和结果落库还未统一接入独立采集命令体系。
+   - Modbus 告警/状态读取扩展：告警寄存器、总告警标志、参数寄存器和可选 SOC/SOH/容量寄存器仍需逐项映射。
+   - Modbus 写白名单扩展：当前已存在均衡写路径，内阻测试、连接条测试、地址设置、清调试数据、系数/校准、告警屏蔽/解除仍需冻结寄存器所有权后再接入命令服务。
+   - 告警过滤/屏蔽/解除：M460 连续确认、恢复边界、`39/E9`、`3C/EC`、Modbus 屏蔽区语义未完成。
+   - 内阻/连接条测试闭环：命令触发已有基础，但结果状态、统计刷新、JSON/TCP/Modbus 可观测状态仍需闭环核验。
+   - SOC/SOH/容量/备电/放电时长：只能作为后处理/历史状态任务，不能在采集线程或单批次帧解析中临时硬算。
+3. 继续排除：
+   - M460 板级外设：蜂鸣器、LED、LCD、继电器、ADC/DAC、RTC、SD、OTA、WDT、FRAM/EEPROM 抽象。
+   - 980 PC/网络端协议作为运行时桥接。
+   - Modbus TCP，除非出现明确部署需求。
+   - 无硬件来源的热失控、氢气、离线总线、网络和传感器故障告警。
+
+后续 Codex 功能任务：
+
+#### TASK-CODEX-M460-OPTPLAN-001：测试计划闭环方案细化
+
+只做方案和任务拆分，不改 Java。
+
+对象：
+
+1. `OptBatteryController`
+2. `ControlBattery`
+3. `ControlBatterySet`
+4. `DevBatteryOpt`
+5. `IDevBatteryOptService`
+6. `BatteryCollectorCommandService`
+7. 现有 scheduled/job 包
+
+输出：
+
+1. 哪些 testType 可映射到独立采集命令。
+2. 哪些 testType 暂时 deferred。
+3. 到点调度 job 的候选入口、互斥规则、停止规则。
+4. 可交给其他 AI 的最小代码任务。
+
+#### TASK-CODEX-M460-MODBUS-READ-001：Modbus 告警和参数寄存器任务拆分
+
+只做方案和任务拆分，不改 Java。
+
+对象：
+
+1. `BatteryModuleModbusReadMappingService`
+2. `BatteryCurrentStateService`
+3. `BatteryDeviceStateService`
+4. `IAlarmLogService`
+5. `ConfigAttribute` / `AlarmItemLevelVo`
+
+输出：寄存器范围、数据来源、无来源时返回策略、是否可给其他 AI 开发。
+
+#### TASK-CODEX-M460-MODBUS-WRITE-001：Modbus 写白名单扩展方案
+
+只做方案和任务拆分，不改 Java。
+
+对象：
+
+1. `ModbusWriteMappingService`
+2. `BatteryCollectorCommandService`
+3. `BatteryModuleControlCommandService`
+4. `ControlBatterySet`
+
+输出：每个候选写寄存器对应的内部命令、参数校验、互斥、失败返回和验证测试。
+
+#### TASK-CODEX-M460-ALARM-001：告警过滤/屏蔽/解除能力拆分
+
+只做方案和任务拆分，不改 Java。
+
+对象：
+
+1. `AlarmContextProcessor`
+2. `BatteryModuleAlarmAdaptService`
+3. `IAlarmLogService`
+4. `BatteryAlarmHandler`
+5. `BatteryAlarmBitMapping`
+
+输出：哪些告警已由实时/设备状态生成，哪些需要过滤，哪些明确 excluded。
+
+#### TASK-CODEX-M460-CAPACITY-001：SOC/SOH/容量状态任务拆分
+
+只做方案和任务拆分，不改 Java。
+
+对象：
+
+1. `CapacityPredictionProcessor`
+2. `BatteryPredictorService`
+3. `PreBatteryGroupService`
+4. `BatteryModuleGroupCompatibilityFillService`
+5. `BatteryModuleReportLogAdapterService`
+
+输出：可立即使用的字段、需要历史状态的字段、deferred 字段和测试入口。
 
 ## 5. 可交给其他 AI 的代码层任务
 
