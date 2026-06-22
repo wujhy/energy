@@ -8,6 +8,7 @@ import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
+import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.device.config.domain.BatteryMonitor;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
@@ -61,6 +62,8 @@ public class BatteryPackHandler {
     private PreBatteryGroupService preBatteryGroupService;
     @Resource
     private DataService dataService;
+    @Resource
+    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
 
 
     /**
@@ -199,6 +202,10 @@ public class BatteryPackHandler {
     }
 
     private BatteryReportLog loadRecentOldReportLog(Config config, Integer packNum) {
+        BatteryReportLog realtimeLog = loadRealtimeOldReportLog(packNum);
+        if (realtimeLog != null) {
+            return realtimeLog;
+        }
         try {
             BatteryReportLog oldInfo = batteryReportLogService.lastCache(packNum);
             if (oldInfo == null || oldInfo.getCreateTime() == null) {
@@ -211,6 +218,22 @@ public class BatteryPackHandler {
             log.error("获取电池组信息异常 imei {} 电池组编号 {} ", config.getConfigId(), packNum, e);
             return null;
         }
+    }
+
+    /** 优先使用标准实时快照适配出的旧上报结构，作为后处理 oldInfo。 */
+    private BatteryReportLog loadRealtimeOldReportLog(Integer packNum) {
+        if (packNum == null || batteryModuleReportLogAdapterService == null) {
+            return null;
+        }
+        try {
+            BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
+            if (realtimeLog != null && realtimeLog.getPackParam() != null && !realtimeLog.getPackParam().isEmpty()) {
+                return realtimeLog;
+            }
+        } catch (Exception e) {
+            log.warn("读取标准实时上报后处理上下文失败, packNum={}", packNum, e);
+        }
+        return null;
     }
 
     private void saveReportLog(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList) {

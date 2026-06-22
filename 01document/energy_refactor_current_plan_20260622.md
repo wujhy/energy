@@ -195,6 +195,8 @@ git diff --check
 
 执行者：Codex。
 
+状态：已完成。`BatteryPackHandler.loadRecentOldReportLog` 已优先使用 `BatteryModuleReportLogAdapterService.buildReportLog(packNum)` 作为后处理 oldInfo；实时适配为空或异常时保留 5 分钟内旧 `BatteryReportLogService.lastCache` 回退。
+
 允许修改：
 
 1. `03code/energy/src/main/java/com/shanhe/project/iot/battery/BatteryPackHandler.java`
@@ -214,6 +216,8 @@ mvn "-DskipTests" compile
 mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryPackHandlerTest" test
 git diff --check
 ```
+
+实际验证：以上命令已通过。
 
 ### TASK-CODEX-M460-001：M460 剩余能力复核
 
