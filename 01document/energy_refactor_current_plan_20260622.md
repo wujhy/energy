@@ -88,6 +88,8 @@ Codex 负责：
 
 执行者：Codex。
 
+状态：已完成。已新增 `BatteryCollectorFrameReceiveService` 承担串口可用字节读取、receive buffer 维护、decode、帧分发和 pending 命中后的状态清理；`BatteryCollectorService.readOnce` 保留为主流程委托入口。
+
 允许修改：
 
 1. `03code/energy/src/main/java/com/shanhe/project/collector/battery/service/BatteryCollectorService.java`
@@ -109,6 +111,8 @@ mvn "-DskipTests" compile
 mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryCollectorServiceTest,BatteryCollectorCommandLogServiceTest" test
 git diff --check
 ```
+
+实际验证：以上命令已通过。
 
 #### TASK-CODEX-COLLECTOR-003：拆分自动编号响应推进
 

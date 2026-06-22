@@ -17,6 +17,7 @@ import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.command.BatteryConnectResistanceCommandProcessor;
 import com.shanhe.project.collector.battery.runtime.BatteryCollectorFrameIoService;
+import com.shanhe.project.collector.battery.runtime.BatteryCollectorFrameReceiveService;
 import com.shanhe.project.collector.battery.runtime.BatteryCollectorTimeoutService;
 import com.shanhe.project.collector.battery.state.BatteryCollectorDeviceStateService;
 import com.shanhe.project.device.config.service.IBatteryPackService;
@@ -28,7 +29,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -60,12 +60,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
      */
     @Resource
     private BatteryCollectorFrameCodec frameCodec;
-
-    /**
-     * 600 节模块端帧分发器。
-     */
-    @Resource
-    private BatteryModuleFrameDispatcher moduleFrameDispatcher;
 
     /**
      * 实时数据消费器。
@@ -106,6 +100,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
      */
     @Resource
     private BatteryCollectorFrameIoService frameIoService;
+
+    /**
+     * 串口接收和响应分派服务。
+     */
+    @Resource
+    private BatteryCollectorFrameReceiveService frameReceiveService;
 
     /**
      * 轮询循环编排服务。
@@ -451,60 +451,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
 
     /** 从串口读取数据并解码分发响应帧。 */
     private void readOnce(BatteryCollectorChannelState state) {
-        SerialPort serialPort = state.getSerialPort();
-        if (serialPort == null || !serialPort.isOpen() || serialPort.bytesAvailable() <= 0) {
-            return;
-        }
-        int available = serialPort.bytesAvailable();
-        int size = Math.max(available, resolveReadBufferSize(state.getConfig()));
-        byte[] buffer = new byte[size];
-        int read = serialPort.readBytes(buffer, Math.min(size, available));
-        if (read <= 0) {
-            return;
-        }
-        state.setLastReceiveTime(System.currentTimeMillis());
-        protocolLogService.logProtocol(properties, state, "rx-bytes", "len=" + read + ", hex=" + bytesToHex(buffer, read));
-        ByteArrayOutputStream receiveBuffer = state.getReceiveBuffer();
-        receiveBuffer.write(buffer, 0, read);
-        trimReceiveBufferIfNecessary(state);
-
-        byte[] source = receiveBuffer.toByteArray();
-        BatteryCollectorFrameCodec.DecodeResult decodeResult = frameCodec.decode(source, source.length);
-        receiveBuffer.reset();
-        byte[] remaining = decodeResult.getRemaining();
-        if (remaining.length > 0) {
-            receiveBuffer.write(remaining, 0, remaining.length);
-        }
-        trimReceiveBufferIfNecessary(state);
-
-        for (BatteryCollectorFrame frame : decodeResult.getFrames()) {
-            state.setLastResponseCode(frame.getCommand());
-            protocolLogService.logProtocol(properties, state, "rx-frame", "cmd=" + String.format("%02X", frame.getCommand())
-                    + ", expect=" + String.format("%02X", state.getExpectedResponseCode())
-                    + ", hex=" + frame.toHex());
-            moduleFrameDispatcher.dispatch(state.getConfig(), frame);
-            if (isCurrentPendingResponse(state, frame)) {
-                handleCompletedPendingResponse(state, frame, state.getPendingCommand());
-                state.setPendingCommand(null);
-                state.setExpectedResponseCode(0);
-                state.setCurrentRetryCount(0);
-                state.setLastPendingCompletedAt(System.currentTimeMillis());
-                state.setLastPendingTimedOut(false);
-                state.setRunState(BatteryCollectorRunState.READ);
-            } else if (isKnownModuleResponse(frame.getCommand())) {
-                log.debug("蓄电池采集响应帧不在当前等待范围内, 通道={}, 请求={}, 期望={}, 实际={}",
-                        state.getConfig().getName(),
-                        String.format("%02X", state.getLastRequestCode()),
-                        String.format("%02X", state.getExpectedResponseCode()),
-                        String.format("%02X", frame.getCommand()));
-            } else {
-                log.info("蓄电池采集收到非预期帧, 通道={}, 请求={}, 期望={}, 实际={}",
-                        state.getConfig().getName(),
-                        String.format("%02X", state.getLastRequestCode()),
-                        String.format("%02X", state.getExpectedResponseCode()),
-                        String.format("%02X", frame.getCommand()));
-            }
-        }
+        frameReceiveService.readOnce(state,
+                resolveReadBufferSize(state.getConfig()),
+                resolveReceiveBufferLimit(state.getConfig()),
+                this::isCurrentPendingResponse,
+                (channelState, frame) -> handleCompletedPendingResponse(channelState, frame, channelState.getPendingCommand()),
+                this::isKnownModuleResponse);
     }
 
     void handleCompletedPendingResponse(BatteryCollectorChannelState state,
@@ -580,11 +532,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return pendingRequest != null
                 && frame.getCommand() == state.getExpectedResponseCode()
                 && frame.getAddress() == pendingRequest.getRequestAddress();
-    }
-
-    /** 接收缓冲区超限时截断保留尾部。已委托 frameIoService.trimBuffer。 */
-    private void trimReceiveBufferIfNecessary(BatteryCollectorChannelState state) {
-        frameIoService.trimBuffer(state.getReceiveBuffer(), resolveReceiveBufferLimit(state.getConfig()));
     }
 
     /** 检测当前等待命令是否超时，超时则重试或放弃。 */
