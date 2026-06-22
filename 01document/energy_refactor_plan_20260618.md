@@ -60,7 +60,7 @@ collector/battery/model
 collector/battery/protocol
 collector/battery/service
 collector/battery/service/impl
-collector/battery/service/postprocess
+collector/battery/postprocess
 ```
 
 建议目标目录：
@@ -86,7 +86,7 @@ collector/battery/legacy           只放兼容迁移适配，不放新业务
 1. 目标目录是终态方向，不要求一次性建满。
 2. 每个提交最多移动一个职责组。
 3. 移动类时先保证包名和 imports 编译通过，不改方法行为。
-4. 当前已有 `service/postprocess` 可先保持不动；后续任务再改为 `postprocess` 或保持原路径并补文档。
+4. `service/postprocess` 已迁移到 `postprocess`；后续不得再新增 `service/postprocess` 主代码。测试文件是否跟随迁移按 Q9 执行。
 5. 对外注入 Bean 名称不要主动变化；如必须变化，先全文搜索调用点并补兼容。
 6. 已被 `device`、`modbus`、`sync`、controller 或大量测试直接引用的门面类，第一轮不要改 package；优先在新目录新增内部实现类，并让旧门面委托。
 7. 模型类第一轮默认留在 `collector/battery/model`；只有当模型只服务单一子域且引用面很小，才允许在独立任务中迁移。
@@ -173,6 +173,21 @@ collector/battery/legacy           只放兼容迁移适配，不放新业务
 1. 公共缓存 key、日期、数值换算、协议字节工具。
 2. 定时任务按业务归属整理。
 3. 超大工具类拆分。
+4. 过度拆分的薄服务收缩回唯一调用者，减少无意义 Bean 和文件数量。
+5. 扩展到整个 `energy` 项目目录梳理，但必须先冻结模块边界和迁移清单。
+
+### 阶段 F：energy 项目级目录重构
+
+目标：在蓄电池主链路和外部读写边界稳定后，梳理整个 `03code/energy` 项目的业务目录，降低历史多人协作造成的目录混乱。
+
+原则：
+
+1. 先文档盘点，再小步迁移；不得直接大规模改 package。
+2. 优先按业务域划分：collector、device、energy/stat、energy/capacity、iot 兼容、sync、scheduled、framework。
+3. 对 controller、mapper、service、domain/model 的既有分层保持兼容；跨域高引用门面第一轮不迁移。
+4. 目录整理不得改变 Spring Bean 名称、URL、Mapper namespace、SQL、缓存 key、定时任务表达式。
+5. 每次只迁一个职责组；如果只是为了目录整齐且引用面大，保留原包并补 README。
+6. 发现薄服务/薄 adapter 只有唯一调用者时，优先评估收缩，而不是继续新增目录层级。
 
 ## 6. 任务卡
 
@@ -429,6 +444,91 @@ refactor: extract battery command queue execution
 2. opt-log 字段变化，停止。
 3. 页面或 Modbus 写控制调用路径需要大改，停止并拆新任务。
 
+### TASK-REF-COMMAND-001B：补齐命令队列执行抽取
+
+优先级：P1
+
+背景：`TASK-REF-COMMAND-001` 已创建 `BatteryCollectorCommandQueueService`，并抽出了 pending 构造、响应匹配和成功判断，但队列出队、发送协调、命令完成回调、超时完成和日志更新仍主要留在 `BatteryCollectorService`。因此 `COMMAND-001` 只能视为 partial，不能直接进入 `COMMAND-002` 包目录整理。
+
+目标：在不改变命令行为的前提下，把命令队列执行协调继续从 `BatteryCollectorService` 移入 `BatteryCollectorCommandQueueService` 或其内部协作类。
+
+允许修改：
+
+```text
+BatteryCollectorService.java
+BatteryCollectorCommandQueueService.java
+BatteryCollectorCommandLogService.java（仅调用点需要）
+BatteryCollectorServiceTest.java
+BatteryCollectorCommandLogServiceTest.java（仅调用点需要）
+```
+
+禁止修改：
+
+```text
+BatteryDeviceProtocolCode.java
+BatteryAggregateCommandDefinition.java
+BatteryModuleControlCommandService.java 的命令 payload 规则
+ControlBatterySet.java
+ModbusWriteMappingService.java
+旧 iot 包
+mapper XML
+SQL
+```
+
+步骤：
+
+1. 先用 `.codegraph` 或 `rg` 确认 `processQueuedModuleCommand`、`processQueuedModuleCommandsImmediately`、`handlePendingResponse`、`checkTimeout`、`markModeStopped` 的调用面。
+2. 将命令出队、pending 创建、发送前状态切换、发送失败处理移入命令队列服务；帧实际写串口仍调用 `BatteryCollectorFrameIoService` 或由 `BatteryCollectorService` 以回调传入。
+3. 将响应成功/失败完成协调移入命令队列服务；具体业务副作用如自动编号推进、连接条读电压推进可以先通过回调保留，避免一次性搬太多。
+4. 将命令超时完成协调移入命令队列服务；轮询超时和通道状态持久化仍留在原位置或 `BatteryCollectorDeviceStateService`。
+5. `BatteryCollectorCommandLogService` 继续负责 opt-log 字段构造和持久化；不要在 QueueService 中重新拼 opt-log 字段。
+6. `BatteryCollectorService` 保留 public API，只作为门面和运行线程持有者。
+7. 给新增 public 方法补中文注释。
+
+验证：
+
+```bash
+mvn -DskipTests compile
+mvn -Dtest=BatteryCollectorServiceTest,BatteryCollectorCommandLogServiceTest,BatteryCollectorCommandServiceTest,BatteryModuleControlCommandServiceTest test
+git diff --check
+```
+
+提交建议：
+
+```text
+refactor: complete battery command queue extraction
+```
+
+停止条件：
+
+1. 命令状态码、错误文案、opt-log 字段发生变化，停止。
+2. 自动编号或连接条流程需要大改，停止并拆功能任务。
+3. 单次 diff 超过约 700 行，停止并拆成 `001B-1/001B-2`。
+
+**COMMAND-001 当前执行结果审查（2026-06-18）：**
+
+状态：partial。
+
+已完成：
+
+1. 新增 `collector/battery/command/BatteryCollectorCommandQueueService`。
+2. 抽出控制命令到 `BatteryPendingRequest` 的转换。
+3. 抽出 pending 响应匹配和成功响应判断。
+4. 已补充抽出命令完成快照、模式停止、显式命令超时收尾，超时日志更新由 `BatteryCollectorCommandQueueService` 调用 `BatteryCollectorCommandLogService`。
+5. 已补充抽出命令出队与发送协调入口、无响应命令发送收尾、普通显式响应完成与日志更新入口。
+6. 已删除 `BatteryCollectorService` 中重复的设备状态持久化实现，统一使用 `collector.battery.state.BatteryCollectorDeviceStateService`。
+7. 已删除 `BatteryCollectorService` 中旧的轮询实现和地址缓存辅助方法，轮询编排统一由 `BatteryCollectorPollingService` 承担。
+8. 已将自动编号协议推进迁入 `BatteryCollectorCommandQueueService`，主服务仅保留模式运行和地址缓存重置回调。
+9. 已新增 `BatteryConnectResistanceCommandProcessor` 承担连接条电阻 0F/11/91 排队、解析、计算、最终日志和模式收尾。
+
+未完成：
+
+1. 帧实际写串口仍留在 `BatteryCollectorService`，这是有意保留的运行态边界。
+2. `BatteryCollectorService` 仍保留串口收发门面、超时重试入口和响应分派入口，后续按功能分批评估。
+3. 测试文件仍需后续适配，尤其是原来直接访问 `BatteryCollectorService` 包私有方法的用例。
+
+后续优先继续观察 `TASK-REF-COMMAND-001B` 的剩余流程分支，确认自动编号/连接条是否还需要进一步拆分，再评估 `TASK-REF-COMMAND-002`。
+
 ### TASK-REF-COMMAND-002：整理命令包目录
 
 优先级：P2
@@ -520,7 +620,7 @@ collector/battery/realtime
   BatteryModuleRealtimeAdapterService
   BatteryModuleReportLogAdapterService
   BatteryCurrentStateService
-  BatteryModuleCompatReportLogSyncService
+  BatteryModuleCompatReportLogSyncService（已由 CONSOLIDATE-001 收缩到 CompatReportLogSyncProcessor）
 
 暂不跟本任务：
   BatteryRealtimePostProcessContextFactory（更接近 realtime 消费侧组装逻辑，可在本任务评估但非必须）
@@ -531,7 +631,7 @@ collector/battery/realtime
 ```text
 BatteryModuleRealtimeSnapshotService → 11 引用，2 外部（BatteryPackServiceImpl、RestoreServiceImpl）
 BatteryModuleRealtimeConsumer → 2 引用，0 外部（仅 BatteryCollectorService）
-BatteryModuleCompatReportLogSyncService → 2 引用，0 外部（仅 CompatReportLogSyncProcessor）
+BatteryModuleCompatReportLogSyncService → 已收缩到 CompatReportLogSyncProcessor
 ```
 
 允许修改：
@@ -582,6 +682,25 @@ refactor: move battery realtime services to realtime package
 3. JSON/TCP 或 Modbus 输出变化，停止。
 4. 需要移动 `BatteryModuleRealtimeSnapshotService` 或快照模型时，停止并改为保留门面。
 
+**REALTIME-001 当前执行结果审查（2026-06-18）：**
+
+状态：partial。
+
+已完成：
+
+1. 新增 `collector/battery/realtime/README.md`，记录 realtime 包职责。
+2. `BatteryModuleGroupCalculationService` 已迁入 `collector/battery/realtime`。
+3. `BatteryModuleGroupCompatibilityFillService` 已迁入 `collector/battery/realtime`。
+4. 旧 `collector/battery/service` 下同名类已删除，避免 Spring 默认 bean name 冲突。
+
+未完成：
+
+1. `BatteryModuleRealtimeConsumer` 仍保留在 `service` 包，符合“先确认入库、快照、后处理时序”的限制。
+2. `BatteryModuleRealtimeSnapshotService` 和 `BatteryModuleRealtimeSnapshot` 仍保留原位置，符合高引用门面保留规则。
+3. `BatteryModuleCellCompatibilityFillService`、`BatteryModuleRealtimeAdapterService`、`BatteryModuleReportLogAdapterService`、`BatteryCurrentStateService` 仍待后续按引用面逐项评估；`BatteryModuleCompatReportLogSyncService` 已由 `CONSOLIDATE-001` 收缩，不再作为迁移候选。
+
+后续不得重复迁移已完成的两个 group 服务；如继续执行本任务，应优先评估 `BatteryModuleCellCompatibilityFillService` 或仅补包说明，不要一次性移动高引用门面。
+
 ### TASK-REF-POSTPROCESS-001：后处理包边界整理
 
 优先级：P2
@@ -597,7 +716,7 @@ collector/battery/postprocess
 允许修改：
 
 ```text
-collector/battery/service/postprocess/**
+collector/battery/postprocess/**
 BatteryRealtimePostProcessContextFactory.java（仅 imports）
 BatteryModuleRealtimeConsumer.java（仅 imports）
 ```
@@ -613,13 +732,13 @@ SOC/SOH/容量算法
 
 步骤：
 
-1. 第一小步只移后处理接口与编排类：`BatteryRealtimePostProcessor`、`BatteryRealtimePostProcessService`、`BatteryRealtimePostProcessContext`。
-2. 具体 processor 实现不跟随第一小步迁移；后续按 2-3 个一组小步迁移。
-3. `PostProcessBatchGuard` 跟随 processor 实现迁移，或保持包私有不动。
-4. `BatteryRealtimePostProcessContextFactory` 暂不跟本任务迁移；它更接近 realtime 消费侧的组装逻辑，可在 `REALTIME-001` 中评估。
-5. 仅更新 package/imports。
-6. 在包说明中写清 processor 输入、输出、禁止事项。
-7. 后处理 processor 不得访问串口、命令队列、轮询状态。
+1. 目标包统一为 `collector/battery/postprocess`；当前主代码已迁入该包。
+2. 第一小步补 `collector/battery/postprocess/README.md`，说明后处理只消费 `BatteryRealtimePostProcessContext`，不得反向访问串口、命令队列、轮询状态。
+3. 第二小步迁移纯上下文/工具类：`BatteryRealtimePostProcessContext`、`PostProcessBatchGuard`、`RealtimeToReportLogAdapter`；只改 package/imports，不改字段和方法。
+4. 第三小步开始迁移具体 processor，每次最多 2-3 个，例如先迁 `VoltageRangeProcessor`、`OnlineStatusProcessor`、`StatisticsProcessor` 这类低外部副作用处理器。
+5. 告警、兼容 report-log、容量预测、内阻统计这类有外部服务依赖的 processor 单独分批迁移，迁移时只改 package/imports 和乱码注释/日志，不改业务逻辑。
+6. `BatteryRealtimePostProcessContextFactory` 暂不跟本任务迁移；它更接近 realtime 消费侧的组装逻辑，可在 `REALTIME-001` 中评估。
+7. 迁移测试文件时遵守 Q9：需要访问包私有成员才跟随迁移，否则只改 imports。
 
 验证：
 
@@ -640,6 +759,26 @@ refactor: clarify battery postprocess package boundary
 1. 发现测试类不存在时，不强行新增全量测试；改用已有相关测试和 compile。
 2. 发现 processor 需要行为修复时，另建功能任务。
 3. 若后续已新增 `CapacityPredictionProcessorTest`，可以把它加入验证命令；当前仓库未要求单独新增该测试。
+
+**POSTPROCESS-001 当前执行结果审查（2026-06-18）：**
+
+状态：completed。
+
+已完成：
+
+1. `BatteryRealtimePostProcessor` 已在 `collector/battery/postprocess`。
+2. `BatteryRealtimePostProcessService` 已在 `collector/battery/postprocess`。
+3. `BatteryRealtimePostProcessContext` 已在 `collector/battery/postprocess`。
+4. `PostProcessBatchGuard`、`RealtimeToReportLogAdapter` 已在 `collector/battery/postprocess`。
+5. 具体 processor 已迁入 `collector/battery/postprocess`，包括告警、统计、在线状态、操作日志、容量预测、内阻统计和兼容历史同步处理器。
+6. 已新增 `collector/battery/postprocess/README.md`。
+
+保留说明：
+
+1. `BatteryRealtimePostProcessContextFactory` 仍在 `service` 包，按计划作为 realtime 消费侧上下文组装桥接类保留。
+2. `BatteryRealtimePostProcessorsTest` 仍在 `service/postprocess` 测试包，按 Q9 不为目录整齐强制迁移测试；它已通过 imports 覆盖 `postprocess` 主代码。
+
+结论：`battery.service.postprocess` 下的主代码后处理能力已迁入 `battery.postprocess`。后续不得重复执行迁包任务；如需处理测试目录，只允许单独做低风险测试包名整理，不改业务逻辑。
 
 ### TASK-REF-STATE-001：整理状态服务目录
 
@@ -717,6 +856,22 @@ refactor: move battery state services to state package
 2. 任何数据库字段变化，停止。
 3. 若后续已新增 `BatteryDeviceStateServiceTest`，可以把它加入验证命令；当前仓库未要求单独新增该测试。
 4. 需要迁移 `BatteryDeviceStateService` 或 `BatteryModeStatusService` 包名时，停止并改为单独评估任务。
+
+**STATE-001 当前执行结果审查（2026-06-18）：**
+
+状态：partial。
+
+已完成：
+
+1. `BatteryCollectorDeviceStateService` 已迁入 `collector/battery/state`。
+2. 旧 `collector/battery/service` 下同名类已删除，避免 Spring 默认 bean name 冲突。
+
+未完成：
+
+1. `BatteryDeviceStateService`、`BatteryDeviceStateServiceImpl`、`BatteryModeStatusService` 仍保留原包名，符合高引用门面保留规则。
+2. `BatteryDeviceState`、`BatteryDeviceStateConstants` 仍保留在 `model` 包，符合减少常量 imports 震荡的限制。
+
+后续执行 `STATE-001` 时不得重复迁移 `BatteryCollectorDeviceStateService`；只能补包说明、内部 helper，或在单独任务中评估高引用状态门面。
 
 ### TASK-REF-EXTERNAL-001：整理外部读取适配边界
 
@@ -994,6 +1149,226 @@ refactor: remove unused battery collector internals
 1. 任何 public API 受影响，停止。
 2. 删除项无法确认无调用，停止。
 
+### TASK-REF-CONSOLIDATE-001：收缩兼容历史同步薄服务
+
+优先级：P2
+
+背景：`CompatReportLogSyncProcessor` 只调用 `BatteryModuleCompatReportLogSyncService.sync`，而该 service 只服务后处理流水线，职责和生命周期完全依附 processor。类似薄包装会增加无意义 Bean、文件和测试维护成本。
+
+目标：在不改变兼容历史写入行为的前提下，把 `BatteryModuleCompatReportLogSyncService.sync` 的逻辑收缩到 `CompatReportLogSyncProcessor` 内，删除薄 service。
+
+允许修改：
+
+```text
+CompatReportLogSyncProcessor.java
+BatteryModuleCompatReportLogSyncService.java（删除）
+CompatReportLogSyncProcessorTest.java
+BatteryModuleCompatReportLogSyncServiceTest.java（删除或迁移断言）
+collector/battery/realtime/README.md（更新服务归属）
+energy_refactor_plan_20260618.md（记录执行结果）
+```
+
+禁止修改：
+
+```text
+BatteryModuleReportLogAdapterService.java
+BatteryReportLogService.java
+DataService.java
+dev_battery_report_log 相关 mapper/XML/SQL
+CompatReportLogSyncProcessor 的 getName/getOrder
+compatReportLogEnabled 开关语义
+```
+
+步骤：
+
+1. 用 `.codegraph` 或 `rg` 确认 `BatteryModuleCompatReportLogSyncService` 只有 `CompatReportLogSyncProcessor` 和测试引用。
+2. 将 `adapterService.buildReportLog`、空数据校验、`dataService.isInsert`、`batteryReportLogService.insert`、debug 日志搬入 `CompatReportLogSyncProcessor` 的私有方法。
+3. `shouldProcess` 不再依赖 `compatReportLogSyncService != null`；改为校验 processor 自身必需依赖，或在 `process` 内 null 安全返回。
+4. 把 `BatteryModuleCompatReportLogSyncServiceTest` 中的行为断言迁入 `CompatReportLogSyncProcessorTest`，不新增低价值方法级测试。
+5. 删除 `BatteryModuleCompatReportLogSyncService` 和其测试。
+6. 更新 README 中 `BatteryModuleCompatReportLogSyncService` 待评估/归属描述。
+7. 不改兼容历史写入字段、不改插入间隔判断、不改异常吞吐口径。
+
+验证：
+
+```bash
+mvn -DskipTests compile
+mvn -Dtest=CompatReportLogSyncProcessorTest,BatteryRealtimePostProcessorsTest test
+git diff --check
+```
+
+提交建议：
+
+```text
+refactor: inline compat report log sync processor dependency
+```
+
+停止条件：
+
+1. 发现除 processor 和测试外还有生产代码引用该 service，停止并改为保留 service。
+2. 需要改 `BatteryModuleReportLogAdapterService` 输出字段，停止并拆功能任务。
+3. 兼容历史写入开关、插入判断或异常处理行为变化，停止。
+
+**CONSOLIDATE-001 执行结果（2026-06-18）：**
+
+状态：completed。
+
+已完成：
+
+1. `BatteryModuleCompatReportLogSyncService.sync` 逻辑已收缩进 `CompatReportLogSyncProcessor` 私有方法。
+2. `BatteryModuleCompatReportLogSyncService` 及其测试已删除。
+3. `CompatReportLogSyncProcessorTest` 已覆盖批次校验、开关关闭、旧历史写入调用等核心行为。
+4. `CompatReportLogSyncProcessor` 的 `getName`、`getOrder`、`compatReportLogEnabled` 开关语义保持不变。
+
+后续不得重新引入该薄 service；如兼容历史同步逻辑显著增长，再新建明确职责的内部 helper。
+
+### TASK-REF-CONSOLIDATE-002：盘点并收缩蓄电池薄服务
+
+优先级：P3
+
+目标：系统盘点 `collector/battery` 中只被单一类调用、且没有独立业务生命周期的薄 service/helper，逐项决定保留、迁包或收缩。
+
+候选方向：
+
+```text
+BatteryModuleCompatReportLogSyncService（已完成，见 CONSOLIDATE-001）
+BatteryModuleCellCompatibilityFillService（与实时单体构建强绑定，评估是否保留）
+BatteryCurrentStateService（页面/外部当前状态门面，默认保留）
+BatteryModuleReportLogAdapterService（跨 device/opt/controller 引用，默认保留）
+BatteryModuleControlCommandService（命令 payload helper，默认保留）
+```
+
+步骤：
+
+1. 用 `.codegraph` 输出候选类的 callers/callees。
+2. 建表记录：调用方、是否跨模块、是否有独立测试、是否是 Spring Bean、是否有开关/缓存/事务语义。
+3. 只对“唯一生产调用方 + 无独立生命周期 + 逻辑短小”的类新增具体收缩任务。
+4. 高引用门面和跨模块 adapter 只补 README，不为文件数量强行收缩。
+
+验证：
+
+```bash
+git diff --check
+```
+
+提交建议：
+
+```text
+docs: audit battery thin service consolidation candidates
+```
+
+停止条件：
+
+1. 候选类涉及 mapper/XML/SQL 或跨模块 public API，停止并标为保留。
+2. 需要同时修改多个 processor 或主流程时，拆成独立任务。
+
+**CONSOLIDATE-002 执行结果（2026-06-18）：**
+
+盘点结果（codegraph 扫描）：
+
+| 候选 | 生产调用方 | 跨模块 | 决策 |
+|---|---|---|---|
+| BatteryModuleCompatReportLogSyncService | 1（CompatReportLogSyncProcessor） | 否 | 已收缩（CONSOLIDATE-001） |
+| BatteryModuleCellCompatibilityFillService | 3（CollectorService, Consumer, RestoreServiceImpl） | 是（device/opt） | 保留 |
+| BatteryCurrentStateService | 0（仅 test） | 否 | 保留（页面/外部门面） |
+| BatteryModuleReportLogAdapterService | 4（ControlBattery, ControlBatterySet, ReportLogController, CompatReportLogSyncProcessor） | 是（device/opt, device/config） | 保留 |
+| BatteryModuleControlCommandService | 1（BatteryCollectorCommandService） | 否 | 保留（命令 payload helper） |
+
+结论：除已完成的 CONSOLIDATE-001 外，无其他可收缩的薄服务。所有候选类均有多调用方或跨模块依赖。
+
+### TASK-REF-ENERGY-DIR-001：energy 项目级目录盘点
+
+优先级：P3
+
+目标：把重构范围扩展到整个 `03code/energy`，先产出项目级目录职责图和候选迁移清单，不直接迁 Java 文件。
+
+允许修改：
+
+```text
+01document/energy_refactor_plan_20260618.md
+可新增 01document/energy_project_directory_audit_YYYYMMDD.md
+```
+
+禁止修改：
+
+```text
+03code/energy/src/main/java/**/*.java
+03code/energy/src/main/resources/**
+03code/energy/sql/rysqlite3.db
+```
+
+盘点范围：
+
+```text
+com.shanhe.project.collector
+com.shanhe.project.device
+com.shanhe.project.energy
+com.shanhe.project.iot
+com.shanhe.project.sync
+com.shanhe.project.scheduled
+com.shanhe.framework（仅记录，不纳入业务迁移）
+```
+
+步骤：
+
+1. 用 `.codegraph` 或 `rg --files` 统计各顶级包的文件数、主要职责、明显混放点。
+2. 标记旧兼容入口、主业务入口、跨域门面、mapper/domain/service/controller 边界。
+3. 识别三类候选：目录迁移、薄服务收缩、公共能力提取。
+4. 每个候选必须写“禁止事项”和“第一提交只允许什么”。
+5. 不把所有候选都排进立即执行；按功能优先级排序，蓄电池主链路、外部读写、测试计划闭环优先。
+
+验证：
+
+```bash
+git diff --check
+```
+
+提交建议：
+
+```text
+docs: audit energy project directory boundaries
+```
+
+停止条件：
+
+1. 执行者开始移动 Java 文件，停止。
+2. 无法判断业务归属时，标记为待确认，不自行迁移。
+
+### TASK-REF-ENERGY-DIR-002：energy 项目级目录小步迁移
+
+优先级：P4
+
+前置条件：必须完成 `TASK-REF-ENERGY-DIR-001`，且候选项已写清引用面和停止条件。
+
+目标：按 `ENERGY-DIR-001` 产出的清单，小步迁移低风险、低引用、边界清晰的目录。
+
+执行规则：
+
+1. 每次只迁一个职责组，最多 3 个生产类。
+2. 不迁 controller URL、mapper XML、domain 表映射类，除非单独任务明确允许。
+3. 高引用 service 先保留旧门面，新增内部实现或 README，不直接改 package。
+4. 迁移测试遵循 Q9，不为目录整齐批量移动测试。
+5. 每次提交必须包含 compile 和针对性测试结果。
+
+验证：
+
+```bash
+mvn -DskipTests compile
+git diff --check
+```
+
+提交建议：
+
+```text
+refactor: move energy <scope> classes to <target> package
+```
+
+停止条件：
+
+1. 单次迁移影响超过 20 个 imports，停止并拆小。
+2. 需要改 Spring Bean 名称、Mapper namespace、SQL 或 URL，停止。
+3. 迁移导致功能测试需要大改，停止并改为保留门面。
+
 ## 7. 推荐执行顺序
 
 第一批，只做边界和低风险结构：
@@ -1007,7 +1382,8 @@ refactor: remove unused battery collector internals
 1. `TASK-REF-COLLECTOR-002`
 2. `TASK-REF-COLLECTOR-001`
 3. `TASK-REF-COMMAND-001`
-4. `TASK-REF-CLEANUP-001`
+4. `TASK-REF-COMMAND-001B`
+5. `TASK-REF-CLEANUP-001`
 
 第三批，整理包目录：
 
@@ -1020,7 +1396,20 @@ refactor: remove unused battery collector internals
 第四批，项目级清理：
 
 1. `TASK-REF-SCHEDULED-001`
-2. 后续按 `TASK-REF-COMMON-001` 产出的候选任务拆分执行。
+2. `TASK-REF-CONSOLIDATE-001`
+3. `TASK-REF-CONSOLIDATE-002`
+4. 后续按 `TASK-REF-COMMON-001` 产出的候选任务拆分执行。
+
+第五批，energy 项目级目录重构：
+
+1. `TASK-REF-ENERGY-DIR-001`
+2. `TASK-REF-ENERGY-DIR-002`（必须等 `ENERGY-DIR-001` 产出候选清单后逐项执行）
+
+执行优先级说明：
+
+1. 功能开发和 M460 能力补齐优先于项目级目录迁移。
+2. `CONSOLIDATE-001` 属于低风险收缩，可在 `POSTPROCESS-001` 完成后优先执行。
+3. `ENERGY-DIR-001/002` 只作为项目级重构储备任务，不插队到采集主链路和外部读写功能之前。
 
 ## 8. 每个任务的固定完成模板
 
@@ -1190,15 +1579,15 @@ refactor: remove unused battery collector internals
 
 当前事实：
 
-1. `service/postprocess` 下有 13 个类。
-2. `BatteryRealtimePostProcessContext.java` 当前已经在 `service/postprocess` 包内。
+1. `service/postprocess` 下主代码已迁入 `collector/battery/postprocess`。
+2. `BatteryRealtimePostProcessContext.java` 当前已经在 `collector/battery/postprocess` 包内。
 3. `BatteryRealtimePostProcessContextFactory.java` 当前在 `service` 包，属于实时消费到后处理的上下文构造桥接类。
 
 执行边界：
 
-1. 第一小步只补包说明或移动后处理接口与编排类：`BatteryRealtimePostProcessor`、`BatteryRealtimePostProcessService`、`BatteryRealtimePostProcessContext`。
-2. 具体 processor 实现不跟随第一小步迁移；后续按 2-3 个一组小步迁移。
-3. `PostProcessBatchGuard` 跟随 processor 实现迁移，或保持包私有不动。
+1. 目标包统一为 `collector/battery/postprocess`；主代码不得再回到 `service/postprocess`。
+2. `BatteryRealtimePostProcessContext`、`PostProcessBatchGuard`、`RealtimeToReportLogAdapter` 已完成迁移，不得重复移动。
+3. 具体 processor 已完成迁移；后续只允许补 README、修注释或整理测试包名，不改 processor 顺序、`shouldProcess` 条件、写库逻辑或缓存逻辑。
 4. `BatteryRealtimePostProcessContextFactory` 暂不跟随 `POSTPROCESS-001` 迁移；它更接近 realtime 消费侧的组装逻辑，可在 `REALTIME-001` 中评估。
 5. 不在本任务改 processor 顺序、`shouldProcess` 条件、写库逻辑或缓存逻辑。
 
@@ -1267,7 +1656,7 @@ COMMAND-002 / REALTIME-001 / POSTPROCESS-001 / STATE-001 / EXTERNAL-001（按引
 | `BatteryCollectorChannelState` | 大量主流程和测试直接构造 | 主要 collector 内部和测试 | — | 中（留在 model，不迁移） |
 | `BatteryCollectorDeviceStateService` | collector 内部为主 | BatteryCollectorService 等 | — | 中（可抽 helper，谨慎迁移） |
 | `BatteryCollectorCacheService` | 2 | 0 | — | 低 |
-| `BatteryModuleCompatReportLogSyncService` | 2 | 0 | — | 低（仅 postprocess 内部） |
+| `BatteryModuleCompatReportLogSyncService` | 已收缩 | 0 | — | 已完成（逻辑内联到 CompatReportLogSyncProcessor） |
 | `BatteryCurrentStateService` | 2 | 0 | — | 低 |
 
 新增服务（待创建，无引用面）：
@@ -1290,6 +1679,9 @@ BatteryCollectorCommandQueueService — COMMAND-001 新增
 | BatteryCollectorChannelState 移除 | STATE-001 | 从迁移列表移除，新增"不迁移"说明 |
 | 跨模块依赖风险 | STATE-001 | 已修正为保留高引用状态门面，不批量同步外部 imports |
 | 引用面速查 | 11.1 | 新增全量引用面速查表 |
+| 命令队列抽取补齐 | COMMAND-001B | 新增后续任务，明确 COMMAND-001 当前仅 partial，不能直接进入 COMMAND-002 |
+| 后处理薄服务收缩 | CONSOLIDATE-001/002 | 新增薄 service 收缩任务，优先处理 CompatReportLogSyncProcessor 的唯一依赖 |
+| energy 项目级目录 | ENERGY-DIR-001/002 | 新增全项目目录盘点和小步迁移任务，排在功能开发和蓄电池主链路稳定之后 |
 
 ### 11.3 二次审查修正记录（2026-06-18）
 
@@ -1300,3 +1692,6 @@ BatteryCollectorCommandQueueService — COMMAND-001 新增
 3. `TASK-REF-STATE-001` 中 `BatteryDeviceStateService`、`BatteryDeviceStateServiceImpl`、`BatteryModeStatusService` 不再允许第一轮迁包；这些类影响告警、定时任务、Modbus、恢复逻辑和旧 iot 兼容链路。
 4. `Q10` 已修正为本项目优先使用 `.codegraph`；其他不支持 `.codegraph` 的执行环境才退回 `rg`。
 5. 阶段 B 顺序已同步为先 `COLLECTOR-002` 帧 I/O，再 `COLLECTOR-001` 轮询编排。
+6. `COMMAND-001` 当前执行结果已审查为 partial；新增 `COMMAND-001B` 补齐队列出队、发送协调、完成回调和超时完成抽取。
+7. 根据后续审查，`POSTPROCESS-001` 主代码迁包已完成；新增 `CONSOLIDATE-001` 收缩 `BatteryModuleCompatReportLogSyncService` 薄包装。
+8. 重构范围扩展到整个 `energy` 项目，但先执行 `ENERGY-DIR-001` 文档盘点，不直接迁 Java 文件。

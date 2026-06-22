@@ -14,11 +14,11 @@
 | VoltageRangeProcessor | postprocess | 电压极差处理器 |
 | OnlineStatusProcessor | postprocess | 在线状态处理器 |
 | StatisticsProcessor | postprocess | 统计处理器 |
-| AlarmContextProcessor | service/postprocess | 告警上下文处理器（待迁移） |
-| CapacityPredictionProcessor | service/postprocess | 容量预测处理器（待迁移） |
-| CompatReportLogSyncProcessor | service/postprocess | 兼容历史同步处理器（待迁移） |
-| OperationLogProcessor | service/postprocess | 操作日志处理器（待迁移） |
-| ResistanceStatisticsProcessor | service/postprocess | 内阻统计处理器（待迁移） |
+| AlarmContextProcessor | postprocess | 告警上下文处理器 |
+| CapacityPredictionProcessor | postprocess | 容量预测处理器 |
+| CompatReportLogSyncProcessor | postprocess | 兼容历史同步处理器 |
+| OperationLogProcessor | postprocess | 操作日志处理器 |
+| ResistanceStatisticsProcessor | postprocess | 内阻统计处理器 |
 
 ## 迁移顺序
 

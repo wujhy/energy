@@ -308,6 +308,7 @@ The following remain real field or hardware confirmations and should not be gues
   - Modbus mapping/read features: existing `BatteryModuleModbusReadMappingService` plus focused helper classes only when register groups grow.
   - Postprocess features: existing `collector/battery/service/postprocess`.
   - Command/control features: existing command services; avoid putting new command semantics into the polling loop.
+- Testing scope rule: add focused tests for core or high-risk behavior such as protocol mapping, snapshot freshness, command state, alarms, capacity, and persisted status. Do not create a new unit test for every changed method; low-risk glue code, field moves, simple controller forwarding, and small fallback branches may rely on existing related tests, compile checks, and `git diff --check`.
 
 ### 17.1 Functional priority queue
 
@@ -324,6 +325,11 @@ The following remain real field or hardware confirmations and should not be gues
 
 ### 17.2 Refactor backlog, explicitly postponed
 
+Detailed execution cards for the postponed refactor work are now tracked in
+`01document/energy_refactor_plan_20260618.md`. Use that document as the source of truth
+when assigning refactor work to another AI, because it defines allowed files, forbidden
+files, verification commands, stop conditions, and commit boundaries.
+
 | Priority | Task | Status | Scope |
 |---|---|---|---|
 | P3 | `TASK-BAT-COLLECTOR-STRUCT-002-CLEANUP` | Deferred | Remove old private methods and unused fields left in `BatteryCollectorService` after service extraction; do this only after current functional slices are stable. |
@@ -338,3 +344,67 @@ Start with `TASK-BAT-FUNC-SNAPSHOT-001` and `TASK-BAT-FUNC-FRESHNESS-001` as one
 1. `TASK-BAT-FUNC-FRESHNESS-001A`: add unit-tested cell merge/fill helper with `batSinSize` and modelNum ordering.
 2. `TASK-BAT-FUNC-SNAPSHOT-001A`: wire the helper into snapshot refresh after realtime persistence.
 3. `TASK-BAT-FUNC-MODBUS-CACHE-001A`: verify Modbus reads consume the refreshed snapshot under high-frequency access.
+
+## 18. M460 remaining capability gaps and task cards
+
+Date: 2026-06-18
+
+This section lists M460 capabilities that are not yet represented clearly enough by
+the functional priority queue above. It does not revive the old `energy <-> M460`
+980-link. Each item must still land in the standard collector/realtime/postprocess,
+alarm, command, JSON/TCP, or Modbus services.
+
+Global gap details are tracked in `01document/M460未整合能力全局盘点_20260618.md`.
+
+### 18.1 Gap summary
+
+| Area | Current state | Missing capability | Decision |
+|---|---|---|---|
+| External realtime reads | Snapshot/freshness/cache tasks exist | Field-level JSON/TCP and page/stat/screen cutover is not fully enumerated | Add field inventory and guarded cutover tasks |
+| Modbus read | Core realtime read and cache path exist | Alarm registers, total alarm flag, parameter registers, and optional SOC/SOH/capacity registers are not fully mapped | Add read-register expansion tasks |
+| Modbus write | Balance write path exists | Internal resistance test, connection resistance test, address setting, clear debug data, coefficient/calibration, alarm shield/release are not mapped as write-register commands | Add write whitelist tasks |
+| Battery test plan | `OptBatteryController` keeps `dev_battery_opt` plan configuration and immediate execution endpoints | Planned execution, due-time trigger, stop behavior, and M460 command cutover are not fully integrated | Add a scheduler/dispatcher task before closing test flows |
+| Command/test flows | 600 command mapping exists | Connection resistance and internal resistance flows still need full result/status/statistics closure | Add test-flow closure tasks |
+| Alarm/fault | Standard alarm context exists | M460 alarm filtering, shield/release parity, computed alarms, and unsupported sensor bits are not task-sliced | Add alarm parity tasks |
+| SOC/SOH/capacity | Compatibility fill and prediction processor exist | Full M460-style stateful SOC/capacity persistence is not implemented; current task is too broad | Split into state/history/cache tasks |
+| Device/network metadata | M460 has time sync, device info, MAC/IP/cloud/server-client mode | Most are board/network capabilities, not battery collection core | Mark as evaluate-only, do not implement by default |
+| Board hardware | M460 has buzzer, LED, LCD, relay, ADC/DAC, RTC, SD, OTA, factory reset, WDT | energy deployment has no confirmed equivalent hardware | Exclude by default; require separate business approval |
+
+### 18.2 New functional tasks
+
+| Priority | Task | Status | Scope |
+|---|---|---|---|
+| P0 | `TASK-BAT-M460-GAP-INVENTORY-001` | Planned | Produce a single gap inventory table from `M460协议功能对照表.md`, `M460字段来源矩阵.md`, `M460_87告警规则表.md`, current code, and this plan. Each M460 capability must be marked `implemented`, `partial`, `planned`, `deferred`, or `excluded`. |
+| P0 | `TASK-BAT-FUNC-JSONTCP-FIELDS-001` | Planned | Enumerate every JSON/TCP output field and control command currently served by old handlers. Map each read field to snapshot/realtime/status/alarm/prediction source, or explicitly mark unsupported. Do not change logic in this task. |
+| P0 | `TASK-BAT-FUNC-EXTERNAL-CUTOVER-001` | Planned | For page/stat/screen/DataReport read paths that still need current data, use the existing `BatteryModuleReportLogAdapterService` or current-state service under feature flags. Keep fallback to legacy report-log when realtime has no data. |
+| P1 | `TASK-BAT-FUNC-MODBUS-READ-ALARM-001` | Planned | Map Modbus alarm/status read ranges such as `410994..411482`, `412580`, and `413561..413563` from standard alarm/device-state models. Do not parse old 87/8D payloads as the new source. |
+| P1 | `TASK-BAT-FUNC-MODBUS-READ-PARAM-001` | Planned | Inventory `400xxx` parameter read registers and decide which can be backed by existing `ConfigAttribute`/alarm config. Unsupported registers must return a documented compatibility value or Modbus exception, not invented data. |
+| P1 | `TASK-BAT-FUNC-MODBUS-WRITE-001` | Planned | Expand Modbus write whitelist beyond balance only after register ownership is frozen. Candidate actions: single/internal resistance test, connection resistance test, manual/auto address, clear debug data, internal resistance coefficient, calibration. All writes must call internal command services. |
+| P1 | `TASK-BAT-FUNC-OPT-PLAN-001` | Planned | Integrate `OptBatteryController` battery test plans with the independent collector path. Keep `/batteryOpt/edit` as plan configuration, add/verify a due-time scheduler or dispatcher for enabled `dev_battery_opt` rows, route supported M460-backed test types to `BatteryCollectorCommandService`, and keep unsupported long-cycle tests deferred instead of sending old 980 commands blindly. |
+| P1 | `TASK-BAT-FUNC-CONNECT-RESISTANCE-001` | Planned | Complete M460 `0F + 11/91` connection resistance flow: address progression, voltage read scheduling, timeout/recovery, mode-state updates, result cache/persistence, and statistics/postprocess integration. |
+| P1 | `TASK-BAT-FUNC-INTERNAL-RESISTANCE-001` | Planned | Close the single/pack internal-resistance test flow: command trigger, running status, response result, opt-log final state, resistance statistic refresh, and JSON/TCP/Modbus observable status. |
+| P1 | `TASK-BAT-FUNC-ALARM-FILTER-001` | Planned | Evaluate and implement M460 `ALARM_FILTERING` parity where useful: consecutive threshold confirmation, recovery boundary, and interaction with existing `IAlarmLogService` shield/confirm/recover semantics. |
+| P1 | `TASK-BAT-FUNC-ALARM-COVERAGE-001` | Planned | Split M460 87/8D alarms into generated, conditional, and excluded groups. Implement only alarms with clear realtime/device-state sources; explicitly exclude thermal runaway, hydrogen, off-bus, network, and sensor faults until hardware/source exists. |
+| P1 | `TASK-BAT-FUNC-ALARM-SHIELD-001` | Planned | Map M460 shield/release semantics (`39/E9`, `3C/EC`, Modbus `400421` range) to energy alarm shield/recover services. Do not reintroduce old 980 command runtime. |
+| P2 | `TASK-BAT-FUNC-SOC-STATE-001` | Planned | Define SOC state persistence outside the polling thread: required inputs, time delta, rated capacity, static voltage lookup, current integration, and recovery after restart. Until complete, keep fields empty or cache-backed. |
+| P2 | `TASK-BAT-FUNC-CAPACITY-STATE-001` | Planned | Define capacity/SOH/backup/discharge state persistence using realtime history, `dev_opt_log`, `pre_battery_group`, and existing predictor services. Do not compute long-cycle values in frame parsing or poll loop. |
+| P2 | `TASK-BAT-FUNC-PARAM-CONFIG-001` | Planned | Align M460 alarm/threshold parameter concepts with `ConfigAttribute` and `AlarmItemLevelVo`, including group voltage/current/temp, cell voltage/temp/resistance, voltage range, resistance range, SOC/SOH, leakage, and swollen voltage. |
+| P2 | `TASK-BAT-FUNC-DEVICE-INFO-001` | Planned | Evaluate PC/network protocol capabilities such as time sync, device type/version, MAC/IP/cloud/server-client mode. Default decision is exclude from battery collector; implement only if energy has a direct business endpoint and storage model. |
+| P3 | `TASK-BAT-FUNC-HARDWARE-EXCLUDE-001` | Planned | Document excluded M460 board-level features: buzzer, LED, LCD, relay, ADC/DAC, RTC, SD, OTA, factory reset, watchdog, FRAM/EEPROM. These require separate hardware/business approval before implementation. |
+
+### 18.3 Recommended priority after current snapshot/cache work
+
+1. Finish `TASK-BAT-FUNC-SNAPSHOT-001`, `TASK-BAT-FUNC-FRESHNESS-001`, and `TASK-BAT-FUNC-MODBUS-CACHE-001` first because all high-frequency external reads depend on them.
+2. Execute `TASK-BAT-M460-GAP-INVENTORY-001` to freeze the gap table before adding more feature work.
+3. Execute `TASK-BAT-FUNC-JSONTCP-FIELDS-001` and `TASK-BAT-FUNC-MODBUS-READ-ALARM-001` next because they expose existing data externally.
+4. Execute `TASK-BAT-FUNC-OPT-PLAN-001` before command/test-flow closure so planned execution and immediate execution share the same supported command dispatcher.
+5. Execute command/test-flow closure tasks before broadening Modbus writes: `TASK-BAT-FUNC-CONNECT-RESISTANCE-001`, `TASK-BAT-FUNC-INTERNAL-RESISTANCE-001`, then `TASK-BAT-FUNC-MODBUS-WRITE-001`.
+6. Keep `TASK-BAT-FUNC-SOC-STATE-001` and `TASK-BAT-FUNC-CAPACITY-STATE-001` behind explicit state/history design. They are not small field-fill tasks.
+
+### 18.4 Explicit non-goals unless separately approved
+
+- Do not implement M460 board peripherals by default: buzzer, LED, LCD, relay, ADC/DAC, RTC, SD, WDT, OTA, factory reset, local keys, or FRAM/EEPROM abstractions.
+- Do not implement Modbus TCP unless a deployment requirement appears; current known M460 path is UART/RTU.
+- Do not restore 980 PC/network protocol as a runtime bridge.
+- Do not generate thermal runaway, hydrogen, off-bus, network, or sensor fault alarms without a clear hardware/source model.
+- Do not synthesize SOC/SOH/capacity values from a single polling batch.

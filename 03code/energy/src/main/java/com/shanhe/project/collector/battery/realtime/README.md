@@ -14,7 +14,6 @@
 | BatteryModuleRealtimeAdapterService | service | 实时适配服务，待评估 |
 | BatteryModuleReportLogAdapterService | service | 报告日志适配服务，待评估 |
 | BatteryCurrentStateService | service | 当前态查询服务，待评估 |
-| BatteryModuleCompatReportLogSyncService | service | 兼容历史同步服务，仅 postprocess 内部调用 |
 | BatteryRealtimePostProcessContextFactory | service | 后处理上下文工厂，暂不跟本任务 |
 
 ## 禁止事项

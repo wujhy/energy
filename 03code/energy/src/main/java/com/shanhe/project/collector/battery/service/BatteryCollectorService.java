@@ -6,7 +6,6 @@ import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.*;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
-import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelState;
 import com.shanhe.project.collector.battery.model.BatteryCollectorFrame;
 import com.shanhe.project.collector.battery.model.BatteryCollectorMetrics;
@@ -14,10 +13,11 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorChannelSnapsho
 import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.model.BatteryPendingRequest;
 import com.shanhe.project.collector.battery.model.BatteryCollectorRunState;
-import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
 import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
+import com.shanhe.project.collector.battery.command.BatteryConnectResistanceCommandProcessor;
 import com.shanhe.project.collector.battery.runtime.BatteryCollectorFrameIoService;
+import com.shanhe.project.collector.battery.runtime.BatteryCollectorTimeoutService;
 import com.shanhe.project.collector.battery.state.BatteryCollectorDeviceStateService;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +30,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -50,14 +48,6 @@ import java.util.concurrent.TimeUnit;
 @Order(4)
 @Component
 public class BatteryCollectorService implements ApplicationRunner, DisposableBean {
-
-    private static final int START_SET_ADDRESS = 1;
-    private static final int STOP_SET_ADDRESS = 2;
-
-    /** 设备状态码：串口状态。 */
-    private static final String STATE_CODE_SERIAL_PORT = BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN;
-    /** 设备状态码：轮询超时计数。 */
-    private static final String STATE_CODE_POLL_TIMEOUT = BatteryDeviceStateConstants.StateCode.CHANNEL_TIMEOUT_COUNT;
 
     /**
      * 采集模块配置。
@@ -96,18 +86,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     private BatteryModeStatusService batteryModeStatusService;
 
     /**
-     * 设备状态服务，用于持久化通道运行状态。
-     */
-    @Resource
-    private BatteryDeviceStateService batteryDeviceStateService;
-
-    /**
-     * 连接条电阻结果缓存服务。
-     */
-    @Resource
-    private BatteryModuleCellCompatibilityFillService compatibilityFillService;
-
-    /**
      * 标准实时有效快照服务。
      */
     @Resource
@@ -140,18 +118,10 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
      */
     @Resource
     private com.shanhe.project.collector.battery.command.BatteryCollectorCommandQueueService commandQueueService;
-
-    /**
-     * 600节模块端标准实时数据 Mapper。
-     */
     @Resource
-    private com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper realtimeMapper;
-
-    /**
-     * 状态去重缓存：key = scopeKey + stateCode，value = 上次写入的 stateValue。
-     * 避免短时间内重复写入相同状态。
-     */
-    private final java.util.concurrent.ConcurrentHashMap<String, String> lastStateValues = new java.util.concurrent.ConcurrentHashMap<>();
+    private BatteryConnectResistanceCommandProcessor connectResistanceCommandProcessor;
+    @Resource
+    private BatteryCollectorTimeoutService timeoutService;
 
     /**
      * 当前运行的通道状态。
@@ -239,7 +209,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 command.setOptLogId(optLogId);
                 markModeRunning(command);
                 if (!state.getQueuedModuleCommands().offer(command)) {
-                    markModeStopped(command, false);
+                    commandQueueService.markModeStopped(command, false);
                     commandLogService.updateCommandOptLog(optLogId, BatteryDeviceStateConstants.CommandStatus.REJECTED, null, null);
                     return false;
                 }
@@ -367,106 +337,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 () -> checkTimeout(state));
     }
 
-    /** 执行一轮01/81全量或增量采集。 */
-    private void pollOnce(BatteryCollectorChannelState state) {
-        List<String> polledCommands = new ArrayList<>();
-        List<String> completedCommands = new ArrayList<>();
-        long startedAt = System.currentTimeMillis();
-        boolean fullDiscovery = shouldRunFullDiscovery(state, startedAt);
-        String batchNo = buildPollBatchNo(state, startedAt);
-        state.setCurrentPollBatchNo(batchNo);
-        state.setCurrentPollStartedAt(startedAt);
-        state.setPollRoundCount(state.getPollRoundCount() + 1);
-        state.setCurrentFullDiscovery(fullDiscovery);
-        if (fullDiscovery) {
-            state.setLastFullDiscoveryTime(startedAt);
-        }
-        // 同一轮 01/81 采集共享批次号，用于关联单体行和 246 组信息行。
-        BatteryModulePollContextHolder.set(BatteryModulePollContext.builder()
-                .pollBatchNo(batchNo)
-                .pollStartedAt(new Date(startedAt))
-                .build());
-        try {
-            // 默认自动轮询只允许 600 节模块端 01/81，不引入 980 聚合命令。
-            BatteryDeviceProtocolCode pollingCommand = BatteryDeviceProtocolCode.MODULE_INFO;
-            int expectedCellCount = resolveExpectedCellCount(state.getConfig());
-            int completedCellCount = 0;
-            boolean skipRemainingCellAddresses = false;
-            for (Integer address : resolvePollingAddresses(state, fullDiscovery)) {
-                if (!running) {
-                    break;
-                }
-                if (skipRemainingCellAddresses && isCellModuleAddress(address)) {
-                    continue;
-                }
-                state.setCurrentPollAddress(address);
-                polledCommands.add(String.format("%02X:%02X/%02X",
-                        address,
-                        pollingCommand.getRequestCode(),
-                        pollingCommand.getResponseCode()));
-                sendCommand(state, pollingCommand, address);
-                waitForPendingComplete(state);
-                boolean responded = state.getPendingCommand() == null && !state.isLastPendingTimedOut();
-                updateModuleAddressCache(state, address, responded);
-                if (responded) {
-                    completedCommands.add(String.format("%02X:%02X/%02X",
-                            address,
-                            pollingCommand.getRequestCode(),
-                            pollingCommand.getResponseCode()));
-                    if (isCellModuleAddress(address)) {
-                        completedCellCount++;
-                    }
-                }
-                if (shouldSkipRemainingCellDiscovery(fullDiscovery, address, completedCellCount, expectedCellCount)) {
-                    skipRemainingCellAddresses = true;
-                }
-                processQueuedModuleCommandsImmediately(state);
-            }
-            realtimeConsumer.flushCurrentPollBatch(state.getConfig());
-        } finally {
-            BatteryModulePollContextHolder.clear();
-            state.setCurrentPollAddress(0);
-            state.setCurrentFullDiscovery(false);
-        }
-        protocolLogService.logPollSummary(state, fullDiscovery, polledCommands, completedCommands);
-    }
-
-    private void processQueuedModuleCommandsImmediately(BatteryCollectorChannelState state) {
-        while (running && state.getPendingCommand() == null && !state.getQueuedModuleCommands().isEmpty()) {
-            if (!processQueuedModuleCommand(state)) {
-                break;
-            }
-            waitForPendingComplete(state);
-        }
-    }
-
     /** 取出一条排队的控制命令并下发。已委托 commandQueueService 做队列和判断。 */
     private boolean processQueuedModuleCommand(BatteryCollectorChannelState state) {
-        BatteryModuleControlCommand command = commandQueueService.dequeueCommand(state);
-        if (command == null) {
-            return false;
-        }
-        BatteryCollectorFrame request = frameCodec.buildRequest(
-                command.getAddress(),
-                command.getRequestCode(),
-                command.getPayload() == null ? new byte[0] : command.getPayload());
-        if (commandQueueService.isNoResponseCommand(command)) {
-            if (!writeFrameWithoutPending(state, request, command)) {
-                commandQueueService.requeueCommand(state, command);
-                return false;
-            }
-            return true;
-        }
-        if (!writeFrame(state, request, pendingFromCommand(command), BatteryCollectorRunState.WAIT_COMMAND_RESPONSE)) {
-            commandQueueService.requeueCommand(state, command);
-            return false;
-        }
-        return true;
-    }
-
-    /** 将控制命令转换为等待响应的待处理请求。已委托 commandQueueService。 */
-    private BatteryPendingRequest pendingFromCommand(BatteryModuleControlCommand command) {
-        return commandQueueService.pendingFromCommand(command);
+        return commandQueueService.processNextQueuedCommand(
+                state,
+                (request, pendingRequest, waitingState) -> writeFrame(state, request, pendingRequest, waitingState),
+                (request, command) -> writeFrameWithoutPending(state, request, command));
     }
 
     /** 向指定地址发送轮询命令并设置等待状态。 */
@@ -537,12 +413,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                     written);
             return false;
         }
-        state.setLastSendTime(System.currentTimeMillis());
-        state.setLastRequestCode(command.getRequestCode());
-        state.setExpectedResponseCode(0);
-        state.setLastPendingTimedOut(false);
-        state.setRunState(BatteryCollectorRunState.READ);
-        markCompletedModuleCommand(state, command.getProtocolCode().name(), 0, true);
+        commandQueueService.completeNoResponseCommandSent(state, command);
         // 连接条测试 0F 发送成功后，立即排队首个 11/91 电压读取命令
         if (command.getProtocolCode() == BatteryDeviceProtocolCode.CONNECT_STRIP_RESISTANCE_TEST
                 && command.getConnectResistanceNextAddress() != null
@@ -556,10 +427,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             pendingFrom0F.setOptLogId(command.getOptLogId());
             pendingFrom0F.setConnectResistanceNextAddress(command.getConnectResistanceNextAddress());
             pendingFrom0F.setConnectResistanceMaxAddress(command.getConnectResistanceMaxAddress());
-            queueNextConnectResistanceVoltageRead(state, pendingFrom0F);
-        }
-        if (shouldStopModeAfterNoResponseCommand(command)) {
-            markModeStopped(command, true);
+            connectResistanceCommandProcessor.queueNextVoltageRead(state, pendingFrom0F);
         }
         protocolLogService.logProtocol(properties, state, "tx", "cmd=" + String.format("%02X", command.getRequestCode())
                 + ", expect=-"
@@ -645,47 +513,43 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         if (state == null || frame == null || pendingRequest == null || pendingRequest.isAutoPoll()) {
             return;
         }
-        boolean success = isSuccessResponse(frame, pendingRequest);
-        markCompletedModuleCommand(state, pendingRequest.getName(), frame.getCommand(), success);
         // 连接条测试 91 响应不在中间步骤更新日志状态，只在最终完成时更新
-        if (!BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.name().equals(pendingRequest.getName())) {
-            commandLogService.updateCommandOptLog(pendingRequest.getOptLogId(), success ? BatteryDeviceStateConstants.CommandStatus.SUCCESS : BatteryDeviceStateConstants.CommandStatus.FAILED, frame.getCommand(), bytesToHex(frame.getPayloadSafe()));
-        }
+        boolean connectResistanceVoltageResponse =
+                BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.name().equals(pendingRequest.getName());
+        boolean success = commandQueueService.completeExplicitCommandResponse(
+                state,
+                frame,
+                pendingRequest,
+                !connectResistanceVoltageResponse,
+                bytesToHex(frame.getPayloadSafe()));
         if (BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.name().equals(pendingRequest.getName())) {
             if (!success) {
                 log.warn("自动编号失败, 通道={}, 地址={}, 响应={}",
                         state.getConfig() == null ? null : state.getConfig().getName(),
                         String.format("%02X", pendingRequest.getRequestAddress()),
                         String.format("%02X", frame.getCommand()));
-                markModeStopped(pendingRequest, false);
+                commandQueueService.markModeStopped(pendingRequest, false);
                 return;
             }
-            if (queueNextAutoSetAddressStep(state, frame, pendingRequest)) {
+            if (commandQueueService.queueNextAutoSetAddressStep(
+                    state,
+                    frame,
+                    pendingRequest,
+                    this::markModeRunning,
+                    () -> cacheService.resetModuleAddressCache(state, realtimeSnapshotService))) {
                 return;
             }
-            markModeStopped(pendingRequest, true);
+            commandQueueService.markModeStopped(pendingRequest, true);
             cacheService.resetModuleAddressCache(state, realtimeSnapshotService);
             log.info("自动编号成功后蓄电池模块地址缓存已重置, 通道={}",
                     state.getConfig() == null ? null : state.getConfig().getName());
             return;
         }
         if (BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.name().equals(pendingRequest.getName())) {
-            if (!success) {
-                pendingRequest.setConnectResistanceFailed(true);
-            }
-            if (success) {
-                storeConnectResistanceResult(pendingRequest, frame);
-            }
-            if (!queueNextConnectResistanceVoltageRead(state, pendingRequest)) {
-                // 所有地址完成，按最后一个响应写最终状态
-                boolean finalSuccess = success && !pendingRequest.isConnectResistanceFailed();
-                String finalStatus = finalSuccess ? BatteryDeviceStateConstants.CommandStatus.SUCCESS : BatteryDeviceStateConstants.CommandStatus.FAILED;
-                commandLogService.updateCommandOptLog(pendingRequest.getOptLogId(), finalStatus, frame.getCommand(), bytesToHex(frame.getPayloadSafe()));
-                markModeStopped(pendingRequest, finalSuccess);
-            }
+            connectResistanceCommandProcessor.handleVoltageResponse(state, frame, pendingRequest, success);
             return;
         }
-        markModeStopped(pendingRequest, success);
+        commandQueueService.markModeStopped(pendingRequest, success);
         if (success && shouldResetModuleAddressCacheAfterCommand(pendingRequest)) {
             cacheService.resetModuleAddressCache(state, realtimeSnapshotService);
             log.info("地址命令成功后蓄电池模块地址缓存已重置, 通道={}, 命令={}",
@@ -699,253 +563,9 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return commandQueueService.isSuccessResponse(frame, pendingRequest);
     }
 
-    /** 排队下一个连接条电阻测试电压读取命令。返回 true 表示已排队，false 表示测试完成。 */
-    private boolean queueNextConnectResistanceVoltageRead(BatteryCollectorChannelState state,
-                                                           BatteryPendingRequest pendingRequest) {
-        Integer nextAddress = pendingRequest.getConnectResistanceNextAddress();
-        Integer maxAddress = pendingRequest.getConnectResistanceMaxAddress();
-        if (nextAddress == null || maxAddress == null || nextAddress > maxAddress) {
-            return false;
-        }
-        int address = nextAddress;
-        pendingRequest.setConnectResistanceNextAddress(address + 1);
-        BatteryModuleControlCommand command = BatteryModuleControlCommand.builder()
-                .protocolCode(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE)
-                .address(address)
-                .requestCode(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.getRequestCode())
-                .responseCode(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.getResponseCode())
-                .payload(new byte[0])
-                .description(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.getDescription())
-                .batteryGroup(pendingRequest.getBatteryGroup())
-                .mode(pendingRequest.getMode())
-                .optLogId(pendingRequest.getOptLogId())
-                .connectResistanceNextAddress(address + 1)
-                .connectResistanceMaxAddress(maxAddress)
-                .connectResistanceFailed(pendingRequest.isConnectResistanceFailed())
-                .build();
-        return state.getQueuedModuleCommands().offer(command);
-    }
-
-    /**
-     * 解析 91 响应帧中的连接条测试电压并计算电阻。
-     * <p>
-     * 91 响应 8 字节：BatteryVoltage(4B) + TestVoltage(4B)，大端序。
-     * 原始值单位：0.1mV（与 BatteryModuleFrameDataParserService 的 ÷10000 换算一致）。
-     */
-    private void storeConnectResistanceResult(BatteryPendingRequest pendingRequest, BatteryCollectorFrame frame) {
-        try {
-            byte[] payload = frame.getPayloadSafe();
-            if (payload.length < 8) {
-                log.debug("连接条测试响应载荷不足8字节, 地址={}, 长度={}",
-                        pendingRequest.getRequestAddress(), payload.length);
-                return;
-            }
-            long batteryVoltageRaw = u32(payload, 0);
-            long testVoltageRaw = u32(payload, 4);
-            Integer batteryGroup = pendingRequest.getBatteryGroup();
-            int address = pendingRequest.getRequestAddress();
-
-            log.info("连接条测试电压记录, 电池组={}, 地址={}, 电池电压raw={}, 测试电压raw={}",
-                     batteryGroup, address, batteryVoltageRaw, testVoltageRaw);
-
-            // 获取实时组电流以计算真实连接条电阻
-            Double current = null;
-            if (realtimeMapper != null) {
-                com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime group = realtimeMapper.selectGroup(batteryGroup);
-                if (group != null) {
-                    if (group.getChargeDischargeCurrent() != null) {
-                        current = group.getChargeDischargeCurrent();
-                    } else {
-                        current = group.getPackCurrent();
-                    }
-                }
-            }
-
-            Double connectBatteryVoltage = batteryVoltageRaw / 10000.0d;
-            Double connectTestVoltage = testVoltageRaw / 10000.0d;
-            Double resistance = calculateConnectResistance(connectTestVoltage, connectBatteryVoltage, current);
-
-            if (resistance != null) {
-                compatibilityFillService.putConnectResistance(batteryGroup, address, resistance);
-                // 同时把计算好的连接条电阻保存到 DB 中的单体实时数据表 (battery_module_cell_realtime) 中
-                if (realtimeMapper != null) {
-                    List<com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime> cells = realtimeMapper.selectCells(batteryGroup);
-                    boolean cellFound = false;
-                    if (cells != null) {
-                        for (com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime cell : cells) {
-                            if (cell.getBatNum() != null && cell.getBatNum() == address) {
-                                cell.setResistanceRageSlip(resistance);
-                                realtimeMapper.upsertCell(cell);
-                                cellFound = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (!cellFound) {
-                        com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime newCell = new com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime();
-                        newCell.setPackNum(batteryGroup);
-                        newCell.setBatNum(address);
-                        newCell.setResistanceRageSlip(resistance);
-                        newCell.setCreateTime(new java.util.Date());
-                        realtimeMapper.upsertCell(newCell);
-                    }
-                }
-                log.info("连接条电阻计算成功且已写入, 电池组={}, 地址={}, 电阻={} uΩ",
-                        batteryGroup, address, resistance);
-            } else {
-                log.warn("连接条电阻计算跳过, 缺少输入或电流过低: 电池组={}, 地址={}, 电流={}",
-                        batteryGroup, address, current);
-            }
-        } catch (Exception e) {
-            log.warn("解析连接条电阻测试失败, 地址={}, 原因={}", pendingRequest.getRequestAddress(), e.getMessage());
-        }
-    }
-
-    /**
-     * 计算真实连接条电阻。
-     *
-     * @param testVoltage 测试电压 (V)
-     * @param batteryVoltage 电池电压 (V)
-     * @param current 充放电电流 (A)
-     * @return 连接条电阻 (uΩ)，无法计算时返回 null
-     */
-    public static Double calculateConnectResistance(Double testVoltage, Double batteryVoltage, Double current) {
-        if (testVoltage == null || batteryVoltage == null || current == null) {
-            return null;
-        }
-        double absCurrent = Math.abs(current);
-        if (absCurrent <= 0.1) {
-            return null;
-        }
-        double deltaV = Math.abs(testVoltage - batteryVoltage);
-        double resistance = (deltaV / absCurrent) * 1000000.0d;
-        // 四舍五入保留四位小数以消除浮点数精度误差
-        resistance = Math.round(resistance * 10000.0d) / 10000.0d;
-        // 限制在合理连接条电阻范围（非负且小于1欧姆）
-        if (resistance < 0 || resistance > 1000000.0d) {
-            return null;
-        }
-        return resistance;
-    }
-
-    /** 无符号 32 位解析（大端序）。 */
-    private long u32(byte[] payload, int offset) {
-        return ((long) (payload[offset] & 0xFF) << 24)
-                | ((long) (payload[offset + 1] & 0xFF) << 16)
-                | ((long) (payload[offset + 2] & 0xFF) << 8)
-                | (long) (payload[offset + 3] & 0xFF);
-    }
-
     /** 已委托 commandQueueService。 */
     private boolean shouldResetModuleAddressCacheAfterCommand(BatteryPendingRequest pendingRequest) {
         return commandQueueService.shouldResetModuleAddressCacheAfterCommand(pendingRequest);
-    }
-
-    /** 自动编号完成后排队下一步或发送停止命令。 */
-    private boolean queueNextAutoSetAddressStep(BatteryCollectorChannelState state,
-                                                BatteryCollectorFrame frame,
-                                                BatteryPendingRequest pendingRequest) {
-        Integer batteryCount = pendingRequest.getAutoAddressBatteryCount();
-        Integer batterySpecification = pendingRequest.getAutoAddressBatterySpecification();
-        if (batteryCount == null || batterySpecification == null) {
-            return false;
-        }
-        int currentAddress = pendingRequest.getRequestAddress();
-        if (currentAddress == GROUP_MODULE_ADDRESS) {
-            return offerAutoSetAddressStep(state, pendingRequest, 1, firstAutoSetAddressCellPayload(batterySpecification));
-        }
-        if (currentAddress < batteryCount) {
-            return offerAutoSetAddressStep(state, pendingRequest, currentAddress + 1, nextAutoSetAddressPayload(frame.getPayloadSafe()));
-        }
-        byte[] stopPayload = stopAutoSetAddressPayload(frame.getPayloadSafe());
-        state.getQueuedModuleCommands().offer(autoSetAddressCommand(pendingRequest, currentAddress, stopPayload, false));
-        BatteryModuleControlCommand stopGroupCommand = autoSetAddressCommand(pendingRequest, GROUP_MODULE_ADDRESS, stopPayload, false);
-        stopGroupCommand.setMode(pendingRequest.getMode());
-        state.getQueuedModuleCommands().offer(stopGroupCommand);
-        cacheService.resetModuleAddressCache(state, realtimeSnapshotService);
-        log.info("自动编号成功后蓄电池模块地址缓存已重置, 通道={}",
-                state.getConfig() == null ? null : state.getConfig().getName());
-        return true;
-    }
-
-    /** 构造并排队自动编号的下一步命令。 */
-    private boolean offerAutoSetAddressStep(BatteryCollectorChannelState state,
-                                            BatteryPendingRequest pendingRequest,
-                                            int address,
-                                            byte[] payload) {
-        BatteryModuleControlCommand command = autoSetAddressCommand(pendingRequest, address, payload, true);
-        markModeRunning(command);
-        return state.getQueuedModuleCommands().offer(command);
-    }
-
-    /** 构造自动编号控制命令。 */
-    private BatteryModuleControlCommand autoSetAddressCommand(BatteryPendingRequest pendingRequest,
-                                                             int address,
-                                                             byte[] payload,
-                                                             boolean waitResponse) {
-        return BatteryModuleControlCommand.builder()
-                .protocolCode(BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS)
-                .address(address)
-                .requestCode(BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.getRequestCode())
-                .responseCode(waitResponse ? BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.getResponseCode() : null)
-                .payload(payload)
-                .description(BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.getDescription())
-                .batteryGroup(pendingRequest.getBatteryGroup())
-                .mode(waitResponse ? pendingRequest.getMode() : null)
-                .autoAddressBatteryCount(pendingRequest.getAutoAddressBatteryCount())
-                .autoAddressBatterySpecification(pendingRequest.getAutoAddressBatterySpecification())
-                .build();
-    }
-
-    /** 构造自动编号第一个单体的协议载荷。 */
-    private byte[] firstAutoSetAddressCellPayload(int batterySpecification) {
-        // 电压×10编码(分辨率0.1V)，拆为大端两字节
-        int startVoltage = batterySpecificationToVoltage(batterySpecification) * 10;
-        return new byte[]{
-                (byte) ((startVoltage >> 8) & 0xFF),
-                (byte) (startVoltage & 0xFF),
-                (byte) (batterySpecification & 0xFF),
-                0,
-                0,
-                0,
-                START_SET_ADDRESS
-        };
-    }
-
-    /** 根据上一步响应构造下一步载荷。 */
-    private byte[] nextAutoSetAddressPayload(byte[] responsePayload) {
-        return new byte[]{
-                responsePayload[0],
-                responsePayload[1],
-                responsePayload[2],
-                0,
-                0,
-                0,
-                START_SET_ADDRESS
-        };
-    }
-
-    /** 根据上一步响应构造停止载荷。 */
-    private byte[] stopAutoSetAddressPayload(byte[] responsePayload) {
-        return new byte[]{
-                responsePayload[0],
-                responsePayload[1],
-                responsePayload[2],
-                0,
-                0,
-                0,
-                STOP_SET_ADDRESS
-        };
-    }
-
-    private int batterySpecificationToVoltage(int batterySpecification) {
-        if (batterySpecification == BATTERY_SPEC_2V) {
-            return VOLTAGE_2V;
-        }
-        if (batterySpecification == BATTERY_SPEC_12V) {
-            return VOLTAGE_12V;
-        }
-        throw new IllegalArgumentException("自动编号仅支持2V或12V电池规格");
     }
 
     private boolean isKnownModuleResponse(int commandCode) {
@@ -969,291 +589,9 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
 
     /** 检测当前等待命令是否超时，超时则重试或放弃。 */
     private void checkTimeout(BatteryCollectorChannelState state) {
-        if (state.getPendingCommand() == null) {
-            return;
-        }
-        long now = System.currentTimeMillis();
-        long timeoutMs = resolveResponseTimeoutMs(state.getConfig());
-        if (now - state.getLastSendTime() < timeoutMs) {
-            return;
-        }
-
-        int retryCount = state.getCurrentRetryCount();
-        int maxRetryCount = resolveMaxRetryCount(state.getConfig());
-        if (retryCount < maxRetryCount) {
-            state.setCurrentRetryCount(retryCount + 1);
-            BatteryPendingRequest retryRequest = state.getPendingCommand();
-            log.warn("蓄电池采集响应超时，正在重试, 通道={}, 请求={}, 响应={}, 重试={}/{}",
-                    state.getConfig().getName(),
-                    String.format("%02X", state.getLastRequestCode()),
-                    String.format("%02X", state.getExpectedResponseCode()),
-                    state.getCurrentRetryCount(),
-                    maxRetryCount);
-            protocolLogService.logProtocol(properties, state, "retry", "request=" + String.format("%02X", state.getLastRequestCode())
-                    + ", expect=" + String.format("%02X", state.getExpectedResponseCode())
-                    + ", retry=" + state.getCurrentRetryCount());
-            BatteryCollectorFrame request = frameCodec.buildRequest(
-                    retryRequest.getRequestAddress(),
-                    retryRequest.getRequestCode(),
-                    retryRequest.getPayload());
-            writeFrame(state, request, retryRequest, retryRequest.isAutoPoll()
-                    ? BatteryCollectorRunState.WAIT_RESPONSE
-                    : BatteryCollectorRunState.WAIT_COMMAND_RESPONSE);
-            state.getReceiveBuffer().reset();
-            return;
-        }
-
-        log.warn("蓄电池采集响应超时, 通道={}, 请求={}, 响应={}, 超时次数={}",
-                state.getConfig().getName(),
-                String.format("%02X", state.getLastRequestCode()),
-                String.format("%02X", state.getExpectedResponseCode()),
-                state.getTimeoutCount() + 1);
-        BatteryPendingRequest timedOutRequest = state.getPendingCommand();
-        collectorDeviceStateService.persistModuleTimeout(state, timedOutRequest);
-        handleTimedOutPendingRequest(state, timedOutRequest);
-        state.setPendingCommand(null);
-        state.setExpectedResponseCode(0);
-        state.setCurrentRetryCount(0);
-        state.setLastPendingCompletedAt(System.currentTimeMillis());
-        state.setLastPendingTimedOut(true);
-        state.setRunState(BatteryCollectorRunState.READ);
-        state.setTimeoutCount(state.getTimeoutCount() + 1);
-        state.setLastTimeoutTime(now);
-        state.getReceiveBuffer().reset();
-        collectorDeviceStateService.persistPollTimeout(state);
+        timeoutService.checkTimeout(state,
+                (request, pendingRequest, waitingState) -> writeFrame(state, request, pendingRequest, waitingState));
     }
-
-    void handleTimedOutPendingRequest(BatteryCollectorChannelState state, BatteryPendingRequest pendingRequest) {
-        if (state == null || pendingRequest == null || pendingRequest.isAutoPoll()) {
-            return;
-        }
-        markCompletedModuleCommand(state, pendingRequest.getName(), pendingRequest.getResponseCode(), false);
-        markModeStopped(pendingRequest, false);
-        commandLogService.updateCommandOptLog(pendingRequest.getOptLogId(), BatteryDeviceStateConstants.CommandStatus.TIMEOUT, null, null);
-    }
-
-    /** 标记工作模式已停止。 */
-    private void markModeStopped(BatteryModuleControlCommand command, boolean success) {
-        if (command == null || command.getMode() == null) {
-            return;
-        }
-        batteryModeStatusService.markStopped(
-                command.getBatteryGroup(),
-                command.getMode(),
-                modeAddress(command),
-                success,
-                command.getOptLogId());
-    }
-
-    /** 已委托 commandQueueService。 */
-    private boolean shouldStopModeAfterNoResponseCommand(BatteryModuleControlCommand command) {
-        return commandQueueService.shouldStopModeAfterNoResponseCommand(command);
-    }
-
-    /** 获取模式关联的模块地址，自动编号场景取电池数量。 */
-    private Integer modeAddress(BatteryModuleControlCommand command) {
-        if (command == null) {
-            return null;
-        }
-        if (command.getProtocolCode() == BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS
-                && command.getAddress() == GROUP_MODULE_ADDRESS
-                && command.getAutoAddressBatteryCount() != null) {
-            return command.getAutoAddressBatteryCount();
-        }
-        return command.getAddress();
-    }
-
-    /** 标记工作模式已停止（从待处理请求）。 */
-    private void markModeStopped(BatteryPendingRequest pendingRequest, boolean success) {
-        if (pendingRequest == null || pendingRequest.getMode() == null) {
-            return;
-        }
-        batteryModeStatusService.markStopped(
-                pendingRequest.getBatteryGroup(),
-                pendingRequest.getMode(),
-                pendingRequest.getRequestAddress(),
-                success,
-                pendingRequest.getOptLogId());
-    }
-
-    /** 记录已完成模块命令的状态。 */
-    private void markCompletedModuleCommand(BatteryCollectorChannelState state,
-                                            String commandName,
-                                            int responseCode,
-                                            boolean success) {
-        state.setLastCompletedModuleCommandName(commandName);
-        state.setLastCompletedModuleResponseCode(responseCode);
-        state.setLastCompletedModuleCommandSuccess(success);
-        state.setLastCompletedModuleCommandTime(System.currentTimeMillis());
-    }
-
-    /** 持久化通道异常到 battery_device_state。 */
-    private void persistChannelError(BatteryCollectorChannelState state, Exception e) {
-        String channelName = state.getConfig().getName();
-        String stateValue = e.getMessage() == null ? "unknown" : e.getMessage();
-        BatteryDeviceState ds = buildChannelState(channelName, state.getConfig(),
-                BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR,
-                stateValue,
-                BatteryDeviceStateConstants.StateLevel.ERROR, null);
-        persistIfChanged(channelName, BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, stateValue, ds);
-    }
-
-    /** 通道重新打开时清除异常状态（更新为正常）。 */
-    private void clearChannelError(String channelName, BatteryCollectorChannelConfig config) {
-        String cacheKey = channelName + ":" + BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR;
-        if (lastStateValues.containsKey(cacheKey)) {
-            BatteryDeviceState ds = buildChannelState(channelName, config,
-                    BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, "cleared",
-                    BatteryDeviceStateConstants.StateLevel.NORMAL, null);
-            persistIfChanged(channelName, BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, "cleared", ds);
-        }
-    }
-
-    /** 持久化通道串口状态到 battery_device_state（带去重）。 */
-    private void persistSerialPortState(BatteryCollectorChannelState state, boolean opened) {
-        String stateValue = opened ? "open" : "closed";
-        String stateLevel = opened ? BatteryDeviceStateConstants.StateLevel.NORMAL : BatteryDeviceStateConstants.StateLevel.ERROR;
-        persistChannelStateThrottled(state.getConfig().getName(), state.getConfig(),
-                STATE_CODE_SERIAL_PORT, stateValue, stateLevel, null);
-        // 通道重新打开时，清除之前的异常状态
-        if (opened) {
-            clearChannelError(state.getConfig().getName(), state.getConfig());
-        }
-    }
-
-    /** 持久化通道轮询超时计数到 battery_device_state（带去重）。 */
-    private void persistPollTimeout(BatteryCollectorChannelState state) {
-        String stateValue = String.valueOf(state.getTimeoutCount());
-        String stateLevel = state.getTimeoutCount() > 0 ? BatteryDeviceStateConstants.StateLevel.WARN : BatteryDeviceStateConstants.StateLevel.NORMAL;
-        persistChannelStateThrottled(state.getConfig().getName(), state.getConfig(),
-                STATE_CODE_POLL_TIMEOUT, stateValue, stateLevel, null);
-    }
-
-    /** 持久化具体模块超时状态到 battery_device_state（带去重）。 */
-    private void persistModuleTimeout(BatteryCollectorChannelState state, BatteryPendingRequest pendingRequest) {
-        if (state == null || pendingRequest == null) {
-            return;
-        }
-        BatteryCollectorChannelConfig config = state.getConfig();
-        int address = pendingRequest.getRequestAddress();
-        if (address < 0 || address > UNSIGNED_BYTE_MAX) {
-            return;
-        }
-        String scopeKey = config.getName() + ":" + address;
-        String stateValue = String.format("%02X/%02X",
-                pendingRequest.getRequestCode(),
-                pendingRequest.getResponseCode());
-        BatteryDeviceState ds = buildModuleState(scopeKey, config,
-                BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT,
-                stateValue,
-                BatteryDeviceStateConstants.StateLevel.WARN,
-                pendingRequest.getOptLogId(),
-                address);
-        persistIfChanged(scopeKey, BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT, stateValue, ds);
-    }
-
-    /** 模块重新响应时清除超时状态（更新为已恢复）。 */
-    private void clearModuleTimeout(String channelName, BatteryCollectorChannelConfig config, int address) {
-        String scopeKey = channelName + ":" + address;
-        String cacheKey = scopeKey + ":" + BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT;
-        if (lastStateValues.containsKey(cacheKey)) {
-            BatteryDeviceState ds = buildModuleState(scopeKey, config,
-                    BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT, "recovered",
-                    BatteryDeviceStateConstants.StateLevel.NORMAL, null, address);
-            persistIfChanged(scopeKey, BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT, "recovered", ds);
-        }
-    }
-
-    /** 持久化模块活跃状态到 battery_device_state（带去重）。 */
-    private void persistModuleActive(String channelName, BatteryCollectorChannelConfig config,
-                                     int address, boolean active) {
-        String scopeKey = channelName + ":" + address;
-        String stateValue = active ? "active" : "inactive";
-        String stateLevel = active ? BatteryDeviceStateConstants.StateLevel.NORMAL : BatteryDeviceStateConstants.StateLevel.WARN;
-        BatteryDeviceState ds = buildModuleState(scopeKey, config,
-                BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE,
-                stateValue, stateLevel, null, address);
-        persistIfChanged(scopeKey, BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE, stateValue, ds);
-    }
-
-    /** 持久化 246 组模块新鲜度到 battery_device_state（带去重）。 */
-    private void persistGroup246Freshness(BatteryCollectorChannelConfig config, boolean fresh) {
-        String scopeKey = String.valueOf(config.getBatteryGroup());
-        String stateValue = fresh ? "fresh" : "stale";
-        String stateLevel = fresh ? BatteryDeviceStateConstants.StateLevel.NORMAL : BatteryDeviceStateConstants.StateLevel.WARN;
-        BatteryDeviceState ds = buildChannelState(scopeKey, config,
-                BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, stateValue, stateLevel, null);
-        ds.setScopeType(BatteryDeviceStateConstants.ScopeType.PACK);
-        persistIfChanged(scopeKey, BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, stateValue, ds);
-    }
-
-    /** 构造通道级 BatteryDeviceState 对象。 */
-    private BatteryDeviceState buildChannelState(String scopeKey, BatteryCollectorChannelConfig config,
-                                                  String stateCode, String stateValue, String stateLevel, Long optLogId) {
-        BatteryDeviceState ds = new BatteryDeviceState();
-        ds.setScopeType(BatteryDeviceStateConstants.ScopeType.CHANNEL);
-        ds.setScopeKey(scopeKey);
-        ds.setChannelName(config.getName());
-        ds.setPackNum(config.getBatteryGroup());
-        ds.setStateCode(stateCode);
-        ds.setStateValue(stateValue);
-        ds.setStateLevel(stateLevel);
-        ds.setSource(BatteryDeviceStateConstants.Source.COLLECTOR);
-        ds.setOptLogId(optLogId);
-        ds.setFirstSeenTime(new Date());
-        ds.setLastChangeTime(new Date());
-        return ds;
-    }
-
-    /** 构造模块级 BatteryDeviceState 对象。 */
-    private BatteryDeviceState buildModuleState(String scopeKey, BatteryCollectorChannelConfig config,
-                                                String stateCode, String stateValue, String stateLevel,
-                                                Long optLogId, int address) {
-        BatteryDeviceState ds = buildChannelState(scopeKey, config, stateCode, stateValue, stateLevel, optLogId);
-        ds.setScopeType(BatteryDeviceStateConstants.ScopeType.MODULE);
-        ds.setSourceRefId(String.valueOf(address));
-        if (isCellModuleAddress(address)) {
-            ds.setModelNum(address);
-        }
-        return ds;
-    }
-
-    /** 通道级状态写入（带去重），相同 scopeKey+stateCode+stateValue 不重复写库。 */
-    private void persistChannelStateThrottled(String channelName, BatteryCollectorChannelConfig config,
-                                               String stateCode, String stateValue, String stateLevel, Long optLogId) {
-        String scopeKey = channelName;
-        BatteryDeviceState ds = buildChannelState(scopeKey, config, stateCode, stateValue, stateLevel, optLogId);
-        persistIfChanged(scopeKey, stateCode, stateValue, ds);
-    }
-
-    /** 仅当 stateValue 变化时写库，避免重复写入。 */
-    private void persistIfChanged(String scopeKey, String stateCode, String stateValue, BatteryDeviceState ds) {
-        String cacheKey = scopeKey + ":" + stateCode;
-        String previous = lastStateValues.get(cacheKey);
-        if (stateValue.equals(previous)) {
-            return;
-        }
-        try {
-            batteryDeviceStateService.upsert(ds);
-            lastStateValues.put(cacheKey, stateValue);
-            // 防止缓存无限增长：超过阈值时清理模块/pack 级高基数条目，保留通道级去重状态。
-            if (lastStateValues.size() > 1000) {
-                lastStateValues.keySet().removeIf(this::isHighCardinalityStateCacheKey);
-            }
-        } catch (Exception e) {
-            log.warn("持久化设备状态失败, scopeKey={}, stateCode={}, 原因={}", scopeKey, stateCode, e.getMessage());
-        }
-    }
-
-    private boolean isHighCardinalityStateCacheKey(String cacheKey) {
-        if (cacheKey == null) {
-            return false;
-        }
-        return cacheKey.contains(":" + BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT)
-                || cacheKey.contains(":" + BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE)
-                || cacheKey.endsWith(":" + BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS);
-    }
-
     /** 静默关闭串口并重置通道状态。 */
     private void closeQuietly(BatteryCollectorChannelState state) {
         frameIoService.closeQuietly(state.getSerialPort());
@@ -1308,17 +646,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return resolvePositiveInt(properties.getRequestGapMs(), 120);
     }
 
-    int resolveModuleAddressStart(BatteryCollectorChannelConfig config) {
-        Integer value = config == null ? null : config.getModuleAddressStart();
-        int start = value == null || value < 1 || value > 246 ? 1 : value;
-        return Math.min(start, resolveModuleAddressEnd(config));
-    }
-
-    int resolveModuleAddressEnd(BatteryCollectorChannelConfig config) {
-        Integer value = config == null ? null : config.getModuleAddressEnd();
-        return value == null || value < 1 || value > 246 ? 246 : value;
-    }
-
     long resolvePollIntervalMs(BatteryCollectorChannelConfig config) {
         Long value = config == null ? null : config.getPollIntervalMs();
         return resolvePositiveLong(value, 3000L);
@@ -1342,11 +669,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     int resolveMaxRetryCount(BatteryCollectorChannelConfig config) {
         Integer value = config == null ? null : config.getMaxRetryCount();
         return value == null || value < 0 ? 2 : value;
-    }
-
-    int resolveModuleAddressMissThreshold() {
-        Integer value = properties.getModuleAddressMissThreshold();
-        return value == null || value <= 0 ? 3 : value;
     }
 
     int resolveExpectedCellCount(BatteryCollectorChannelConfig config) {
@@ -1392,143 +714,13 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return value == null || value.trim().isEmpty();
     }
 
-    /** 构造本轮轮询批次号。 */
-    private String buildPollBatchNo(BatteryCollectorChannelState state, long startedAt) {
-        String channelName = state.getConfig() == null ? "channel" : state.getConfig().getName();
-        return channelName + "-" + startedAt;
-    }
-
-    /** 解析本轮轮询的模块地址列表。 */
-    private List<Integer> resolvePollingAddresses(BatteryCollectorChannelState state, boolean fullDiscovery) {
-        if (!Boolean.TRUE.equals(properties.getModuleAddressCacheEnabled()) || fullDiscovery) {
-            return fullModuleAddressRange(state.getConfig());
-        }
-        List<Integer> activeAddresses = sortedActiveModuleAddresses(state);
-        if (activeAddresses.isEmpty()) {
-            state.getFullDiscoveryRequested().set(true);
-            return fullModuleAddressRange(state.getConfig());
-        }
-        appendRequiredGroupModuleAddress(activeAddresses);
-        return activeAddresses;
-    }
-
-    /** 确保地址列表包含246组模块地址。 */
-    private void appendRequiredGroupModuleAddress(List<Integer> addresses) {
-        int groupModuleAddress = 246;
-        if (addresses.contains(groupModuleAddress)) {
-            return;
-        }
-        addresses.add(groupModuleAddress);
-        Collections.sort(addresses);
-    }
-
-    /** 生成全量模块地址范围。 */
-    private List<Integer> fullModuleAddressRange(BatteryCollectorChannelConfig config) {
-        List<Integer> addresses = new ArrayList<>();
-        for (int address = resolveModuleAddressStart(config); address <= resolveModuleAddressEnd(config); address++) {
-            addresses.add(address);
-        }
-        appendRequiredGroupModuleAddress(addresses);
-        return addresses;
-    }
-
-    /** 返回排序后的活跃模块地址列表。 */
-    private List<Integer> sortedActiveModuleAddresses(BatteryCollectorChannelState state) {
-        List<Integer> addresses = new ArrayList<>(state.getActiveModuleAddresses());
-        Collections.sort(addresses);
-        return addresses;
-    }
-
-    /** 判断是否需要全量发现。 */
-    private boolean shouldRunFullDiscovery(BatteryCollectorChannelState state, long now) {
-        if (!Boolean.TRUE.equals(properties.getModuleAddressCacheEnabled())) {
-            return true;
-        }
-        // 启动、人工重置、缓存为空或周期到期时回到 1..246 全量发现。
-        if (state.getFullDiscoveryRequested().getAndSet(false)) {
-            return true;
-        }
-        if (!hasActiveCellModuleAddress(state)) {
-            return true;
-        }
-        Long interval = properties.getModuleAddressFullDiscoveryIntervalMs();
-        return interval != null && interval > 0
-                && state.getLastFullDiscoveryTime() > 0
-                && now - state.getLastFullDiscoveryTime() >= interval;
-    }
-
-    boolean shouldSkipRemainingCellDiscovery(boolean fullDiscovery,
-                                             Integer currentAddress,
-                                             int completedCellCount,
-                                             int expectedCellCount) {
-        return fullDiscovery
-                && isCellModuleAddress(currentAddress)
-                && expectedCellCount > 0
-                && completedCellCount >= expectedCellCount;
-    }
-
     /** 判断地址是否为单体模块地址(1-245)。 */
     private boolean isCellModuleAddress(Integer address) {
         return address != null && address >= 1 && address <= 245;
     }
 
-    boolean hasActiveCellModuleAddress(BatteryCollectorChannelState state) {
-        if (state == null || state.getActiveModuleAddresses().isEmpty()) {
-            return false;
-        }
-        int start = resolveModuleAddressStart(state.getConfig());
-        int end = Math.min(resolveModuleAddressEnd(state.getConfig()), 245);
-        for (Integer address : state.getActiveModuleAddresses()) {
-            if (address != null && address >= start && address <= end) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** 更新模块地址活跃缓存。 */
-    private void updateModuleAddressCache(BatteryCollectorChannelState state, int address, boolean responded) {
-        if (isGroupModuleAddress(address)) {
-            collectorDeviceStateService.persistGroup246Freshness(state.getConfig(), responded);
-        }
-        if (!Boolean.TRUE.equals(properties.getModuleAddressCacheEnabled())) {
-            return;
-        }
-        // 只缓存有响应地址；稳定运行后避免每轮扫描不存在的模块。
-        if (responded) {
-            boolean wasActive = state.getActiveModuleAddresses().contains(address);
-            state.getActiveModuleAddresses().add(address);
-            state.getModuleAddressMissCounts().remove(address);
-            if (!wasActive) {
-                collectorDeviceStateService.persistModuleActive(state.getConfig().getName(), state.getConfig(), address, true);
-            }
-            // 模块重新响应，清除超时状态
-            collectorDeviceStateService.clearModuleTimeout(state.getConfig().getName(), state.getConfig(), address);
-            return;
-        }
-        if (!state.getActiveModuleAddresses().contains(address)) {
-            return;
-        }
-        int misses = state.getModuleAddressMissCounts().merge(address, 1, Integer::sum);
-        if (misses >= resolveModuleAddressMissThreshold()) {
-            state.getActiveModuleAddresses().remove(address);
-            state.getModuleAddressMissCounts().remove(address);
-            collectorDeviceStateService.persistModuleActive(state.getConfig().getName(), state.getConfig(), address, false);
-            log.warn("蓄电池模块地址因连续未响应已从缓存移除, 通道={}, 地址={}, 未响应次数={}",
-                    state.getConfig().getName(),
-                    address,
-                    misses);
-        }
-    }
-
-    /** 判断是否为 246 组模块地址。 */
-    private boolean isGroupModuleAddress(int address) {
-        return address == GROUP_MODULE_ADDRESS;
-    }
-
     /**
      * 重置模块地址缓存，下轮轮询恢复全量发现。
-     *
      * @param channelName 通道名称；为空时重置全部通道
      * @return 是否匹配到通道
      */

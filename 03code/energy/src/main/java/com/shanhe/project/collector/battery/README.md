@@ -12,7 +12,7 @@ collector/battery/model            采集链路模型（帧数据、轮询上下
 collector/battery/protocol         600 模块协议编解码、协议常量、状态寄存器 codec
 collector/battery/service          采集核心服务（轮询、命令、实时、快照、状态、日志、兼容填充、Modbus 读取）
 collector/battery/service/impl     服务实现
-collector/battery/service/postprocess  后处理处理器（告警、统计、操作日志、内阻、容量预测、兼容历史同步）
+collector/battery/postprocess          后处理编排与处理器（告警、统计、操作日志、内阻、容量预测、兼容历史同步）
 ```
 
 ## 目标目录结构（终态方向，不要求一次性建满）

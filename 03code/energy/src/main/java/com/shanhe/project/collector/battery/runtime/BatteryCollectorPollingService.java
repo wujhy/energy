@@ -8,6 +8,7 @@ import com.shanhe.project.collector.battery.service.BatteryCollectorProtocolLogS
 import com.shanhe.project.collector.battery.service.BatteryModulePollContextHolder;
 import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
 import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeConsumer;
+import com.shanhe.project.collector.battery.state.BatteryCollectorDeviceStateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -35,6 +36,8 @@ public class BatteryCollectorPollingService {
 
     @Resource
     private BatteryModuleRealtimeConsumer realtimeConsumer;
+    @Resource
+    private BatteryCollectorDeviceStateService collectorDeviceStateService;
 
     /**
      * 满足轮询间隔条件时触发一次轮询。
@@ -194,6 +197,9 @@ public class BatteryCollectorPollingService {
      * 更新模块地址缓存：响应成功时加入/保留，连续未响应时移除。
      */
     public void updateModuleAddressCache(BatteryCollectorChannelState state, int address, boolean responded) {
+        if (address == 246) {
+            collectorDeviceStateService.persistGroup246Freshness(state.getConfig(), responded);
+        }
         if (!Boolean.TRUE.equals(properties.getModuleAddressCacheEnabled())) {
             return;
         }
@@ -203,12 +209,15 @@ public class BatteryCollectorPollingService {
         if (responded) {
             state.getActiveModuleAddresses().add(address);
             state.getModuleAddressMissCounts().remove(address);
+            collectorDeviceStateService.persistModuleActive(state.getConfig().getName(), state.getConfig(), address, true);
+            collectorDeviceStateService.clearModuleTimeout(state.getConfig().getName(), state.getConfig(), address);
         } else {
             Integer missCount = state.getModuleAddressMissCounts().getOrDefault(address, 0);
             int threshold = resolveModuleAddressMissThreshold();
             if (threshold > 0 && missCount + 1 >= threshold) {
                 state.getActiveModuleAddresses().remove(address);
                 state.getModuleAddressMissCounts().remove(address);
+                collectorDeviceStateService.persistModuleActive(state.getConfig().getName(), state.getConfig(), address, false);
             } else {
                 state.getModuleAddressMissCounts().put(address, missCount + 1);
             }
