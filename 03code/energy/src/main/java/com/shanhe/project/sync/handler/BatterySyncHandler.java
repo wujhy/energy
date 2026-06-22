@@ -3,15 +3,12 @@ package com.shanhe.project.sync.handler;
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.shanhe.common.exception.ServiceException;
-import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.framework.web.domain.AjaxResult;
-import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
-import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
-import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
 import com.shanhe.project.device.config.service.IBatteryPackService;
+import com.shanhe.project.device.opt.service.BatteryOptCollectorCommandAdapter;
 import com.shanhe.project.device.opt.service.ControlBattery;
 import com.shanhe.project.energy.stat.domain.DevBatteryMonomer;
 import com.shanhe.project.energy.stat.service.IDevBatteryMonomerService;
@@ -38,15 +35,13 @@ public class BatterySyncHandler {
     @Resource
     private ControlBattery controlBattery;
     @Resource
-    private BatteryCollectorProperties batteryCollectorProperties;
-    @Resource
-    private BatteryCollectorCommandService batteryCollectorCommandService;
-    @Resource
     private IBatteryPackService batteryPackService;
     @Resource
     private ClientReportService clientReportService;
     @Resource
     private IDevBatteryMonomerService devBatteryMonomerService;
+    @Resource
+    private BatteryOptCollectorCommandAdapter batteryOptCollectorCommandAdapter;
 
     /**
      * 同步蓄电池操作计划
@@ -69,7 +64,7 @@ public class BatterySyncHandler {
             if (Objects.equals(optVo.getIsNow(), YesNoEnum.YES.getDictValue())) {
                 ajaxResult = controlBattery.toSendCmdToOat(batteryOpt);
             } else {
-                AjaxResult collectorResult = tryCollectorCommand(batteryOpt);
+                AjaxResult collectorResult = batteryOptCollectorCommandAdapter.tryExecute(batteryOpt);
                 if (collectorResult != null) {
                     if (!Objects.equals(collectorResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value())) {
                         Object collectorMsg = collectorResult.get(AjaxResult.MSG_TAG);
@@ -89,58 +84,6 @@ public class BatterySyncHandler {
             log.error(msg);
         }
         return new ResponseVo(request.getImei(), MethodEnum._43.getDictValue(), request.getBusinessId(), msg);
-    }
-
-    private AjaxResult tryCollectorCommand(DevBatteryOpt batteryOpt) {
-        if (!Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpModuleCommandEnabled())
-                || batteryOpt == null
-                || batteryCollectorCommandService == null) {
-            return null;
-        }
-        String channelName = batteryCollectorCommandService.resolveChannelName(batteryOpt.getPackNum());
-        if (channelName == null || channelName.trim().isEmpty()) {
-            log.warn("独立采集模块未找到匹配通道，回退旧蓄电池控制链路，configId={}, packNum={}",
-                    batteryOpt.getConfigId(),
-                    batteryOpt.getPackNum());
-            return null;
-        }
-        BatteryCollectorCommandResult result = executeCollectorCommand(channelName, batteryOpt);
-        if (result == null) {
-            return null;
-        }
-        if (result.isSuccess()) {
-            return AjaxResult.success("独立采集模块命令已加入下发队列", result);
-        }
-        log.warn("独立采集模块命令未入队，回退旧蓄电池控制链路，configId={}, packNum={}, testType={}, result={}",
-                batteryOpt.getConfigId(),
-                batteryOpt.getPackNum(),
-                batteryOpt.getTestType(),
-                result.getMessage());
-        return null;
-    }
-
-    private BatteryCollectorCommandResult executeCollectorCommand(String channelName, DevBatteryOpt batteryOpt) {
-        BatteryTestEnum testEnum = BatteryTestEnum.find(batteryOpt.getTestType());
-        switch (testEnum) {
-            case _2:
-                int batteryCount = resolveBatteryCount(batteryOpt.getPackNum());
-                return batteryCollectorCommandService.connectResistanceTest(
-                        channelName,
-                        batteryOpt.getPackNum(),
-                        batteryCount,
-                        null);
-            case _6:
-                if (batteryOpt.getModelNum() == null) {
-                    return null;
-                }
-                return batteryCollectorCommandService.singleInternalResistanceTest(
-                        channelName,
-                        batteryOpt.getPackNum(),
-                        batteryOpt.getModelNum(),
-                        null);
-            default:
-                return null;
-        }
     }
 
     public ResponseVo syncBatteryMonomer(RequestVo request) {
@@ -200,16 +143,4 @@ public class BatterySyncHandler {
         return new ResponseVo(request.getImei(), MethodEnum._47.getDictValue(), request.getBusinessId(), msg);
     }
 
-    /** 从电池组配置读取单体数量，默认 245。 */
-    private int resolveBatteryCount(Integer packNum) {
-        if (packNum == null) {
-            return 245;
-        }
-        try {
-            Integer count = batteryPackService.getBatteryMaxNumber(packNum);
-            return count != null && count > 0 ? Math.min(count, 245) : 245;
-        } catch (Exception e) {
-            return 245;
-        }
-    }
 }

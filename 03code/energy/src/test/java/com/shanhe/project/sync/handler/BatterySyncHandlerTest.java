@@ -8,6 +8,8 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
+import com.shanhe.project.device.config.service.IBatteryPackService;
+import com.shanhe.project.device.opt.service.BatteryOptCollectorCommandAdapter;
 import com.shanhe.project.device.opt.service.ControlBattery;
 import com.shanhe.project.sync.consts.MethodEnum;
 import com.shanhe.project.sync.domain.BatteryOptVo;
@@ -23,11 +25,8 @@ class BatterySyncHandlerTest {
 
     @Test
     void shouldKeepPlanSyncOnOldControlPathWhenCollectorCommandEnabled() {
-        BatterySyncHandler handler = newHandler(true);
-        ControlBattery controlBattery = Mockito.mock(ControlBattery.class);
-        BatteryCollectorCommandService commandService = Mockito.mock(BatteryCollectorCommandService.class);
-        ReflectionTestUtils.setField(handler, "controlBattery", controlBattery);
-        ReflectionTestUtils.setField(handler, "batteryCollectorCommandService", commandService);
+        BatterySyncHandler handler = new HandlerBuilder().collectorCommandEnabled(true).build();
+        ControlBattery controlBattery = (ControlBattery) ReflectionTestUtils.getField(handler, "controlBattery");
         Mockito.when(controlBattery.toSendCmdToOat(Mockito.any(DevBatteryOpt.class)))
                 .thenReturn(AjaxResult.success());
 
@@ -35,40 +34,35 @@ class BatterySyncHandlerTest {
 
         Assertions.assertEquals(0, response.getCode());
         Mockito.verify(controlBattery).toSendCmdToOat(Mockito.any(DevBatteryOpt.class));
-        Mockito.verifyNoInteractions(commandService);
     }
 
     @Test
     void shouldUseCollectorCommandOnlyForImmediateExecutableCommand() {
-        BatterySyncHandler handler = newHandler(true);
-        ControlBattery controlBattery = Mockito.mock(ControlBattery.class);
-        BatteryCollectorCommandService commandService = Mockito.mock(BatteryCollectorCommandService.class);
-        ReflectionTestUtils.setField(handler, "controlBattery", controlBattery);
-        ReflectionTestUtils.setField(handler, "batteryCollectorCommandService", commandService);
-        Mockito.when(commandService.resolveChannelName(1)).thenReturn("battery-rs485-1");
-        Mockito.when(commandService.connectResistanceTest("battery-rs485-1", 1, 245, null))
-                .thenReturn(BatteryCollectorCommandResult.builder()
-                        .success(true)
-                        .mappedToModuleCommand(true)
-                        .channelName("battery-rs485-1")
-                        .commandDefinition(BatteryAggregateCommandDefinition.CONNECT_RESISTANCE_TEST)
-                        .build());
+        BatteryCollectorCommandResult commandResult = BatteryCollectorCommandResult.builder()
+                .success(true)
+                .mappedToModuleCommand(true)
+                .channelName("battery-rs485-1")
+                .commandDefinition(BatteryAggregateCommandDefinition.CONNECT_RESISTANCE_TEST)
+                .build();
+        BatterySyncHandler handler = new HandlerBuilder()
+                .collectorCommandEnabled(true)
+                .commandResult(commandResult)
+                .build();
+        ControlBattery controlBattery = (ControlBattery) ReflectionTestUtils.getField(handler, "controlBattery");
 
         ResponseVo response = handler.syncBatteryOpt(request(YesNoEnum.NO.getDictValue(), BatteryTestEnum._2.getDictValue(), null));
 
         Assertions.assertEquals(0, response.getCode());
-        Mockito.verify(commandService).connectResistanceTest("battery-rs485-1", 1, 245, null);
         Mockito.verifyNoInteractions(controlBattery);
     }
 
     @Test
     void shouldFallbackToOldImmediateControlWhenCollectorCommandIsNotMapped() {
-        BatterySyncHandler handler = newHandler(true);
-        ControlBattery controlBattery = Mockito.mock(ControlBattery.class);
-        BatteryCollectorCommandService commandService = Mockito.mock(BatteryCollectorCommandService.class);
-        ReflectionTestUtils.setField(handler, "controlBattery", controlBattery);
-        ReflectionTestUtils.setField(handler, "batteryCollectorCommandService", commandService);
-        Mockito.when(commandService.resolveChannelName(1)).thenReturn("battery-rs485-1");
+        BatterySyncHandler handler = new HandlerBuilder()
+                .collectorCommandEnabled(true)
+                .commandResult(null)
+                .build();
+        ControlBattery controlBattery = (ControlBattery) ReflectionTestUtils.getField(handler, "controlBattery");
         Mockito.when(controlBattery.toSendBatteryCmdToOat(Mockito.any(DevBatteryOpt.class)))
                 .thenReturn(AjaxResult.success());
 
@@ -78,14 +72,6 @@ class BatterySyncHandlerTest {
         ArgumentCaptor<DevBatteryOpt> captor = ArgumentCaptor.forClass(DevBatteryOpt.class);
         Mockito.verify(controlBattery).toSendBatteryCmdToOat(captor.capture());
         Assertions.assertEquals(BatteryTestEnum._6.getDictValue(), captor.getValue().getTestType());
-    }
-
-    private BatterySyncHandler newHandler(boolean collectorCommandEnabled) {
-        BatterySyncHandler handler = new BatterySyncHandler();
-        BatteryCollectorProperties properties = new BatteryCollectorProperties();
-        properties.setJsonTcpModuleCommandEnabled(collectorCommandEnabled);
-        ReflectionTestUtils.setField(handler, "batteryCollectorProperties", properties);
-        return handler;
     }
 
     private RequestVo request(Integer isNow, Integer testType, Integer modelNum) {
@@ -100,5 +86,44 @@ class BatterySyncHandlerTest {
                 .setBusinessId("biz")
                 .setMethod(MethodEnum._43.getDictValue())
                 .setContent(optVo);
+    }
+
+    private static class HandlerBuilder {
+        private boolean collectorCommandEnabled = false;
+        private BatteryCollectorCommandResult commandResult = null;
+
+        HandlerBuilder collectorCommandEnabled(boolean enabled) {
+            this.collectorCommandEnabled = enabled;
+            return this;
+        }
+
+        HandlerBuilder commandResult(BatteryCollectorCommandResult result) {
+            this.commandResult = result;
+            return this;
+        }
+
+        BatterySyncHandler build() {
+            BatterySyncHandler handler = new BatterySyncHandler();
+
+            ControlBattery controlBattery = Mockito.mock(ControlBattery.class);
+            ReflectionTestUtils.setField(handler, "controlBattery", controlBattery);
+
+            BatteryOptCollectorCommandAdapter adapter = new BatteryOptCollectorCommandAdapter();
+            BatteryCollectorProperties properties = new BatteryCollectorProperties();
+            properties.setJsonTcpModuleCommandEnabled(collectorCommandEnabled);
+            ReflectionTestUtils.setField(adapter, "batteryCollectorProperties", properties);
+
+            BatteryCollectorCommandService commandService = Mockito.mock(BatteryCollectorCommandService.class);
+            Mockito.when(commandService.resolveChannelName(1)).thenReturn("battery-rs485-1");
+            if (commandResult != null) {
+                Mockito.when(commandService.connectResistanceTest("battery-rs485-1", 1, 245, null))
+                        .thenReturn(commandResult);
+            }
+            ReflectionTestUtils.setField(adapter, "batteryCollectorCommandService", commandService);
+            ReflectionTestUtils.setField(adapter, "batteryPackService", Mockito.mock(IBatteryPackService.class));
+
+            ReflectionTestUtils.setField(handler, "batteryOptCollectorCommandAdapter", adapter);
+            return handler;
+        }
     }
 }
