@@ -285,7 +285,7 @@ SQL
 5. 若方法参数过多，允许新增一个包内 request/context 对象，但不得改变字段含义。
 6. 给新类和核心 public 方法补中文注释。
 7. 暂不迁移 `BatteryCollectorService` 的包名；它是 controller、device、sync 等链路的稳定门面。
-8. 超时判断和超时落状态的具体实现第一轮不迁移，仍留在 `BatteryCollectorService`；后续可由 `COMMAND-001` 迁移命令 pending 超时，或新增 `TASK-REF-COLLECTOR-003-TIMEOUT` 专项处理。
+8. 超时判断和超时落状态的具体实现已在后续任务中拆出：命令 pending 超时完成归 `BatteryCollectorCommandQueueService` 协调，通道 pending 超时重试和最终收尾归 `BatteryCollectorTimeoutService` 协调。
 
 验证：
 
@@ -448,7 +448,7 @@ refactor: extract battery command queue execution
 
 优先级：P1
 
-背景：`TASK-REF-COMMAND-001` 已创建 `BatteryCollectorCommandQueueService`，并抽出了 pending 构造、响应匹配和成功判断，但队列出队、发送协调、命令完成回调、超时完成和日志更新仍主要留在 `BatteryCollectorService`。因此 `COMMAND-001` 只能视为 partial，不能直接进入 `COMMAND-002` 包目录整理。
+背景：`TASK-REF-COMMAND-001` 首轮创建了 `BatteryCollectorCommandQueueService`，后续 `COMMAND-001B` 已补齐队列出队、发送协调、命令完成回调、超时完成和日志更新协调。本文保留任务卡用于归档，后续执行以 `energy_refactor_current_plan_20260622.md` 为准。
 
 目标：在不改变命令行为的前提下，把命令队列执行协调继续从 `BatteryCollectorService` 移入 `BatteryCollectorCommandQueueService` 或其内部协作类。
 
@@ -507,7 +507,7 @@ refactor: complete battery command queue extraction
 
 **COMMAND-001 当前执行结果审查（2026-06-18）：**
 
-状态：partial。
+状态：已完成主要抽取，仍保留串口写入和主流程门面边界。
 
 已完成：
 
@@ -521,13 +521,13 @@ refactor: complete battery command queue extraction
 8. 已将自动编号协议推进迁入 `BatteryCollectorCommandQueueService`，主服务仅保留模式运行和地址缓存重置回调。
 9. 已新增 `BatteryConnectResistanceCommandProcessor` 承担连接条电阻 0F/11/91 排队、解析、计算、最终日志和模式收尾。
 
-未完成：
+有意保留：
 
 1. 帧实际写串口仍留在 `BatteryCollectorService`，这是有意保留的运行态边界。
 2. `BatteryCollectorService` 仍保留串口收发门面、超时重试入口和响应分派入口，后续按功能分批评估。
-3. 测试文件仍需后续适配，尤其是原来直接访问 `BatteryCollectorService` 包私有方法的用例。
+3. 测试不再按“每个方法补单测”推进；后续仅对核心和高风险行为补针对性测试。
 
-后续优先继续观察 `TASK-REF-COMMAND-001B` 的剩余流程分支，确认自动编号/连接条是否还需要进一步拆分，再评估 `TASK-REF-COMMAND-002`。
+后续优先由 Codex 审查主流程剩余职责，确认是否需要继续拆分自动编号、连接条或响应分派；不再直接进入大范围 `COMMAND-002` 包迁移。
 
 ### TASK-REF-COMMAND-002：整理命令包目录
 
@@ -1488,14 +1488,14 @@ refactor: move energy <scope> classes to <target> package
 1. 串口打开/关闭实现。
 2. `writeFrame`、`readOnce`、接收缓冲裁剪、帧边界处理。
 3. 命令队列出队、pending 创建、响应匹配。
-4. 超时判断和超时落状态的具体实现。
+4. 超时判断和超时落状态的具体实现已由 `BatteryCollectorTimeoutService` 承担，本文此处仅保留原任务切分说明。
 5. 地址缓存增删和重置规则。
 
-超时归属：
+超时归属当前结论：
 
-1. 第一轮仍留在 `BatteryCollectorService`。
-2. `COMMAND-001` 可以迁移“命令 pending 超时完成/失败”。
-3. 后续如需要单独任务，新增 `TASK-REF-COLLECTOR-003-TIMEOUT`，专门抽取轮询超时、pending 超时和超时状态持久化协调。
+1. 命令 pending 超时完成/失败由 `BatteryCollectorCommandQueueService` 协调。
+2. 通道 pending 超时重试、最终超时收尾和状态落库由 `BatteryCollectorTimeoutService` 协调。
+3. `BatteryCollectorService` 保留超时入口和回调编排，不再维护重复的超时落状态实现。
 
 ### Q3. `COLLECTOR-002` 与 `COLLECTOR-001` 的职责切割点
 
