@@ -551,6 +551,196 @@ mvn "-DskipTests" compile
 git diff --check
 ```
 
+### TASK-AI-DIRECT-001：盘点新增 iot/battery 测试后的测试包边界
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg --files 03code/energy/src/test/java/com/shanhe/project/iot/battery
+rg "ReflectionTestUtils|Mockito\\.mock|lastCache|buildReportLog" 03code/energy/src/test/java/com/shanhe/project/iot/battery -n
+```
+
+输出：
+
+1. 测试类清单。
+2. 每个测试类覆盖的 handler。
+3. 是否存在重复 setup 代码。
+4. 不抽 helper，不改测试，交给 Codex 判断。
+
+### TASK-AI-DIRECT-002：清理 BatteryPackHandlerTest 明显重复 setup 的前置检查
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "new BatteryPackHandler|Mockito\\.mock|ReflectionTestUtils\\.setField|reportLogWithPackParam" 03code/energy/src/test/java/com/shanhe/project/iot/battery/BatteryPackHandlerTest.java -n
+```
+
+输出：列出重复 setup 行号；不得修改测试。若重复少于 3 处，输出“不建议抽 helper”。
+
+### TASK-AI-DIRECT-003：BatteryAlarmHandler 实时上下文回退路径检查
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "loadAlarmContextReportLog|batteryModuleReportLogAdapterService|batteryReportLogService\\.lastCache|alarmBattery\\(" 03code/energy/src/main/java/com/shanhe/project/iot/battery/BatteryAlarmHandler.java 03code/energy/src/test/java/com/shanhe/project/iot/battery/BatteryAlarmHandlerTest.java -n
+```
+
+输出：
+
+1. 87 告警是否调用 `loadAlarmContextReportLog`。
+2. 8D 故障是否调用 `loadAlarmContextReportLog`。
+3. 是否有测试覆盖实时优先。
+4. 是否有测试覆盖历史回退。
+5. 不改代码，交给 Codex 判断是否补测试。
+
+### TASK-AI-DIRECT-004：BatteryPackHandler oldInfo 回退路径检查
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "loadRecentOldReportLog|loadRealtimeOldReportLog|batteryModuleReportLogAdapterService|batteryReportLogService\\.lastCache|doTotalBatteryStep|insertBattery" 03code/energy/src/main/java/com/shanhe/project/iot/battery/BatteryPackHandler.java 03code/energy/src/test/java/com/shanhe/project/iot/battery/BatteryPackHandlerTest.java -n
+```
+
+输出：
+
+1. 是否优先调用实时适配。
+2. 是否保留 5 分钟历史回退。
+3. 是否改变 `executePostSaveProcesses` 调用顺序。
+4. 不改代码。
+
+### TASK-AI-DIRECT-005：collector/battery/runtime 包职责候选检查
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg --files 03code/energy/src/main/java/com/shanhe/project/collector/battery/runtime
+rg "public class|public .*\\(" 03code/energy/src/main/java/com/shanhe/project/collector/battery/runtime -n
+```
+
+输出：按类列出 public 方法和职责一句话，标注是否依赖 `service` 包。不得移动类。
+
+### TASK-AI-DIRECT-006：collector/battery/command 包职责候选检查
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg --files 03code/energy/src/main/java/com/shanhe/project/collector/battery/command
+rg "public class|public .*\\(" 03code/energy/src/main/java/com/shanhe/project/collector/battery/command -n
+```
+
+输出：按类列出 public 方法和职责一句话，标注是否直接依赖 `service` 包。不得移动类。
+
+### TASK-AI-DIRECT-007：协议十六进制输出复用前置检查
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "String\\.format\\(\"%02X\"|bytesToHex|toHex\\(" 03code/energy/src/main/java/com/shanhe/project/collector/battery 03code/energy/src/main/java/com/shanhe/project/iot -n
+```
+
+输出：
+
+1. 列出格式化十六进制输出的位置。
+2. 标注输出是否要求大写、是否允许 null、是否带分隔符。
+3. 标注是否可复用 `BatteryCollectorFrameIoService.bytesToHex`。
+4. 不修改代码，不新增工具类。
+
+### TASK-AI-DIRECT-008：缓存 key 维度一致性前置检查
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "CacheKeyEnum|CacheUtils\\.(get|put|remove)|battery:module:snapshot|String\\.format\\(" 03code/energy/src/main/java/com/shanhe/project/collector/battery 03code/energy/src/main/java/com/shanhe/project/device 03code/energy/src/main/java/com/shanhe/project/iot -n
+```
+
+输出：
+
+1. 按缓存用途列 key 构造方式。
+2. 标注 key 是否包含 configId、packNum、channelName、moduleAddress。
+3. 标注是否存在同一用途多种 key 维度。
+4. 不修改代码。
+
+### TASK-AI-DIRECT-009：BatteryModuleReportLogAdapterService 旧模型适配字段检查
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "put\\(packMap|setBatNum|setVoltage|setResistance|setTemperature|setBcapacity|setPackParam|setBatteryList" 03code/energy/src/main/java/com/shanhe/project/collector/battery/service/BatteryModuleReportLogAdapterService.java 03code/energy/src/test/java -n
+```
+
+输出：
+
+1. 列出适配到旧 `packData` 的字段。
+2. 列出适配到旧 `monitorData` 的字段。
+3. 标注是否有测试覆盖关键字段。
+4. 不新增字段，不改适配逻辑。
+
+### TASK-AI-DIRECT-010：BatteryCurrentStateService 实时读取回退检查
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "getCurrentState|getCachedSnapshot|readGroup|readCells|resolveFreshness|FRESHNESS_" 03code/energy/src/main/java/com/shanhe/project/collector/battery/service/BatteryCurrentStateService.java 03code/energy/src/test/java -n
+```
+
+输出：
+
+1. 是否优先读取 `getCachedSnapshot`。
+2. 缓存未命中是否回退实时表。
+3. 新鲜度状态有哪些。
+4. 是否有测试覆盖 partial/stale/not_collected。
+5. 不修改代码。
+
+### TASK-AI-DIRECT-011：低风险未使用 import 清理候选检查
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+mvn "-DskipTests" compile
+rg "^import " 03code/energy/src/main/java/com/shanhe/project/collector/battery 03code/energy/src/main/java/com/shanhe/project/iot/battery 03code/energy/src/test/java/com/shanhe/project/iot/battery -n
+```
+
+输出：如果编译器或 IDE 明确提示未使用 import，列出文件；否则输出“不建议清理”。不得自行删除。
+
+### TASK-AI-DIRECT-012：低引用模型迁移候选二次检查
+
+只检查，不改代码。
+
+执行：
+
+```powershell
+rg "BatteryCollectorCommandResult|BatteryAggregateCommandDefinition|BatteryRealtimePostProcessRequest|BatteryModulePollContext" 03code/energy/src/main/java 03code/energy/src/test/java -n
+```
+
+输出：
+
+1. 每个模型的引用文件数量。
+2. 是否跨 controller/service/postprocess/command/runtime。
+3. 是否出现在 JSON 入参或返回值。
+4. 不提出迁包结论，交给 Codex 判断。
+
 ## 6. 暂不执行任务
 
 1. 批量迁移 `service` 包剩余类。
