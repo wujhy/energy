@@ -267,6 +267,37 @@ git diff --check
 3. 到点调度 job 的候选入口、互斥规则、停止规则。
 4. 可交给其他 AI 的最小代码任务。
 
+核验结论：
+
+1. `/batteryOpt/edit` 目前不是纯保存计划：`OptBatteryController.edit` 设置默认 `configId/isSync` 后直接调用 `ControlBattery.toSendCmdToOat`，该方法会保存 `DevBatteryOpt`，再按 `_1.._5` 生成旧 980 配置命令并通过 `CommServer.returnCmd` 下发。
+2. `/batteryOpt/doCmdOptBatteryTest` 仍以 `ControlBattery.toSendBatteryCmdToOat` 为主，前置判断已优先读取 600 实时快照适配结果，但命令下发仍主要走旧 `CmdBatteryControlService` + `CommServer.returnCmd`。
+3. `BatterySyncHandler.syncBatteryOpt` 的立即执行分支已有独立采集命令尝试，但只覆盖 `_2` 连接条电阻测试和 `_6` 单节内阻测试；计划/配置同步分支仍回到 `ControlBattery.toSendCmdToOat`。
+4. 在 `scheduled`、`sync`、`device` 相关范围内未确认存在按 `DevBatteryOpt.testTime/isEnabled` 到点扫描并触发测试的 job。当前“测试计划闭环”不能视为已完成。
+5. `BatteryCollectorCommandService` 已具备 `_2` 连接条电阻测试和 `_6` 单节内阻测试所需入口；连接条测试会使用电池组单体数量限制，单节内阻要求 `modelNum`。
+6. `_1` 内阻测试在旧立即执行链路有模式互斥和 5 分钟重复限制，但当前独立采集命令服务没有明确“整组内阻测试”高级入口，不能简单等同 `_6` 单节内阻测试。
+7. `_3` 核容、`_5` 备电时长属于长周期放电/后处理闭环，当前只能暂缓，不应在采集线程或普通命令队列里临时闭环。
+8. `_4` 浮充测试、`_7` 充电测试缺少已核验的 M460 命令和运行态闭环，暂不新增映射。
+
+testType 映射边界：
+
+| testType | 名称 | 当前结论 | 后续处理 |
+| --- | --- | --- | --- |
+| `_1` | 内阻测试 | 旧链路可发起整组测试，600 独立命令只确认单节入口 | 先保留旧链路，另立任务核验 M460 整组内阻协议与状态闭环 |
+| `_2` | 连接条电阻测试 | 可映射 `BatteryCollectorCommandService.connectResistanceTest` | 优先切立即执行入口，保留电流条件、运行互斥和日志口径 |
+| `_3` | 核容测试 | 暂无短命令闭环 | deferred，等待容量/备电后处理任务 |
+| `_4` | 浮充测试 | M460 命令来源和状态未确认 | deferred，不自动迁移 |
+| `_5` | 备电时长测试 | 暂无短命令闭环 | deferred，等待容量/备电后处理任务 |
+| `_6` | 单节内阻测试 | 可映射 `BatteryCollectorCommandService.singleInternalResistanceTest` | 优先切立即执行入口，必须校验 `modelNum` 和范围 |
+| `_7` | 充电测试 | 命令来源和安全条件未确认 | deferred，不自动迁移 |
+
+下一步代码任务必须按以下顺序：
+
+1. 先新增一个窄的测试计划命令适配服务，只负责把 `DevBatteryOpt` 转为独立采集命令结果，不移动 controller/service 包。
+2. 再把 `/batteryOpt/doCmdOptBatteryTest` 的 `_2`、`_6` 分支接入该适配服务；适配失败或未支持类型继续走旧链路。
+3. 单独核验 `/batteryOpt/edit` 是否应改为“只保存计划、不立即下发旧配置命令”。未确认前不得改行为。
+4. 到点调度 job 单独设计，先只扫描 enabled 且到期的计划，不和 controller 改造混在同一个任务。
+5. 停止命令单独设计；当前停止逻辑只对 `_1` 有本地状态收口，其余走旧 `genCmd30`，不能被 `_2/_6` 立即执行切换顺手改掉。
+
 #### TASK-CODEX-M460-MODBUS-READ-001：Modbus 告警和参数寄存器任务拆分
 
 只做方案和任务拆分，不改 Java。
@@ -839,6 +870,139 @@ rg "BatteryCollectorCommandResult|BatteryAggregateCommandDefinition|BatteryRealt
 2. 是否跨 controller/service/postprocess/command/runtime。
 3. 是否出现在 JSON 入参或返回值。
 4. 不提出迁包结论，交给 Codex 判断。
+
+### TASK-AI-DIRECT-013：测试计划立即执行采集命令适配服务
+
+目标：新增一个很窄的适配服务，为后续 `/batteryOpt/doCmdOptBatteryTest` 切换 `_2/_6` 做准备。本任务只新增服务和中文类/方法注释，不改现有 controller 行为。
+
+允许新增：
+
+1. `03code/energy/src/main/java/com/shanhe/project/device/opt/service/BatteryOptCollectorCommandAdapter.java`
+
+允许依赖：
+
+1. `BatteryCollectorProperties`
+2. `BatteryCollectorCommandService`
+3. `IBatteryPackService`
+4. `BatteryCollectorCommandResult`
+5. `DevBatteryOpt`
+6. `BatteryTestEnum`
+
+方法要求：
+
+1. 新增 `public AjaxResult tryExecute(DevBatteryOpt opt)`。
+2. 独立采集命令开关 `jsonTcpModuleCommandEnabled` 未开启时返回 `null`。
+3. 找不到 `channelName` 时返回 `null`，让旧链路继续兜底。
+4. `_2` 调用 `connectResistanceTest(channelName, packNum, batteryCount, null)`，`batteryCount` 从 `IBatteryPackService.getBatteryMaxNumber(packNum)` 获取，异常或空值时使用 `245`，最大值限制为 `245`。
+5. `_6` 必须要求 `modelNum` 非空；为空时返回 `null`，非空时调用 `singleInternalResistanceTest(channelName, packNum, modelNum, null)`。
+6. 其他 testType 返回 `null`。
+7. 命令成功时返回 `AjaxResult.success("独立采集模块命令已加入下发队列", result)`。
+8. 命令失败时返回 `null`，不要直接报错，避免改变旧兜底行为。
+
+禁止：
+
+1. 不修改 `OptBatteryController`。
+2. 不修改 `ControlBattery`。
+3. 不移动 `BatterySyncHandler`。
+4. 不新增单元测试，除非编译必须。
+5. 不改 MyBatis XML。
+
+验收：
+
+```powershell
+mvn "-DskipTests" compile
+git diff --check
+rg "�|钃|鐙|闆|鍛|绋|€|锟|閽|閻|\?\?\?" 03code/energy/src/main/java/com/shanhe/project/device/opt/service/BatteryOptCollectorCommandAdapter.java
+```
+
+### TASK-AI-DIRECT-014：立即执行入口优先尝试采集命令
+
+依赖：必须先完成 `TASK-AI-DIRECT-013`。
+
+目标：让 `/batteryOpt/doCmdOptBatteryTest` 的 `_2`、`_6` 优先尝试独立采集命令，失败或未支持时保留旧链路兜底。
+
+允许修改：
+
+1. `03code/energy/src/main/java/com/shanhe/project/device/opt/controller/OptBatteryController.java`
+
+修改要求：
+
+1. 注入 `BatteryOptCollectorCommandAdapter`。
+2. 在 `OptLog opt = optLogService.getRunningOptLog(...)` 检查通过后、调用 `controlBattery.toSendBatteryCmdToOat` 前，调用 `batteryOptCollectorCommandAdapter.tryExecute(devBatteryOpt)`。
+3. 当返回值非空时直接返回该结果。
+4. 当返回值为空时保持原有 `controlBattery.toSendBatteryCmdToOat` 行为。
+5. 保留 `_1` 成功后 `batteryModeStatusService.markRunning` 的原逻辑，不要移动到采集命令分支。
+6. 不修改 `/batteryOpt/edit`。
+7. 不修改 `/batteryOpt/doCmdStopBattery`。
+
+禁止：
+
+1. 不修改 `ControlBattery`。
+2. 不调整旧 980 命令生成。
+3. 不新增到点调度。
+4. 不新增大范围测试。
+
+验收：
+
+```powershell
+mvn "-DskipTests" compile
+git diff --check
+rg "�|钃|鐙|闆|鍛|绋|€|锟|閽|閻|\?\?\?" 03code/energy/src/main/java/com/shanhe/project/device/opt/controller/OptBatteryController.java
+```
+
+### TASK-AI-DIRECT-015：同步入口复用测试计划采集命令适配服务
+
+依赖：必须先完成 `TASK-AI-DIRECT-013`。
+
+目标：收缩 `BatterySyncHandler` 里重复的 `_2/_6` 采集命令映射逻辑，改为复用 `BatteryOptCollectorCommandAdapter`。
+
+允许修改：
+
+1. `03code/energy/src/main/java/com/shanhe/project/sync/handler/BatterySyncHandler.java`
+
+修改要求：
+
+1. 注入 `BatteryOptCollectorCommandAdapter`。
+2. `syncBatteryOpt` 的立即执行分支中继续先尝试独立采集命令。
+3. 删除或停止使用 `BatterySyncHandler` 内部的 `tryCollectorCommand`、`executeCollectorCommand`、`resolveBatteryCount` 重复逻辑。
+4. 当适配服务返回非空结果时，保持原有 ResponseVo 返回语义：失败时把 AjaxResult msg 写入 `msg`，成功时 `msg` 为空。
+5. 适配服务返回空时，继续调用 `controlBattery.toSendBatteryCmdToOat`。
+6. 计划/配置同步分支 `controlBattery.toSendCmdToOat` 不改。
+
+禁止：
+
+1. 不改变 `MethodEnum._43` 返回。
+2. 不改 `BatterySyncHandler` 的单体初装值同步方法。
+3. 不改 `BatteryCollectorCommandService`。
+4. 不新增 README。
+
+验收：
+
+```powershell
+mvn "-DskipTests" compile
+git diff --check
+rg "tryCollectorCommand|executeCollectorCommand|resolveBatteryCount" 03code/energy/src/main/java/com/shanhe/project/sync/handler/BatterySyncHandler.java
+rg "�|钃|鐙|闆|鍛|绋|€|锟|閽|閻|\?\?\?" 03code/energy/src/main/java/com/shanhe/project/sync/handler/BatterySyncHandler.java
+```
+
+### TASK-AI-DIRECT-016：测试计划到点调度入口前置盘点
+
+只检查，不改代码。
+
+目标：确认项目是否已有适合承载 `DevBatteryOpt` 到点调度的 job/定时器基础。
+
+执行：
+
+```powershell
+rg "@Scheduled|Schedule|Quartz|Job|Timer|DevBatteryOpt|testTime|isEnabled" 03code/energy/src/main/java -n
+```
+
+输出：
+
+1. 所有疑似定时任务入口文件。
+2. 是否已有扫描 `DevBatteryOpt` 的逻辑。
+3. 是否已有全局调度开关或 cron 配置。
+4. 不写代码，不新增任务类，交给 Codex 决定调度方案。
 
 ## 6. 暂不执行任务
 
