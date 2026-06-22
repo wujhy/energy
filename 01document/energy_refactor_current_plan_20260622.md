@@ -62,11 +62,11 @@ Codex 负责：
 
 ### TASK-CODEX-PLAN-001：清理历史计划过期描述
 
-只由 Codex 执行。修正 `energy_refactor_plan_20260618.md` 中 `COMMAND-001B`、`COLLECTOR-003-TIMEOUT`、测试适配等过期描述。
+状态：已完成。已修正 `energy_refactor_plan_20260618.md` 中 `COMMAND-001B`、`COLLECTOR-003-TIMEOUT`、测试适配等过期描述。
 
 ### TASK-CODEX-COLLECTOR-001：主流程剩余职责审查
 
-只审查，不改代码。对象：
+状态：已完成审查，暂不直接改 Java。对象：
 
 1. `BatteryCollectorService.readOnce`
 2. `BatteryCollectorService.handleCompletedPendingResponse`
@@ -74,7 +74,66 @@ Codex 负责：
 4. `BatteryCollectorService.writeFrameWithoutPending`
 5. `BatteryCollectorService.closeQuietly`
 
-输出是否值得继续抽取、影响面、停止条件、验证命令。
+审查结论：
+
+1. `readOnce` 值得拆分，但不应交给弱 AI 直接执行。该方法同时负责串口读取、receive buffer、帧解码、协议日志、dispatcher 分发、pending 完成状态清理，建议后续由 Codex 拆出 `BatteryCollectorFrameReceiveService` 或等价内部协作类。
+2. `handleCompletedPendingResponse` 值得继续拆分，优先把自动编号响应推进和地址缓存重置封装到命令侧协作类；连接条分支已由 `BatteryConnectResistanceCommandProcessor` 承担，暂不再扩。
+3. `writeFrame` 和 `writeFrameWithoutPending` 当前只在主服务内部调用，且与串口写入、pending 状态设置、协议日志强绑定。暂不单独迁包；若后续拆，只能作为 `BatteryCollectorFrameIoService` 的小步复用，不改变 pending 字段设置顺序。
+4. `closeQuietly` 暂留主服务。它同时处理串口关闭、通道状态重置、receive buffer 清理和设备状态落库，拆分收益小于风险。
+5. `BatteryCollectorService` 仍是 controller、命令服务、恢复服务和测试引用的稳定门面，不迁包。
+
+后续候选任务：
+
+#### TASK-CODEX-COLLECTOR-002：拆分串口接收和响应分派
+
+执行者：Codex。
+
+允许修改：
+
+1. `03code/energy/src/main/java/com/shanhe/project/collector/battery/service/BatteryCollectorService.java`
+2. `03code/energy/src/main/java/com/shanhe/project/collector/battery/runtime/BatteryCollectorFrameReceiveService.java`（可新增）
+3. 必要时调整 `BatteryCollectorServiceTest`
+
+要求：
+
+1. 只抽取 `readOnce` 内的串口读取、receive buffer、decode、帧遍历协调。
+2. 保持 `moduleFrameDispatcher.dispatch` 在 pending 判断前执行。
+3. 保持 pending 清理字段顺序不变。
+4. 保持非预期帧日志级别和文案不变。
+5. 不迁移 `BatteryCollectorService` 包名。
+
+验证：
+
+```powershell
+mvn "-DskipTests" compile
+mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryCollectorServiceTest,BatteryCollectorCommandLogServiceTest" test
+git diff --check
+```
+
+#### TASK-CODEX-COLLECTOR-003：拆分自动编号响应推进
+
+执行者：Codex。
+
+允许修改：
+
+1. `03code/energy/src/main/java/com/shanhe/project/collector/battery/service/BatteryCollectorService.java`
+2. `03code/energy/src/main/java/com/shanhe/project/collector/battery/command/BatteryCollectorCommandQueueService.java`
+3. 必要时调整 `BatteryCollectorServiceTest`
+
+要求：
+
+1. 只收缩 `handleCompletedPendingResponse` 中自动编号分支。
+2. 不改变 `markModeStopped`、`markModeRunning`、地址缓存重置的触发条件。
+3. 不改连接条电阻分支。
+4. 不改 opt-log 字段、状态码、错误文案。
+
+验证：
+
+```powershell
+mvn "-DskipTests" compile
+mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryCollectorServiceTest,BatteryCollectorCommandLogServiceTest" test
+git diff --check
+```
 
 ### TASK-CODEX-EXTERNAL-001：外部读取缓存边界复核
 
