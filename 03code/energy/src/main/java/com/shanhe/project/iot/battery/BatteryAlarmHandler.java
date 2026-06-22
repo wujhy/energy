@@ -7,6 +7,7 @@ import com.shanhe.framework.enums.AlarmLevelEnum;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
+import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.device.config.domain.Config;
@@ -36,6 +37,8 @@ public class BatteryAlarmHandler {
     private IAlarmLogService alarmLogService;
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    @Resource
+    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
 
 
     /** 单体电池故障属性 **/
@@ -95,7 +98,7 @@ public class BatteryAlarmHandler {
         String seriousStatus = group87EffectiveStatus(serious);
 
         // 最新电池组上报记录
-        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(warnInfo.getBatteryPackNumber());
+        BatteryReportLog batteryReportLog = loadAlarmContextReportLog(warnInfo.getBatteryPackNumber());
 
         // 电池组告警参数
         Map<String, String> warnParam = new HashMap<>(14);
@@ -359,7 +362,7 @@ public class BatteryAlarmHandler {
         }
 
         // 最新电池组上报记录
-        BatteryReportLog batteryReportLog = batteryReportLogService.lastCache(batteryWarnInfo.getBatteryPackNumber());
+        BatteryReportLog batteryReportLog = loadAlarmContextReportLog(batteryWarnInfo.getBatteryPackNumber());
 
         /*电池组故障状态*/
         String dfs = batteryWarnInfo.getDeviceFaultStatus();
@@ -468,5 +471,24 @@ public class BatteryAlarmHandler {
         index8D = index8D + batteryWarnInfo.getAlarmBatterySum() * 4;
         batteryWarnInfo.setDeviceFaultStatus(CodingUtil.hexString2binaryString(info.substring(index8D, index8D + 2)));
         return batteryWarnInfo;
+    }
+
+    /** 优先读取标准实时快照适配的告警上下文，失败时回退旧上报缓存。 */
+    private BatteryReportLog loadAlarmContextReportLog(Integer packNum) {
+        if (packNum == null) {
+            return null;
+        }
+        try {
+            if (batteryModuleReportLogAdapterService != null) {
+                BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
+                if (realtimeLog != null && realtimeLog.getPackParam() != null
+                        && !realtimeLog.getPackParam().isEmpty()) {
+                    return realtimeLog;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("读取标准实时告警上下文失败, packNum={}", packNum, e);
+        }
+        return batteryReportLogService == null ? null : batteryReportLogService.lastCache(packNum);
     }
 }

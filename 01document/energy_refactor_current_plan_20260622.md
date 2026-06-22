@@ -166,6 +166,8 @@ git diff --check
 
 执行者：Codex。
 
+状态：已完成。`BatteryAlarmHandler` 的 87 告警和 8D 故障告警上下文已优先使用 `BatteryModuleReportLogAdapterService.buildReportLog(packNum)`，实时适配为空或异常时回退 `BatteryReportLogService.lastCache`。
+
 允许修改：
 
 1. `03code/energy/src/main/java/com/shanhe/project/iot/battery/BatteryAlarmHandler.java`
@@ -186,6 +188,8 @@ mvn "-DskipTests" compile
 mvn "-DskipTests=false" "-Dmaven.test.skip=false" "-Dtest=BatteryAlarmHandlerTest" test
 git diff --check
 ```
+
+实际验证：以上命令已通过。
 
 #### TASK-CODEX-EXTERNAL-003：旧 JSON/TCP 实时上报后处理 oldInfo 切实时适配
 

@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.enums.AlarmLevelEnum;
 import com.shanhe.framework.enums.ItemCode;
+import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryReportLog;
 import com.shanhe.project.device.config.domain.Config;
@@ -15,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -135,6 +137,41 @@ class BatteryAlarmHandlerTest {
                 AlarmLevelEnum._1.getDictValue(),
                 warnParamCaptor.getValue().get(ItemCode.DTLJTGJ.getCode()));
     }
+
+    @Test
+    void shouldPreferRealtimeReportLogForBatteryWarnContext() {
+        BatteryAlarmHandler handler = new BatteryAlarmHandler();
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryReportLogService batteryReportLogService = Mockito.mock(BatteryReportLogService.class);
+        BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
+        BatteryReportLog realtimeLog = new BatteryReportLog();
+        realtimeLog.setPackParam(new HashMap<>());
+        realtimeLog.getPackParam().put("packVoltage", "54.0");
+        BatteryReportLog historyLog = new BatteryReportLog();
+        Mockito.when(adapterService.buildReportLog(1)).thenReturn(realtimeLog);
+        Mockito.when(batteryReportLogService.lastCache(1)).thenReturn(historyLog);
+        ReflectionTestUtils.setField(handler, "alarmLogService", alarmLogService);
+        ReflectionTestUtils.setField(handler, "batteryReportLogService", batteryReportLogService);
+        ReflectionTestUtils.setField(handler, "batteryModuleReportLogAdapterService", adapterService);
+
+        String payload = "0100" +
+                "5001" +
+                "A002" +
+                "C208";
+        DeviceData deviceData = new DeviceData();
+        deviceData.setInfo(buildFrame("87", payload));
+
+        handler.uploadBatteryWarnData(new Config(), deviceData);
+
+        Mockito.verify(alarmLogService).alarmBattery(
+                Mockito.any(Config.class),
+                Mockito.eq(1),
+                Mockito.isNull(),
+                Mockito.anyMap(),
+                Mockito.same(realtimeLog));
+        Mockito.verify(batteryReportLogService, Mockito.never()).lastCache(1);
+    }
+
     @Test
     void shouldUploadBatteryGroupWarnWithCorrectMappings() {
         BatteryAlarmHandler handler = new BatteryAlarmHandler();
