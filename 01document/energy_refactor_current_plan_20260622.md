@@ -459,7 +459,127 @@ testType 映射边界：
 
 输出：可立即使用的字段、需要历史状态的字段、deferred 字段和测试入口。
 
-## 5. 可交给其他 AI 的代码层任务
+## 5. 后续执行策略：Codex 主导采集主流程与 M460 整合
+
+从本轮开始，后续任务不再继续拆给其他 AI。原 `TASK-AI-*` 任务保留为历史检查清单，除非 Codex 明确选用，否则不再作为执行优先队列。
+
+当前工作重点切回两条主线：
+
+1. 采集主流程：串口收发、轮询调度、pending 超时、显式命令队列、实时快照、后处理流水线、状态持久化和高频外部读取。
+2. M460 能力整合：测试计划闭环、连接条/内阻测试闭环、告警/故障标准化、Modbus 读写边界、SOC/SOH/容量/备电时长等历史状态能力。
+
+优先级原则：
+
+1. 先保证采集主流程稳定、可观测、可恢复，再做外围接口扩展。
+2. 新能力先进入标准实时模型、设备状态模型或后处理模型，不回写旧 JSON/TCP handler 作为最终落点。
+3. 显式命令统一走 `BatteryCollectorCommandService` 与命令队列，禁止新增旧 980 拼帧路径。
+4. 外部读取优先读实时快照和状态缓存，避免高频请求穿透数据库。
+5. Modbus 写、告警屏蔽、维护类命令默认收紧，只有 Codex 冻结地址、权限、互斥和失败语义后再开发。
+6. 测试只覆盖核心行为和高风险边界，不为每个私有方法机械补测试。
+
+### TASK-CODEX-COLLECTOR-MAIN-004：采集主流程状态机复核
+
+目标：复核 `BatteryCollectorService.readOnce` 拆分后的主流程是否仍存在职责过重、状态切换隐患或异常后无法恢复的分支。
+
+对象：
+
+1. `BatteryCollectorService`
+2. `BatteryCollectorFrameReceiveService`
+3. `BatteryCollectorTimeoutService`
+4. `BatteryCollectorCommandQueueService`
+5. `BatteryCollectorChannelState`
+
+输出：
+
+1. 当前 `READ / WAIT_RESPONSE / WAIT_COMMAND_RESPONSE` 状态流转图。
+2. pending 超时、显式命令完成、自动编号推进、无响应命令完成后的状态清理清单。
+3. 是否还需要抽取独立 coordinator 或只补局部保护。
+4. 若发现 bug，直接修复并验证；若只是结构优化，排入后续。
+
+### TASK-CODEX-COLLECTOR-MAIN-005：后处理流水线执行边界复核
+
+目标：复核采集完成后实时快照、兼容报告同步、告警、统计/容量等后处理是否仍有顺序依赖、重复执行或旧表依赖过深的问题。
+
+对象：
+
+1. `BatteryRealtimePostProcessService`
+2. `BatteryRealtimePostProcessor`
+3. `CompatReportLogSyncProcessor`
+4. `AlarmContextProcessor`
+5. `CapacityPredictionProcessor`
+6. `BatteryModuleRealtimeSnapshotService`
+
+输出：
+
+1. 后处理 processor 顺序表和各自输入/输出。
+2. 哪些 processor 必须同批次 `pollBatchNo`，哪些允许只依赖设备状态。
+3. 哪些旧 `dev_battery_report_log` 写入仍是兼容过渡，哪些外部读取已可直接走实时模型。
+4. 可执行的代码修复任务。
+
+### TASK-CODEX-M460-OPTPLAN-002：测试计划到点调度闭环
+
+目标：在已有立即执行 `_2/_6` 采集命令适配基础上，继续梳理 `dev_battery_opt` 计划保存、到点触发、互斥、停止和结果落库。
+
+对象：
+
+1. `OptBatteryController`
+2. `ControlBattery`
+3. `BatteryOptCollectorCommandAdapter`
+4. `DevBatteryOptServiceImpl`
+5. `scheduled` / `sync scheduled` 包
+6. `OptLogService`
+
+输出：
+
+1. `/batteryOpt/edit` 是否需要从“保存并下发旧配置命令”改为“只保存计划”的最终判断。
+2. 到点调度入口设计：扫描条件、执行锁、失败重试、日志记录。
+3. `_2/_6` 与旧 `_1/_3/_5` 的分阶段迁移策略。
+4. 停止命令和运行态判断是否需要接入独立命令队列。
+
+### TASK-CODEX-M460-TESTFLOW-001：连接条和内阻测试结果闭环
+
+目标：把已能下发的连接条/单节内阻测试继续推进到状态、结果、统计和外部可观测闭环。
+
+对象：
+
+1. `BatteryCollectorCommandService.connectResistanceTest`
+2. `BatteryCollectorCommandService.singleInternalResistanceTest`
+3. `BatteryModeStatusService`
+4. `BatteryModuleFrameDispatcher` / 响应 consumer
+5. `BatteryModuleGroupRealtime` / `BatteryModuleCellRealtime`
+6. `OptLogService`
+
+输出：
+
+1. 连接条测试 `0F + 11/91` 当前已完成与缺失环节。
+2. 单节内阻测试响应如何写入实时模型或测试日志。
+3. 页面、JSON/TCP、Modbus 对测试运行态和结果的读取口径。
+4. 第一批可实施代码任务。
+
+### TASK-CODEX-M460-CAPACITY-002：SOC/SOH/容量历史状态闭环
+
+目标：把 SOC/SOH、核容、备电时长、放电容量等不适合采集线程内硬算的能力放回后处理/历史状态闭环。
+
+对象：
+
+1. `CapacityPredictionProcessor`
+2. `BatteryPredictorService`
+3. `PreBatteryGroupService`
+4. `BatteryModuleGroupCompatibilityFillService`
+5. `BatteryModuleReportLogAdapterService`
+6. `BatteryModuleGroupRealtime`
+
+输出：
+
+1. 哪些字段当前可由实时模型直接提供。
+2. 哪些字段必须依赖历史序列、旧预测服务或人工配置。
+3. Modbus `411751..411766` 当前字段来源和缺失返回策略。
+4. 可实施的后处理代码任务。
+
+## 6. 历史 AI 检查任务归档
+
+以下任务仅作为历史检查清单保留，不再默认交给其他 AI 执行。后续由 Codex 按需挑选、审查和落地。
+### 历史：可交给其他 AI 的代码层任务
 
 这些任务面向整个 `energy` 项目的代码层重构，重点是“类放到合适位置、公共能力抽取、重复逻辑收缩”。测试和 README 后续再统一补。
 
@@ -1285,7 +1405,7 @@ rg "@Scheduled|Schedule|Quartz|Job|Timer|DevBatteryOpt|testTime|isEnabled" 03cod
 3. 是否已有全局调度开关或 cron 配置。
 4. 不写代码，不新增任务类，交给 Codex 决定调度方案。
 
-## 6. 暂不执行任务
+## 7. 暂不执行任务
 
 1. 批量迁移 `service` 包剩余类。
 2. 移动 `BatteryModuleRealtimeSnapshotService`。
@@ -1303,7 +1423,7 @@ rg "@Scheduled|Schedule|Quartz|Job|Timer|DevBatteryOpt|testTime|isEnabled" 03cod
 14. 弱 AI 自行删除看似无用的 service、domain、mapper。
 15. 弱 AI 自行修改 MyBatis XML namespace、resultMap、parameterType。
 
-## 7. 固定验证命令
+## 8. 固定验证命令
 
 代码任务完成后执行：
 
