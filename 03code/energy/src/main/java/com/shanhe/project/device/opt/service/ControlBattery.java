@@ -304,6 +304,11 @@ public class ControlBattery extends ControlBase {
 
         // 下发指令
         CommServer.returnCmd(cmdStr);
+        if (Objects.equals(opt.getTestType(), BatteryTestEnum._3.getDictValue())
+                || Objects.equals(opt.getTestType(), BatteryTestEnum._5.getDictValue())) {
+            // 核容/备电停止命令下发后先关闭运行日志，避免手动停止后继续阻塞后续测试。
+            optLogService.doStopTest(opt.getPackNum(), opt.getTestType());
+        }
         return AjaxResult.success();
     }
 
