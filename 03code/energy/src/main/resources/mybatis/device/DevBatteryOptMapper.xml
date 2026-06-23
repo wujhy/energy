@@ -16,6 +16,7 @@
         Interval_days as intervalDays ,
         exec_count as execCount ,
         discharge_time as dischargeTime ,
+        model_num as modelNum ,
         opt_command as optCommand ,
         create_time as createTime ,
         update_time as updateTime
@@ -57,6 +58,9 @@
             </if>
             <if test="dischargeTime != null ">
                 and discharge_time = #{dischargeTime}
+            </if>
+            <if test="modelNum != null ">
+                and model_num = #{modelNum}
             </if>
             <if test="optCommand != null  and optCommand != ''">
                 and opt_command = #{optCommand}
@@ -110,6 +114,9 @@
             <if test="dischargeTime != null">
                 discharge_time,
             </if>
+            <if test="modelNum != null">
+                model_num,
+            </if>
             <if test="optCommand != null">
                 opt_command,
             </if>
@@ -150,6 +157,9 @@
             <if test="dischargeTime != null">
                 #{dischargeTime},
             </if>
+            <if test="modelNum != null">
+                #{modelNum},
+            </if>
             <if test="optCommand != null">
                 #{optCommand},
             </if>
@@ -172,6 +182,7 @@
             Interval_days ,
             exec_count ,
             discharge_time ,
+            model_num ,
             opt_command ,
             create_time ,
             update_time
@@ -189,6 +200,7 @@
                 #{item.intervalDays} ,
                 #{item.execCount} ,
                 #{item.dischargeTime} ,
+                #{item.modelNum} ,
                 #{item.optCommand} ,
                 datetime(CURRENT_TIMESTAMP,'localtime'),
                 datetime(CURRENT_TIMESTAMP,'localtime')
@@ -230,6 +242,9 @@
             </if>
             <if test="dischargeTime != null">
                 discharge_time = #{dischargeTime},
+            </if>
+            <if test="modelNum != null">
+                model_num = #{modelNum},
             </if>
             <if test="optCommand != null">
                 opt_command = #{optCommand},
