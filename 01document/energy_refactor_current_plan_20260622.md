@@ -408,6 +408,43 @@ testType 映射边界：
 
 输出：哪些告警已由实时/设备状态生成，哪些需要过滤，哪些明确 excluded。
 
+核验结论：
+
+1. 旧 `BatteryAlarmHandler` / `BatteryAlarmBitMapping` 只作为 JSON/TCP 87/8D 兼容解析链路保留；bit 映射已有 `BatteryAlarmBitMappingTest` 和 `BatteryAlarmHandlerTest` 守护，不应把旧 handler 作为新告警最终落点。
+2. 新链路已由 `AlarmContextProcessor` 在后处理阶段把标准实时模型转为 `BatteryModuleAlarmContext`，再调用 `IAlarmLogService.alarmBatteryValue` 统一落入 `dev_alarm_log`。
+3. `BatteryModuleAlarmAdaptService` 已覆盖：
+   - 单体阈值候选：单体电压高/低、单体内阻高/低、单体温度高/低、鼓包。
+   - 单体直接状态：漏液告警。
+   - 组阈值候选：组电压高/低、充放电电流、环境温度高/低、SOC 低、SOH 低。
+   - 通信/设备状态：通道关闭、通道异常、模块超时、模块 inactive、246 新鲜度 stale。
+4. `AlarmContextProcessor` 已按 `pollBatchNo` 做同批次保护，避免不同轮采集数据混入；通信状态告警允许在缺少本轮单体/组实时数据时独立生成。
+5. 告警恢复、屏蔽中不重复、告警级别匹配和缓存更新仍统一由 `AlarmLogServiceImpl` 处理；新增告警逻辑不得绕过 `IAlarmLogService` 直接写表。
+6. `IAlarmLogService.selectBatteryAlarmLogListCache(packNum)` 会追加通信状态合成告警，适合作为页面/外部摘要读取，但不适合作为 Modbus 告警位图的唯一来源。
+7. 告警屏蔽/解除现有入口是页面/同步链路调用 `shiedAlarmLog`，主要围绕已有 `alarmId`；M460 `39/E9`、`3C/EC`、Modbus `400421` 起的语义尚未映射到 energy 标准服务。
+
+已覆盖与缺口：
+
+| 能力 | 当前状态 | 说明 |
+| --- | --- | --- |
+| 87/8D 旧上报 bit 映射 | 已覆盖 | 只保留旧 JSON/TCP 兼容入口，不承接新链路扩展 |
+| 单体电压/内阻/温度/鼓包阈值告警 | 已覆盖 | 由 `BatteryModuleAlarmAdaptService` 生成候选，`AlarmLogServiceImpl` 判级 |
+| 单体漏液告警 | 已覆盖 | 来源 `BatteryModuleCellRealtime.leakageStatus` |
+| 组电压/电流/环境温度/SOC/SOH 告警 | 已覆盖 | SOC/SOH 依赖字段是否由后处理维护，缺失时不生成候选 |
+| 通道异常/模块超时/246 缺失 | 已覆盖 | 由 `BatteryDeviceStateService` 合成通信告警候选 |
+| 告警恢复 | 部分覆盖 | `alarmFix` 和 `alarmValid` 可恢复已有告警；仍需核验缺采单体恢复边界 |
+| 告警屏蔽/解除 | 部分覆盖 | 页面/同步按 `alarmId` 屏蔽已有告警；M460/Modbus 屏蔽区未整合 |
+| 设备故障细分位图 | 暂缓 | 不直接复用旧 `8D`，先以设备状态摘要表达 |
+| 氢气、热失控、外部传感器故障 | excluded | 当前无硬件来源，不生成告警 |
+| 蜂鸣器/LED/LCD/继电器等板级外设告警 | excluded | 非 energy 当前业务模型范围 |
+
+后续顺序：
+
+1. 先做检查任务，确认 `BatteryModuleAlarmAdaptService` 的 itemCode 覆盖与旧 87 规则表是否还有明确缺口。
+2. 再做 `alarmFix` 缺采恢复边界复核，重点是“本轮未上报单体”和“连续缺采新鲜度”的关系。
+3. 告警屏蔽/解除单独设计，优先复用 `IAlarmLogService` 和 `ConfigAttribute`，不恢复旧 980 runtime 命令。
+4. Modbus 告警位图必须等告警屏蔽/解除语义稳定后再定义 bit 顺序。
+5. 暂不新增独立告警规则引擎；除非检查证明 `BatteryModuleAlarmAdaptService` 继续膨胀且规则难以维护。
+
 #### TASK-CODEX-M460-CAPACITY-001：SOC/SOH/容量状态任务拆分
 
 只做方案和任务拆分，不改 Java。
@@ -1054,6 +1091,65 @@ rg "tryCollectorCommand|executeCollectorCommand|resolveBatteryCount" 03code/ener
 rg "�|钃|鐙|闆|鍛|绋|€|锟|閽|閻|\?\?\?" 03code/energy/src/main/java/com/shanhe/project/sync/handler/BatterySyncHandler.java
 ```
 
+### TASK-AI-DIRECT-023：告警适配 itemCode 覆盖检查
+
+只检查，不改代码。
+
+目标：核对 `BatteryModuleAlarmAdaptService` 已生成的 itemCode，和旧 87/8D 规则表、`BatteryAlarmHandler` 测试覆盖之间是否存在明确缺口。
+
+执行：
+
+```powershell
+rg "ItemCode\.|putPackWarn|putCellWarn|alarmBattery\(|group87EffectiveStatus|toWarnDecoder|toFailDecoder" 03code/energy/src/main/java/com/shanhe/project/collector/battery/service/BatteryModuleAlarmAdaptService.java 03code/energy/src/main/java/com/shanhe/project/iot/battery/BatteryAlarmHandler.java 03code/energy/src/test/java/com/shanhe/project/iot/battery/BatteryAlarmHandlerTest.java 03code/energy/src/test/java/com/shanhe/project/collector/battery/service/BatteryModuleAlarmAdaptServiceTest.java 01document/M460_87告警规则表.md -n
+```
+
+输出：
+
+1. 新链路已生成的组级 itemCode。
+2. 新链路已生成的单体 itemCode。
+3. 旧 87/8D 测试覆盖但新链路未覆盖的 itemCode。
+4. 明确无硬件来源或已 excluded 的 itemCode。
+5. 不修改 Java，不新增规则。
+
+### TASK-AI-DIRECT-024：告警恢复边界检查
+
+只检查，不改代码。
+
+目标：确认 `AlarmContextProcessor` 调用 `alarmFix` 的单体范围是否和当前采集新鲜度策略一致。
+
+执行：
+
+```powershell
+rg "alarmFix\(|ALL_CELL_ALARM_CODES|activeCellNums|GROUP_246_FRESHNESS|freshness|stale|pollBatchNo" 03code/energy/src/main/java/com/shanhe/project/collector/battery/postprocess/AlarmContextProcessor.java 03code/energy/src/main/java/com/shanhe/project/collector/battery/service/BatteryModuleAlarmAdaptService.java 03code/energy/src/main/java/com/shanhe/project/device/alarm/service/impl/AlarmLogServiceImpl.java 03code/energy/src/test/java/com/shanhe/project/collector/battery/postprocess/AlarmContextProcessorTest.java -n
+```
+
+输出：
+
+1. `alarmFix` 传入的 activeCellNums 来源。
+2. 本轮缺采单体是否会被恢复告警。
+3. 246 stale 是否只影响组通信告警。
+4. 是否有测试覆盖不同 batch 的单体不参与告警生成。
+5. 不修改代码。
+
+### TASK-AI-DIRECT-025：告警屏蔽解除入口检查
+
+只检查，不改代码。
+
+目标：整理现有告警屏蔽/解除入口，确认未被 Modbus 写或 600 命令绕过。
+
+执行：
+
+```powershell
+rg "shiedAlarmLog|shieldAlarm|closeAlarmLog|closeDefaultDeviceAlarmLog|DISABLE_WARNING|DISABLE_WARNING_CONFIGURE|ALARM_RELEASE|0A|8A|39|E9|3C|EC|400421" 03code/energy/src/main/java 03code/energy/src/test/java 01document/protocol 01document/energy_refactor_current_plan_20260622.md -n
+```
+
+输出：
+
+1. 页面/同步屏蔽入口。
+2. 告警恢复/关闭入口。
+3. 旧 980 屏蔽/解除命令相关入口。
+4. 是否有 Modbus 写调用屏蔽/解除。
+5. 不修改代码，不新增 Modbus 映射。
 ### TASK-AI-DIRECT-020：Modbus 写白名单现状检查
 
 只检查，不改代码。
