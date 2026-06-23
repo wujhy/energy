@@ -172,8 +172,8 @@ public class ControlBattery extends ControlBase {
             return collectorResult;
         }
 
-        // 默认需要等待执行结果，不需要记录操作日志
-        boolean needWait = true, needLog = false;
+        // 默认需要等待执行结果；部分命令需要记录一次性响应日志或长任务运行日志
+        boolean needWait = true, needCommandLog = false, needRunningLog = false;
         // 命令内容、动态指令号
         String cmdStr, dynCid;
         switch (testEnum) {
@@ -205,15 +205,17 @@ public class ControlBattery extends ControlBase {
             case _2:   //立即执行连接条电阻测试
                 cmdStr = cmdBatteryControlService.genCmd0F(config, opt);
                 dynCid = BatteryCidEnum._8F.getDictValue();
-                needLog = true;
+                needCommandLog = true;
                 break;
             case _3:  //立即执行核容测试
                 cmdStr = cmdBatteryControlService.genCmd30(config, opt.getPackNum(), "2", opt.getDischargeTime(), opt.getEndVoltage());
                 dynCid = BatteryCidEnum._E0.getDictValue();
+                needRunningLog = true;
                 break;
             case _5:  //立即执行备电时长测试
                 cmdStr = cmdBatteryControlService.genCmd30(config, opt.getPackNum(), "1", opt.getDischargeTime(), opt.getEndVoltage());
                 dynCid = BatteryCidEnum._E0.getDictValue();
+                needRunningLog = true;
                 break;
             case _6:  //单节内阻测试
                 cmdStr = cmdBatteryControlService.getCmd36(config, opt);
@@ -230,7 +232,7 @@ public class ControlBattery extends ControlBase {
         String resultKey = super.setControlStatus(config, opt.getPackNum(), dynCid, cacheKeyEnum);
         // 记录操作日志
         Long optLogId = null;
-        if (needLog) {
+        if (needCommandLog) {
             optLogId = optLogService.insert(opt.getPackNum(), opt.getTestType(), null);
         }
 
@@ -243,11 +245,15 @@ public class ControlBattery extends ControlBase {
             ajaxResult = super.getControlResult(resultKey, cacheKeyEnum);
         }
         // 更新日志结果
-        if (needLog && optLogId != null) {
-            optLogService.update(optLogId, Objects.equals(ajaxResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value()) ? 0 : 1, null);
+        boolean success = Objects.equals(ajaxResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value());
+        if (needCommandLog && optLogId != null) {
+            optLogService.update(optLogId, success ? 0 : 1, null);
         }
-        if (Objects.equals(ajaxResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value())
-                && testEnum == BatteryTestEnum._1) {
+        if (needRunningLog && success) {
+            // 核容/备电是长任务，成功启动后先落运行日志，后续实时状态负责关闭。
+            optLogService.insert(opt.getPackNum(), opt.getTestType(), null);
+        }
+        if (success && testEnum == BatteryTestEnum._1) {
             // 内阻测试不等待设备回包，成功下发后先标记运行态，后续实时上报负责刷新测试结果。
             batteryModeStatusService.markRunning(
                     opt.getPackNum(),
