@@ -4,7 +4,9 @@ import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
 import com.shanhe.project.device.config.service.IDevBatteryOptService;
+import com.shanhe.project.device.opt.domain.OptLog;
 import com.shanhe.project.device.opt.service.ControlBattery;
+import com.shanhe.project.device.opt.service.OptLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,6 +30,8 @@ public class BatteryOptScheduleJob {
     private IDevBatteryOptService devBatteryOptService;
     @Resource
     private ControlBattery controlBattery;
+    @Resource
+    private OptLogService optLogService;
 
     private final Set<String> runningKeys = ConcurrentHashMap.newKeySet();
 
@@ -63,6 +67,11 @@ public class BatteryOptScheduleJob {
             return;
         }
         try {
+            if (hasRunningOptLog(opt)) {
+                log.info("蓄电池测试计划到点执行跳过，已有测试运行中, packNum={}, testType={}",
+                        opt.getPackNum(), opt.getTestType());
+                return;
+            }
             AjaxResult result = controlBattery.toSendBatteryCmdToOat(opt);
             if (isSuccess(result)) {
                 updateNextSchedule(opt, now);
@@ -76,6 +85,11 @@ public class BatteryOptScheduleJob {
         } finally {
             runningKeys.remove(key);
         }
+    }
+
+    private boolean hasRunningOptLog(DevBatteryOpt opt) {
+        OptLog running = optLogService.getRunningOptLog(null, opt.getTestType());
+        return running != null;
     }
 
     private boolean isSuccess(AjaxResult result) {
