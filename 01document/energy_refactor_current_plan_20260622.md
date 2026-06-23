@@ -362,6 +362,38 @@ testType 映射边界：
 
 输出：每个候选写寄存器对应的内部命令、参数校验、互斥、失败返回和验证测试。
 
+核验结论：
+
+1. `ModbusWriteMappingService` 当前只允许写单寄存器 `404915`，语义为单体均衡控制；写入值高字节为均衡值，低字节为单体编号 `1..245`。
+2. `ModbusWriteMappingService` 已明确禁止直接拼旧 980 命令，现有实现只调用 `BatteryCollectorCommandService.singleBatteryBalance`，成功语义为“命令已入队”，不表示硬件已完成。
+3. `404901`、`404902`、`404921`、`404922` 等候选地址当前测试明确拒绝；不能由其他 AI 直接改成可写。
+4. `BatteryCollectorCommandService` 已具备可复用内部命令入口：单体均衡、单体内阻测试、连接条电阻测试、手动编号、清电池组调试数据、内阻系数、校准参数。
+5. 具备内部命令入口不等于可以开放 Modbus 写寄存器。地址、参数编码、权限、安全互斥、失败返回和审计日志必须先冻结。
+6. 告警屏蔽/解除涉及 `dev_alarm_log`、`ConfigAttribute`、旧 980 `0A/8A`、`39/E9`、`3C/EC` 等多套语义，不能并入普通写命令白名单；必须等待告警任务拆分后处理。
+7. 地址设置、清调试数据、系数/校准属于维护类高风险命令；即使内部服务已存在，也不应默认暴露给 Modbus 上位机。
+
+候选白名单分级：
+
+| 候选能力 | 当前地址 | 内部入口 | 当前结论 |
+| --- | --- | --- | --- |
+| 单体均衡 | `404915` | `singleBatteryBalance` | 已实现，保留 |
+| 单节内阻测试 | 未冻结 | `singleInternalResistanceTest` | 暂缓，需定义地址和运行互斥 |
+| 连接条电阻测试 | 未冻结 | `connectResistanceTest` | 暂缓，需定义地址、电流条件和电池数量来源 |
+| 手动设置模块地址 | 测试明确拒绝 `404921/404922` | `manualSetSubmoduleAddress` | 暂缓，维护类命令，不开放 |
+| 自动编号 | 未冻结 | `autoSetSubmoduleAddress` | 暂缓，组级维护命令，不开放 |
+| 清调试数据 | 未冻结 | `clearBatteryGroupDebugData` | 暂缓，维护类命令，不开放 |
+| 内阻系数 | 未冻结 | `setInternalResistanceCoefficient` | 暂缓，需参数编码和权限确认 |
+| 校准参数 | 未冻结 | `setCalibrationParameter` | 暂缓，需参数编码和权限确认 |
+| 告警屏蔽/解除 | 草案 `400421` 起 | `IAlarmLogService` / 告警配置链路 | 暂缓，等待告警任务 |
+
+下一步顺序：
+
+1. 其他 AI 只能做写白名单现状检查，不得新增可写寄存器。
+2. Codex 先对照 `SH_Modbus寄存器映射草案.md` 和 M460 源码冻结第一批可写地址，优先级只考虑“低风险、可回滚、有现成内部服务”的能力。
+3. 若要扩展 `_2/_6` 测试类写寄存器，必须复用 `BatteryOptCollectorCommandAdapter` 或同等前置校验链路，不能绕过实时数据、告警、空闲态、电流条件。
+4. 所有新增写寄存器必须补 `ModbusWriteMappingServiceTest` 和 `ModbusRtuServerTest`；但不要求每个内部私有方法单独建测试。
+5. 高风险维护类命令和告警屏蔽类命令暂不交给其他 AI 开发。
+
 #### TASK-CODEX-M460-ALARM-001：告警过滤/屏蔽/解除能力拆分
 
 只做方案和任务拆分，不改 Java。
@@ -1022,6 +1054,63 @@ rg "tryCollectorCommand|executeCollectorCommand|resolveBatteryCount" 03code/ener
 rg "�|钃|鐙|闆|鍛|绋|€|锟|閽|閻|\?\?\?" 03code/energy/src/main/java/com/shanhe/project/sync/handler/BatterySyncHandler.java
 ```
 
+### TASK-AI-DIRECT-020：Modbus 写白名单现状检查
+
+只检查，不改代码。
+
+目标：确认当前 Modbus 写寄存器只开放单体均衡，不存在其他隐式写入口。
+
+执行：
+
+```powershell
+rg "writeSingleRegister|BALANCE_REGISTER|404915|404901|404902|404921|404922|singleBatteryBalance|manualSetSubmoduleAddress|connectResistanceTest|singleInternalResistanceTest" 03code/energy/src/main/java/com/shanhe/project/modbus 03code/energy/src/test/java/com/shanhe/project/modbus 03code/energy/src/main/java/com/shanhe/project/collector/battery/service/BatteryCollectorCommandService.java -n
+```
+
+输出：
+
+1. 当前 `ModbusWriteMappingService` 支持的地址。
+2. 当前测试明确拒绝的地址。
+3. 是否存在绕过 `ModbusWriteMappingService` 的 Modbus 写路径。
+4. 不新增可写地址，不修改 Java。
+
+### TASK-AI-DIRECT-021：内部命令服务可复用能力清单检查
+
+只检查，不改代码。
+
+目标：列出 `BatteryCollectorCommandService` 已有能力，供 Codex 后续决定是否映射到 Modbus 写白名单。
+
+执行：
+
+```powershell
+rg "public BatteryCollectorCommandResult|singleBatteryBalance|singleInternalResistanceTest|connectResistanceTest|manualSetSubmoduleAddress|autoSetSubmoduleAddress|clearBatteryGroupDebugData|setInternalResistanceCoefficient|setCalibrationParameter" 03code/energy/src/main/java/com/shanhe/project/collector/battery/service/BatteryCollectorCommandService.java 03code/energy/src/test/java/com/shanhe/project/collector/battery/service/BatteryCollectorCommandServiceTest.java -n
+```
+
+输出：
+
+1. 每个公开命令方法名。
+2. 参数含义和范围校验是否在 service 内部完成。
+3. 是否已有测试覆盖成功和非法参数。
+4. 不提出 Modbus 地址映射，不写代码。
+
+### TASK-AI-DIRECT-022：Modbus 写高风险命令入口检查
+
+只检查，不改代码。
+
+目标：找出地址设置、清调试数据、系数/校准、告警屏蔽相关入口，确认它们没有被 Modbus 写开放。
+
+执行：
+
+```powershell
+rg "manualSetSubmoduleAddress|autoSetSubmoduleAddress|clearBatteryGroupDebugData|setInternalResistanceCoefficient|setCalibrationParameter|shiedAlarmLog|shieldAlarm|DISABLE_WARNING|DISABLE_WARNING_CONFIGURE|ALARM_RELEASE|400421" 03code/energy/src/main/java 03code/energy/src/test/java 01document -n
+```
+
+输出：
+
+1. 命中的 Java 入口和文档位置。
+2. 是否有 Modbus 写路径调用这些入口。
+3. 哪些属于维护类高风险命令。
+4. 哪些属于告警屏蔽/解除链路。
+5. 不修改代码。
 ### TASK-AI-DIRECT-017：Modbus 读寄存器代码与草案差异检查
 
 只检查，不改代码。
