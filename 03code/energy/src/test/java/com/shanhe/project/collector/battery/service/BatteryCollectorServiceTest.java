@@ -15,6 +15,7 @@ import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
+import com.shanhe.project.collector.battery.runtime.BatteryCollectorFrameIoService;
 import com.shanhe.project.collector.battery.runtime.BatteryCollectorPollingService;
 import com.shanhe.project.collector.battery.command.BatteryCollectorCommandQueueService;
 import com.shanhe.project.collector.battery.command.BatteryConnectResistanceCommandProcessor;
@@ -1648,6 +1649,42 @@ class BatteryCollectorServiceTest {
                 Mockito.isNull());
     }
 
+    @Test
+    void shouldCompletePendingExplicitCommandBeforeClose() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        injectCommandLogMapper(optLogMapper);
+        ReflectionTestUtils.setField(service, "frameIoService", Mockito.mock(BatteryCollectorFrameIoService.class));
+        BatteryCollectorChannelConfig channelConfig = newChannelConfig();
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
+                8,
+                new byte[0],
+                false);
+        pendingRequest.setBatteryGroup(1);
+        pendingRequest.setMode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+        pendingRequest.setOptLogId(10L);
+        state.setPendingCommand(pendingRequest);
+        state.setExpectedResponseCode(0x82);
+        state.setCurrentRetryCount(1);
+        state.setRunState(BatteryCollectorRunState.WAIT_COMMAND_RESPONSE);
+
+        ReflectionTestUtils.invokeMethod(service, "closeQuietly", state);
+
+        Assertions.assertNull(state.getPendingCommand());
+        Assertions.assertEquals(0, state.getExpectedResponseCode());
+        Assertions.assertEquals(0, state.getCurrentRetryCount());
+        Assertions.assertEquals(BatteryCollectorRunState.READ, state.getRunState());
+        Assertions.assertEquals("SINGLE_BATTERY_IR_TEST", state.getLastCompletedModuleCommandName());
+        Assertions.assertFalse(state.isLastCompletedModuleCommandSuccess());
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.TIMEOUT),
+                Mockito.isNull(),
+                Mockito.anyString(),
+                Mockito.eq("命令响应超时"),
+                Mockito.isNull());
+    }
     @Test
     void shouldSkipPollingImmediatelyAfterAnySend() {
         BatteryCollectorProperties properties = new BatteryCollectorProperties();

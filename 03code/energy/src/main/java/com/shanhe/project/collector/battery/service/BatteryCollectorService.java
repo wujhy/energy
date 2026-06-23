@@ -535,6 +535,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     }
     /** 静默关闭串口并重置通道状态。 */
     private void closeQuietly(BatteryCollectorChannelState state) {
+        completePendingCommandBeforeClose(state);
         frameIoService.closeQuietly(state.getSerialPort());
         boolean wasOpened = state.getOpened().get();
         state.getOpened().set(false);
@@ -548,6 +549,18 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         if (wasOpened) {
             collectorDeviceStateService.persistSerialPortState(state, false);
         }
+    }
+
+    /** 串口异常关闭前，先完成已发出的显式命令，避免工作模式和操作日志遗留运行态。 */
+    private void completePendingCommandBeforeClose(BatteryCollectorChannelState state) {
+        if (state == null) {
+            return;
+        }
+        BatteryPendingRequest pendingRequest = state.getPendingCommand();
+        if (pendingRequest == null || pendingRequest.isAutoPoll()) {
+            return;
+        }
+        commandQueueService.completeTimedOutExplicitCommand(state, pendingRequest);
     }
 
     /** 按调试配置输出协议收发日志。 */
