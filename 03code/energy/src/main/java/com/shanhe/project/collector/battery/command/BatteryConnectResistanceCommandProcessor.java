@@ -7,10 +7,12 @@ import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.collector.battery.model.BatteryPendingRequest;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandLogService;
 import com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService;
+import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -34,6 +36,8 @@ public class BatteryConnectResistanceCommandProcessor {
     private BatteryModuleCellCompatibilityFillService compatibilityFillService;
     @Resource
     private BatteryModuleRealtimeMapper realtimeMapper;
+    @Resource
+    private BatteryModuleRealtimeSnapshotService snapshotService;
     @Resource
     private BatteryCollectorCommandLogService commandLogService;
     @Resource
@@ -141,12 +145,13 @@ public class BatteryConnectResistanceCommandProcessor {
         }
     }
 
-    /** 获取电池组实时电流，优先使用 chargeDischargeCurrent。 */
+    /** 获取电池组实时电流，优先使用标准实时快照中的 chargeDischargeCurrent。 */
     private Double currentOfGroup(Integer batteryGroup) {
-        if (realtimeMapper == null) {
-            return null;
+        BatteryModuleRealtimeSnapshot snapshot = snapshotOf(batteryGroup);
+        BatteryModuleGroupRealtime group = snapshot == null ? null : snapshot.getGroup();
+        if (group == null && realtimeMapper != null) {
+            group = realtimeMapper.selectGroup(batteryGroup);
         }
-        BatteryModuleGroupRealtime group = realtimeMapper.selectGroup(batteryGroup);
         if (group == null) {
             return null;
         }
@@ -160,12 +165,16 @@ public class BatteryConnectResistanceCommandProcessor {
         if (realtimeMapper == null) {
             return;
         }
-        List<BatteryModuleCellRealtime> cells = realtimeMapper.selectCells(batteryGroup);
+        BatteryModuleRealtimeSnapshot snapshot = snapshotOf(batteryGroup);
+        List<BatteryModuleCellRealtime> cells = snapshot == null
+                ? realtimeMapper.selectCells(batteryGroup)
+                : snapshot.getCells();
         if (cells != null) {
             for (BatteryModuleCellRealtime cell : cells) {
                 if (cell.getBatNum() != null && cell.getBatNum() == address) {
                     cell.setResistanceRageSlip(resistance);
                     realtimeMapper.upsertCell(cell);
+                    evictSnapshot(batteryGroup);
                     return;
                 }
             }
@@ -176,16 +185,22 @@ public class BatteryConnectResistanceCommandProcessor {
         newCell.setResistanceRageSlip(resistance);
         newCell.setCreateTime(new Date());
         realtimeMapper.upsertCell(newCell);
+        evictSnapshot(batteryGroup);
     }
 
-    /**
-     * 计算真实连接条电阻。
-     *
-     * @param testVoltage 测试电压，单位 V
-     * @param batteryVoltage 电池电压，单位 V
-     * @param current 充放电电流，单位 A
-     * @return 连接条电阻，单位 uΩ；无法计算时返回 null
-     */
+    /** 读取标准实时快照；未命中时由快照服务按实时表保守重建。 */
+    private BatteryModuleRealtimeSnapshot snapshotOf(Integer batteryGroup) {
+        return snapshotService == null ? null : snapshotService.getSnapshot(batteryGroup);
+    }
+
+    /** 连接条电阻写回实时表后清理快照，避免外部读取旧缓存。 */
+    private void evictSnapshot(Integer batteryGroup) {
+        if (snapshotService != null) {
+            snapshotService.evict(batteryGroup);
+        }
+    }
+
+    /** 计算真实连接条电阻，单位 uΩ；无法计算时返回 null。 */
     public static Double calculateConnectResistance(Double testVoltage, Double batteryVoltage, Double current) {
         if (testVoltage == null || batteryVoltage == null || current == null) {
             return null;
