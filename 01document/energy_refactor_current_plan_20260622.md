@@ -312,6 +312,43 @@ testType 映射边界：
 
 输出：寄存器范围、数据来源、无来源时返回策略、是否可给其他 AI 开发。
 
+核验结论：
+
+1. `BatteryModuleModbusReadMappingService` 当前已支持以下只读范围：
+   - `410004..410248`：单体电压，来源为标准实时快照中的 `BatteryModuleCellRealtime.voltage`。
+   - `410252..410496`：单体内阻，来源为 `BatteryModuleCellRealtime.resistance`。
+   - `410500..410744`：单体温度，来源为 `BatteryModuleCellRealtime.temperature`。
+   - `410748..410992`：单体鼓包电压，来源为 `BatteryModuleCellRealtime.swollenVoltage`。
+   - `411483..411488`：通道/模块/246 新鲜度/工作模式状态，来源为 `BatteryDeviceStateService`。
+   - `411729..411752`：组电压、电流、温度、极值、SOC/SOH 等，来源为 `BatteryModuleGroupRealtime`。
+   - `411762..411766`：电池状态寄存器、备电时长、容量、放电时长和放电容量，来源为 `BatteryModuleGroupRealtime`。
+2. `loadSnapshot` 已优先使用 `BatteryModuleRealtimeSnapshotService.getCachedSnapshot(packNum)`，适合 Modbus 高频读；构造器未注入 snapshotService 时才回退 mapper 查询。
+3. 首次数据未就绪时抛 `IllegalStateException`，后续由 RTU 层转换异常；数据已就绪但某个字段缺失时返回 `0`。
+4. 当前没有独立的“告警位图寄存器”实现，也没有冻结告警寄存器地址；不能让其他 AI 直接按旧 980 `8D` 或旧告警缓存随意映射。
+5. `IAlarmLogService.selectBatteryAlarmLogListCache(packNum)` 可作为告警摘要候选来源，但它包含旧缓存、屏蔽/恢复状态、通信类设备状态合成告警等混合语义，不适合直接做稳定 Modbus 位图。
+6. `BatteryDeviceStateService` 已能表达通道异常、模块超时、246 新鲜度、工作模式等设备状态；这些已通过 `411483..411488` 暴露，不应重复塞进告警位图。
+7. `ConfigAttribute` / `AlarmItemLevelVo` 适合做“告警项配置/阈值同步”来源，但 Modbus 读寄存器暂不应暴露配置表，除非后续明确寄存器区间和编码。
+
+暂定数据来源策略：
+
+| 候选能力 | 寄存器范围 | 数据来源 | 当前处理 |
+| --- | --- | --- | --- |
+| 基础实时单体 | `410004..410992` | `BatteryModuleRealtimeSnapshotService` | 已完成 |
+| 设备状态摘要 | `411483..411488` | `BatteryDeviceStateService` | 已完成 |
+| 组实时参数 | `411729..411752`、`411762..411766` | `BatteryModuleGroupRealtime` | 已完成 |
+| 总告警标志 | 未冻结 | 候选：`IAlarmLogService.isAlarmByCache(packNum)` + 设备状态摘要 | 暂缓，需先定义地址 |
+| 告警位图 | 未冻结 | 候选：实时告警模型或 `AlarmLog` 缓存映射 | 暂缓，需先定义 bit 顺序和屏蔽口径 |
+| 告警屏蔽态 | 未冻结 | `AlarmLog.status` / 告警屏蔽接口 | 暂缓，需先定义读写所有权 |
+| 告警参数/阈值 | 未冻结 | `ConfigAttribute` / `AlarmItemLevelVo` | 暂缓，不给弱 AI 直接开发 |
+
+后续顺序：
+
+1. 先由 Codex 对照 `01document/protocol/SH_Modbus寄存器映射草案.md` 和 M460 `modbus.c` 冻结告警寄存器地址、bit 顺序、屏蔽态语义。
+2. 再决定是否新增 `BatteryModuleModbusAlarmRegisterService` 作为内部 helper，避免继续扩大 `BatteryModuleModbusReadMappingService`。
+3. 总告警标志可以作为第一阶段开发，但必须明确“告警缓存为空返回 0，服务缺失返回 0，首次数据未就绪仍按现有快照异常处理”。
+4. 告警位图和告警屏蔽态必须等 `TASK-CODEX-M460-ALARM-001` 完成后再开发。
+5. 参数/阈值寄存器不进入当前批次。
+
 #### TASK-CODEX-M460-MODBUS-WRITE-001：Modbus 写白名单扩展方案
 
 只做方案和任务拆分，不改 Java。
@@ -985,6 +1022,65 @@ rg "tryCollectorCommand|executeCollectorCommand|resolveBatteryCount" 03code/ener
 rg "�|钃|鐙|闆|鍛|绋|€|锟|閽|閻|\?\?\?" 03code/energy/src/main/java/com/shanhe/project/sync/handler/BatterySyncHandler.java
 ```
 
+### TASK-AI-DIRECT-017：Modbus 读寄存器代码与草案差异检查
+
+只检查，不改代码。
+
+目标：对照 `BatteryModuleModbusReadMappingService`、`BatteryModuleModbusReadMappingServiceTest` 和 `01document/protocol/SH_Modbus寄存器映射草案.md`，确认当前已实现寄存器与草案是否一致。
+
+执行：
+
+```powershell
+rg "410004|410252|410500|410748|411483|411488|411729|411752|411762|411766|isSupportedGroupAddress|STATUS_START" 03code/energy/src/main/java/com/shanhe/project/collector/battery/service/BatteryModuleModbusReadMappingService.java 03code/energy/src/test/java/com/shanhe/project/collector/battery/service/BatteryModuleModbusReadMappingServiceTest.java 01document/protocol/SH_Modbus寄存器映射草案.md -n
+```
+
+输出：
+
+1. 已实现地址范围清单。
+2. 测试已覆盖地址范围清单。
+3. 草案有但代码没有的地址。
+4. 代码有但草案没有的地址。
+5. 不修改 Java，不自行新增寄存器。
+
+### TASK-AI-DIRECT-018：Modbus 告警寄存器候选来源检查
+
+只检查，不改代码。
+
+目标：确认告警相关可用来源，不定义寄存器地址，不写实现。
+
+执行：
+
+```powershell
+rg "selectBatteryAlarmLogListCache|isAlarmByCache|getCurrentIsAlarm|AlarmLog|BatteryAlarmBitMapping|BatteryModuleAlarmAdaptService|BatteryDeviceStateConstants" 03code/energy/src/main/java/com/shanhe/project -n
+```
+
+输出：
+
+1. `IAlarmLogService` 当前可用告警查询方法。
+2. 哪些方法读缓存，哪些读数据库。
+3. 哪些方法会混入设备状态通信告警。
+4. 是否存在独立实时告警 bit 映射类。
+5. 不提出寄存器地址，不写代码。
+
+### TASK-AI-DIRECT-019：Modbus 高频读路径数据库访问检查
+
+只检查，不改代码。
+
+目标：确认 Modbus 读保持寄存器时是否仍有不必要的数据库查询路径，尤其是高频请求场景。
+
+执行：
+
+```powershell
+rg "getCachedSnapshot|selectCells|selectGroup|selectByScope|selectByChannelAndCode|selectBatteryAlarmLogListCache|lastCache" 03code/energy/src/main/java/com/shanhe/project/collector/battery/service/BatteryModuleModbusReadMappingService.java 03code/energy/src/main/java/com/shanhe/project/modbus 03code/energy/src/main/java/com/shanhe/project/device/alarm -n
+```
+
+输出：
+
+1. Modbus 读入口是否优先使用 `getCachedSnapshot`。
+2. 哪些状态寄存器仍会调用 `BatteryDeviceStateService`。
+3. 是否存在从 Modbus 读路径调用 `BatteryReportLogService.lastCache`。
+4. 告警缓存方法是否可能引入数据库读取。
+5. 不修改代码，交给 Codex 判断是否需要缓存 helper。
 ### TASK-AI-DIRECT-016：测试计划到点调度入口前置盘点
 
 只检查，不改代码。
