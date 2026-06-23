@@ -127,7 +127,7 @@
         select
         <include refid="Base_Column_List"/>
         from dev_opt_log
-        where result is null and type != 99
+        where config_id = 1 and result is null and type != 99
         <if test="packNum != null">
             and pack_num = #{packNum}
         </if>
