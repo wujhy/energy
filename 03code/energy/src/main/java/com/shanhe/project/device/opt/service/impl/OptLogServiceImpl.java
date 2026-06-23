@@ -306,6 +306,18 @@ public class OptLogServiceImpl implements OptLogService {
         return optLogList;
     }
 
+
+    /**
+     * 查询运行中的操作日志。
+     *
+     * @param packNum 电池组编号；为空时查询全部
+     * @return 运行中日志列表
+     */
+    @Override
+    public List<OptLog> selectRunningList(Integer packNum) {
+        List<OptLog> list = optLogMapper.selectRunningList(packNum);
+        return list == null ? Collections.emptyList() : list;
+    }
     /**
      * 根据ID批量删除操作日志
      *

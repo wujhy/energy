@@ -13,6 +13,7 @@ import com.shanhe.project.device.alarm.domain.AlarmLog;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.service.IBatteryPackService;
+import com.shanhe.project.device.opt.service.OptLogService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -40,6 +41,8 @@ public class BatteryCurrentStateService {
     private BatteryDeviceStateService batteryDeviceStateService;
     @Resource
     private IAlarmLogService alarmLogService;
+    @Resource
+    private OptLogService optLogService;
 
     public BatteryCurrentState getCurrentState(Integer packNum) {
         BatteryCurrentState state = new BatteryCurrentState();
@@ -62,6 +65,8 @@ public class BatteryCurrentStateService {
                 ? Collections.emptyList() : safeStates(batteryDeviceStateService.selectByPackNum(packNum)));
         state.setAlarms(toAlarmSummaries(alarmLogService == null
                 ? Collections.emptyList() : alarmLogService.selectBatteryAlarmLogListCache(packNum)));
+        state.setRunningOptLogs(optLogService == null
+                ? Collections.emptyList() : optLogService.selectRunningList(packNum));
         state.setLastPollBatchNo(resolveLastPollBatchNo(group, cells));
         state.setFreshness(resolveFreshness(pack.getBatSinSize(), group, cells));
         return state;

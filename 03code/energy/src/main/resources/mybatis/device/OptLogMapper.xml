@@ -121,6 +121,18 @@
         from dev_opt_log where result is null and type != 99 order by create_time desc
     </select>
 
+
+    <!-- 查询指定电池组运行中日志 -->
+    <select id="selectRunningList" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from dev_opt_log
+        where result is null and type != 99
+        <if test="packNum != null">
+            and pack_num = #{packNum}
+        </if>
+        order by create_time desc
+    </select>
     <!-- 更新电池参数 -->
     <update id="updateBattery">
         update dev_opt_log

@@ -1,6 +1,7 @@
 package com.shanhe.project.collector.battery.model;
 
 import lombok.Data;
+import com.shanhe.project.device.opt.domain.OptLog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,4 +30,5 @@ public class BatteryCurrentState {
     private List<BatteryCurrentCellState> cells = new ArrayList<>();
     private List<BatteryDeviceState> deviceStates = new ArrayList<>();
     private List<BatteryCurrentAlarmSummary> alarms = new ArrayList<>();
+    private List<OptLog> runningOptLogs = new ArrayList<>();
 }

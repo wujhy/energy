@@ -57,6 +57,14 @@ public interface OptLogService {
     List<OptLog> select(OptLog optLog);
 
     /**
+     * 查询运行中的操作日志。
+     *
+     * @param packNum 电池组编号；为空时查询全部
+     * @return 运行中日志列表
+     */
+    List<OptLog> selectRunningList(Integer packNum);
+
+    /**
      * 删除记录
      *
      * @param ids 记录id

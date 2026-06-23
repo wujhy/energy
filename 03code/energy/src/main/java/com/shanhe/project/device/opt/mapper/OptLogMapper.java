@@ -50,6 +50,11 @@ public interface OptLogMapper {
     List<OptLog> findRunningList();
 
     /**
+     * 查询指定电池组运行中的操作日志。
+     */
+    List<OptLog> selectRunningList(@Param("packNum") Integer packNum);
+
+    /**
      * 更新操作日志
      */
     void updateBattery(@Param("id") Long id,
