@@ -11,6 +11,7 @@ import com.shanhe.framework.enums.*;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
+import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.device.alarm.domain.AlarmLog;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.*;
@@ -63,6 +64,8 @@ public class ControlBattery extends ControlBase {
     private IBatteryPackService batteryPackService;
     @Resource
     private BatteryOptCollectorCommandAdapter batteryOptCollectorCommandAdapter;
+    @Resource
+    private BatteryModeStatusService batteryModeStatusService;
 
     /** 缓存结果 **/
     CacheKeyEnum cacheKeyEnum = CacheKeyEnum.RESULT;
@@ -242,6 +245,14 @@ public class ControlBattery extends ControlBase {
         // 更新日志结果
         if (needLog && optLogId != null) {
             optLogService.update(optLogId, Objects.equals(ajaxResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value()) ? 0 : 1, null);
+        }
+        if (Objects.equals(ajaxResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value())
+                && testEnum == BatteryTestEnum._1) {
+            // 内阻测试不等待设备回包，成功下发后先标记运行态，后续实时上报负责刷新测试结果。
+            batteryModeStatusService.markRunning(
+                    opt.getPackNum(),
+                    BatteryModeStatusService.MODE_INTERNAL_RESISTANCE,
+                    1);
         }
         return ajaxResult;
     }
