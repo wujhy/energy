@@ -6,6 +6,7 @@ import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
+import com.shanhe.project.collector.battery.service.BatteryCollectorService;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.UNSIGNED_SHORT_MAX;
@@ -55,6 +56,8 @@ public class ControlBatterySet extends ControlBase {
     private RestoreService restoreService;
     @Resource
     private BatteryCollectorCommandService batteryCollectorCommandService;
+    @Resource
+    private BatteryCollectorService batteryCollectorService;
     @Resource
     private BatteryModeStatusService batteryModeStatusService;
     @Resource
@@ -457,6 +460,7 @@ public class ControlBatterySet extends ControlBase {
     /** 清除指定电池组的编号状态缓存。 */
     public AjaxResult clearModelNum(Integer packNum) {
         batteryModeStatusService.clear(packNum);
+        batteryCollectorService.resetModuleAddressCacheByBatteryGroup(packNum);
         return AjaxResult.success();
     }
 
