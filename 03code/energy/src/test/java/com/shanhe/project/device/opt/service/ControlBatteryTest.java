@@ -76,6 +76,24 @@ class ControlBatteryTest {
         Mockito.verify(reportLogService).lastCache(1);
     }
 
+    @Test
+    void shouldCheckConnectResistanceCurrentBeforeCollectorCommandAdapter() {
+        ControlBattery service = service(true);
+        BatteryModuleReportLogAdapterService adapterService =
+                (BatteryModuleReportLogAdapterService) ReflectionTestUtils.getField(service, "batteryModuleReportLogAdapterService");
+        BatteryOptCollectorCommandAdapter commandAdapter =
+                (BatteryOptCollectorCommandAdapter) ReflectionTestUtils.getField(service, "batteryOptCollectorCommandAdapter");
+        BatteryReportLog reportLog = reportLog(BatteryPackStatusEnum.IDLE.getCode());
+        reportLog.getPackParam().put("packCurrent", 1D);
+        Mockito.when(adapterService.buildReportLog(1)).thenReturn(reportLog);
+
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class,
+                () -> service.toSendBatteryCmdToOat(request(BatteryTestEnum._2.getDictValue())));
+
+        Assertions.assertTrue(exception.getMessage().contains("组电流超过"));
+        Mockito.verifyNoInteractions(commandAdapter);
+    }
+
     private ControlBattery service(boolean realtimeEnabled) {
         ControlBattery service = new ControlBattery();
 
@@ -101,6 +119,9 @@ class ControlBatteryTest {
                 controlBatterySet());
         ReflectionTestUtils.setField(service, "optLogService",
                 Mockito.mock(OptLogService.class));
+
+        ReflectionTestUtils.setField(service, "batteryOptCollectorCommandAdapter",
+                Mockito.mock(BatteryOptCollectorCommandAdapter.class));
 
         CmdBatteryControlService cmdService = Mockito.mock(CmdBatteryControlService.class);
         Mockito.when(cmdService.genCmd05(Mockito.any(), Mockito.anyString(), Mockito.anyString())).thenReturn("");

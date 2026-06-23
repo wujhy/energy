@@ -11,7 +11,6 @@ import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
 import com.shanhe.project.device.config.service.IDevBatteryOptService;
 import com.shanhe.project.device.opt.domain.OptLog;
-import com.shanhe.project.device.opt.service.BatteryOptCollectorCommandAdapter;
 import com.shanhe.project.device.opt.service.ControlBattery;
 import com.shanhe.project.device.opt.service.OptLogService;
 import lombok.extern.slf4j.Slf4j;
@@ -38,8 +37,6 @@ public class OptBatteryController extends BaseController {
     private OptLogService optLogService;
     @Resource
     private BatteryModeStatusService batteryModeStatusService;
-    @Resource
-    private BatteryOptCollectorCommandAdapter batteryOptCollectorCommandAdapter;
 
     /**
      * 查询【蓄电池测试操作参数】列表
@@ -83,11 +80,6 @@ public class OptBatteryController extends BaseController {
         OptLog opt = optLogService.getRunningOptLog(null, testEnum.getDictValue());
         if(opt!=null){
             return AjaxResult.error("蓄电池正在执行测试工作，请稍后再试！");
-        }
-        // 优先尝试独立采集模块命令
-        AjaxResult adapterResult = batteryOptCollectorCommandAdapter.tryExecute(devBatteryOpt);
-        if (adapterResult != null) {
-            return adapterResult;
         }
         // 发送指令到终端设备
         AjaxResult result = controlBattery.toSendBatteryCmdToOat(devBatteryOpt);

@@ -61,6 +61,8 @@ public class ControlBattery extends ControlBase {
     private IAlarmLogService alarmLogService;
     @Resource
     private IBatteryPackService batteryPackService;
+    @Resource
+    private BatteryOptCollectorCommandAdapter batteryOptCollectorCommandAdapter;
 
     /** 缓存结果 **/
     CacheKeyEnum cacheKeyEnum = CacheKeyEnum.RESULT;
@@ -160,6 +162,11 @@ public class ControlBattery extends ControlBase {
                 return AjaxResult.error("电池组处于非空闲状态，不允许测试！", 0);
             }
 
+        }
+
+        AjaxResult collectorResult = batteryOptCollectorCommandAdapter.tryExecute(opt);
+        if (collectorResult != null) {
+            return collectorResult;
         }
 
         // 默认需要等待执行结果，不需要记录操作日志

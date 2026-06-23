@@ -8,7 +8,6 @@ import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
 import com.shanhe.project.device.config.service.IBatteryPackService;
-import com.shanhe.project.device.opt.service.BatteryOptCollectorCommandAdapter;
 import com.shanhe.project.device.opt.service.ControlBattery;
 import com.shanhe.project.energy.stat.domain.DevBatteryMonomer;
 import com.shanhe.project.energy.stat.service.IDevBatteryMonomerService;
@@ -40,8 +39,6 @@ public class BatterySyncHandler {
     private ClientReportService clientReportService;
     @Resource
     private IDevBatteryMonomerService devBatteryMonomerService;
-    @Resource
-    private BatteryOptCollectorCommandAdapter batteryOptCollectorCommandAdapter;
 
     /**
      * 同步蓄电池操作计划
@@ -64,14 +61,6 @@ public class BatterySyncHandler {
             if (Objects.equals(optVo.getIsNow(), YesNoEnum.YES.getDictValue())) {
                 ajaxResult = controlBattery.toSendCmdToOat(batteryOpt);
             } else {
-                AjaxResult collectorResult = batteryOptCollectorCommandAdapter.tryExecute(batteryOpt);
-                if (collectorResult != null) {
-                    if (!Objects.equals(collectorResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value())) {
-                        Object collectorMsg = collectorResult.get(AjaxResult.MSG_TAG);
-                        msg = collectorMsg != null ? collectorMsg.toString() : "采集命令执行失败";
-                    }
-                    return new ResponseVo(request.getImei(), MethodEnum._43.getDictValue(), request.getBusinessId(), msg);
-                }
                 ajaxResult = controlBattery.toSendBatteryCmdToOat(batteryOpt);
             }
             // 失败
