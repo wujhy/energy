@@ -38,7 +38,10 @@ class BatteryOptCollectorCommandAdapterTest {
         BatteryOptCollectorCommandAdapter adapter = adapter(true);
         BatteryCollectorCommandService commandService =
                 (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
+        IBatteryPackService batteryPackService =
+                (IBatteryPackService) ReflectionTestUtils.getField(adapter, "batteryPackService");
         Mockito.when(commandService.resolveChannelName(1)).thenReturn("battery-group-1");
+        Mockito.when(batteryPackService.getBatteryMaxNumber(1)).thenReturn(24);
         Mockito.when(commandService.singleInternalResistanceTest("battery-group-1", 1, 8, null))
                 .thenReturn(successResult());
 
@@ -47,6 +50,24 @@ class BatteryOptCollectorCommandAdapterTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
         Mockito.verify(commandService).singleInternalResistanceTest("battery-group-1", 1, 8, null);
+    }
+
+    @Test
+    void shouldRejectSingleInternalResistanceWhenModelNumOutOfRange() {
+        BatteryOptCollectorCommandAdapter adapter = adapter(true);
+        BatteryCollectorCommandService commandService =
+                (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
+        IBatteryPackService batteryPackService =
+                (IBatteryPackService) ReflectionTestUtils.getField(adapter, "batteryPackService");
+        Mockito.when(commandService.resolveChannelName(1)).thenReturn("battery-group-1");
+        Mockito.when(batteryPackService.getBatteryMaxNumber(1)).thenReturn(24);
+
+        AjaxResult result = adapter.tryExecute(opt(BatteryTestEnum._6.getDictValue(), 25));
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Mockito.verify(commandService, Mockito.never())
+                .singleInternalResistanceTest(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt(), Mockito.any());
     }
 
     @Test

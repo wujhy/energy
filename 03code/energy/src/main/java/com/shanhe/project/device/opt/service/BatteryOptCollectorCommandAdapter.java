@@ -61,11 +61,13 @@ public class BatteryOptCollectorCommandAdapter {
                 result = batteryCollectorCommandService.connectResistanceTest(
                         channelName, opt.getPackNum(), batteryCount, null);
             } else if (BatteryTestEnum._6.getDictValue().equals(opt.getTestType())) {
-                if (opt.getModelNum() == null) {
-                    return null;
+                Integer modelNum = opt.getModelNum();
+                int batteryCount = resolveBatteryCount(opt.getPackNum());
+                if (modelNum == null || modelNum < 1 || modelNum > batteryCount) {
+                    return AjaxResult.error("单节内阻测试单体编号无效", 0);
                 }
                 result = batteryCollectorCommandService.singleInternalResistanceTest(
-                        channelName, opt.getPackNum(), opt.getModelNum(), null);
+                        channelName, opt.getPackNum(), modelNum, null);
             } else {
                 return null;
             }
