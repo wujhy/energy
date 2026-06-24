@@ -493,9 +493,11 @@ public class BatteryCollectorCommandService {
                 break;
             case SINGLE_INTERNAL_RESISTANCE_TEST:
                 moduleCommand.setMode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+                moduleCommand.setOptLogType(BatteryTestEnum._6.getDictValue());
                 break;
             case CONNECT_RESISTANCE_TEST:
                 moduleCommand.setMode(BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+                moduleCommand.setOptLogType(BatteryTestEnum._2.getDictValue());
                 break;
             default:
                 return;

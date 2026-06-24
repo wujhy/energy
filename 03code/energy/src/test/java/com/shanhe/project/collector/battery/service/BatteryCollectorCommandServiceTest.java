@@ -359,6 +359,8 @@ class BatteryCollectorCommandServiceTest {
         Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
         Assertions.assertEquals(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
                 state.getQueuedModuleCommands().peek().getProtocolCode());
+        Assertions.assertEquals(BatteryTestEnum._6.getDictValue(),
+                state.getQueuedModuleCommands().peek().getOptLogType());
         Assertions.assertEquals(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST.getRequestCode(),
                 result.getRequestCode());
         Assertions.assertEquals(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST.getResponseCode(),
@@ -395,6 +397,8 @@ class BatteryCollectorCommandServiceTest {
         Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
         Assertions.assertEquals(BatteryDeviceProtocolCode.CONNECT_STRIP_RESISTANCE_TEST,
                 state.getQueuedModuleCommands().peek().getProtocolCode());
+        Assertions.assertEquals(BatteryTestEnum._2.getDictValue(),
+                state.getQueuedModuleCommands().peek().getOptLogType());
         Assertions.assertEquals(1, state.getQueuedModuleCommands().peek().getConnectResistanceNextAddress());
         Assertions.assertEquals(24, state.getQueuedModuleCommands().peek().getConnectResistanceMaxAddress());
         BatteryModeInfo modeInfo = modeStatusService.get(1);
