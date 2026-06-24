@@ -9,6 +9,7 @@ import com.shanhe.project.collector.battery.service.BatteryCollectorCommandServi
 import com.shanhe.project.collector.battery.service.BatteryCollectorService;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.GROUP_MODULE_ADDRESS;
 import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.UNSIGNED_SHORT_MAX;
 import com.shanhe.project.device.config.domain.BatteryMonitor;
 import com.shanhe.project.device.config.domain.BatteryPack;
@@ -279,7 +280,7 @@ public class ControlBatterySet extends ControlBase {
             if (packNum == null || packNum <= 0) {
                 return AjaxResult.error("电池组编号无效");
             }
-            if (modelNum == null || modelNum < 1 || modelNum >= 246) {
+            if (modelNum == null || modelNum < 1 || modelNum >= GROUP_MODULE_ADDRESS) {
                 return AjaxResult.error("单体地址必须在1到245之间");
             }
             int effectiveBalance = balanceValue == null ? 0 : balanceValue;
