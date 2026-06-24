@@ -44,7 +44,7 @@ public class BatteryCollectorCommandLogService {
             optLog.setId(IdUtils.getSnowflakeId());
             optLog.setConfigId(config == null ? null : config.getConfigId());
             optLog.setPackNum(command.getBatteryGroup());
-            optLog.setType(BatteryTestEnum._99.getDictValue());
+            optLog.setType(command.getOptLogType() == null ? BatteryTestEnum._99.getDictValue() : command.getOptLogType());
             optLog.setContent(command.getDescription());
             optLog.setCreateTimeStr(now);
             optLog.setSource(BatteryDeviceStateConstants.Source.COLLECTOR);

@@ -1,5 +1,6 @@
 package com.shanhe.project.collector.battery.service;
 
+import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelState;
@@ -101,6 +102,7 @@ class BatteryCollectorCommandServiceTest {
         Assertions.assertEquals(1, result.getModuleControlCommand().getBatteryGroup());
         Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE,
                 result.getModuleControlCommand().getMode());
+        Assertions.assertEquals(BatteryTestEnum._2.getDictValue(), result.getModuleControlCommand().getOptLogType());
     }
 
     @Test

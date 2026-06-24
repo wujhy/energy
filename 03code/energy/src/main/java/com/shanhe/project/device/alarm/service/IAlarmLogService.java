@@ -10,11 +10,11 @@ import com.shanhe.project.device.config.domain.ConfigAttribute;
 
 /**
  * 设备历史记录Service接口
- * 
+ *
  * @author wjh
  * @since 2024-12-31
  */
-public interface IAlarmLogService 
+public interface IAlarmLogService
 {
     /**
      * 通过缓存获取默认设备告警记录
@@ -23,7 +23,7 @@ public interface IAlarmLogService
 
     /**
      * 查询设备历史记录
-     * 
+     *
      * @param alarmId 设备历史记录主键
      * @return 设备历史记录
      */
@@ -65,7 +65,7 @@ public interface IAlarmLogService
 
     /**
      * 查询设备历史记录列表
-     * 
+     *
      * @param alarmLog 设备历史记录
      * @return 设备历史记录集合
      */
@@ -147,7 +147,7 @@ public interface IAlarmLogService
 
     /**
      * 新增设备历史记录
-     * 
+     *
      * @param alarmLog 设备历史记录
      * @return 结果
      */
@@ -155,7 +155,7 @@ public interface IAlarmLogService
 
     /**
      * 修改设备历史记录
-     * 
+     *
      * @param alarmLog 设备历史记录
      * @return 结果
      */
@@ -171,7 +171,7 @@ public interface IAlarmLogService
 
     /**
      * 批量删除设备历史记录
-     * 
+     *
      * @param alarmIds 需要删除的设备历史记录主键集合
      * @return 结果
      */
@@ -184,7 +184,7 @@ public interface IAlarmLogService
 
     /**
      * 删除设备历史记录信息
-     * 
+     *
      * @param alarmId 设备历史记录主键
      */
     void deleteAlarmLogByAlarmId(Long alarmId);
@@ -220,7 +220,7 @@ public interface IAlarmLogService
     /**
      * 删除所有告警日志
      */
-    void deleteALL();
+    void deleteAll();
 
     /**
      * 删除默认设备指定组告警记录

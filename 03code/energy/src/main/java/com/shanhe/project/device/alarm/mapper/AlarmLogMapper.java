@@ -6,15 +6,15 @@ import org.apache.ibatis.annotations.Param;
 
 /**
  * 设备历史记录Mapper接口
- * 
+ *
  * @author wjh
  * @since 2024-12-31
  */
-public interface AlarmLogMapper 
+public interface AlarmLogMapper
 {
     /**
      * 查询设备历史记录
-     * 
+     *
      * @param alarmId 设备历史记录主键
      * @return 设备历史记录
      */
@@ -51,7 +51,7 @@ public interface AlarmLogMapper
 
     /**
      * 查询设备历史记录列表
-     * 
+     *
      * @param alarmLog 设备历史记录
      * @return 设备历史记录集合
      */
@@ -59,7 +59,7 @@ public interface AlarmLogMapper
 
     /**
      * 新增设备历史记录
-     * 
+     *
      * @param alarmLog 设备历史记录
      * @return 结果
      */
@@ -67,7 +67,7 @@ public interface AlarmLogMapper
 
     /**
      * 修改设备历史记录
-     * 
+     *
      * @param alarmLog 设备历史记录
      * @return 结果
      */
@@ -87,7 +87,7 @@ public interface AlarmLogMapper
 
     /**
      * 批量删除设备历史记录
-     * 
+     *
      * @param alarmIds 需要删除的数据主键集合
      * @return 结果
      */
@@ -96,7 +96,7 @@ public interface AlarmLogMapper
     /**
      * 删除设备告警记录信息
      */
-    void deleteALL();
+    void deleteAll();
 
     /**
      * 删除设备告警记录信息

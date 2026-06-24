@@ -1,10 +1,10 @@
 package com.shanhe.project.collector.battery.service;
 
+import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
-import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.*;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -174,6 +174,7 @@ public class BatteryCollectorCommandService {
             moduleCommand = moduleControlCommandService.connectStripResistanceTest();
             moduleCommand.setConnectResistanceNextAddress(1);
             moduleCommand.setConnectResistanceMaxAddress(batteryCount);
+            moduleCommand.setOptLogType(BatteryTestEnum._2.getDictValue());
         } catch (IllegalArgumentException e) {
             log.warn("连接条测试命令被拒绝, 通道={}, 电池组={}, 原因={}", channelName, batteryGroup, e.getMessage());
             return unsupported(BatteryAggregateCommandDefinition.CONNECT_RESISTANCE_TEST, channelName);

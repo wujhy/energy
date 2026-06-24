@@ -73,6 +73,8 @@ public class BatteryModuleControlCommand {
      * 关联的操作日志ID。
      */
     private Long optLogId;
+    /** 兼容 dev_opt_log 的操作类型，不设置时按 99 模块命令记录。 */
+    private Integer optLogType;
 
     /**
      * 连接条测试下一个待测单体地址。

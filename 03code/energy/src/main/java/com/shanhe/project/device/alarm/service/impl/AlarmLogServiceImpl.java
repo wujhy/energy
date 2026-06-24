@@ -1161,8 +1161,8 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
      * 删除所有告警日志并清空缓存
      */
     @Override
-    public void deleteALL() {
-        alarmLogMapper.deleteALL();
+    public void deleteAll() {
+        alarmLogMapper.deleteAll();
         CacheUtils.removeAll(alarmCache.getCache());
     }
 

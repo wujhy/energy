@@ -30,6 +30,7 @@ class BatteryCollectorCommandLogServiceTest {
                 .batteryGroup(2)
                 .address(8)
                 .mode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE)
+                .optLogType(BatteryTestEnum._2.getDictValue())
                 .requestCode(0x02)
                 .responseCode(0x82)
                 .payload(new byte[]{0x01, 0x23})
@@ -44,7 +45,7 @@ class BatteryCollectorCommandLogServiceTest {
         Assertions.assertEquals(optLogId, optLog.getId());
         Assertions.assertEquals(1L, optLog.getConfigId());
         Assertions.assertEquals(2, optLog.getPackNum());
-        Assertions.assertEquals(BatteryTestEnum._99.getDictValue(), optLog.getType());
+        Assertions.assertEquals(BatteryTestEnum._2.getDictValue(), optLog.getType());
         Assertions.assertEquals("single-test", optLog.getContent());
         Assertions.assertEquals(BatteryDeviceStateConstants.Source.COLLECTOR, optLog.getSource());
         Assertions.assertEquals("battery-group-1", optLog.getChannelName());

@@ -16,7 +16,11 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.function.Consumer;
 
-import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.*;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.BATTERY_SPEC_2V;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.BATTERY_SPEC_12V;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.GROUP_MODULE_ADDRESS;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.VOLTAGE_2V;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.VOLTAGE_12V;
 
 /**
  * 蓄电池命令队列执行服务。

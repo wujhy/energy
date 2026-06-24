@@ -3,7 +3,7 @@ package com.shanhe.project.collector.battery.service;
 import com.fazecast.jSerialComm.SerialPort;
 import com.shanhe.common.utils.Threads;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
-import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.*;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.UNSIGNED_BYTE_MAX;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelState;

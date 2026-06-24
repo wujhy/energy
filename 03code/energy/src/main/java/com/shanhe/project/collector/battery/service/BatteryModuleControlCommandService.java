@@ -2,7 +2,8 @@ package com.shanhe.project.collector.battery.service;
 
 import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
-import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.*;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.GROUP_MODULE_ADDRESS;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.UNSIGNED_BYTE_MAX;
 import org.springframework.stereotype.Service;
 
 /**

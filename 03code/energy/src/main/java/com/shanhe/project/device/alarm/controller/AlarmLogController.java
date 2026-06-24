@@ -18,7 +18,7 @@ import javax.annotation.Resource;
 
 /**
  * 设备历史记录Controller
- * 
+ *
  * @author wjh
  * @since 2024-12-31
  */
@@ -129,7 +129,7 @@ public class AlarmLogController extends BaseController
     @ResponseBody
     public AjaxResult removeAll()
     {
-        alarmLogService.deleteALL();
+        alarmLogService.deleteAll();
         return success();
     }
 }
