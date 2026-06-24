@@ -310,6 +310,11 @@ public class ControlBattery extends ControlBase {
             return AjaxResult.success();
         }
 
+        if (Objects.equals(opt.getTestType(), BatteryTestEnum._2.getDictValue())
+                || Objects.equals(opt.getTestType(), BatteryTestEnum._6.getDictValue())) {
+            return AjaxResult.error("当前测试类型暂不支持停止命令", 0);
+        }
+
         String cmdStr = cmdBatteryControlService.genCmd30(config, opt.getPackNum(), "4", 0, 0D);
         if (StrUtil.isBlank(cmdStr)) {
             return AjaxResult.error("下发蓄电池停止备电失败，指令生成失败", 0);

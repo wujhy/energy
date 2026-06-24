@@ -96,6 +96,17 @@ class ControlBatteryTest {
     }
 
     @Test
+    void shouldRejectStopForCollectorManagedTestTypes() {
+        ControlBattery service = service(true);
+        CmdBatteryControlService cmdService = (CmdBatteryControlService) ReflectionTestUtils.getField(service, "cmdBatteryControlService");
+
+        AjaxResult result = service.toSendStopBatteryCmdToOat(request(BatteryTestEnum._2.getDictValue()));
+
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Mockito.verify(cmdService, Mockito.never()).genCmd30(Mockito.any(), Mockito.anyInt(), Mockito.anyString(), Mockito.anyInt(), Mockito.anyDouble());
+    }
+
+    @Test
     void shouldRejectUnsupportedScheduleCommandTypeBeforePersist() {
         ControlBattery service = service(true);
         IConfigService configService = (IConfigService) ReflectionTestUtils.getField(service, "configService");
