@@ -77,7 +77,7 @@ public class OptBatteryController extends BaseController {
         if (testEnum == null || BatteryTestEnum._99.equals(testEnum)) {
             return AjaxResult.error("下发蓄电池测试指令类型失败", 0);
         }
-        OptLog opt = optLogService.getRunningOptLog(null, testEnum.getDictValue());
+        OptLog opt = optLogService.getRunningOptLog(devBatteryOpt.getPackNum(), testEnum.getDictValue());
         if (opt != null) {
             return AjaxResult.error("蓄电池正在执行测试工作，请稍后再试！");
         }
