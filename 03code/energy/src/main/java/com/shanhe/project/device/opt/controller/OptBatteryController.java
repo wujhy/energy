@@ -10,6 +10,7 @@ import com.shanhe.framework.web.page.TableDataInfo;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
 import com.shanhe.project.device.config.service.IDevBatteryOptService;
 import com.shanhe.project.device.opt.domain.OptLog;
+import com.shanhe.project.device.opt.service.BatteryOptExecuteType;
 import com.shanhe.project.device.opt.service.ControlBattery;
 import com.shanhe.project.device.opt.service.OptLogService;
 import lombok.extern.slf4j.Slf4j;
@@ -61,10 +62,9 @@ public class OptBatteryController extends BaseController {
     @Log(title = "蓄电池测试操作", businessType = BusinessType.UPDATE)
     @PostMapping("/edit")
     public AjaxResult edit(@RequestBody DevBatteryOpt devBatteryOpt) {
-        devBatteryOpt.setConfigId(Constants.DEFAULT_CONFIG_ID);
-        devBatteryOpt.setIsSync(false);
-        //发送指令到终端设备
-        return controlBattery.toSendCmdToOat(devBatteryOpt);
+        normalizeLocalOpt(devBatteryOpt);
+        devBatteryOptService.insertDevBatteryOpt(devBatteryOpt);
+        return success();
     }
 
     /**
@@ -72,17 +72,24 @@ public class OptBatteryController extends BaseController {
      */
     @PostMapping("/doCmdOptBatteryTest")
     public AjaxResult doCmdOptBatteryTest(@RequestBody DevBatteryOpt devBatteryOpt) {
-        devBatteryOpt.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        normalizeLocalOpt(devBatteryOpt);
         BatteryTestEnum testEnum = BatteryTestEnum.find(devBatteryOpt.getTestType());
         if (testEnum == null || BatteryTestEnum._99.equals(testEnum)) {
             return AjaxResult.error("下发蓄电池测试指令类型失败", 0);
         }
+        devBatteryOptService.insertDevBatteryOpt(devBatteryOpt);
         OptLog opt = optLogService.getRunningOptLog(null, testEnum.getDictValue());
         if (opt != null) {
             return AjaxResult.error("蓄电池正在执行测试工作，请稍后再试！");
         }
         // 发送指令到终端设备
-        return controlBattery.toSendBatteryCmdToOat(devBatteryOpt);
+        return controlBattery.executeBatteryOpt(devBatteryOpt, BatteryOptExecuteType.MANUAL);
+    }
+
+    /** 统一页面入口写库字段，避免计划保存和立即执行使用不同默认值。 */
+    private void normalizeLocalOpt(DevBatteryOpt devBatteryOpt) {
+        devBatteryOpt.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        devBatteryOpt.setIsSync(false);
     }
 
     /**

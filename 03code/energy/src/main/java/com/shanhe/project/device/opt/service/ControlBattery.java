@@ -131,6 +131,13 @@ public class ControlBattery extends ControlBase {
     }
 
     /**
+     * 统一执行蓄电池测试命令，页面立即执行和计划任务触发共用该入口。
+     */
+    public AjaxResult executeBatteryOpt(DevBatteryOpt opt, BatteryOptExecuteType executeType) {
+        return toSendBatteryCmdToOat(opt);
+    }
+
+    /**
      * 立即执行蓄电池操作
      */
     public AjaxResult toSendBatteryCmdToOat(DevBatteryOpt opt) {

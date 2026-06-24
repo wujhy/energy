@@ -5,6 +5,7 @@ import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
 import com.shanhe.project.device.config.service.IDevBatteryOptService;
 import com.shanhe.project.device.opt.domain.OptLog;
+import com.shanhe.project.device.opt.service.BatteryOptExecuteType;
 import com.shanhe.project.device.opt.service.ControlBattery;
 import com.shanhe.project.device.opt.service.OptLogService;
 import lombok.extern.slf4j.Slf4j;
@@ -72,7 +73,7 @@ public class BatteryOptScheduleJob {
                         opt.getPackNum(), opt.getTestType());
                 return;
             }
-            AjaxResult result = controlBattery.toSendBatteryCmdToOat(opt);
+            AjaxResult result = controlBattery.executeBatteryOpt(opt, BatteryOptExecuteType.SCHEDULED);
             if (isSuccess(result)) {
                 updateNextSchedule(opt, now);
             } else {
