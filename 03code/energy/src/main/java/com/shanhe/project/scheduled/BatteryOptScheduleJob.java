@@ -88,7 +88,7 @@ public class BatteryOptScheduleJob {
     }
 
     private boolean hasRunningOptLog(DevBatteryOpt opt) {
-        OptLog running = optLogService.getRunningOptLog(null, opt.getTestType());
+        OptLog running = optLogService.getRunningOptLog(opt.getPackNum(), opt.getTestType());
         return running != null;
     }
 
