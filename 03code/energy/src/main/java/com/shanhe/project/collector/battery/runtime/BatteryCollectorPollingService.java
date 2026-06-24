@@ -1,6 +1,7 @@
 package com.shanhe.project.collector.battery.runtime;
 
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.GROUP_MODULE_ADDRESS;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelState;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
@@ -200,7 +201,7 @@ public class BatteryCollectorPollingService {
      * 更新模块地址缓存：响应成功时加入/保留，连续未响应时移除。
      */
     public void updateModuleAddressCache(BatteryCollectorChannelState state, int address, boolean responded) {
-        if (address == 246) {
+        if (address == GROUP_MODULE_ADDRESS) {
             collectorDeviceStateService.persistGroup246Freshness(state.getConfig(), responded);
         }
         if (!Boolean.TRUE.equals(properties.getModuleAddressCacheEnabled())) {
@@ -241,7 +242,7 @@ public class BatteryCollectorPollingService {
     private List<Integer> fullModuleAddressRange(BatteryCollectorChannelConfig config) {
         List<Integer> addresses = new ArrayList<>();
         int start = config.getModuleAddressStart() != null ? config.getModuleAddressStart() : 1;
-        int end = config.getModuleAddressEnd() != null ? config.getModuleAddressEnd() : 246;
+        int end = config.getModuleAddressEnd() != null ? config.getModuleAddressEnd() : GROUP_MODULE_ADDRESS;
         for (int address = start; address <= end; address++) {
             addresses.add(address);
         }
@@ -256,7 +257,7 @@ public class BatteryCollectorPollingService {
     }
 
     private void appendRequiredGroupModuleAddress(List<Integer> addresses) {
-        int groupModuleAddress = 246;
+        int groupModuleAddress = GROUP_MODULE_ADDRESS;
         if (!addresses.contains(groupModuleAddress)) {
             addresses.add(groupModuleAddress);
             Collections.sort(addresses);

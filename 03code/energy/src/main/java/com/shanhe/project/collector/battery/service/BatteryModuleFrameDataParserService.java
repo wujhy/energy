@@ -6,7 +6,8 @@ import com.shanhe.project.collector.battery.model.BatteryModuleFrameData;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import org.springframework.stereotype.Service;
 
-import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.*;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.GROUP_MODULE_ADDRESS;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.MAX_CELL_ADDRESS;
 
 /**
  * 600节模块端帧标准数据解析服务。

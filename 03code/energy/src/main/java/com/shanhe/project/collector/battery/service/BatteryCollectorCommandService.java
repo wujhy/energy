@@ -7,6 +7,9 @@ import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.iot.model.BatteryModeInfo;
+
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.MAX_CELL_ADDRESS;
+import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.UNSIGNED_SHORT_MAX;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

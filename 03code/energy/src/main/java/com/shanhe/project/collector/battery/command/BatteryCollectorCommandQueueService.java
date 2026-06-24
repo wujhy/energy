@@ -144,8 +144,7 @@ public class BatteryCollectorCommandQueueService {
             if (payload.length < 3) {
                 return false;
             }
-            // GROUP_MODULE_ADDRESS = 246
-            return pendingRequest.getRequestAddress() != 246 || (payload[0] & 0xFF) == 1;
+            return pendingRequest.getRequestAddress() != GROUP_MODULE_ADDRESS || (payload[0] & 0xFF) == 1;
         }
         // payload[0]==0 表示模块应答成功
         return payload.length > 0 && (payload[0] & 0xFF) == 0;
