@@ -14,6 +14,7 @@ import com.shanhe.project.device.config.domain.DevBatteryOpt;
 import com.shanhe.project.device.config.service.BatteryReportLogService;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IConfigService;
+import com.shanhe.project.device.config.service.IDevBatteryOptService;
 import com.shanhe.project.device.opt.cmd.CmdBatteryControlService;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
@@ -94,6 +95,19 @@ class ControlBatteryTest {
         Mockito.verifyNoInteractions(commandAdapter);
     }
 
+    @Test
+    void shouldRejectUnsupportedScheduleCommandTypeBeforePersist() {
+        ControlBattery service = service(true);
+        IConfigService configService = (IConfigService) ReflectionTestUtils.getField(service, "configService");
+        IDevBatteryOptService optService = (IDevBatteryOptService) ReflectionTestUtils.getField(service, "devBatteryOptService");
+
+        AjaxResult result = service.toSendCmdToOat(request(12345));
+
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Mockito.verifyNoInteractions(optService);
+        Mockito.verify(configService, Mockito.never()).selectDefaultConfig();
+    }
+
     private ControlBattery service(boolean realtimeEnabled) {
         ControlBattery service = new ControlBattery();
 
@@ -119,6 +133,8 @@ class ControlBatteryTest {
                 controlBatterySet());
         ReflectionTestUtils.setField(service, "optLogService",
                 Mockito.mock(OptLogService.class));
+        ReflectionTestUtils.setField(service, "devBatteryOptService",
+                Mockito.mock(IDevBatteryOptService.class));
 
         ReflectionTestUtils.setField(service, "batteryOptCollectorCommandAdapter",
                 Mockito.mock(BatteryOptCollectorCommandAdapter.class));

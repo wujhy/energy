@@ -74,8 +74,11 @@ public class OptBatteryController extends BaseController {
     public AjaxResult doCmdOptBatteryTest(@RequestBody DevBatteryOpt devBatteryOpt) {
         devBatteryOpt.setConfigId(Constants.DEFAULT_CONFIG_ID);
         BatteryTestEnum testEnum = BatteryTestEnum.find(devBatteryOpt.getTestType());
+        if (testEnum == null || BatteryTestEnum._99.equals(testEnum)) {
+            return AjaxResult.error("下发蓄电池测试指令类型失败", 0);
+        }
         OptLog opt = optLogService.getRunningOptLog(null, testEnum.getDictValue());
-        if(opt!=null){
+        if (opt != null) {
             return AjaxResult.error("蓄电池正在执行测试工作，请稍后再试！");
         }
         // 发送指令到终端设备

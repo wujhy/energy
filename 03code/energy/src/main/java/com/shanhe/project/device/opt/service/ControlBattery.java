@@ -74,6 +74,10 @@ public class ControlBattery extends ControlBase {
      * 蓄电池推送测试指令到终端设备
      */
     public AjaxResult toSendCmdToOat(DevBatteryOpt opt) {
+        BatteryTestEnum testEnum = BatteryTestEnum.find(opt.getTestType());
+        if (isUnsupportedCommandType(testEnum)) {
+            return AjaxResult.error("下发蓄电池测试指令类型失败", 0);
+        }
         // 校验设备
         Config config = this.getConfig(opt);
 
@@ -89,7 +93,6 @@ public class ControlBattery extends ControlBase {
         opt.setReplaceTime(DateUtils.parseDateToStr(DateUtils.YYYYMMDDHHMMSS, opt.getTestTime()));
         // 命令内容、动态指令号
         String dynCid, cmdStr;
-        BatteryTestEnum testEnum = BatteryTestEnum.find(opt.getTestType());
         switch (testEnum) {
             case _1:  //内阻测试配置
                 cmdStr = cmdBatteryControlService.getCmd32(config, opt);
@@ -131,9 +134,12 @@ public class ControlBattery extends ControlBase {
      * 立即执行蓄电池操作
      */
     public AjaxResult toSendBatteryCmdToOat(DevBatteryOpt opt) {
+        BatteryTestEnum testEnum = BatteryTestEnum.find(opt.getTestType());
+        if (isUnsupportedCommandType(testEnum)) {
+            return AjaxResult.error("下发蓄电池测试指令类型失败", 0);
+        }
         // 校验设备
         Config config = this.getConfig(opt);
-        BatteryTestEnum testEnum = BatteryTestEnum.find(opt.getTestType());
 
         BatteryReportLog batteryReportLog = getCurrentReportLog(opt.getPackNum());
         if (null == batteryReportLog) {
@@ -335,6 +341,13 @@ public class ControlBattery extends ControlBase {
             throw new ServiceException("该电池组不允许测试！");
         }
         return config;
+    }
+
+    /**
+     * 判断是否为当前控制链路不支持的测试类型。
+     */
+    private boolean isUnsupportedCommandType(BatteryTestEnum testEnum) {
+        return testEnum == null || BatteryTestEnum._99.equals(testEnum);
     }
 
     /**
