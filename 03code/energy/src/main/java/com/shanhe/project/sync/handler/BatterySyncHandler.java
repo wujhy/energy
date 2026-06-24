@@ -8,6 +8,8 @@ import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
 import com.shanhe.project.device.config.service.IBatteryPackService;
+import com.shanhe.project.device.config.service.IDevBatteryOptService;
+import com.shanhe.project.device.opt.service.BatteryOptExecuteType;
 import com.shanhe.project.device.opt.service.ControlBattery;
 import com.shanhe.project.energy.stat.domain.DevBatteryMonomer;
 import com.shanhe.project.energy.stat.service.IDevBatteryMonomerService;
@@ -34,6 +36,8 @@ public class BatterySyncHandler {
     @Resource
     private ControlBattery controlBattery;
     @Resource
+    private IDevBatteryOptService devBatteryOptService;
+    @Resource
     private IBatteryPackService batteryPackService;
     @Resource
     private ClientReportService clientReportService;
@@ -56,12 +60,11 @@ public class BatterySyncHandler {
             batteryOpt.setConfigId(optVo.getDevId());
             batteryOpt.setIsSync(true);
 
-            AjaxResult ajaxResult;
-            // 保留旧分支语义：YES 走测试计划/配置同步，其他值走立即执行。
-            if (Objects.equals(optVo.getIsNow(), YesNoEnum.YES.getDictValue())) {
-                ajaxResult = controlBattery.toSendCmdToOat(batteryOpt);
-            } else {
-                ajaxResult = controlBattery.toSendBatteryCmdToOat(batteryOpt);
+            devBatteryOptService.insertDevBatteryOpt(batteryOpt);
+            AjaxResult ajaxResult = AjaxResult.success();
+            // YES 表示同步测试计划，只保存参数；其他值表示立即执行，复用页面执行链路。
+            if (!Objects.equals(optVo.getIsNow(), YesNoEnum.YES.getDictValue())) {
+                ajaxResult = controlBattery.executeBatteryOpt(batteryOpt, BatteryOptExecuteType.MANUAL);
             }
             // 失败
             if (!Objects.equals(ajaxResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value())) {

@@ -4,6 +4,8 @@ import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
+import com.shanhe.project.device.config.service.IDevBatteryOptService;
+import com.shanhe.project.device.opt.service.BatteryOptExecuteType;
 import com.shanhe.project.device.opt.service.ControlBattery;
 import com.shanhe.project.sync.consts.MethodEnum;
 import com.shanhe.project.sync.domain.BatteryOptVo;
@@ -18,30 +20,32 @@ import org.springframework.test.util.ReflectionTestUtils;
 class BatterySyncHandlerTest {
 
     @Test
-    void shouldKeepPlanSyncOnOldControlPathWhenCollectorCommandEnabled() {
+    void shouldSavePlanSyncWithoutDispatchingCommand() {
         BatterySyncHandler handler = new HandlerBuilder().build();
         ControlBattery controlBattery = (ControlBattery) ReflectionTestUtils.getField(handler, "controlBattery");
-        Mockito.when(controlBattery.toSendCmdToOat(Mockito.any(DevBatteryOpt.class)))
-                .thenReturn(AjaxResult.success());
+        IDevBatteryOptService optService = (IDevBatteryOptService) ReflectionTestUtils.getField(handler, "devBatteryOptService");
 
         ResponseVo response = handler.syncBatteryOpt(request(YesNoEnum.YES.getDictValue(), BatteryTestEnum._2.getDictValue(), null));
 
         Assertions.assertEquals(0, response.getCode());
-        Mockito.verify(controlBattery).toSendCmdToOat(Mockito.any(DevBatteryOpt.class));
+        Mockito.verify(optService).insertDevBatteryOpt(Mockito.any(DevBatteryOpt.class));
+        Mockito.verifyNoInteractions(controlBattery);
     }
 
     @Test
-    void shouldFallbackToOldImmediateControlWhenCollectorCommandIsNotMapped() {
+    void shouldSaveAndExecuteImmediateSyncThroughUnifiedPath() {
         BatterySyncHandler handler = new HandlerBuilder().build();
         ControlBattery controlBattery = (ControlBattery) ReflectionTestUtils.getField(handler, "controlBattery");
-        Mockito.when(controlBattery.toSendBatteryCmdToOat(Mockito.any(DevBatteryOpt.class)))
+        IDevBatteryOptService optService = (IDevBatteryOptService) ReflectionTestUtils.getField(handler, "devBatteryOptService");
+        Mockito.when(controlBattery.executeBatteryOpt(Mockito.any(DevBatteryOpt.class), Mockito.eq(BatteryOptExecuteType.MANUAL)))
                 .thenReturn(AjaxResult.success());
 
         ResponseVo response = handler.syncBatteryOpt(request(YesNoEnum.NO.getDictValue(), BatteryTestEnum._6.getDictValue(), null));
 
         Assertions.assertEquals(0, response.getCode());
         ArgumentCaptor<DevBatteryOpt> captor = ArgumentCaptor.forClass(DevBatteryOpt.class);
-        Mockito.verify(controlBattery).toSendBatteryCmdToOat(captor.capture());
+        Mockito.verify(optService).insertDevBatteryOpt(Mockito.any(DevBatteryOpt.class));
+        Mockito.verify(controlBattery).executeBatteryOpt(captor.capture(), Mockito.eq(BatteryOptExecuteType.MANUAL));
         Assertions.assertEquals(BatteryTestEnum._6.getDictValue(), captor.getValue().getTestType());
     }
 
@@ -65,6 +69,7 @@ class BatterySyncHandlerTest {
 
             ControlBattery controlBattery = Mockito.mock(ControlBattery.class);
             ReflectionTestUtils.setField(handler, "controlBattery", controlBattery);
+            ReflectionTestUtils.setField(handler, "devBatteryOptService", Mockito.mock(IDevBatteryOptService.class));
             return handler;
         }
     }
