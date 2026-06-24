@@ -8,5 +8,8 @@ public enum BatteryOptExecuteType {
     MANUAL,
 
     /** 测试计划定时触发。 */
-    SCHEDULED
+    SCHEDULED,
+
+    /** 平台同步触发立即执行。 */
+    SYNC
 }

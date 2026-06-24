@@ -37,7 +37,7 @@ class BatterySyncHandlerTest {
         BatterySyncHandler handler = new HandlerBuilder().build();
         ControlBattery controlBattery = (ControlBattery) ReflectionTestUtils.getField(handler, "controlBattery");
         IDevBatteryOptService optService = (IDevBatteryOptService) ReflectionTestUtils.getField(handler, "devBatteryOptService");
-        Mockito.when(controlBattery.executeBatteryOpt(Mockito.any(DevBatteryOpt.class), Mockito.eq(BatteryOptExecuteType.MANUAL)))
+        Mockito.when(controlBattery.executeBatteryOpt(Mockito.any(DevBatteryOpt.class), Mockito.eq(BatteryOptExecuteType.SYNC)))
                 .thenReturn(AjaxResult.success());
 
         ResponseVo response = handler.syncBatteryOpt(request(YesNoEnum.NO.getDictValue(), BatteryTestEnum._6.getDictValue(), null));
@@ -45,7 +45,7 @@ class BatterySyncHandlerTest {
         Assertions.assertEquals(0, response.getCode());
         ArgumentCaptor<DevBatteryOpt> captor = ArgumentCaptor.forClass(DevBatteryOpt.class);
         Mockito.verify(optService).insertDevBatteryOpt(Mockito.any(DevBatteryOpt.class));
-        Mockito.verify(controlBattery).executeBatteryOpt(captor.capture(), Mockito.eq(BatteryOptExecuteType.MANUAL));
+        Mockito.verify(controlBattery).executeBatteryOpt(captor.capture(), Mockito.eq(BatteryOptExecuteType.SYNC));
         Assertions.assertEquals(BatteryTestEnum._6.getDictValue(), captor.getValue().getTestType());
     }
 

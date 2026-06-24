@@ -64,7 +64,7 @@ public class BatterySyncHandler {
             AjaxResult ajaxResult = AjaxResult.success();
             // YES 表示同步测试计划，只保存参数；其他值表示立即执行，复用页面执行链路。
             if (!Objects.equals(optVo.getIsNow(), YesNoEnum.YES.getDictValue())) {
-                ajaxResult = controlBattery.executeBatteryOpt(batteryOpt, BatteryOptExecuteType.MANUAL);
+                ajaxResult = controlBattery.executeBatteryOpt(batteryOpt, BatteryOptExecuteType.SYNC);
             }
             // 失败
             if (!Objects.equals(ajaxResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value())) {
