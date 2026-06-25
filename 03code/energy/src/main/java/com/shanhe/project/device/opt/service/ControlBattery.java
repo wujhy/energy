@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * 设备控制类
+ * 设备控制。
  *
  * @author wjh
  * @since 2026-05-25
@@ -125,7 +125,7 @@ public class ControlBattery extends ControlBase {
 
         // 是否重复请求
         String resultKey = super.setControlStatus(config, opt.getPackNum(), dynCid, cacheKeyEnum);
-        // 旧 CommServer.returnCmd 直发链路，待迁移为 600 命令队列。
+        // 走 CommServer.returnCmd 直发链路，待迁移到 600 命令队列。
         CommServer.returnCmd(cmdStr);
 
         // 结果监控
@@ -140,7 +140,7 @@ public class ControlBattery extends ControlBase {
     }
 
     /**
-     * 立即执行蓄电池操作
+     * 立即执行蓄电池操作。
      */
     public AjaxResult toSendBatteryCmdToOat(DevBatteryOpt opt) {
         BatteryTestEnum testEnum = BatteryTestEnum.find(opt.getTestType());
@@ -170,7 +170,7 @@ public class ControlBattery extends ControlBase {
             Double current = MapUtil.getDouble(batteryReportLog.getPackParam(), "packCurrent");
             //电池组充放电电流
             if (current != null && Math.abs(current) < 5) {
-                throw new RuntimeException("电池组未到达测试条件，需组电流超过±5A才可以进行连接条测试！");
+                throw new RuntimeException("电池组未到达测试条件，需组电流超过 5A 才可以进行连接条测试");
             }
         } else {
 
@@ -187,7 +187,7 @@ public class ControlBattery extends ControlBase {
             return collectorResult;
         }
 
-        // 默认需要等待执行结果；部分命令需要记录一次性响应日志或长任务运行日志
+        // 默认需要等待执行结果；部分命令需要记录一次性响应日志或长任务运行日志。
         boolean needWait = true, needCommandLog = false, needRunningLog = false;
         // 命令内容、动态指令号
         String cmdStr, dynCid;
@@ -197,8 +197,8 @@ public class ControlBattery extends ControlBase {
                 if (modelResult != null) {
                     if (modelResult.getMode() == 0 && modelResult.getStatus() == 0) {
                     } else {
-                        // 当前模式 0： 无测试 1： 自动编号 6： 内阻测试 10：连接条电阻测试 */
-                        String mode = modelResult.getMode() == 1 ? "自动编号" : modelResult.getMode() == 6 ? "内阻测试" : modelResult.getMode() == 10 ? "连接条电阻测试" : "无";
+                        // 当前模式 0：无测试 1：自动编号 6：内阻测试 10：连接条电阻测试
+                        String mode = modelResult.getMode() == 1 ? "自动编号" : modelResult.getMode() == 6 ? "内阻测试" : modelResult.getMode() == 10 ? "连接条电阻测试" : "未知";
                         return AjaxResult.error("正在进行" + mode + "，请勿进行其他操作");
                     }
                 }
@@ -207,7 +207,7 @@ public class ControlBattery extends ControlBase {
                 // 5 分钟内不允许测试
                 if (null != optLog) {
                     if (null == optLog.getUpdateTime()) {
-                        return AjaxResult.error("正在内阻测试中", 0);
+                        return AjaxResult.error("正在内阻测试", 0);
                     }
                     if (System.currentTimeMillis() - optLog.getUpdateTime().getTime() < 5 * 60 * 1000) {
                         return AjaxResult.error("5分钟内不允许重复测试内阻", 0);
@@ -233,6 +233,7 @@ public class ControlBattery extends ControlBase {
                 needRunningLog = true;
                 break;
             case _6:  //单节内阻测试
+
                 cmdStr = cmdBatteryControlService.getCmd36(config, opt);
                 dynCid = BatteryCidEnum._E6.getDictValue();
                 break;
@@ -246,12 +247,13 @@ public class ControlBattery extends ControlBase {
         // 是否重复请求
         String resultKey = super.setControlStatus(config, opt.getPackNum(), dynCid, cacheKeyEnum);
         // 记录操作日志
+
         Long optLogId = null;
         if (needCommandLog) {
             optLogId = optLogService.insert(opt.getPackNum(), opt.getTestType(), null);
         }
 
-        // 旧 CommServer.returnCmd 直发链路，待迁移为 600 命令队列。
+        // 走 CommServer.returnCmd 直发链路，待迁移到 600 命令队列。
         CommServer.returnCmd(cmdStr);
 
         AjaxResult ajaxResult = AjaxResult.success();
@@ -314,7 +316,7 @@ public class ControlBattery extends ControlBase {
 
         if (Objects.equals(opt.getTestType(), BatteryTestEnum._2.getDictValue())
                 || Objects.equals(opt.getTestType(), BatteryTestEnum._6.getDictValue())) {
-            return AjaxResult.error("当前测试类型暂不支持停止命令", 0);
+            return batteryOptCollectorCommandAdapter.tryStop(opt);
         }
 
         String cmdStr = cmdBatteryControlService.genCmd30(config, opt.getPackNum(), "4", 0, 0D);
@@ -322,7 +324,7 @@ public class ControlBattery extends ControlBase {
             return AjaxResult.error("下发蓄电池停止备电失败，指令生成失败", 0);
         }
 
-        // 旧 CommServer.returnCmd 直发链路，待迁移为 600 命令队列。
+        // 走 CommServer.returnCmd 直发链路，待迁移到 600 命令队列。
         CommServer.returnCmd(cmdStr);
         if (Objects.equals(opt.getTestType(), BatteryTestEnum._3.getDictValue())
                 || Objects.equals(opt.getTestType(), BatteryTestEnum._5.getDictValue())) {
@@ -339,7 +341,7 @@ public class ControlBattery extends ControlBase {
         // 设备
         Config config = configService.selectDefaultConfig();
         if (config == null) {
-            throw new ServiceException("设备不存在，操作执行失败！");
+            throw new ServiceException("设备不存在，操作执行失败");
         }
         if (!Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
             throw new ServiceException("非蓄电池设备，操作执行失败！");
