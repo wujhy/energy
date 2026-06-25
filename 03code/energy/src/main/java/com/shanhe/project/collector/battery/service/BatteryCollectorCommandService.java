@@ -107,6 +107,37 @@ public class BatteryCollectorCommandService {
     }
 
     /**
+     * 停止指定电池组当前运行的采集测试，并取消队列中尚未下发的同类命令。
+     *
+     * @param batteryGroup 电池组编号
+     * @param mode 期望停止的工作模式
+     * @return 停止处理结果
+     */
+    public BatteryCollectorCommandResult stopRunningTest(Integer batteryGroup, Integer mode) {
+        if (batteryGroup == null || batteryGroup <= 0) {
+            return blocked(null, null, "电池组编号无效");
+        }
+        if (mode == null) {
+            return blocked(null, null, "测试类型不支持停止");
+        }
+        BatteryModeInfo modeInfo = batteryModeStatusService == null ? null : batteryModeStatusService.get(batteryGroup);
+        if (modeInfo == null || !Objects.equals(modeInfo.getPackNum(), batteryGroup)
+                || !Objects.equals(modeInfo.getStatus(), 1)) {
+            return blocked(null, null, "当前电池组没有正在执行的测试");
+        }
+        if (!Objects.equals(modeInfo.getMode(), mode)) {
+            return blocked(null, null, "当前运行测试类型与停止类型不一致");
+        }
+        int cancelled = collectorService == null ? 0 : collectorService.cancelQueuedModuleCommands(batteryGroup, mode);
+        batteryModeStatusService.markStopped(batteryGroup, mode, modeInfo.getAddress(), true);
+        return BatteryCollectorCommandResult.builder()
+                .success(true)
+                .timeout(false)
+                .mappedToModuleCommand(true)
+                .message("测试停止成功，已取消未下发命令" + cancelled + "条")
+                .build();
+    }
+    /**
      * 手动设置模块地址。
      *
      * @param channelName 通道名称

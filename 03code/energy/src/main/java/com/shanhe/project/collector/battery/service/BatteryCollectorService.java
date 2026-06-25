@@ -32,6 +32,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -673,6 +674,43 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return address != null && address >= 1 && address <= 245;
     }
 
+    /**
+     * 取消指定电池组和模式下尚未下发的模块端命令。
+     *
+     * @param batteryGroup 电池组编号
+     * @param mode 工作模式
+     * @return 已取消的命令数量
+     */
+    public int cancelQueuedModuleCommands(Integer batteryGroup, Integer mode) {
+        if (batteryGroup == null || mode == null) {
+            return 0;
+        }
+        int cancelled = 0;
+        for (BatteryCollectorChannelState state : new ArrayList<>(channelStates)) {
+            List<BatteryModuleControlCommand> matchedCommands = new ArrayList<>();
+            state.getQueuedModuleCommands().removeIf(command -> {
+                boolean matched = command != null
+                        && Objects.equals(command.getBatteryGroup(), batteryGroup)
+                        && Objects.equals(command.getMode(), mode);
+                if (matched) {
+                    matchedCommands.add(command);
+                }
+                return matched;
+            });
+            for (BatteryModuleControlCommand command : matchedCommands) {
+                commandLogService.updateCommandOptLog(
+                        command.getOptLogId(),
+                        BatteryDeviceStateConstants.CommandStatus.CANCELLED,
+                        null,
+                        null);
+            }
+            cancelled += matchedCommands.size();
+        }
+        if (cancelled > 0) {
+            log.info("蓄电池模块命令队列已取消未下发命令, packNum={}, mode={}, count={}", batteryGroup, mode, cancelled);
+        }
+        return cancelled;
+    }
     /**
      * 重置模块地址缓存，下轮轮询恢复全量发现。
      * @param channelName 通道名称；为空时重置全部通道
