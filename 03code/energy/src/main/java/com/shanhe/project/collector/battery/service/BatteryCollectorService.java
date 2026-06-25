@@ -87,7 +87,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     @Resource
     private BatteryCollectorRuntimeViewService runtimeViewService;
     @Resource
-    private BatteryCollectorCacheService cacheService;
+    private BatteryCollectorCacheService batteryCollectorCacheService;
     @Resource
     private BatteryCollectorProtocolLogService protocolLogService;
     @Resource
@@ -488,7 +488,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 pendingRequest,
                 success,
                 this::markModeRunning,
-                () -> cacheService.resetModuleAddressCache(state, realtimeSnapshotService))) {
+                () -> batteryCollectorCacheService.resetModuleAddressCache(state, realtimeSnapshotService))) {
             return;
         }
         if (BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.name().equals(pendingRequest.getName())) {
@@ -497,7 +497,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         }
         commandQueueService.markModeStopped(pendingRequest, success);
         if (success && shouldResetModuleAddressCacheAfterCommand(pendingRequest)) {
-            cacheService.resetModuleAddressCache(state, realtimeSnapshotService);
+            batteryCollectorCacheService.resetModuleAddressCache(state, realtimeSnapshotService);
             log.info("地址命令成功后蓄电池模块地址缓存已重置, 通道={}, 命令={}",
                     state.getConfig() == null ? null : state.getConfig().getName(),
                     pendingRequest.getName());
@@ -679,7 +679,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
      * @return 是否匹配到通道
      */
     public boolean resetModuleAddressCache(String channelName) {
-        return cacheService.resetModuleAddressCache(channelStates, realtimeSnapshotService, channelName);
+        return batteryCollectorCacheService.resetModuleAddressCache(channelStates, realtimeSnapshotService, channelName);
     }
 
     /**
@@ -689,7 +689,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
      * @return 是否匹配到通道
      */
     public boolean resetModuleAddressCacheByBatteryGroup(Integer batteryGroup) {
-        return cacheService.resetModuleAddressCacheByBatteryGroup(channelStates, realtimeSnapshotService, batteryGroup);
+        return batteryCollectorCacheService.resetModuleAddressCacheByBatteryGroup(channelStates, realtimeSnapshotService, batteryGroup);
     }
 
     /**
