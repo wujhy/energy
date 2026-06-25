@@ -17,7 +17,6 @@ import com.shanhe.framework.manager.AsyncTaskManager;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.ConfigAttributeListVO;
 import com.shanhe.project.device.config.domain.ConfigAttributeVO;
-import com.shanhe.project.device.opt.service.ControlBattery;
 import com.shanhe.project.sync.service.ClientReportService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,8 +41,6 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
     private ConfigAttributeMapper configAttributeMapper;
     @Resource
     private IAlarmLogService alarmLogService;
-    @Resource
-    private ControlBattery controlBattery;
     @Resource
     private ClientReportService clientReportService;
 
@@ -420,15 +417,6 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
                             if (Objects.equals(attribute.getStatus(), YesNoEnum.NO.getDictValue())
                                     || Objects.equals(attribute.getAlarmConfig(), YesNoEnum.NO.getDictValue())) {
                                 alarmLogService.closeAlarmLog(attribute);
-                            }
-
-                            // 下发指令到设备
-                            if (needUpdate) {
-                                try {
-                                    controlBattery.doUpdateParameter(attribute);
-                                } catch (Exception e) {
-                                    log.error("下发更新属性指令失败：{}", e.getMessage());
-                                }
                             }
 
                             // 上报设备属性信息至服务端

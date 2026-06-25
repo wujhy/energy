@@ -4,7 +4,6 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.shanhe.common.exception.ServiceException;
-import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.DateUtils;
 import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.enums.*;
@@ -21,11 +20,9 @@ import com.shanhe.project.device.config.service.IDevBatteryOptService;
 import com.shanhe.project.device.opt.cmd.CmdBatteryControlService;
 import com.shanhe.project.device.opt.domain.OptLog;
 import com.shanhe.project.iot.model.BatteryModeInfo;
-import com.shanhe.project.sync.domain.AlarmItemLevelVo;
 import com.shanhe.project.sync.service.ClientReportService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import oshi.util.Util;
 
 import javax.annotation.Resource;
 import java.util.Date;
@@ -42,6 +39,7 @@ import java.util.Objects;
 @Service
 public class ControlBattery extends ControlBase {
 
+    /** 旧 M460/980 指令生成器，新测试控制不应继续扩展该链路。 */
     @Resource
     private CmdBatteryControlService cmdBatteryControlService;
     @Resource
@@ -72,7 +70,11 @@ public class ControlBattery extends ControlBase {
 
     /**
      * 蓄电池推送测试指令到终端设备
+     *
+     * @deprecated 旧 M460/980 测试计划配置下发链路。新计划保存不应调用本方法，
+     * 后续测试控制统一迁移到 600 模块端显式命令队列。
      */
+    @Deprecated
     public AjaxResult toSendCmdToOat(DevBatteryOpt opt) {
         BatteryTestEnum testEnum = BatteryTestEnum.find(opt.getTestType());
         if (isUnsupportedCommandType(testEnum)) {
@@ -123,7 +125,7 @@ public class ControlBattery extends ControlBase {
 
         // 是否重复请求
         String resultKey = super.setControlStatus(config, opt.getPackNum(), dynCid, cacheKeyEnum);
-        // 下发指令
+        // 旧 CommServer.returnCmd 直发链路，待迁移为 600 命令队列。
         CommServer.returnCmd(cmdStr);
 
         // 结果监控
@@ -249,7 +251,7 @@ public class ControlBattery extends ControlBase {
             optLogId = optLogService.insert(opt.getPackNum(), opt.getTestType(), null);
         }
 
-        // 下发指令
+        // 旧 CommServer.returnCmd 直发链路，待迁移为 600 命令队列。
         CommServer.returnCmd(cmdStr);
 
         AjaxResult ajaxResult = AjaxResult.success();
@@ -320,7 +322,7 @@ public class ControlBattery extends ControlBase {
             return AjaxResult.error("下发蓄电池停止备电失败，指令生成失败", 0);
         }
 
-        // 下发指令
+        // 旧 CommServer.returnCmd 直发链路，待迁移为 600 命令队列。
         CommServer.returnCmd(cmdStr);
         if (Objects.equals(opt.getTestType(), BatteryTestEnum._3.getDictValue())
                 || Objects.equals(opt.getTestType(), BatteryTestEnum._5.getDictValue())) {
@@ -381,186 +383,4 @@ public class ControlBattery extends ControlBase {
         return batteryReportLogService.lastCache(packNum);
     }
 
-    /**
-     * 同步参数信息
-     *
-     * @param config 设备
-     * @param batteryPackNumber 电池组
-     * @param needWait 是否等待结果
-     */
-    public void doSynBatteryAlarm(Config config, Integer batteryPackNumber, boolean needWait) {
-        // 判断是否存在记录
-        String cacheKey = String.format(CacheKeyEnum.RESULT_SYN_ALARM.getKey(), config.getConfigId(), batteryPackNumber);
-        Object hasCache = CacheUtils.get(CacheKeyEnum.RESULT_SYN_ALARM.getCache(), cacheKey);
-        if (hasCache != null) {
-            throw new ServiceException("正在同步参数中，请稍后再试！");
-        }
-        // 生成指令
-        String cmdStr = cmdBatteryControlService.genCmd39(config, batteryPackNumber);
-        if (StrUtil.isBlank(cmdStr)) {
-            log.error("39获取屏蔽报警参数，生成指令失败！");
-            return;
-        }
-        // 缓存
-        CacheUtils.put(CacheKeyEnum.RESULT_SYN_ALARM.getCache(), cacheKey, 1);
-        // 下发指令
-        CommServer.returnCmd(cmdStr);
-
-//        int[] alarmLevel = {1, 2, 3};  //参数报警等级
-        int[] alarmLevel = {1};  //参数报警等级，后面两个等级设备没开放
-        for (int level : alarmLevel) {
-            cmdStr = cmdBatteryControlService.genCmd0B(config, batteryPackNumber, level);
-            if (StrUtil.isBlank(cmdStr)) {
-                log.error("0B读取电池组报警参数，生成指令失败！");
-                continue;
-            }
-            // 下发指令
-            CommServer.returnCmd(cmdStr);
-        }
-
-        if (needWait) {
-            //延迟等待设备响应
-            while (true) {
-                hasCache = CacheUtils.get(CacheKeyEnum.RESULT_SYN_ALARM.getCache(), cacheKey);
-                if (hasCache == null) {
-                    break;
-                }
-                Util.sleep(500L);
-            }
-        }
-    }
-
-    /**
-     * 读取电池组信息
-     *
-     * @param config 设备
-     */
-    public void doUploadBattery(Config config) {
-        String cmdStr = cmdBatteryControlService.genCmd06(config);
-        if (StrUtil.isBlank(cmdStr)) {
-            log.error("06屏蔽电池组报警参数，生成指令失败！");
-            return;
-        }
-        // 下发指令
-        CommServer.returnCmd(cmdStr);
-    }
-
-    /**
-     * 读取设备版本
-     *
-     * @param config 设备配置
-     */
-    public void doUploadSoftNum(Config config) {
-        String cmdStr = cmdBatteryControlService.genCmd0E(config);
-        if (StrUtil.isBlank(cmdStr)) {
-            log.error("0E读取设备版本，生成指令失败！");
-            return;
-        }
-        // 下发指令
-        CommServer.returnCmd(cmdStr);
-    }
-
-    /**
-     * 下发指令，修改参数内容
-     *
-     * @param configAttribute 设备属性
-     */
-    public void doUpdateParameter(ConfigAttribute configAttribute) {
-        Config config = configService.selectDefaultConfig();
-        // 设备启用、在线、且为蓄电池
-        if (config == null
-                || !Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
-            return;
-        }
-
-        // 为指定属性
-        String paramNumber = ItemCode.getParamsNumber(configAttribute.getCode());
-        if (paramNumber == null || paramNumber.isEmpty()) {
-            log.info("{}【{}】参数编号不存在，无需下发指令！", configAttribute.getName(), configAttribute.getCode());
-            return;
-        }
-
-        // 若属性未开启、告警未配置，则下发告警屏蔽
-        if (Objects.equals(configAttribute.getStatus(), YesNoEnum.NO.getDictValue())
-                || Objects.equals(configAttribute.getAlarmConfig(), YesNoEnum.NO.getDictValue())) {
-            log.info("{}【{}】参数编号{}存在，下发屏蔽告警指令！", configAttribute.getName(), configAttribute.getCode(), paramNumber);
-            this.updateParameterByAlarm(config, configAttribute, paramNumber, true);
-            return;
-        }
-
-        // 告警解除屏蔽
-        log.info("{}【{}】参数编号{}存在，下发解除屏蔽告警指令！", configAttribute.getName(), configAttribute.getCode(), paramNumber);
-        this.updateParameterByAlarm(config, configAttribute, paramNumber, false);
-
-        // 告警配置设置
-        if (configAttribute.getListLevel() == null || configAttribute.getListLevel().isEmpty()) {
-            log.info("{}【{}】告警等级配置不存在，无需下发告警参数指令！", configAttribute.getName(), configAttribute.getCode());
-            return;
-        }
-
-        // 告警参数设置（首条记录 --> 设备三个告警等级）
-        AlarmItemLevelVo levelVo = configAttribute.getListLevel().get(0);
-        for (int i = 1; i <= 3; i++) {
-            this.updateParameterByLevel(config, configAttribute.getPackNum(), paramNumber, String.valueOf(i),
-                    levelVo.getHightValue(), levelVo.getLowValue(), levelVo.getRecValue());
-        }
-    }
-
-    /**
-     * 下发指令，是否开启告警配置
-     *
-     * @param config 设备
-     * @param configAttribute 参数项
-     */
-    public void updateParameterByAlarm(Config config, ConfigAttribute configAttribute, String paramNumber, Boolean isShield) {
-        //指令组装
-        String cmdStr = cmdBatteryControlService.genCmd0A(config, configAttribute.getPackNum(), 1, isShield ? 1 : 0, paramNumber);
-        if (StrUtil.isBlank(cmdStr)) {
-            log.error("0A屏蔽电池组报警参数，生成指令失败！");
-            return;
-        }
-        // 下发指令
-        CommServer.returnCmd(cmdStr);
-    }
-
-    /**
-     *
-     * 更新属性告警参数等级
-     *
-     * @param config 设备
-     * @param packNum 电池组编号
-     * @param paramNumber 参数编号
-     * @param level 告警等级
-     * @param minValue 最小值
-     * @param maxValue 最大值
-     * @param recValue 恢复值
-    、     */
-    private void updateParameterByLevel(Config config, Integer packNum, String paramNumber, String level, Double minValue, Double maxValue, Double recValue) {
-        // 告警值
-        Double value = minValue != null ? minValue : maxValue;
-        if (value == null) {
-            log.info("参数编号{}，告警等级{}，告警值不存在，无需下发配置！", paramNumber, level);
-            return;
-        }
-
-        //指令组装
-        String cmdStr = cmdBatteryControlService.genCmd03(config, packNum, level, paramNumber, value);
-        if (StrUtil.isBlank(cmdStr)) {
-            log.info("03设置电池组报警参数，生成指令失败！");
-            return;
-        }
-        // 下发指令
-        CommServer.returnCmd(cmdStr);
-
-        // 恢复值
-        if (recValue != null) {
-            String recParamNum = String.format("%02d", Integer.parseInt(paramNumber) + 1);
-            cmdStr = cmdBatteryControlService.genCmd03(config, packNum, level, recParamNum, recValue);
-            // 下发指令
-            if (StrUtil.isNotBlank(cmdStr)) {
-                CommServer.returnCmd(cmdStr);
-            }
-        }
-
-    }
 }
