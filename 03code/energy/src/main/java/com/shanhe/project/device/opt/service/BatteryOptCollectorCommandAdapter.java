@@ -3,6 +3,7 @@ package com.shanhe.project.device.opt.service;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
+import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
 import com.shanhe.project.device.config.service.IBatteryPackService;
@@ -83,6 +84,40 @@ public class BatteryOptCollectorCommandAdapter {
         return null;
     }
 
+    /**
+     * 尝试停止已接入 600 队列的测试命令。
+     *
+     * @param opt 停止参数
+     * @return 已处理时返回结果；无法处理时返回 null
+     */
+    public AjaxResult tryStop(DevBatteryOpt opt) {
+        if (opt == null || opt.getTestType() == null || opt.getPackNum() == null) {
+            return null;
+        }
+        if (!Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpModuleCommandEnabled())) {
+            return null;
+        }
+        Integer mode = resolveMode(opt.getTestType());
+        if (mode == null) {
+            return null;
+        }
+        BatteryCollectorCommandResult result = batteryCollectorCommandService.stopRunningTest(opt.getPackNum(), mode);
+        if (result != null && result.isSuccess()) {
+            return AjaxResult.success(result.getMessage(), result);
+        }
+        return AjaxResult.error(result == null ? "停止测试失败" : result.getMessage(), 0);
+    }
+
+    /** 将测试类型映射为 600 采集侧工作模式。 */
+    private Integer resolveMode(Integer testType) {
+        if (BatteryTestEnum._2.getDictValue().equals(testType)) {
+            return BatteryModeStatusService.MODE_CONNECT_RESISTANCE;
+        }
+        if (BatteryTestEnum._6.getDictValue().equals(testType)) {
+            return BatteryModeStatusService.MODE_INTERNAL_RESISTANCE;
+        }
+        return null;
+    }
     /**
      * 解析电池组单体数量，异常或空值时使用默认值 245。
      */
