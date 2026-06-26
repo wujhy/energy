@@ -84,10 +84,20 @@ public class BatteryCollectorCommandLogService {
         try {
             String now = now();
             String errorMessage = BatteryDeviceStateConstants.CommandStatus.TIMEOUT.equals(status) ? "命令响应超时" : null;
-            optLogMapper.updateCommandStatus(optLogId, status, responseCode, now, errorMessage, responsePayload);
+            optLogMapper.updateCommandStatus(optLogId, status, resultOf(status), responseCode, now, errorMessage, responsePayload);
         } catch (Exception e) {
             log.warn("更新600模块命令日志失败, 日志ID={}, 原因={}", optLogId, e.getMessage());
         }
+    }
+
+    private Integer resultOf(String status) {
+        if (BatteryDeviceStateConstants.CommandStatus.SUCCESS.equals(status)) {
+            return 0;
+        }
+        if (BatteryDeviceStateConstants.CommandStatus.PENDING.equals(status)) {
+            return null;
+        }
+        return 1;
     }
 
     /** 生成旧操作日志表使用的时间字符串。 */

@@ -90,6 +90,7 @@ class BatteryCollectorCommandLogServiceTest {
         Mockito.verify(optLogMapper).updateCommandStatus(
                 Mockito.eq(10L),
                 Mockito.eq(BatteryDeviceStateConstants.CommandStatus.TIMEOUT),
+                Mockito.eq(1),
                 Mockito.isNull(),
                 Mockito.anyString(),
                 Mockito.eq("命令响应超时"),

@@ -201,6 +201,7 @@
     <update id="updateCommandStatus">
         update dev_opt_log
         set status = #{status},
+            result = #{result},
             <if test="responseCode != null">response_code = #{responseCode},</if>
             ended_at = #{endedAt},
             error_message = #{errorMessage},

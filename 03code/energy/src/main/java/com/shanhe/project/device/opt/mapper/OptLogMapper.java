@@ -99,6 +99,7 @@ public interface OptLogMapper {
      */
     void updateCommandStatus(@Param("id") Long id,
                              @Param("status") String status,
+                             @Param("result") Integer result,
                              @Param("responseCode") Integer responseCode,
                              @Param("endedAt") String endedAt,
                              @Param("errorMessage") String errorMessage,

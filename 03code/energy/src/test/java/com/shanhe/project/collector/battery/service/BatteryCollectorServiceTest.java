@@ -1547,6 +1547,7 @@ class BatteryCollectorServiceTest {
         Mockito.verify(optLogMapper).updateCommandStatus(
                 Mockito.eq(10L),
                 Mockito.eq(BatteryDeviceStateConstants.CommandStatus.FAILED),
+                Mockito.eq(1),
                 Mockito.eq(0x91),
                 Mockito.anyString(),
                 Mockito.isNull(),
@@ -1584,6 +1585,7 @@ class BatteryCollectorServiceTest {
         Mockito.verify(optLogMapper).updateCommandStatus(
                 Mockito.eq(10L),
                 Mockito.eq(BatteryDeviceStateConstants.CommandStatus.SUCCESS),
+                Mockito.eq(0),
                 Mockito.eq(0x91),
                 Mockito.anyString(),
                 Mockito.isNull(),
@@ -1614,6 +1616,7 @@ class BatteryCollectorServiceTest {
         Mockito.verify(optLogMapper).updateCommandStatus(
                 Mockito.eq(10L),
                 Mockito.eq(BatteryDeviceStateConstants.CommandStatus.SUCCESS),
+                Mockito.eq(0),
                 Mockito.eq(0x82),
                 Mockito.anyString(),
                 Mockito.isNull(),
@@ -1643,6 +1646,7 @@ class BatteryCollectorServiceTest {
         Mockito.verify(optLogMapper).updateCommandStatus(
                 Mockito.eq(10L),
                 Mockito.eq(BatteryDeviceStateConstants.CommandStatus.TIMEOUT),
+                Mockito.eq(1),
                 Mockito.isNull(),
                 Mockito.anyString(),
                 Mockito.eq("命令响应超时"),
@@ -1680,6 +1684,7 @@ class BatteryCollectorServiceTest {
         Mockito.verify(optLogMapper).updateCommandStatus(
                 Mockito.eq(10L),
                 Mockito.eq(BatteryDeviceStateConstants.CommandStatus.TIMEOUT),
+                Mockito.eq(1),
                 Mockito.isNull(),
                 Mockito.anyString(),
                 Mockito.eq("命令响应超时"),
