@@ -1,13 +1,16 @@
 package com.shanhe.project.scheduled;
 
+import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.framework.web.domain.AjaxResult;
+import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
 import com.shanhe.project.device.config.service.IDevBatteryOptService;
 import com.shanhe.project.device.opt.domain.OptLog;
 import com.shanhe.project.device.opt.service.BatteryOptExecuteType;
 import com.shanhe.project.device.opt.service.ControlBattery;
 import com.shanhe.project.device.opt.service.OptLogService;
+import com.shanhe.project.iot.model.BatteryModeInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -33,6 +36,8 @@ public class BatteryOptScheduleJob {
     private ControlBattery controlBattery;
     @Resource
     private OptLogService optLogService;
+    @Resource
+    private BatteryModeStatusService batteryModeStatusService;
 
     private final Set<String> runningKeys = ConcurrentHashMap.newKeySet();
 
@@ -90,7 +95,28 @@ public class BatteryOptScheduleJob {
 
     private boolean hasRunningOptLog(DevBatteryOpt opt) {
         OptLog running = optLogService.getRunningOptLog(opt.getPackNum(), opt.getTestType());
-        return running != null;
+        if (running != null) {
+            return true;
+        }
+        Integer expectedMode = resolveCollectorMode(opt.getTestType());
+        if (expectedMode == null || batteryModeStatusService == null) {
+            return false;
+        }
+        BatteryModeInfo modeInfo = batteryModeStatusService.get(opt.getPackNum());
+        return modeInfo != null
+                && Objects.equals(modeInfo.getPackNum(), opt.getPackNum())
+                && Objects.equals(modeInfo.getStatus(), 1)
+                && Objects.equals(modeInfo.getMode(), expectedMode);
+    }
+
+    private Integer resolveCollectorMode(Integer testType) {
+        if (Objects.equals(testType, BatteryTestEnum._2.getDictValue())) {
+            return BatteryModeStatusService.MODE_CONNECT_RESISTANCE;
+        }
+        if (Objects.equals(testType, BatteryTestEnum._6.getDictValue())) {
+            return BatteryModeStatusService.MODE_INTERNAL_RESISTANCE;
+        }
+        return null;
     }
 
     private boolean isSuccess(AjaxResult result) {
