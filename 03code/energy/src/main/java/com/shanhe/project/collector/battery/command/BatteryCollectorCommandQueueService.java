@@ -232,7 +232,8 @@ public class BatteryCollectorCommandQueueService {
             return false;
         }
         // 连接条测试模式不在无响应命令后停止
-        if (command.getMode() == 10) { // MODE_CONNECT_RESISTANCE
+        // MODE_CONNECT_RESISTANCE
+        if (command.getMode() == 10) {
             return false;
         }
         return true;

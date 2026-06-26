@@ -222,7 +222,8 @@ public class ModbusRtuServer implements ApplicationRunner {
     }
 
     private void sendWriteResponse(int stationAddress, int functionCode, int registerAddress, int value) {
-        byte[] response = new byte[8]; // 站号 + 功能码 + 寄存器地址(2) + 值(2) + CRC(2)
+        // 站号 + 功能码 + 寄存器地址(2) + 值(2) + CRC(2)
+        byte[] response = new byte[8];
         response[0] = (byte) stationAddress;
         response[1] = (byte) functionCode;
         response[2] = (byte) ((registerAddress >> 8) & 0xFF);
@@ -247,7 +248,8 @@ public class ModbusRtuServer implements ApplicationRunner {
 
     private void sendReadResponse(int stationAddress, int[] values) {
         int byteCount = values.length * 2;
-        byte[] response = new byte[3 + byteCount + 2]; // 站号 + 功能码 + 字节数 + 数据 + CRC
+        // 站号 + 功能码 + 字节数 + 数据 + CRC
+        byte[] response = new byte[3 + byteCount + 2];
         response[0] = (byte) stationAddress;
         response[1] = (byte) FUNC_READ_HOLDING_REGISTERS;
         response[2] = (byte) byteCount;
@@ -262,7 +264,8 @@ public class ModbusRtuServer implements ApplicationRunner {
     }
 
     private void sendException(int stationAddress, int functionCode, int exceptionCode) {
-        byte[] response = new byte[5]; // 站号 + 功能码+0x80 + 异常码 + CRC(2)
+        // 站号 + 功能码+0x80 + 异常码 + CRC(2)
+        byte[] response = new byte[5];
         response[0] = (byte) stationAddress;
         response[1] = (byte) (functionCode | 0x80);
         response[2] = (byte) exceptionCode;

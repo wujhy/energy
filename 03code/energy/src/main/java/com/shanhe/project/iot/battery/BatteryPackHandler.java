@@ -109,11 +109,14 @@ public class BatteryPackHandler {
         // 起始偏移：电池组固定字段占124字节
         int index82 = 124;
         switch (serviceType) {
-            case "1":  //铅酸电池采集主机
+            // 铅酸电池采集主机
+            case "1":
             case "2":
-            case "5":  //铅酸电池采集主机（带核容功能）
+            // 铅酸电池采集主机（带核容功能）
+            case "5":
                 break;
-            case "3": {//3: 铅酸电池采集主机（带电池鼓包漏液检测功能）
+            // 铅酸电池采集主机（带电池鼓包漏液检测功能）
+            case "3": {
                 index82 = index82 + 14;
                 // 单体电池个数
                 int num = Integer.parseInt(dataStr.substring(12, 14), 16);
@@ -124,7 +127,8 @@ public class BatteryPackHandler {
 
                 break;
             }
-            case "4": { //大屏蓄电池主机
+            // 大屏蓄电池主机
+            case "4": {
 
                 String bcapacity = null;
                 String backupDuration = null;

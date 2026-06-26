@@ -48,15 +48,19 @@ public class BatteryModuleGroupCompatibilityFillService {
         if (group.getPackCurrent() == null) {
             group.setBatteryPackStatus(null);
         } else if (group.getPackCurrent() < -0.1) {
-            group.setBatteryPackStatus(5); // BACKUP 备电
+            // BACKUP 备电
+            group.setBatteryPackStatus(5);
         } else if (group.getPackCurrent() > 0.1) {
-            group.setBatteryPackStatus(1); // CHARGE 充电
+            // CHARGE 充电
+            group.setBatteryPackStatus(1);
         } else {
-            group.setBatteryPackStatus(0); // MONITOR 监控
+            // MONITOR 监控
+            group.setBatteryPackStatus(0);
         }
 
         if (group.getResistanceTestStatus() == null) {
-            group.setResistanceTestStatus(0); // NOT_TESTING 不在内阻测试
+            // NOT_TESTING 不在内阻测试
+            group.setResistanceTestStatus(0);
         }
     }
 

@@ -270,7 +270,8 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
                 log.debug("阶段1==" + p1);
                 log.debug("阶段2==" + p2);
                 log.debug("阶段3==" + p3);
-            }else if (lastPoint.getVoltage() >= (1.88 * specSize)) { //1.88V一个拐点
+            // 1.88V一个拐点
+            }else if (lastPoint.getVoltage() >= (1.88 * specSize)) {
                 if(specSize==1){
                     if (Math.abs(slope) < 0.00036) {
                         slope = -0.00036;
@@ -290,7 +291,8 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
                 preTotalSize = p2 + p3;
                 log.debug("阶段2==" + p2);
                 log.debug("阶段3==" + p3);
-            } else if (lastPoint.getVoltage() >= (1.79 * specSize)) { //1.79结束
+            // 1.79结束
+            } else if (lastPoint.getVoltage() >= (1.79 * specSize)) {
                 if(specSize==1){
                     if (Math.abs(slope) < 0.00108) {
                         slope = -0.00108;
@@ -535,10 +537,12 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         }
 
         double slope = regression.getSlope();
-        if(slope>=0){ //数据存在波动，可能存在正的斜率
+        // 数据存在波动，可能存在正的斜率
+        if(slope>=0){
             slope = -0.00001;
         }
-        return slope; // 负斜率表示电压下降
+        // 负斜率表示电压下降
+        return slope;
     }
 
     //预测当前斜率下，下一个点的时间

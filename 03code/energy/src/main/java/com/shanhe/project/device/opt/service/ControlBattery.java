@@ -96,23 +96,28 @@ public class ControlBattery extends ControlBase {
         // 命令内容、动态指令号
         String dynCid, cmdStr;
         switch (testEnum) {
-            case _1:  //内阻测试配置
+            // 内阻测试配置
+            case _1:
                 cmdStr = cmdBatteryControlService.getCmd32(config, opt);
                 dynCid = BatteryCidEnum._E2.getDictValue();
                 break;
-            case _2:   //连接条电阻测试配置
+            // 连接条电阻测试配置
+            case _2:
                 cmdStr = cmdBatteryControlService.getCmd33(config, opt);
                 dynCid = BatteryCidEnum._E3.getDictValue();
                 break;
-            case _3://核容测试配置
+            // 核容测试配置
+            case _3:
                 cmdStr = cmdBatteryControlService.getCmd34(config, opt);
                 dynCid = BatteryCidEnum._E4.getDictValue();
                 break;
-            case _4:  //浮充管理配置
+            // 浮充管理配置
+            case _4:
                 cmdStr = cmdBatteryControlService.getCmd31(config, opt);
                 dynCid = BatteryCidEnum._E1.getDictValue();
                 break;
-            case _5:  //备电时长测试配置
+            // 备电时长测试配置
+            case _5:
                 cmdStr = cmdBatteryControlService.getCmd35(config, opt);
                 dynCid = BatteryCidEnum._E5.getDictValue();
                 break;
@@ -192,7 +197,8 @@ public class ControlBattery extends ControlBase {
         // 命令内容、动态指令号
         String cmdStr, dynCid;
         switch (testEnum) {
-            case _1:  //立即执行内阻测试
+            // 立即执行内阻测试
+            case _1:
                 BatteryModeInfo modelResult = controlBatterySet.getModelResult(opt.getPackNum());
                 if (modelResult != null) {
                     if (modelResult.getMode() == 0 && modelResult.getStatus() == 0) {
@@ -217,23 +223,26 @@ public class ControlBattery extends ControlBase {
                 dynCid = BatteryCidEnum._85.getDictValue();
                 needWait = false;
                 break;
-            case _2:   //立即执行连接条电阻测试
+            // 立即执行连接条电阻测试
+            case _2:
                 cmdStr = cmdBatteryControlService.genCmd0F(config, opt);
                 dynCid = BatteryCidEnum._8F.getDictValue();
                 needCommandLog = true;
                 break;
-            case _3:  //立即执行核容测试
+            // 立即执行核容测试
+            case _3:
                 cmdStr = cmdBatteryControlService.genCmd30(config, opt.getPackNum(), "2", opt.getDischargeTime(), opt.getEndVoltage());
                 dynCid = BatteryCidEnum._E0.getDictValue();
                 needRunningLog = true;
                 break;
-            case _5:  //立即执行备电时长测试
+            // 立即执行备电时长测试
+            case _5:
                 cmdStr = cmdBatteryControlService.genCmd30(config, opt.getPackNum(), "1", opt.getDischargeTime(), opt.getEndVoltage());
                 dynCid = BatteryCidEnum._E0.getDictValue();
                 needRunningLog = true;
                 break;
-            case _6:  //单节内阻测试
-
+            // 单节内阻测试
+            case _6:
                 cmdStr = cmdBatteryControlService.getCmd36(config, opt);
                 dynCid = BatteryCidEnum._E6.getDictValue();
                 break;

@@ -315,98 +315,119 @@ public class BatteryParamsHandler {
         Integer recOpt = null;
         Double standValue = null;
         switch (itemCode) {
-            case ZDYGC: //组电压过充告警
+            // 组电压过充告警
+            case ZDYGC:
                 hightValue = paramsInfo.getBatteryPackOverchargeAlarm();
                 recValue = paramsInfo.getBatteryPackOverchargeRestore();
                 break;
-            case ZDYGF: //组电压过放告警
+            // 组电压过放告警
+            case ZDYGF:
                 lowValue = paramsInfo.getBatteryPackOverdischargeAlarm();
                 recValue = paramsInfo.getBatteryPackOverdischargeRestore();
                 break;
-            case ZWDG: //环境高温告警
+            // 环境高温告警
+            case ZWDG:
                 hightValue = paramsInfo.getEnvironmentHighTemperatureAlarm();
                 recValue = paramsInfo.getEnvironmentHighTemperatureRestore();
                 break;
-            case ZWDD: //环境低温告警
+            // 环境低温告警
+            case ZWDD:
                 lowValue = paramsInfo.getEnvironmentLowTemperatureAlarm();
                 recValue = paramsInfo.getEnvironmentLowTemperatureRestore();
                 break;
-            case ZFCDYGG: //总体浮充电压过高告警
+            // 总体浮充电压过高告警
+            case ZFCDYGG:
                 hightValue = paramsInfo.getBatteryPackFloatChargeOvertopAlarm();
                 recValue = paramsInfo.getBatteryPackFloatChargeOvertopRestore();
                 break;
-            case ZFCDYGD: //总体浮充电压过低告警
+            // 总体浮充电压过低告警
+            case ZFCDYGD:
                 lowValue = paramsInfo.getBatteryPackFloatChargeTooLowAlarm();
                 recValue = paramsInfo.getBatteryPackFloatChargeTooLowRestore();
                 break;
-            case ZCGDLGJ: //电流过充告警
+            // 电流过充告警
+            case ZCGDLGJ:
                 hightValue = paramsInfo.getChargeOvercurrentAlarm();
                 recValue = paramsInfo.getChargeOvercurrentRestore();
                 break;
-            case ZSOCDGJ: //SOC低告警
+            // SOC低告警
+            case ZSOCDGJ:
                 lowValue = paramsInfo.getSocLowAlarm();
                 recValue = paramsInfo.getSocLowRestore();
                 break;
-//            case ZSOHDGJ: //SOH低告警
-            case DTGB: //鼓包
+            // 鼓包
+            case DTGB:
                 hightValue = paramsInfo.getSohLowAlarm();
                 recValue = paramsInfo.getSohLowRestore();
                 break;
-            case DTDYGC: //单体电压过充告警
+            // 单体电压过充告警
+            case DTDYGC:
                 hightValue = paramsInfo.getBatteryOverchargeAlarm();
                 recValue = paramsInfo.getBatteryOverchargeRestore();
                 break;
-            case DTDYGF: //单体电压过放告警
+            // 单体电压过放告警
+            case DTDYGF:
                 lowValue = paramsInfo.getBatteryOverdischargeAlarm();
                 recValue = paramsInfo.getBatteryOverdischargeRestore();
                 break;
-            case DTNZGD: //内阻过大告警系数
+            // 内阻过大告警系数
+            case DTNZGD:
                 hightValue =paramsInfo.getResistanceTooBigAlarm();
                 recValue = paramsInfo.getResistanceTooBigRestore();
                 if (StrUtil.isNotBlank(paramsInfo.getResistanceReferenceValue())) {
                     standValue = Double.parseDouble(paramsInfo.getResistanceReferenceValue());
                 }
                 break;
-            case DTNZGX: //内阻过小告警系数
+            // 内阻过小告警系数
+            case DTNZGX:
                 lowValue = paramsInfo.getResistanceTooSmallAlarm();
                 recValue = paramsInfo.getResistanceTooSmallRestore();
                 if (StrUtil.isNotBlank(paramsInfo.getResistanceReferenceValue())) {
                     standValue = Double.parseDouble(paramsInfo.getResistanceReferenceValue());
                 }
                 break;
-            case DTNZBJ: //内阻不均告警系数
+            // 内阻不均告警系数
+            case DTNZBJ:
                 hightValue = paramsInfo.getResistanceUnevennessAlarm();
                 recValue = paramsInfo.getResistanceUnevennessRestore();
                 break;
-            case DTDCWDG: //电池高温告警
+            // 电池高温告警
+            case DTDCWDG:
                 hightValue = paramsInfo.getBatteryHighTemperatureAlarm();
                 recValue = paramsInfo.getBatteryHighTemperatureRestore();
                 break;
-            case DTDCWDD: //电池低温告警
+            // 电池低温告警
+            case DTDCWDD:
                 lowValue = paramsInfo.getBatteryLowTemperatureAlarm();
                 recValue = paramsInfo.getBatteryLowTemperatureRestore();
                 break;
-            case DTFCDYG: //单体浮充电压过高告警
+            // 单体浮充电压过高告警
+            case DTFCDYG:
                 hightValue = paramsInfo.getBatteryFloatChargeOvertopAlarm();
                 recValue = paramsInfo.getBatteryFloatChargeOvertopRestore();
                 break;
-            case DTFCDYD: //单体浮充电压过低告警
+            // 单体浮充电压过低告警
+            case DTFCDYD:
                 lowValue = paramsInfo.getBatteryFloatChargeTooLowAlarm();
                 recValue = paramsInfo.getBatteryFloatChargeTooLowRestore();
                 break;
-            case DTDYBJ: //单体电压不均告警
+            // 单体电压不均告警
+            case DTDYBJ:
                 hightValue = paramsInfo.getBatteryVoltageUnevennessAlarm();
                 recValue = paramsInfo.getBatteryVoltageUnevennessRestore();
                 break;
-            case DTDYJC: //单体电压极差告警
+            // 单体电压极差告警
+            case DTDYJC:
                 hightValue = paramsInfo.getBatteryVoltageRangeAlarm();
                 recValue = paramsInfo.getBatteryVoltageRangeRestore();
                 break;
-            case DTDCWDBJ: //电池温度不均告警
+            // 电池温度不均告警
+            case DTDCWDBJ:
                 hightValue = paramsInfo.getBatteryTemperatureUnevennessAlarm();
                 recValue = paramsInfo.getBatteryTemperatureUnevennessRestore();
                 break;
-            case DTLJTGJ: //连接条
+            // 连接条
+            case DTLJTGJ:
                 hightValue = paramsInfo.getHydrogenPercentageUpperLimitAlarm();
                 recValue = paramsInfo.getHydrogenPercentageUpperLimitRestore();
                 break;

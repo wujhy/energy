@@ -273,17 +273,23 @@ public class BatteryModuleModbusReadMappingService {
             return 0;
         }
         switch (address) {
-            case 411483: // 通道在线状态：1=在线, 0=离线
+            // 通道在线状态：1=在线, 0=离线
+            case 411483:
                 return readChannelOpenStatus(snapshot.getChannelName());
-            case 411484: // 通道异常状态：1=异常, 0=正常
+            // 通道异常状态：1=异常, 0=正常
+            case 411484:
                 return readChannelErrorStatus(snapshot.getChannelName());
-            case 411485: // 模块活跃状态：1=有模块活跃, 0=全部无响应
+            // 模块活跃状态：1=有模块活跃, 0=全部无响应
+            case 411485:
                 return readModuleActiveStatus(snapshot.getChannelName(), packNum);
-            case 411486: // 模块超时状态：1=存在超时, 0=正常
+            // 模块超时状态：1=存在超时, 0=正常
+            case 411486:
                 return readModuleTimeoutStatus(snapshot.getChannelName(), packNum);
-            case 411487: // 246 新鲜度：1=新鲜, 0=过期
+            // 246 新鲜度：1=新鲜, 0=过期
+            case 411487:
                 return readGroup246Freshness(packNum);
-            case 411488: // 工作模式：模式码
+            // 工作模式：模式码
+            case 411488:
                 return readWorkMode(packNum);
             default:
                 return 0;

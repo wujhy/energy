@@ -119,35 +119,6 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
     }
 
     /**
-     * 根据 {@link #toString()} 方法中描述的字符串标准表示形式创建{@code UUID}。
-     *
-     * @param name 指定 {@code UUID} 字符串
-     * @return 具有指定值的 {@code UUID}
-     * @throws IllegalArgumentException 如果 name 与 {@link #toString} 中描述的字符串表示形式不符抛出此异常
-     */
-    public static UUID fromString(String name) {
-        String[] components = name.split("-");
-        if (components.length != 5) {
-            throw new IllegalArgumentException("无效的UUID字符串: " + name);
-        }
-        for (int i = 0; i < 5; i++) {
-            components[i] = new StringBuilder("0x").append(components[i]).toString();
-        }
-
-        long mostSigBits = Long.decode(components[0]);
-        mostSigBits <<= 16;
-        mostSigBits |= Long.decode(components[1]);
-        mostSigBits <<= 16;
-        mostSigBits |= Long.decode(components[2]);
-
-        long leastSigBits = Long.decode(components[3]);
-        leastSigBits <<= 48;
-        leastSigBits |= Long.decode(components[4]);
-
-        return new UUID(mostSigBits, leastSigBits);
-    }
-
-    /**
      * 返回此 UUID 的 128 位值中的最低有效 64 位。
      *
      * @return 此 UUID 的 128 位值中的最低有效 64 位。

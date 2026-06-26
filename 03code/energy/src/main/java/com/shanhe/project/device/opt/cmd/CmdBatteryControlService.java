@@ -500,7 +500,8 @@ public class CmdBatteryControlService {
         String result = "";
         /*说明：全部参数都是两字节*/
         switch (paramNumber) {
-            case "01":  //3位小数
+            // 3位小数
+            case "01":
             case "batteryOverchargeAlarm":
             case "02":
             case "batteryOverchargeRestore":
@@ -526,7 +527,8 @@ public class CmdBatteryControlService {
             case "batteryVoltageRangeRestore":
                 result = String.format("%05.3f", paramValue).replace(".", "");
                 break;
-            case "37":  //2位小数
+            // 2位小数
+            case "37":
             case "batteryPackOverchargeAlarm":
             case "38":
             case "batteryPackOverchargeRestore":
@@ -542,7 +544,8 @@ public class CmdBatteryControlService {
             case "batteryPackFloatChargeTooLowRestore":
                 result = String.format("%05.2f", paramValue).replace(".", "");
                 break;
-            case "13":  //1位小数
+            // 1位小数
+            case "13":
             case "chargeOvercurrentAlarm":
             case "14":
             case "chargeOvercurrentRestore":
@@ -598,7 +601,8 @@ public class CmdBatteryControlService {
             case "SOHLowRestore":
                 result = String.format("%05.1f", paramValue).replace(".", "");
                 break;
-            case "53":  //无小数
+            // 无小数
+            case "53":
             case "resistanceReferenceValue":
                 result = String.format("%04d", paramValue.intValue());
                 break;
