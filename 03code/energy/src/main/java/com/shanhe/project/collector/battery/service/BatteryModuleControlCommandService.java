@@ -114,7 +114,8 @@ public class BatteryModuleControlCommandService {
      */
     public BatteryModuleControlCommand setCalibrationParameter(int moduleAddress, int... payloadBytes) {
         validateCellModuleAddress(moduleAddress);
-        if (payloadBytes == null || (payloadBytes.length != 4 && payloadBytes.length != 6)) {
+        boolean invalidLength = payloadBytes == null || (payloadBytes.length != 4 && payloadBytes.length != 6);
+        if (invalidLength) {
             throw new IllegalArgumentException("校准参数载荷长度必须为4或6字节");
         }
         return command(BatteryDeviceProtocolCode.SET_CALIBRATION_PARAMETER, moduleAddress, payloadBytes);

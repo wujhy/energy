@@ -141,6 +141,6 @@ public class AlarmItemVo implements Serializable {
      */
     private String remark;
 
-    // 组态是否展示主页 1 是 0 否
+    /** 组态是否展示主页：1-是，0-否 */
     private Integer displayHome;
 }

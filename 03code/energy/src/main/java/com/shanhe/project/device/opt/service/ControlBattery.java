@@ -249,7 +249,8 @@ public class ControlBattery extends ControlBase {
             // 立即执行内阻测试
             case _1:
                 BatteryModeInfo modelResult = controlBatterySet.getModelResult(opt.getPackNum());
-                if (modelResult != null && !(modelResult.getMode() == 0 && modelResult.getStatus() == 0)) {
+                boolean isIdle = modelResult == null || (modelResult.getMode() == 0 && modelResult.getStatus() == 0);
+                if (!isIdle) {
                     String mode = modelResult.getMode() == 1 ? "自动编号" : modelResult.getMode() == 6 ? "内阻测试" : modelResult.getMode() == 10 ? "连接条电阻测试" : "未知";
                     throw new RuntimeException("正在进行" + mode + "，请勿进行其他操作");
                 }

@@ -41,8 +41,8 @@ public class SoundWarnJob {
 
     /**
      * 每隔5秒执行
+     * TODO: 注释掉的定时任务 @Scheduled(cron = "${job.checkSoundWarnCron}")
      */
-    // @Scheduled(cron = "${job.checkSoundWarnCron}")
     public void doJob() {
         if (!isOpenSoundWarn) {
             return;

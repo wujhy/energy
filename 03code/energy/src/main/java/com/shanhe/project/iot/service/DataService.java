@@ -20,7 +20,7 @@ import java.util.Date;
 @Service
 public class DataService {
 
-    // 告警存储间隔：秒
+    /** 告警存储间隔：秒 */
     @Value("${storage.interval.alarm:30}")
     private Integer intervalAlarm;
 

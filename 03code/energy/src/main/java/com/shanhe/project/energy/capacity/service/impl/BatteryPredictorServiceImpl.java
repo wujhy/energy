@@ -541,7 +541,9 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         return slope;
     }
 
-    //预测当前斜率下，下一个点的时间
+    /**
+     * 预测当前斜率下，下一个点的时间
+     */
     private int calcPrePointTime(double startVoltage, double endVoltage, double slope) {
         // 防止除零异常
         if (slope == 0) {

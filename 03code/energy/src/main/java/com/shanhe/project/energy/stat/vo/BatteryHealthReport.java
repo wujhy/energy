@@ -61,7 +61,7 @@ public class BatteryHealthReport implements Serializable {
     /** 是否内阻超限告警 */
     private Integer isResistanceTransfinite;
 
-    // 告警数量
+    /** 告警数量 */
     private Integer alarmCount;
 
     /** 评估因子 */
