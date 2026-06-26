@@ -55,7 +55,7 @@ public class BatteryOptCollectorCommandAdapter {
             return null;
         }
 
-        BatteryCollectorCommandResult result = null;
+        BatteryCollectorCommandResult result;
         try {
             if (BatteryTestEnum._2.getDictValue().equals(opt.getTestType())) {
                 int batteryCount = resolveBatteryCount(opt.getPackNum());
@@ -75,13 +75,13 @@ public class BatteryOptCollectorCommandAdapter {
         } catch (Exception e) {
             log.warn("采集命令适配异常, packNum={}, testType={}, 原因={}",
                     opt.getPackNum(), opt.getTestType(), e.getMessage());
-            return null;
+            return AjaxResult.error("独立采集模块命令执行失败", 0);
         }
 
         if (result != null && result.isSuccess()) {
             return AjaxResult.success("独立采集模块命令已加入下发队列", result);
         }
-        return null;
+        return AjaxResult.error(result == null ? "独立采集模块命令执行失败" : result.getMessage(), 0);
     }
 
     /**

@@ -71,6 +71,47 @@ class BatteryOptCollectorCommandAdapterTest {
     }
 
     @Test
+    void shouldReturnErrorWhenCollectorCommandQueueFails() {
+        BatteryOptCollectorCommandAdapter adapter = adapter(true);
+        BatteryCollectorCommandService commandService =
+                (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
+        IBatteryPackService batteryPackService =
+                (IBatteryPackService) ReflectionTestUtils.getField(adapter, "batteryPackService");
+        Mockito.when(commandService.resolveChannelName(1)).thenReturn("battery-group-1");
+        Mockito.when(batteryPackService.getBatteryMaxNumber(1)).thenReturn(24);
+        Mockito.when(commandService.connectResistanceTest("battery-group-1", 1, 24, null))
+                .thenReturn(BatteryCollectorCommandResult.builder()
+                        .success(false)
+                        .message("queue failed")
+                        .build());
+
+        AjaxResult result = adapter.tryExecute(opt(BatteryTestEnum._2.getDictValue(), null));
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertEquals("queue failed", result.get(AjaxResult.MSG_TAG));
+    }
+
+    @Test
+    void shouldReturnErrorWhenCollectorCommandThrows() {
+        BatteryOptCollectorCommandAdapter adapter = adapter(true);
+        BatteryCollectorCommandService commandService =
+                (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
+        IBatteryPackService batteryPackService =
+                (IBatteryPackService) ReflectionTestUtils.getField(adapter, "batteryPackService");
+        Mockito.when(commandService.resolveChannelName(1)).thenReturn("battery-group-1");
+        Mockito.when(batteryPackService.getBatteryMaxNumber(1)).thenReturn(24);
+        Mockito.when(commandService.connectResistanceTest("battery-group-1", 1, 24, null))
+                .thenThrow(new IllegalStateException("queue unavailable"));
+
+        AjaxResult result = adapter.tryExecute(opt(BatteryTestEnum._2.getDictValue(), null));
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertEquals("独立采集模块命令执行失败", result.get(AjaxResult.MSG_TAG));
+    }
+
+    @Test
     void shouldFallbackWhenCollectorCommandSwitchDisabled() {
         BatteryOptCollectorCommandAdapter adapter = adapter(false);
         BatteryCollectorCommandService commandService =
