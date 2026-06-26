@@ -256,115 +256,126 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         // 单体实时记录
         BatteryMonitor batteryMonitor = null;
         if (modelNum != null && batteryReportLog.getBatteryList() != null && !batteryReportLog.getBatteryList().isEmpty()) {
-            // 循环匹配modelNum
             batteryMonitor = batteryReportLog.getBatteryList().stream().filter(monitor -> monitor.getBatNum().equals(modelNum)).findFirst().orElse(null);
         }
         // 循环告警项
         for (String itemCode : warnParam.keySet()) {
-            // 告警值
-            String alarmValue = warnParam.get(itemCode);
-
-            // 取缓存告警记录
-            String key = String.format(alarmCache.getKey(), packNum, modelNum, itemCode);
-            AlarmLog cacheLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
-
-            /* -----------------------------------------屏蔽处理-------------------------------------------- */
-            // 存在告警记录，屏蔽处理
-            if (cacheLog != null) {
-                // 告警屏蔽时间内，不处理
-                if (null != cacheLog.getShiedTime()
-                        && cacheLog.getShiedTime().getTime() > System.currentTimeMillis()) {
-                    continue;
-                }
-                // 告警记录是已处理的（屏蔽时间已过），删除缓存
-                if (Objects.equals(cacheLog.getStatus(), YesNoEnum.YES.getDictValue())) {
-                    cacheLog = null;
-                    CacheUtils.remove(alarmCache.getCache(), key);
-                }
-            }
-
-            /* ----------------------------------------是否告警-------------------------------------------- */
-            // 最新告警值为0，不告警处理，退出
-            if (StrUtil.isBlank(alarmValue) || StrUtil.equals(alarmValue, "0")) {
-                if (cacheLog != null) {
-                    // 存在记录需完成
-                    cacheLog.setStatus(YesNoEnum.YES.getDictValue());
-                    this.updateStatus(cacheLog, key);
-                }
-                continue;
-            }
-
-            // 属性配置校验
-            ConfigAttribute configAttribute = configAttributeService.getCacheBy(packNum, itemCode);
-            if (configAttribute == null
-                    || Objects.equals(configAttribute.getStatus(), YesNoEnum.NO.getDictValue())
-                    || Objects.equals(configAttribute.getAlarmConfig(), YesNoEnum.NO.getDictValue())) {
-                if (cacheLog != null) {
-                    // 属性不存在、不启用、无需告警，直接完成告警
-                    cacheLog.setStatus(YesNoEnum.YES.getDictValue());
-                    this.updateStatus(cacheLog, key);
-                }
-                continue;
-            }
-
-            /* -----------------------------------------恒告警处理-------------------------------------------- */
-            // 取实时告警值
-            if (modelNum != null) {
-                // 单体
-                alarmValue = this.getAlarmBatteryValue(configAttribute, itemCode, batteryMonitor);
-            } else {
-                // 组
-                alarmValue = this.getAlarmBatteryPackValue(configAttribute, itemCode, batteryReportLog.getPackParam());
-            }
-
-            // 匹配告警等级
-            AlarmItemLevelVo alarmItemLevel = null;
-            if (StrUtil.isNotBlank(alarmValue)) {
-                // 告警等级
-                alarmItemLevel = this.getLevel(configAttribute, alarmValue);
-            }
-            // 告警值为空（模拟量未取得实时数据）、未匹配告警等级，取默认告警项
-            if (alarmItemLevel == null) {
-                alarmItemLevel = this.getDefaultLevel(configAttribute);
-            }
-
-            // 告警项未匹配、默认告警项也没有（应不存在，配置错误或同步错误，先置不处理）
-            if (alarmItemLevel == null) {
-                if (cacheLog != null) {
-                    // 存在记录需完成
-                    cacheLog.setStatus(YesNoEnum.YES.getDictValue());
-                    this.updateStatus(cacheLog, key);
-                }
-                continue;
-            }
-
-            // 告警内容
-            String dataInfo = this.getBatteryAlarmInfo(configAttribute, alarmItemLevel, modelNum, alarmValue);
-
-            // 存在缓存告警，更新
-            if (cacheLog != null) {
-                cacheLog.setAlarmLevel(alarmItemLevel.getLevelCode());
-                cacheLog.setDataInfo(dataInfo);
-                this.updateStatus(cacheLog, key);
-                continue;
-            }
-
-            // 创建告警记录
-            AlarmLog alarmLog = new AlarmLog();
-            alarmLog.setConfigId(configAttribute.getConfigId());
-            alarmLog.setItemCode(configAttribute.getCode());
-            alarmLog.setPackNum(packNum);
-            alarmLog.setModelNum(modelNum);
-            alarmLog.setAlarmLevel(alarmItemLevel.getLevelCode());
-            // 告警则为未处理状态
-            alarmLog.setStatus(YesNoEnum.NO.getDictValue());
-            alarmLog.setDataInfo(dataInfo);
-
-            // 滤波处理
-            postfilterBattery(alarmLog);
-
-            this.insertAlarm(alarmLog, key);
+            processAlarmItem(config, packNum, modelNum, warnParam.get(itemCode), itemCode, batteryMonitor, batteryReportLog);
         }
+    }
+
+    /**
+     * 处理单个告警项
+     */
+    private void processAlarmItem(Config config, Integer packNum, Integer modelNum,
+                                  String alarmValue, String itemCode,
+                                  BatteryMonitor batteryMonitor, BatteryReportLog batteryReportLog) {
+        // 取缓存告警记录
+        String key = String.format(alarmCache.getKey(), packNum, modelNum, itemCode);
+        AlarmLog cacheLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
+
+        // 屏蔽处理
+        cacheLog = processShield(cacheLog, key);
+        if (cacheLog != null && Objects.equals(cacheLog.getStatus(), YesNoEnum.YES.getDictValue())) {
+            return;
+        }
+
+        // 最新告警值为0，不告警处理
+        if (StrUtil.isBlank(alarmValue) || StrUtil.equals(alarmValue, "0")) {
+            if (cacheLog != null) {
+                cacheLog.setStatus(YesNoEnum.YES.getDictValue());
+                this.updateStatus(cacheLog, key);
+            }
+            return;
+        }
+
+        // 属性配置校验
+        ConfigAttribute configAttribute = configAttributeService.getCacheBy(packNum, itemCode);
+        if (configAttribute == null
+                || Objects.equals(configAttribute.getStatus(), YesNoEnum.NO.getDictValue())
+                || Objects.equals(configAttribute.getAlarmConfig(), YesNoEnum.NO.getDictValue())) {
+            if (cacheLog != null) {
+                cacheLog.setStatus(YesNoEnum.YES.getDictValue());
+                this.updateStatus(cacheLog, key);
+            }
+            return;
+        }
+
+        // 取实时告警值
+        if (modelNum != null) {
+            alarmValue = this.getAlarmBatteryValue(configAttribute, itemCode, batteryMonitor);
+        } else {
+            alarmValue = this.getAlarmBatteryPackValue(configAttribute, itemCode, batteryReportLog.getPackParam());
+        }
+
+        // 匹配告警等级
+        AlarmItemLevelVo alarmItemLevel = matchAlarmLevel(configAttribute, alarmValue);
+        if (alarmItemLevel == null) {
+            if (cacheLog != null) {
+                cacheLog.setStatus(YesNoEnum.YES.getDictValue());
+                this.updateStatus(cacheLog, key);
+            }
+            return;
+        }
+
+        // 告警内容
+        String dataInfo = this.getBatteryAlarmInfo(configAttribute, alarmItemLevel, modelNum, alarmValue);
+
+        // 存在缓存告警，更新
+        if (cacheLog != null) {
+            cacheLog.setAlarmLevel(alarmItemLevel.getLevelCode());
+            cacheLog.setDataInfo(dataInfo);
+            this.updateStatus(cacheLog, key);
+            return;
+        }
+
+        // 创建告警记录
+        AlarmLog alarmLog = new AlarmLog();
+        alarmLog.setConfigId(configAttribute.getConfigId());
+        alarmLog.setItemCode(configAttribute.getCode());
+        alarmLog.setPackNum(packNum);
+        alarmLog.setModelNum(modelNum);
+        alarmLog.setAlarmLevel(alarmItemLevel.getLevelCode());
+        alarmLog.setStatus(YesNoEnum.NO.getDictValue());
+        alarmLog.setDataInfo(dataInfo);
+
+        // 滤波处理
+        postfilterBattery(alarmLog);
+        this.insertAlarm(alarmLog, key);
+    }
+
+    /**
+     * 处理告警屏蔽逻辑
+     */
+    private AlarmLog processShield(AlarmLog cacheLog, String key) {
+        if (cacheLog == null) {
+            return null;
+        }
+        // 告警屏蔽时间内，不处理
+        if (null != cacheLog.getShiedTime()
+                && cacheLog.getShiedTime().getTime() > System.currentTimeMillis()) {
+            return cacheLog;
+        }
+        // 告警记录是已处理的（屏蔽时间已过），删除缓存
+        if (Objects.equals(cacheLog.getStatus(), YesNoEnum.YES.getDictValue())) {
+            CacheUtils.remove(alarmCache.getCache(), key);
+            return null;
+        }
+        return cacheLog;
+    }
+
+    /**
+     * 匹配告警等级
+     */
+    private AlarmItemLevelVo matchAlarmLevel(ConfigAttribute configAttribute, String alarmValue) {
+        AlarmItemLevelVo alarmItemLevel = null;
+        if (StrUtil.isNotBlank(alarmValue)) {
+            alarmItemLevel = this.getLevel(configAttribute, alarmValue);
+        }
+        if (alarmItemLevel == null) {
+            alarmItemLevel = this.getDefaultLevel(configAttribute);
+        }
+        return alarmItemLevel;
     }
 
     /**
@@ -913,8 +924,10 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         // 缓存处理
         String key = String.format(alarmCache.getKey(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode());
         // 如果已处理，且屏蔽时间小于当前时间，删除缓存
-        if (Objects.equals(alarmLog.getStatus(), YesNoEnum.YES.getDictValue())
-                && (Objects.isNull(alarmLog.getShiedTime()) || alarmLog.getShiedTime().getTime() < System.currentTimeMillis())) {
+        boolean isProcessed = Objects.equals(alarmLog.getStatus(), YesNoEnum.YES.getDictValue());
+        boolean shieldExpired = Objects.isNull(alarmLog.getShiedTime())
+                || alarmLog.getShiedTime().getTime() < System.currentTimeMillis();
+        if (isProcessed && shieldExpired) {
             CacheUtils.remove(alarmCache.getCache(), key);
         } else {
             CacheUtils.put(alarmCache.getCache(), key, alarmLog);

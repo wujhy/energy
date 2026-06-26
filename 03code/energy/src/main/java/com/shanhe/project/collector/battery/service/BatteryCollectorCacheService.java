@@ -41,7 +41,9 @@ public class BatteryCollectorCacheService {
         boolean matched = false;
         for (BatteryCollectorChannelState state : safeStates(channelStates)) {
             BatteryCollectorChannelConfig config = state == null ? null : state.getConfig();
-            if (batteryGroup == null || (config != null && Objects.equals(batteryGroup, config.getBatteryGroup()))) {
+            boolean isTargetGroup = batteryGroup == null
+                    || (config != null && Objects.equals(batteryGroup, config.getBatteryGroup()));
+            if (isTargetGroup) {
                 resetModuleAddressCache(state, realtimeSnapshotService);
                 matched = true;
             }

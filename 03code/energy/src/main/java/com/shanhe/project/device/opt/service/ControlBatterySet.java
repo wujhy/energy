@@ -96,7 +96,8 @@ public class ControlBatterySet extends ControlBase {
     public AjaxResult autoModelNum(BatterySetVO batterySetVO) {
         try {
             BatteryModeInfo modelResult = getModelResult(batterySetVO.getPackNum());
-            if (modelResult != null && (modelResult.getMode() != 0 || modelResult.getStatus() != 0)) {
+            boolean isBusy = modelResult != null && (modelResult.getMode() != 0 || modelResult.getStatus() != 0);
+            if (isBusy) {
                 String mode = modelResult.getMode() == 1 ? "自动编号" : modelResult.getMode() == 6 ? "内阻测试" : modelResult.getMode() == 10 ? "连接条电阻测试" : "无";
                 return AjaxResult.error("正在进行" + mode + "，请勿进行其他操作");
             }

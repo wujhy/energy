@@ -155,36 +155,17 @@ public class ControlBattery extends ControlBase {
         // 校验设备
         Config config = this.getConfig(opt);
 
+        // 校验上报数据和告警状态
+        AjaxResult validateResult = validateBeforeCommand(opt);
+        if (validateResult != null) {
+            return validateResult;
+        }
+
+        // 校验测试条件
         BatteryReportLog batteryReportLog = getCurrentReportLog(opt.getPackNum());
-        if (null == batteryReportLog) {
-            return AjaxResult.error("暂无上报数据", 0);
-        }
-        if (null == batteryReportLog.getPackParam()) {
-            return AjaxResult.error("暂无上报数据", 0);
-        }
-        AlarmLog alarmLog = alarmLogService.getByCache(opt.getPackNum(), null, ItemCode.TXZT.getCode());
-        if (null != alarmLog) {
-            if (ObjUtil.equals(YesNoEnum.NO.getDictValue(), alarmLog.getStatus())) {
-                return AjaxResult.error(alarmLog.getDataInfo(), 0);
-            }
-        }
-
-        //连接条测试
-        if (BatteryTestEnum._2.getDictValue().equals(testEnum.getDictValue())) {
-
-            Double current = MapUtil.getDouble(batteryReportLog.getPackParam(), "packCurrent");
-            //电池组充放电电流
-            if (current != null && Math.abs(current) < 5) {
-                throw new RuntimeException("电池组未到达测试条件，需组电流超过 5A 才可以进行连接条测试");
-            }
-        } else {
-
-            Map<String, Object> packParam = batteryReportLog.getPackParam();
-            String batteryPackStatus = packParam != null ? Objects.toString(packParam.get("batteryPackStatus"), null) : null;
-            if (!BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
-                return AjaxResult.error("电池组处于非空闲状态，不允许测试！", 0);
-            }
-
+        AjaxResult conditionResult = validateTestCondition(testEnum, batteryReportLog);
+        if (conditionResult != null) {
+            return conditionResult;
         }
 
         AjaxResult collectorResult = batteryOptCollectorCommandAdapter.tryExecute(opt);
@@ -192,95 +173,154 @@ public class ControlBattery extends ControlBase {
             return collectorResult;
         }
 
-        // 默认需要等待执行结果；部分命令需要记录一次性响应日志或长任务运行日志。
-        boolean needWait = true, needCommandLog = false, needRunningLog = false;
-        // 命令内容、动态指令号
-        String cmdStr, dynCid;
+        // 生成命令
+        CommandInfo cmdInfo = generateCommand(testEnum, config, opt);
+        if (cmdInfo == null) {
+            return AjaxResult.error("下发蓄电池测试指令类型失败", 0);
+        }
+        if (StrUtil.isBlank(cmdInfo.cmdStr)) {
+            return AjaxResult.error("下发蓄电池测试指令失败，指令生成失败", 0);
+        }
+
+        // 执行命令并记录日志
+        return executeCommandAndLog(config, opt, testEnum, cmdInfo);
+    }
+
+    /**
+     * 校验上报数据和告警状态
+     */
+    private AjaxResult validateBeforeCommand(DevBatteryOpt opt) {
+        BatteryReportLog batteryReportLog = getCurrentReportLog(opt.getPackNum());
+        if (null == batteryReportLog || null == batteryReportLog.getPackParam()) {
+            return AjaxResult.error("暂无上报数据", 0);
+        }
+        AlarmLog alarmLog = alarmLogService.getByCache(opt.getPackNum(), null, ItemCode.TXZT.getCode());
+        if (null != alarmLog && ObjUtil.equals(YesNoEnum.NO.getDictValue(), alarmLog.getStatus())) {
+            return AjaxResult.error(alarmLog.getDataInfo(), 0);
+        }
+        return null;
+    }
+
+    /**
+     * 校验测试条件
+     */
+    private AjaxResult validateTestCondition(BatteryTestEnum testEnum, BatteryReportLog batteryReportLog) {
+        if (BatteryTestEnum._2.getDictValue().equals(testEnum.getDictValue())) {
+            // 连接条测试
+            Double current = MapUtil.getDouble(batteryReportLog.getPackParam(), "packCurrent");
+            if (current != null && Math.abs(current) < 5) {
+                throw new RuntimeException("电池组未到达测试条件，需组电流超过 5A 才可以进行连接条测试");
+            }
+        } else {
+            // 其他测试
+            Map<String, Object> packParam = batteryReportLog.getPackParam();
+            String batteryPackStatus = packParam != null ? Objects.toString(packParam.get("batteryPackStatus"), null) : null;
+            if (!BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
+                return AjaxResult.error("电池组处于非空闲状态，不允许测试！", 0);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 命令信息内部类
+     */
+    private static class CommandInfo {
+        String cmdStr;
+        String dynCid;
+        boolean needWait;
+        boolean needCommandLog;
+        boolean needRunningLog;
+
+        CommandInfo(String cmdStr, String dynCid, boolean needWait, boolean needCommandLog, boolean needRunningLog) {
+            this.cmdStr = cmdStr;
+            this.dynCid = dynCid;
+            this.needWait = needWait;
+            this.needCommandLog = needCommandLog;
+            this.needRunningLog = needRunningLog;
+        }
+    }
+
+    /**
+     * 生成测试命令
+     */
+    private CommandInfo generateCommand(BatteryTestEnum testEnum, Config config, DevBatteryOpt opt) {
         switch (testEnum) {
             // 立即执行内阻测试
             case _1:
                 BatteryModeInfo modelResult = controlBatterySet.getModelResult(opt.getPackNum());
-                if (modelResult != null) {
-                    if (modelResult.getMode() == 0 && modelResult.getStatus() == 0) {
-                    } else {
-                        // 当前模式 0：无测试 1：自动编号 6：内阻测试 10：连接条电阻测试
-                        String mode = modelResult.getMode() == 1 ? "自动编号" : modelResult.getMode() == 6 ? "内阻测试" : modelResult.getMode() == 10 ? "连接条电阻测试" : "未知";
-                        return AjaxResult.error("正在进行" + mode + "，请勿进行其他操作");
-                    }
+                if (modelResult != null && !(modelResult.getMode() == 0 && modelResult.getStatus() == 0)) {
+                    String mode = modelResult.getMode() == 1 ? "自动编号" : modelResult.getMode() == 6 ? "内阻测试" : modelResult.getMode() == 10 ? "连接条电阻测试" : "未知";
+                    throw new RuntimeException("正在进行" + mode + "，请勿进行其他操作");
                 }
-
                 OptLog optLog = optLogService.lastType(opt.getPackNum(), BatteryTestEnum._1.getDictValue());
-                // 5 分钟内不允许测试
                 if (null != optLog) {
                     if (null == optLog.getUpdateTime()) {
-                        return AjaxResult.error("正在内阻测试", 0);
+                        throw new RuntimeException("正在内阻测试");
                     }
                     if (System.currentTimeMillis() - optLog.getUpdateTime().getTime() < 5 * 60 * 1000) {
-                        return AjaxResult.error("5分钟内不允许重复测试内阻", 0);
+                        throw new RuntimeException("5分钟内不允许重复测试内阻");
                     }
                 }
-                cmdStr = cmdBatteryControlService.genCmd05(config, "79", String.valueOf(opt.getPackNum()));
-                dynCid = BatteryCidEnum._85.getDictValue();
-                needWait = false;
-                break;
+                return new CommandInfo(
+                        cmdBatteryControlService.genCmd05(config, "79", String.valueOf(opt.getPackNum())),
+                        BatteryCidEnum._85.getDictValue(), false, false, false);
             // 立即执行连接条电阻测试
             case _2:
-                cmdStr = cmdBatteryControlService.genCmd0F(config, opt);
-                dynCid = BatteryCidEnum._8F.getDictValue();
-                needCommandLog = true;
-                break;
+                return new CommandInfo(
+                        cmdBatteryControlService.genCmd0F(config, opt),
+                        BatteryCidEnum._8F.getDictValue(), true, true, false);
             // 立即执行核容测试
             case _3:
-                cmdStr = cmdBatteryControlService.genCmd30(config, opt.getPackNum(), "2", opt.getDischargeTime(), opt.getEndVoltage());
-                dynCid = BatteryCidEnum._E0.getDictValue();
-                needRunningLog = true;
-                break;
+                return new CommandInfo(
+                        cmdBatteryControlService.genCmd30(config, opt.getPackNum(), "2", opt.getDischargeTime(), opt.getEndVoltage()),
+                        BatteryCidEnum._E0.getDictValue(), true, false, true);
             // 立即执行备电时长测试
             case _5:
-                cmdStr = cmdBatteryControlService.genCmd30(config, opt.getPackNum(), "1", opt.getDischargeTime(), opt.getEndVoltage());
-                dynCid = BatteryCidEnum._E0.getDictValue();
-                needRunningLog = true;
-                break;
+                return new CommandInfo(
+                        cmdBatteryControlService.genCmd30(config, opt.getPackNum(), "1", opt.getDischargeTime(), opt.getEndVoltage()),
+                        BatteryCidEnum._E0.getDictValue(), true, false, true);
             // 单节内阻测试
             case _6:
-                cmdStr = cmdBatteryControlService.getCmd36(config, opt);
-                dynCid = BatteryCidEnum._E6.getDictValue();
-                break;
+                return new CommandInfo(
+                        cmdBatteryControlService.getCmd36(config, opt),
+                        BatteryCidEnum._E6.getDictValue(), true, false, false);
             default:
-                return AjaxResult.error("下发蓄电池测试指令类型失败", 0);
+                return null;
         }
-        if (StrUtil.isBlank(cmdStr)) {
-            return AjaxResult.error("下发蓄电池测试指令失败，指令生成失败", 0);
-        }
+    }
 
+    /**
+     * 执行命令并记录日志
+     */
+    private AjaxResult executeCommandAndLog(Config config, DevBatteryOpt opt, BatteryTestEnum testEnum, CommandInfo cmdInfo) {
         // 是否重复请求
-        String resultKey = super.setControlStatus(config, opt.getPackNum(), dynCid, cacheKeyEnum);
-        // 记录操作日志
+        String resultKey = super.setControlStatus(config, opt.getPackNum(), cmdInfo.dynCid, cacheKeyEnum);
 
+        // 记录操作日志
         Long optLogId = null;
-        if (needCommandLog) {
+        if (cmdInfo.needCommandLog) {
             optLogId = optLogService.insert(opt.getPackNum(), opt.getTestType(), null);
         }
 
-        // 走 CommServer.returnCmd 直发链路，待迁移到 600 命令队列。
-        CommServer.returnCmd(cmdStr);
+        // 走 CommServer.returnCmd 直发链路
+        CommServer.returnCmd(cmdInfo.cmdStr);
 
         AjaxResult ajaxResult = AjaxResult.success();
-        //延迟等待设备响应
-        if (needWait) {
+        // 延迟等待设备响应
+        if (cmdInfo.needWait) {
             ajaxResult = super.getControlResult(resultKey, cacheKeyEnum);
         }
+
         // 更新日志结果
         boolean success = Objects.equals(ajaxResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value());
-        if (needCommandLog && optLogId != null) {
+        if (cmdInfo.needCommandLog && optLogId != null) {
             optLogService.update(optLogId, success ? 0 : 1, null);
         }
-        if (needRunningLog && success) {
-            // 核容/备电是长任务，成功启动后先落运行日志，后续实时状态负责关闭。
+        if (cmdInfo.needRunningLog && success) {
             optLogService.insert(opt.getPackNum(), opt.getTestType(), null);
         }
         if (success && testEnum == BatteryTestEnum._1) {
-            // 内阻测试不等待设备回包，成功下发后先标记运行态，后续实时上报负责刷新测试结果。
             batteryModeStatusService.markRunning(
                     opt.getPackNum(),
                     BatteryModeStatusService.MODE_INTERNAL_RESISTANCE,

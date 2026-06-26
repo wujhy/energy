@@ -83,14 +83,17 @@ public class BatteryCurrentStateService {
     private String resolveFreshness(Integer expectedCellCount,
                                     BatteryModuleGroupRealtime group,
                                     List<BatteryModuleCellRealtime> cells) {
-        if (group == null && (cells == null || cells.isEmpty())) {
+        boolean noData = group == null && (cells == null || cells.isEmpty());
+        if (noData) {
             return BatteryCurrentState.FRESHNESS_NOT_COLLECTED;
         }
-        if (group != null && Boolean.FALSE.equals(group.getDataFresh())) {
+        boolean isStale = group != null && Boolean.FALSE.equals(group.getDataFresh());
+        if (isStale) {
             return BatteryCurrentState.FRESHNESS_STALE;
         }
-        if (expectedCellCount != null && expectedCellCount > 0
-                && cells != null && cells.size() < expectedCellCount) {
+        boolean isPartial = expectedCellCount != null && expectedCellCount > 0
+                && cells != null && cells.size() < expectedCellCount;
+        if (isPartial) {
             return BatteryCurrentState.FRESHNESS_PARTIAL;
         }
         return BatteryCurrentState.FRESHNESS_FRESH;

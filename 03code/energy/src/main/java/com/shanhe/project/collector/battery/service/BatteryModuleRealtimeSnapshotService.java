@@ -117,7 +117,8 @@ public class BatteryModuleRealtimeSnapshotService {
                                                 BatteryModuleGroupRealtime group,
                                                 BatteryModuleRealtimeSnapshot previous) {
         Integer batSinSize = resolveBatSinSize(packNum);
-        if ((batSinSize == null || batSinSize <= 0) && previous != null) {
+        boolean needFallback = (batSinSize == null || batSinSize <= 0) && previous != null;
+        if (needFallback) {
             batSinSize = previous.getBatSinSize();
         }
         Map<Integer, BatteryModuleCellRealtime> currentMap = toCellMap(context.getCells());

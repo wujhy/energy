@@ -188,142 +188,134 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         Map<String, PreBatteryVo> result = new HashMap<>(specSize);
         // 放电倍率
         double crate = current / aCapacity;
-        //格式化，保留2位小数
         crate = StringUtils.formatToDouble(crate, 2);
-        List<DataPoint> dataPoints;
-        // 放电开始
-        DataPoint firstPoint;
-        // 放电截止
-        DataPoint lastPoint;
-        // 电池组容量
-        double bCapacity;
         Integer intervalTime = null;
-        // 获取放电总时长（秒）
-        int totalSecond = 0;
-        // 单体预估电池容量
-        PreBatteryVo vo;
-        int totalSize = 0;
         double diffSlope;
-        if(Math.abs(crate)>0.1){
-            diffSlope = RateCapacityConverter.calculateSlopeRelationship(0.1,crate);
-        }else{
-            diffSlope = RateCapacityConverter.calculateSlopeRelationship(crate,0.1);
+        if (Math.abs(crate) > 0.1) {
+            diffSlope = RateCapacityConverter.calculateSlopeRelationship(0.1, crate);
+        } else {
+            diffSlope = RateCapacityConverter.calculateSlopeRelationship(crate, 0.1);
         }
-
         log.debug("=====相差斜率========" + String.format("%.6f", Math.abs(diffSlope)));
         Date staticTime = new Date();
 
         for (BatteryMonitor bat : packInfo.getBatteryList()) {
-            // 查找电池的放电数据
-            dataPoints = dataPointService.findCurrentDataPoint(packInfo.getPackNum(), bat.getBatNum(), startTime, endTime);
-            if (dataPoints == null || dataPoints.size() < 2) {
-                log.error("电池编号 {} 放电数据不足", bat.getBatNum());
-                continue;
-            }
-            //对数据进行滤波处理
-            dataPoints = FilterProcessor.movingAverageFilter(dataPoints, 2);
-            firstPoint = dataPoints.get(0);
-            lastPoint = dataPoints.get(dataPoints.size() - 1);
-            if (lastPoint.getVoltage() > (2.1 * specSize)) {
-                log.error("电池编号 {} 放电截止电压 {} V 大于 {} V，不做预估！", bat.getBatNum(), lastPoint.getVoltage(), 2.1 * specSize);
-                continue;
-            }
-            totalSize = dataPoints.size();
-            //间隔时间
-            if (intervalTime == null) {
-                //相差多少秒
-                intervalTime = DateUtils.differentSecondByMillisecond(startTime, endTime) / totalSize ;
-            }
-
-            //获取斜率,获取最近的斜率值，更加接近实际斜率
-            double slope;
-            if (lastPoint.getVoltage() >= (2 * specSize)) {
-                slope = this.calculateDischargeSlope(dataPoints.subList(5, totalSize - 1));
-            }else{
-                slope = this.calculateDischargeSlope(dataPoints.subList(totalSize - 10, totalSize - 1));
-            }
-            log.debug(lastPoint.getVoltage() + "=====斜率0=========" + String.format("%.5f", slope));
-
-            int preTotalSize = 0;
-            //分段处理,2V一个拐点
-            if (lastPoint.getVoltage() >= (2 * specSize)) {
-                //抛开前面快速下跌的节点
-                int p1 = this.calcPrePointTime(lastPoint.getVoltage(), 2  * specSize, slope);
-                if(specSize==1){
-                    if (Math.abs(slope) < 0.00036) {
-                        slope = -0.00036;
-                        //斜率转换
-                        slope = slope * diffSlope;
-                    }
-                }else if(specSize==6){
-                    if (Math.abs(slope) < 0.0036) {
-                        slope = -0.0036;
-                        //斜率转换
-                        slope = slope * diffSlope;
+            PreBatteryVo vo = processSingleBattery(bat, packInfo.getPackNum(), startTime, endTime,
+                    aCapacity, crate, current, specSize, diffSlope, intervalTime);
+            if (vo != null) {
+                result.put(Constants.CAP_BAT + bat.getBatNum(), vo);
+                // 记录间隔时间（只计算一次）
+                if (intervalTime == null) {
+                    List<DataPoint> dataPoints = dataPointService.findCurrentDataPoint(packInfo.getPackNum(), bat.getBatNum(), startTime, endTime);
+                    if (dataPoints != null && dataPoints.size() >= 2) {
+                        intervalTime = DateUtils.differentSecondByMillisecond(startTime, endTime) / dataPoints.size();
                     }
                 }
-
-                log.debug(lastPoint.getVoltage() + "=====斜率1========" + String.format("%.6f", slope));
-                int p2 = this.calcPrePointTime(2.0  * specSize, 1.88 * specSize, slope);
-                int p3 = this.calcPrePointTime(1.88 * specSize, 1.8 * specSize, slope * 3);
-                preTotalSize = p1 + p2 + p3;
-                log.debug("阶段1==" + p1);
-                log.debug("阶段2==" + p2);
-                log.debug("阶段3==" + p3);
-            // 1.88V一个拐点
-            }else if (lastPoint.getVoltage() >= (1.88 * specSize)) {
-                if(specSize==1){
-                    if (Math.abs(slope) < 0.00036) {
-                        slope = -0.00036;
-                        //斜率转换
-                        slope = slope * diffSlope;
-                    }
-                }else if(specSize==6){
-                    if (Math.abs(slope) < 0.0036) {
-                        slope = -0.0036;
-                        //斜率转换
-                        slope = slope * diffSlope;
-                    }
-                }
-                log.debug(lastPoint.getVoltage() + "=====斜率2========" + String.format("%.6f", slope));
-                int p2 = this.calcPrePointTime(lastPoint.getVoltage(), 1.88 * specSize, slope);
-                int p3 = this.calcPrePointTime(1.88 * specSize, 1.8 * specSize, slope * 3);
-                preTotalSize = p2 + p3;
-                log.debug("阶段2==" + p2);
-                log.debug("阶段3==" + p3);
-            // 1.79结束
-            } else if (lastPoint.getVoltage() >= (1.79 * specSize)) {
-                if(specSize==1){
-                    if (Math.abs(slope) < 0.00108) {
-                        slope = -0.00108;
-                        //斜率转换
-                        slope = slope * diffSlope;
-                    }
-                }else if(specSize==6){
-                    if (Math.abs(slope) < 0.0108) {
-                        slope = -0.0108;
-                        //斜率转换
-                        slope = slope * diffSlope;
-                    }
-                }
-                log.debug(lastPoint.getVoltage() + "=====斜率3========" + String.format("%.6f", slope));
-                int p3 = this.calcPrePointTime(lastPoint.getVoltage(), 1.8 * specSize, slope);
-                preTotalSize = p3;
-                log.debug("阶段3==" + p3);
             }
-
-            //因为到临界点，数据预测的点数越少，需要补偿不同点相同电压的情况
-            if (lastPoint.getVoltage() <= (1.92 * specSize) && lastPoint.getVoltage() >= (1.86 * specSize)) {
-                preTotalSize = (int) Math.round(preTotalSize * 1.05);
-            }
-            totalSecond = (totalSize * intervalTime) + (preTotalSize *60);
-            bCapacity = this.preCapacity(aCapacity, crate,current, totalSecond);
-            log.debug(bat.getBatNum()+"=========="+lastPoint.getVoltage() + "======长度======" + totalSize + "======时间====" + ((double) totalSecond / 3600) + "小时" + "=====预估容量===" + bCapacity);
-            // 组装对象
-            vo = initPreBatteryVo(bat, aCapacity, firstPoint.getVoltage(), lastPoint.getVoltage(), bCapacity, staticTime);
-            result.put(Constants.CAP_BAT + bat.getBatNum(), vo);
         }
         return result;
+    }
+
+    /**
+     * 处理单个电池的预估容量计算
+     */
+    private PreBatteryVo processSingleBattery(BatteryMonitor bat, Integer packNum,
+                                               Date startTime, Date endTime,
+                                               Double aCapacity, double crate, Double current,
+                                               int specSize, double diffSlope, Integer intervalTime) {
+        // 查找电池的放电数据
+        List<DataPoint> dataPoints = dataPointService.findCurrentDataPoint(packNum, bat.getBatNum(), startTime, endTime);
+        if (dataPoints == null || dataPoints.size() < 2) {
+            log.error("电池编号 {} 放电数据不足", bat.getBatNum());
+            return null;
+        }
+        // 对数据进行滤波处理
+        dataPoints = FilterProcessor.movingAverageFilter(dataPoints, 2);
+        DataPoint firstPoint = dataPoints.get(0);
+        DataPoint lastPoint = dataPoints.get(dataPoints.size() - 1);
+        if (lastPoint.getVoltage() > (2.1 * specSize)) {
+            log.error("电池编号 {} 放电截止电压 {} V 大于 {} V，不做预估！", bat.getBatNum(), lastPoint.getVoltage(), 2.1 * specSize);
+            return null;
+        }
+        int totalSize = dataPoints.size();
+        // 间隔时间
+        if (intervalTime == null) {
+            intervalTime = DateUtils.differentSecondByMillisecond(startTime, endTime) / totalSize;
+        }
+
+        // 获取斜率
+        double slope;
+        if (lastPoint.getVoltage() >= (2 * specSize)) {
+            slope = this.calculateDischargeSlope(dataPoints.subList(5, totalSize - 1));
+        } else {
+            slope = this.calculateDischargeSlope(dataPoints.subList(totalSize - 10, totalSize - 1));
+        }
+        log.debug(lastPoint.getVoltage() + "=====斜率0=========" + String.format("%.5f", slope));
+
+        // 计算预估点数
+        int preTotalSize = calculatePreTotalSize(lastPoint.getVoltage(), slope, specSize, diffSlope);
+
+        // 因为到临界点，数据预测的点数越少，需要补偿不同点相同电压的情况
+        if (lastPoint.getVoltage() <= (1.92 * specSize) && lastPoint.getVoltage() >= (1.86 * specSize)) {
+            preTotalSize = (int) Math.round(preTotalSize * 1.05);
+        }
+        int totalSecond = (totalSize * intervalTime) + (preTotalSize * 60);
+        double bCapacity = this.preCapacity(aCapacity, crate, current, totalSecond);
+        log.debug(bat.getBatNum() + "==========" + lastPoint.getVoltage() + "======长度======" + totalSize + "======时间====" + ((double) totalSecond / 3600) + "小时" + "=====预估容量===" + bCapacity);
+
+        // 组装对象
+        return initPreBatteryVo(bat, aCapacity, firstPoint.getVoltage(), lastPoint.getVoltage(), bCapacity, new Date());
+    }
+
+    /**
+     * 计算预估点数
+     */
+    private int calculatePreTotalSize(double voltage, double slope, int specSize, double diffSlope) {
+        int preTotalSize = 0;
+        // 分段处理, 2V一个拐点
+        if (voltage >= (2 * specSize)) {
+            int p1 = this.calcPrePointTime(voltage, 2 * specSize, slope);
+            slope = adjustSlope(slope, specSize, diffSlope, 0.00036, 0.0036);
+            log.debug(voltage + "=====斜率1========" + String.format("%.6f", slope));
+            int p2 = this.calcPrePointTime(2.0 * specSize, 1.88 * specSize, slope);
+            int p3 = this.calcPrePointTime(1.88 * specSize, 1.8 * specSize, slope * 3);
+            preTotalSize = p1 + p2 + p3;
+            log.debug("阶段1==" + p1 + " 阶段2==" + p2 + " 阶段3==" + p3);
+        // 1.88V一个拐点
+        } else if (voltage >= (1.88 * specSize)) {
+            slope = adjustSlope(slope, specSize, diffSlope, 0.00036, 0.0036);
+            log.debug(voltage + "=====斜率2========" + String.format("%.6f", slope));
+            int p2 = this.calcPrePointTime(voltage, 1.88 * specSize, slope);
+            int p3 = this.calcPrePointTime(1.88 * specSize, 1.8 * specSize, slope * 3);
+            preTotalSize = p2 + p3;
+            log.debug("阶段2==" + p2 + " 阶段3==" + p3);
+        // 1.79结束
+        } else if (voltage >= (1.79 * specSize)) {
+            slope = adjustSlope(slope, specSize, diffSlope, 0.00108, 0.0108);
+            log.debug(voltage + "=====斜率3========" + String.format("%.6f", slope));
+            int p3 = this.calcPrePointTime(voltage, 1.8 * specSize, slope);
+            preTotalSize = p3;
+            log.debug("阶段3==" + p3);
+        }
+        return preTotalSize;
+    }
+
+    /**
+     * 调整斜率
+     */
+    private double adjustSlope(double slope, int specSize, double diffSlope, double threshold2V, double threshold12V) {
+        if (specSize == 1) {
+            if (Math.abs(slope) < threshold2V) {
+                slope = -threshold2V;
+                slope = slope * diffSlope;
+            }
+        } else if (specSize == 6) {
+            if (Math.abs(slope) < threshold12V) {
+                slope = -threshold12V;
+                slope = slope * diffSlope;
+            }
+        }
+        return slope;
     }
 
 

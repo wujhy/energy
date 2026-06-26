@@ -85,9 +85,9 @@ public class BatteryPackHandler {
 
         // 单体电池列表
         List<BatteryMonitor> batteryList = new ArrayList<>();
-        //电池组型号
+        // 电池组型号
         String serviceType = String.valueOf(CodingUtil.binaryToDecimal(binary.substring(1, 5)));
-        //电池组编号
+        // 电池组编号
         int packNum = CodingUtil.binaryToDecimal(binary.substring(5, 8));
         // 截去头尾完整指令
         String dataStr = deviceData.getInfo().substring(2, deviceData.getInfo().length() - 2);
@@ -106,6 +106,24 @@ public class BatteryPackHandler {
         }
 
         // 解析单体电池
+        parseBatteryMonitors(serviceType, info, dataStr, config, packNum, packMap, batteryList);
+
+        if (batteryList.isEmpty()) {
+            log.error("上传蓄电池实时数据出错，无单体数据！电池组：{}，info={}", packNum, deviceData.getInfo());
+            return;
+        }
+        refreshConfigOnlineCache(deviceData);
+        BatteryReportLog oldInfo = loadRecentOldReportLog(config, packNum);
+        saveReportLog(packNum, packMap, batteryList);
+        executePostSaveProcesses(config, packNum, batteryPack, packMap, batteryList, oldInfo);
+    }
+
+    /**
+     * 解析单体电池数据
+     */
+    private void parseBatteryMonitors(String serviceType, String info, String dataStr,
+                                       Config config, int packNum, Map<String, Object> packMap,
+                                       List<BatteryMonitor> batteryList) {
         // 起始偏移：电池组固定字段占124字节
         int index82 = 124;
         switch (serviceType) {
@@ -116,88 +134,87 @@ public class BatteryPackHandler {
             case "5":
                 break;
             // 铅酸电池采集主机（带电池鼓包漏液检测功能）
-            case "3": {
-                index82 = index82 + 14;
-                // 单体电池个数
-                int num = Integer.parseInt(dataStr.substring(12, 14), 16);
-                // 所有单体电池INFO
-                String batteryInfos = info.substring(index82, index82 + num * 13 * 2);
-                // 解析单体电池
-                this.getBatteryInfo3(num, batteryInfos, config.getConfigId(), packNum, batteryList);
-
+            case "3":
+                parseBatteryInfo3(info, dataStr, config, packNum, index82, batteryList);
                 break;
-            }
             // 大屏蓄电池主机
-            case "4": {
-
-                String bcapacity = null;
-                String backupDuration = null;
-
-
-                // 从预估容量中获取容量和预估备电时长
-                PreBatteryGroup preBatteryGroupVo = preBatteryGroupService.lastCache(packNum);
-                Map<String, PreBatteryVo> batteryVoMap = null;
-                if (preBatteryGroupVo != null) {
-                    if (null != preBatteryGroupVo.getBackUpDuration()) {
-                        backupDuration = Double.toString(preBatteryGroupVo.getBackUpDuration());
-                    }
-                    if (null != preBatteryGroupVo.getBcapacity()) {
-                        bcapacity = Double.toString(preBatteryGroupVo.getBcapacity());
-                    }
-                    batteryVoMap = preBatteryGroupVo.getMapBattery();
-                }
-
-                if (null == bcapacity) {
-                    backupDuration = String.valueOf(CodingUtil.hexStringToInteger(info.substring(138, 142)));
-                    bcapacity = CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(142, 146)), "#.0", 10);
-                }
-
-                //电池组备电时长
-                packMap.put("backupDuration", backupDuration);
-                //电池组核容值
-                packMap.put("bcapacity", bcapacity);
-                //放电容量
-                packMap.put("disChargeCapacity", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(146, 150)), "#.0", 10));
-                //放电时长
-                packMap.put("disChargeDuration", String.valueOf(CodingUtil.hexStringToInteger(info.substring(150, 154))));
-
-                // 服务类型4: 电池组固定字段占89字节(×2 hex字符)
-                index82 = 89 * 2;
-                // 单体电池个数
-                int num = Integer.parseInt(CodingUtil.hexStringToString(dataStr.substring(12, 14)));
-                int lastSize = index82 + num * 13 * 2;
-
-                if (info.length() < lastSize) {
-                    log.error("解析单体数据，info内容长度{}小于单体数据大小{}", info.length(), lastSize);
-                    return;
-                }
-                //所有单体电池INFO
-                String batteryInfos = info.substring(index82, lastSize);
-                // 解析单体电池
-                this.getBatteryInfo4(num, batteryInfos, config.getConfigId(), packNum, batteryList, batteryVoMap);
-
+            case "4":
+                parseBatteryInfo4(info, dataStr, config, packNum, packMap, batteryList);
                 break;
-            }
-            default: {
-                index82 = index82 + 14;
-                // 单体电池个数
-                int num = Integer.parseInt(dataStr.substring(12, 14), 16);
-                // 所有单体电池INFO
-                String batteryInfos = info.substring(index82, index82 + num * 9 * 2);
-                // 默认解析
-                this.getBatteryInfoDefault(num, batteryInfos, config.getConfigId(), packNum, batteryList);
+            default:
+                parseBatteryInfoDefault(info, dataStr, config, packNum, index82, batteryList);
                 break;
+        }
+    }
+
+    /**
+     * 解析类型3的单体电池数据
+     */
+    private void parseBatteryInfo3(String info, String dataStr, Config config, int packNum,
+                                    int index82, List<BatteryMonitor> batteryList) {
+        index82 = index82 + 14;
+        int num = Integer.parseInt(dataStr.substring(12, 14), 16);
+        String batteryInfos = info.substring(index82, index82 + num * 13 * 2);
+        this.getBatteryInfo3(num, batteryInfos, config.getConfigId(), packNum, batteryList);
+    }
+
+    /**
+     * 解析类型4的单体电池数据
+     */
+    private void parseBatteryInfo4(String info, String dataStr, Config config, int packNum,
+                                    Map<String, Object> packMap, List<BatteryMonitor> batteryList) {
+        String bcapacity = null;
+        String backupDuration = null;
+
+        // 从预估容量中获取容量和预估备电时长
+        PreBatteryGroup preBatteryGroupVo = preBatteryGroupService.lastCache(packNum);
+        Map<String, PreBatteryVo> batteryVoMap = null;
+        if (preBatteryGroupVo != null) {
+            if (null != preBatteryGroupVo.getBackUpDuration()) {
+                backupDuration = Double.toString(preBatteryGroupVo.getBackUpDuration());
             }
+            if (null != preBatteryGroupVo.getBcapacity()) {
+                bcapacity = Double.toString(preBatteryGroupVo.getBcapacity());
+            }
+            batteryVoMap = preBatteryGroupVo.getMapBattery();
         }
 
-        if (batteryList.isEmpty()) {
-            log.error("上传蓄电池实时数据出错，无单体数据！电池组：{}，info={}", packNum, deviceData.getInfo());
+        if (null == bcapacity) {
+            backupDuration = String.valueOf(CodingUtil.hexStringToInteger(info.substring(138, 142)));
+            bcapacity = CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(142, 146)), "#.0", 10);
+        }
+
+        // 电池组备电时长
+        packMap.put("backupDuration", backupDuration);
+        // 电池组核容值
+        packMap.put("bcapacity", bcapacity);
+        // 放电容量
+        packMap.put("disChargeCapacity", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(146, 150)), "#.0", 10));
+        // 放电时长
+        packMap.put("disChargeDuration", String.valueOf(CodingUtil.hexStringToInteger(info.substring(150, 154))));
+
+        // 服务类型4: 电池组固定字段占89字节(×2 hex字符)
+        int index82 = 89 * 2;
+        int num = Integer.parseInt(CodingUtil.hexStringToString(dataStr.substring(12, 14)));
+        int lastSize = index82 + num * 13 * 2;
+
+        if (info.length() < lastSize) {
+            log.error("解析单体数据，info内容长度{}小于单体数据大小{}", info.length(), lastSize);
             return;
         }
-        refreshConfigOnlineCache(deviceData);
-        BatteryReportLog oldInfo = loadRecentOldReportLog(config, packNum);
-        saveReportLog(packNum, packMap, batteryList);
-        executePostSaveProcesses(config, packNum, batteryPack, packMap, batteryList, oldInfo);
+        String batteryInfos = info.substring(index82, lastSize);
+        this.getBatteryInfo4(num, batteryInfos, config.getConfigId(), packNum, batteryList, batteryVoMap);
+    }
+
+    /**
+     * 解析默认类型的单体电池数据
+     */
+    private void parseBatteryInfoDefault(String info, String dataStr, Config config, int packNum,
+                                          int index82, List<BatteryMonitor> batteryList) {
+        index82 = index82 + 14;
+        int num = Integer.parseInt(dataStr.substring(12, 14), 16);
+        String batteryInfos = info.substring(index82, index82 + num * 9 * 2);
+        this.getBatteryInfoDefault(num, batteryInfos, config.getConfigId(), packNum, batteryList);
     }
 
     private void refreshConfigOnlineCache(DeviceData deviceData) {
@@ -352,109 +369,117 @@ public class BatteryPackHandler {
             return null;
         }
         Map<String, Object> packMap = new HashMap<>(16);
-        //电池组组压
+
+        // 解析基本电气参数
         int packVoltage = this.negative(CodingUtil.hexStringToInteger(info.substring(2, 6)));
         packMap.put("packVoltage", CodingUtil.decimal(packVoltage, "#.0", 10));
-        //电池组外组压
         int packOuterVoltage = this.negative(CodingUtil.hexStringToInteger(info.substring(6, 10)));
         packMap.put("batteryPackOuterVoltage", CodingUtil.decimal(packOuterVoltage, "#.0", 10));
-        //电池组充放电电流
         int packCurrent = this.negative(CodingUtil.hexStringToInteger(info.substring(10, 14)));
         packMap.put("packCurrent", CodingUtil.decimal(packCurrent, "#.0", 10));
-        //电池组浮充电流
         int batteryPackFloatCurrent = this.negative(CodingUtil.hexStringToInteger(info.substring(14, 18)));
         packMap.put("batteryPackFloatCurrent", CodingUtil.decimal(batteryPackFloatCurrent, "#.000", 1000));
-        //环境温度1
         int et1 = this.negative(CodingUtil.hexStringToInteger(info.substring(18, 22)));
         packMap.put("environmentTemperature1", CodingUtil.decimal(et1, "#.0", 10));
-        //环境温度2
         int et2 = this.negative(CodingUtil.hexStringToInteger(info.substring(22, 26)));
         packMap.put("environmentTemperature2", CodingUtil.decimal(et2, "#.0", 10));
 
-        // 组外压、组电流、组压、温度
+        // 校验数据有效性
+        if (!validatePackData(packOuterVoltage, packCurrent, packVoltage, et1)) {
+            return null;
+        }
+
+        // 解析电压统计信息
+        parseVoltageInfo(info, packMap);
+        // 解析内阻信息
+        parseResistanceInfo(info, packMap);
+        // 解析温度信息
+        parseTemperatureInfo(info, packMap);
+        // 解析容量和状态信息
+        parseCapacityAndStatusInfo(info, packMap, packCurrent);
+
+        return packMap;
+    }
+
+    /**
+     * 校验电池组数据有效性
+     */
+    private boolean validatePackData(int packOuterVoltage, int packCurrent, int packVoltage, int et1) {
         boolean validPack = Objects.equals(packOuterVoltage, 0)
                 && Objects.equals(packCurrent, 0) && Objects.equals(packVoltage, 0)
                 && (Objects.equals(et1, 0) || Objects.equals(et1, -150));
         if (validPack) {
             log.error("电池组数据无效（组外压、组电压、组电流、环境温度），不进行存储");
-            return null;
+            return false;
         }
+        return true;
+    }
 
-        //最高电压电池号
+    /**
+     * 解析电压统计信息
+     */
+    private void parseVoltageInfo(String info, Map<String, Object> packMap) {
         packMap.put("maxVoltageBatteryNumber", CodingUtil.hexStringToString(info.substring(26, 28)));
-        //最高电池电压值
         packMap.put("batteryMaxVoltage", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(28, 32)), "#.000", 1000));
-        //最低电压电池号
         packMap.put("minVoltageBatteryNumber", CodingUtil.hexStringToString(info.substring(32, 34)));
-        //最低电池电压值
         packMap.put("batteryMinVoltage", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(34, 38)), "#.000", 1000));
-        //电池平均单体电压
         packMap.put("batteryAvgVoltage", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(38, 42)), "#.000", 1000));
-        //电池电压均差值单位
         packMap.put("batteryVoltageDeviation", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(42, 46)), "#.000", 1000));
-        //电池电压极差值
         packMap.put("batteryVoltageRange", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(46, 50)), "#.000", 1000));
-        //最高内阻电池号
+    }
+
+    /**
+     * 解析内阻信息
+     */
+    private void parseResistanceInfo(String info, Map<String, Object> packMap) {
         packMap.put("maxResistanceBatteryNumber", CodingUtil.hexStringToString(info.substring(50, 52)));
-        //最高电池内阻值
         packMap.put("batteryMaxResistance", String.valueOf(CodingUtil.hexStringToInteger(info.substring(52, 56))));
-        //最低内阻电池号
         packMap.put("minResistanceBatteryNumber", CodingUtil.hexStringToString(info.substring(56, 58)));
-        //最低电池内阻值
         packMap.put("batteryMinEsistance", String.valueOf(CodingUtil.hexStringToInteger(info.substring(58, 62))));
-        //平均电池内阻值
         packMap.put("batteryAvgResistance", String.valueOf(CodingUtil.hexStringToInteger(info.substring(62, 66))));
-        //最高温度电池号
+    }
+
+    /**
+     * 解析温度信息
+     */
+    private void parseTemperatureInfo(String info, Map<String, Object> packMap) {
         packMap.put("maxTemperatureBatteryNumber", CodingUtil.hexStringToString(info.substring(66, 68)));
-        //最高电池温度值
         int bMaxT = this.negative(CodingUtil.hexStringToInteger(info.substring(68, 72)));
         packMap.put("batteryMaxTemperature", CodingUtil.decimal(bMaxT, "#.0", 10));
-        //最低温度电池号
         packMap.put("minTemperatureBatteryNumber", CodingUtil.hexStringToString(info.substring(72, 74)));
-        //最低电池温度值
         int bMinT = this.negative(CodingUtil.hexStringToInteger(info.substring(74, 78)));
         packMap.put("batteryMinTemperature", CodingUtil.decimal(bMinT, "#.0", 10));
-        //平均电池温度值
         int bAvgT = this.negative(CodingUtil.hexStringToInteger(info.substring(78, 82)));
         packMap.put("batteryAvgTemperature", CodingUtil.decimal(bAvgT, "#.0", 10));
-        //组SOC
+    }
+
+    /**
+     * 解析容量和状态信息
+     */
+    private void parseCapacityAndStatusInfo(String info, Map<String, Object> packMap, int packCurrent) {
         packMap.put("batteryPackSoc", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(82, 86)), "#.0", 10));
-        //组SOH
         packMap.put("batteryPackSoh", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(86, 90)), "#.0", 10));
-        //剩余放电时长
         packMap.put("residualDischargeDuration", String.valueOf(CodingUtil.hexStringToInteger(info.substring(90, 94))));
-        //纹波电压
         packMap.put("rippleVoltage", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(94, 98)), "#.000", 1000));
-        //氢气浓度
         packMap.put("hydrogenConcentration", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(98, 102)), "#.0", 10));
-        //绝缘正电阻
         packMap.put("positiveinsulationResistance", String.valueOf(CodingUtil.hexStringToInteger(info.substring(102, 106))));
-        //绝缘负电阻
         packMap.put("negativeinsulationResistance", String.valueOf(CodingUtil.hexStringToInteger(info.substring(106, 110))));
-        //接地电池号上限
         packMap.put("groundingBatteryUpperLimit", String.valueOf(CodingUtil.hexStringToInteger(info.substring(110, 112))));
-        //接地电池号下限
         packMap.put("groundingBatteryLowerLimit", String.valueOf(CodingUtil.hexStringToInteger(info.substring(112, 114))));
-        //内阻最大变化率电池号
         packMap.put("maxResistanceRateChangeBatteryNumber", String.valueOf(CodingUtil.hexStringToInteger(info.substring(114, 116))));
-        //内阻最大变化率值
         packMap.put("maxResistanceRateChange", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(116, 120)), "#.00", 100));
-        /*电池组状态寄存器*/
+
+        // 电池组状态寄存器
         String binary2 = CodingUtil.hexString2binaryString(info.substring(120, 122));
-        //设备工作状态
         packMap.put("deviceWorkStatus", String.valueOf(CodingUtil.binaryToDecimal(binary2.substring(0, 3))));
-        //设备工作IO状态
         packMap.put("deviceWorkIOStatus", String.valueOf(CodingUtil.valueOfInteger(binary2.substring(3, 4))));
-        //电池状态字
         packMap.put("batteryPackStatus", String.valueOf(CodingUtil.binaryToDecimal(binary2.substring(4))));
-        //电池容量测试标志位：0表示不在内阻测试、1表示通讯故障、2表示浮充电流异常、4表示放电电流异常、6表示正在内阻测试、7表示内阻测试正常结束、8表示内阻测试异常结束、9表示回路电压异常
         packMap.put("resistanceTestStatus", String.valueOf(CodingUtil.hexStringToInteger(info.substring(122, 124))));
 
-        // 放电
+        // 放电状态
         if (packCurrent < 0) {
             packMap.put("batteryPackStatus", BatteryPackStatusEnum.BACKUP.getCode());
         }
-        return packMap;
     }
 
     /**
