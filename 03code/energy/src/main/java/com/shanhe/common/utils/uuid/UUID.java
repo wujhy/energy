@@ -369,11 +369,9 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
     {
         // The ordering is intentionally set up so that the UUIDs
         // can simply be numerically compared as two numbers
-        //
-        //
-        return (this.mostSigBits < val.mostSigBits ? -1 : //
-                (this.mostSigBits > val.mostSigBits ? 1 : //
-                        Long.compare(this.leastSigBits, val.leastSigBits)));
+        return (this.mostSigBits < val.mostSigBits ? -1
+                : (this.mostSigBits > val.mostSigBits ? 1
+                        : Long.compare(this.leastSigBits, val.leastSigBits)));
     }
 
     // -------------------------------------------------------------------------------------------------------------------

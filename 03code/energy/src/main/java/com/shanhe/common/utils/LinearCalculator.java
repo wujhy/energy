@@ -77,7 +77,9 @@ public class LinearCalculator {
         return this.k == other.k && this.b == other.b;
     }
 
-    // 求两条直线的交点
+    /**
+     * 求两条直线的交点
+     */
     private double[] findIntersection(LinearCalculator other) {
         if (this.isParallelTo(other)) {
             if (this.isSameAs(other)) {

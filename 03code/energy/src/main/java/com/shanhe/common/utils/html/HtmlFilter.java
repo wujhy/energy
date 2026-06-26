@@ -46,7 +46,7 @@ public final class HtmlFilter {
     private static final Pattern P_RIGHT_ARROW = Pattern.compile(">");
     private static final Pattern P_BOTH_ARROWS = Pattern.compile("<>");
 
-    // @xxx could grow large... maybe use sesat's ReferenceMap
+    /** @xxx could grow large... maybe use sesat's ReferenceMap */
     private static final ConcurrentMap<String, Pattern> P_REMOVE_PAIR_BLANKS = new ConcurrentHashMap<>();
     private static final ConcurrentMap<String, Pattern> P_REMOVE_SELF_BLANKS = new ConcurrentHashMap<>();
 
@@ -173,8 +173,9 @@ public final class HtmlFilter {
         vTagCounts.clear();
     }
 
-    // ---------------------------------------------------------------
-    // my versions of some PHP library functions
+    /**
+     * my versions of some PHP library functions
+     */
     public static String chr(final int decimal)
     {
         return String.valueOf((char) decimal);
