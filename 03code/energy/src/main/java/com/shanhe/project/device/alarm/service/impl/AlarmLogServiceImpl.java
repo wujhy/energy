@@ -1232,7 +1232,9 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return listDTO;
     }
 
-    // 添加格式化方法
+    /**
+     * 格式化持续时长
+     */
     private static String formatDuration(Long duration) {
         if (duration == null || duration <= 0) {
             return "0秒";

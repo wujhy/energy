@@ -16,8 +16,10 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Modbus RTU 从站服务。
@@ -77,7 +79,8 @@ public class ModbusRtuServer implements ApplicationRunner {
         running = true;
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat("modbus-rtu-server").setDaemon(true).build();
-        serverExecutor = Executors.newSingleThreadExecutor(threadFactory);
+        serverExecutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(1), threadFactory, new ThreadPoolExecutor.AbortPolicy());
         serverExecutor.submit(this::runServer);
         log.info("Modbus RTU 从站已启动, 串口={}, 站号={}, 波特率={}",
                 modbusRtuProperties.getPortName(),

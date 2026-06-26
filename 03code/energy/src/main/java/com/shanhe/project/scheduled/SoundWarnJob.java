@@ -42,7 +42,7 @@ public class SoundWarnJob {
     /**
      * 每隔5秒执行
      */
-//    @Scheduled(cron = "${job.checkSoundWarnCron}")
+    // @Scheduled(cron = "${job.checkSoundWarnCron}")
     public void doJob() {
         if (!isOpenSoundWarn) {
             return;

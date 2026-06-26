@@ -92,8 +92,6 @@ public class TcpServerConfig implements ApplicationRunner {
                      * 在服务器端会每隔N秒检查channelRead方法被调用的情况，如果N秒内channelRead没有被触发就会调用userEventTriggered方法 intervalTime
                      */
                     pipeline.addLast(new IdleStateHandler(deviceCommConst.getTcpIntervalTime(), 0, 0, TimeUnit.SECONDS));
-                    //设置2min的超时时间，如果某个通道2min内未发送信号，则抛出异常删除当前通道
-//                        pipeline.addLast(new ReadTimeoutHandler(tcpConst.getIntervalTime()));
                     // 解析结果处理
                     pipeline.addLast(new TcpServerHandler(deviceService));
                 }

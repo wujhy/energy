@@ -579,7 +579,10 @@ public class BatteryCollectorCommandService {
         batterySpecificationToVoltage(batterySpecification);
     }
 
-    // 电池规格: 2=2V单体, 8=12V(6节串联)
+    /**
+     * 电池规格转换为电压
+     * 电池规格: 2=2V单体, 8=12V(6节串联)
+     */
     private int batterySpecificationToVoltage(int batterySpecification) {
         switch (batterySpecification) {
             case 2:

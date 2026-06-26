@@ -92,6 +92,8 @@ public interface BatteryReportLogService {
 
     /**
      * 导出
+     *
+     * @param params 查询参数
      */
     void export(BatteryReportLog params);
 }

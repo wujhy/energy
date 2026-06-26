@@ -10,11 +10,11 @@ import lombok.Data;
  */
 @Data
 public class EvaluationFactors {
-    // 名称
+    /** 名称 */
     private String name;
-    // 值
+    /** 值 */
     private String value;
-    // 是否报警 0 报警
+    /** 是否报警：0-报警 */
     private Integer isAlarm;
 
     public EvaluationFactors() {

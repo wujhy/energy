@@ -246,10 +246,30 @@ public class BatteryModeStatusService {
     }
 
     interface CacheAccessor {
+        /**
+         * 获取缓存值
+         *
+         * @param cacheName 缓存名称
+         * @param key 缓存键
+         * @return 缓存值
+         */
         Object get(String cacheName, String key);
 
+        /**
+         * 设置缓存值
+         *
+         * @param cacheName 缓存名称
+         * @param key 缓存键
+         * @param value 缓存值
+         */
         void put(String cacheName, String key, Object value);
 
+        /**
+         * 删除缓存值
+         *
+         * @param cacheName 缓存名称
+         * @param key 缓存键
+         */
         void remove(String cacheName, String key);
     }
 

@@ -24,7 +24,7 @@ public class DataService {
     @Value("${storage.interval.alarm:30}")
     private Integer intervalAlarm;
 
-    // 正常存储间隔：秒
+    /** 正常存储间隔：秒 */
     @Value("${storage.interval.data:60}")
     private Integer intervalData;
     @Resource

@@ -64,7 +64,7 @@ public class BatteryHealthReport implements Serializable {
     // 告警数量
     private Integer alarmCount;
 
-    // 评估因子
+    /** 评估因子 */
     private List<EvaluationFactors> evaluationFactors;
 
 }

@@ -130,7 +130,8 @@ public class MessageFactory {
                 }
             } catch (Throwable e){
                 try {
-                    Thread.sleep(5000); // 等待5秒
+                    // 等待5秒
+                    Thread.sleep(5000);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }

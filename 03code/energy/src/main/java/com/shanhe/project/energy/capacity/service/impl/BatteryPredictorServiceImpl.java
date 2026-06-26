@@ -447,10 +447,13 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         return Math.min(batCapacity, groupCapacity) / batCapacity * 100.0;
     }
 
-    // 1、每次内阻测试后，计算变化率
-    // 2、内阻变化率= ( (R_measured - R_initial) / R_initial ) × 100%
-    // SOH内阻 ≈ 1 - 内阻变化率 / 2 * 100%
-    // 实测内阻最小不能超过初始内阻，实测内阻最高只能为初始内阻的1倍
+    /**
+     * 计算SOH内阻
+     * 1、每次内阻测试后，计算变化率
+     * 2、内阻变化率= ( (R_measured - R_initial) / R_initial ) × 100%
+     * SOH内阻 ≈ 1 - 内阻变化率 / 2 * 100%
+     * 实测内阻最小不能超过初始内阻，实测内阻最高只能为初始内阻的1倍
+     */
     private double getSohResistance(BatteryPack batteryInfo) {
         Double maxResistance = devBatteryMonomerService.getMaxResistance(batteryInfo.getPackNum());
         if (maxResistance == null) {
@@ -459,10 +462,11 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         return (1 - maxResistance) * 100;
     }
 
-
-    //
-    // 已使用时间最大值5年
-    // SOH_时间 = (1 - 已使用时间（年） / 设计寿命) × 100%
+    /**
+     * 计算SOH时间
+     * 已使用时间最大值5年
+     * SOH_时间 = (1 - 已使用时间（年） / 设计寿命) × 100%
+     */
     private double getSohTime(BatteryPack batteryInfo) {
         // 计算差距多少年，四舍五入
         LocalDate currentDate = LocalDate.now();

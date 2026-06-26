@@ -110,18 +110,37 @@ public class BatteryCollectorFrameReceiveService {
     /** 判断响应帧是否命中当前 pending。 */
     @FunctionalInterface
     public interface PendingResponseMatcher {
+        /**
+         * 判断响应帧是否命中当前 pending
+         *
+         * @param state 通道状态
+         * @param frame 响应帧
+         * @return 是否命中
+         */
         boolean isCurrentPendingResponse(BatteryCollectorChannelState state, BatteryCollectorFrame frame);
     }
 
     /** 处理已命中 pending 的响应帧。 */
     @FunctionalInterface
     public interface PendingResponseCompletion {
+        /**
+         * 处理已命中 pending 的响应帧
+         *
+         * @param state 通道状态
+         * @param frame 响应帧
+         */
         void handleCompletedPendingResponse(BatteryCollectorChannelState state, BatteryCollectorFrame frame);
     }
 
     /** 判断响应编码是否属于已知模块响应。 */
     @FunctionalInterface
     public interface KnownResponseChecker {
+        /**
+         * 判断响应编码是否属于已知模块响应
+         *
+         * @param commandCode 命令编码
+         * @return 是否已知
+         */
         boolean isKnownModuleResponse(int commandCode);
     }
 }

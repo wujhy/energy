@@ -16,23 +16,23 @@ import java.util.Date;
 public class SysLogFile implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    // 文件名称
+    /** 文件名称 */
     private String fileName;
 
-    // 文件路径
+    /** 文件路径 */
     private String filePath;
 
-    // 文件大小
+    /** 文件大小 */
     private Long fileSize;
 
-    // 是否文件夹
+    /** 是否文件夹 */
     private String isDir;
 
-    // 最后跟新时间
+    /** 最后更新时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date lastModifiedTime;
 
-    // 是否子文件
+    /** 是否子文件 */
     private Integer isSub;
 
 }

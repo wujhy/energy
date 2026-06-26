@@ -106,7 +106,8 @@ public class BatteryHandler {
             case _E7:
             case _E8:
             case _F8:
-            case _F6: // 恢复出厂设置响应
+            // 恢复出厂设置响应
+            case _F6:
                 // 普通应答，统一缓存结果
                 batteryOptResHandler.uploadBatteryResponse(config, deviceData);
                 break;
