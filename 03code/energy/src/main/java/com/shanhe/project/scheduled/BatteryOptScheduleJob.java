@@ -23,6 +23,16 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * 蓄电池测试计划到点调度任务。
+ *
+ * <p>每分钟扫描已启用的测试计划，到点后自动执行；
+ * 执行前检查是否已有运行中测试，避免重复触发。
+ * 执行成功后更新下次调度时间或禁用一次性计划。</p>
+ *
+ * @author wjh
+ * @since 2026-06-22
+ */
 @Slf4j
 @Component
 @EnableScheduling
@@ -41,6 +51,9 @@ public class BatteryOptScheduleJob {
 
     private final Set<String> runningKeys = ConcurrentHashMap.newKeySet();
 
+    /**
+     * 扫描并执行到期的蓄电池测试计划。
+     */
     @Scheduled(cron = "${job.batteryOptSchedule:0 0/1 * * * ?}")
     public void executeDueBatteryOpt() {
         DevBatteryOpt query = new DevBatteryOpt();
@@ -59,6 +72,7 @@ public class BatteryOptScheduleJob {
         }
     }
 
+    /** 判断测试计划是否已到执行时间。 */
     private boolean isDue(DevBatteryOpt opt, Date now) {
         return opt != null
                 && opt.getPackNum() != null
@@ -67,6 +81,7 @@ public class BatteryOptScheduleJob {
                 && !opt.getTestTime().after(now);
     }
 
+    /** 执行单个测试计划，使用 runningKeys 防止重复触发。 */
     private void executeOne(DevBatteryOpt opt, Date now) {
         String key = opt.getPackNum() + ":" + opt.getTestType();
         if (!runningKeys.add(key)) {
@@ -93,6 +108,7 @@ public class BatteryOptScheduleJob {
         }
     }
 
+    /** 检查是否已有运行中的测试（opt_log 或采集模块工作模式）。 */
     private boolean hasRunningOptLog(DevBatteryOpt opt) {
         OptLog running = optLogService.getRunningOptLog(opt.getPackNum(), opt.getTestType());
         if (running != null) {
@@ -109,6 +125,7 @@ public class BatteryOptScheduleJob {
                 && Objects.equals(modeInfo.getMode(), expectedMode);
     }
 
+    /** 将测试类型映射为采集模块工作模式。 */
     private Integer resolveCollectorMode(Integer testType) {
         if (Objects.equals(testType, BatteryTestEnum._2.getDictValue())) {
             return BatteryModeStatusService.MODE_CONNECT_RESISTANCE;
@@ -119,6 +136,7 @@ public class BatteryOptScheduleJob {
         return null;
     }
 
+    /** 判断执行结果是否成功。 */
     private boolean isSuccess(AjaxResult result) {
         if (result == null) {
             return false;
@@ -128,6 +146,7 @@ public class BatteryOptScheduleJob {
                 || Objects.equals(String.valueOf(code), String.valueOf(AjaxResult.Type.SUCCESS.value()));
     }
 
+    /** 更新下次调度时间，无间隔的计划执行后禁用。 */
     private void updateNextSchedule(DevBatteryOpt opt, Date now) {
         Integer execCount = opt.getExecCount() == null ? 0 : opt.getExecCount();
         opt.setExecCount(execCount + 1);
