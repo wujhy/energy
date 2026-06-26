@@ -45,6 +45,8 @@ public interface IDevBatteryMonomerService {
 
     /**
      * 删除
+     *
+     * @param packId 电池组ID
      */
     void deleteByPackId(Long packId);
 

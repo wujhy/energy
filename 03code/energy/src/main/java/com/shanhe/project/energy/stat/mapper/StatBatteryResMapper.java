@@ -18,6 +18,8 @@ public interface StatBatteryResMapper {
     /**
      * 查询单体内阻变化统计（内阻测试后）列表
      *
+     * @param packNum 电池组编号
+     * @param batNum 单体编号
      * @return 单体内阻变化统计（内阻测试后）集合
      */
     List<StatBatteryRes> selectList(@Param("packNum") Integer packNum, @Param("batNum") Integer batNum);

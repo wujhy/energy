@@ -181,6 +181,8 @@ public interface IConfigAttributeService
 
     /**
      * 获取缓存属性列表
+     *
+     * @return 属性列表
      */
     List<ConfigAttribute> cacheAttributeList();
 }

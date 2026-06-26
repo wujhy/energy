@@ -18,6 +18,11 @@ public interface IAlarmLogService
 {
     /**
      * 通过缓存获取默认设备告警记录
+     *
+     * @param packNum 电池组编号
+     * @param modelNum 模块编号
+     * @param itemCode 告警项编码
+     * @return 告警记录
      */
     AlarmLog getByCache(Integer packNum, Integer modelNum, String itemCode);
 
@@ -38,11 +43,16 @@ public interface IAlarmLogService
 
     /**
      * 默认设备是否告警
+     *
+     * @param packNum 电池组编号
+     * @return 是否告警
      */
     Integer isAlarmByCache(Integer packNum);
 
     /**
      * 默认蓄电池设备告警记录数
+     *
+     * @return 告警记录数
      */
     Long batteryAlarmNum();
 
@@ -55,11 +65,15 @@ public interface IAlarmLogService
 
     /**
      * 总告警数量
+     *
+     * @return 告警数量
      */
     Long alarmAllNum();
 
     /**
      * 告警设备数量
+     *
+     * @return 告警设备数量
      */
     Long alarmDeviceNum();
 
@@ -137,6 +151,8 @@ public interface IAlarmLogService
 
     /**
      * 基于属性关闭告警
+     *
+     * @param configAttribute 设备属性配置
      */
     void closeAlarmLog(ConfigAttribute configAttribute);
 

@@ -12,7 +12,13 @@ import com.shanhe.project.collector.battery.model.BatteryModuleFrameSummary;
  */
 public interface BatteryModuleFrameConsumer {
 
-    /** 消费600节模块端帧数据。 */
+    /**
+     * 消费600节模块端帧数据
+     *
+     * @param channelConfig 通道配置
+     * @param frame 帧数据
+     * @param summary 帧摘要
+     */
     void consume(BatteryCollectorChannelConfig channelConfig,
                  BatteryCollectorFrame frame,
                  BatteryModuleFrameSummary summary);

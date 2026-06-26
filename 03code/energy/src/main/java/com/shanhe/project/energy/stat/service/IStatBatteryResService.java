@@ -62,6 +62,7 @@ public interface IStatBatteryResService {
      * 导出
      *
      * @param packNum 电池组编号
+     * @param exportPath 导出路径
      */
     void export(Integer packNum, String exportPath);
 }

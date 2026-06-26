@@ -11,6 +11,8 @@ import com.shanhe.project.energy.capacity.vo.PreBatteryGroup;
 public interface PreBatteryGroupService {
     /**
      * 插入记录
+     *
+     * @param groupVo 组容量信息
      */
     void insert(PreBatteryGroup groupVo);
 

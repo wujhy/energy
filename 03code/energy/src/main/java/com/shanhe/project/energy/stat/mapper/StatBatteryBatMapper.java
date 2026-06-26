@@ -20,6 +20,9 @@ public interface StatBatteryBatMapper {
     /**
      * 查询单体电池统计列表
      *
+     * @param packIds 电池组编号列表
+     * @param startDateTime 开始时间
+     * @param endDateTime 结束时间
      * @return 单体电池统计集合
      */
     List<StatBatteryBat> selectListByPackIds(@Param("packIds") List<Long> packIds,
@@ -28,13 +31,14 @@ public interface StatBatteryBatMapper {
     /**
      * 新增单体电池统计
      *
-     * @param statBattery 单体电池统计
+     * @param statBattery 单体电池统计列表
      */
     void insertList(@Param("list") List<StatBatteryBat> statBattery);
 
     /**
      * 查询单体电池组统计列表
      *
+     * @param statBatteryBat 查询参数
      * @return 单体电池组统计集合
      */
     List<StatBatteryBat> selectList(StatBatteryBat statBatteryBat);

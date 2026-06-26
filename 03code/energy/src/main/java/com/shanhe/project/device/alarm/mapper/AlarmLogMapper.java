@@ -100,6 +100,8 @@ public interface AlarmLogMapper
 
     /**
      * 删除设备告警记录信息
+     *
+     * @param packNum 电池组编号
      */
     void deleteBatteryAlarmLogByPackNum(@Param("packNum") Integer packNum);
 }

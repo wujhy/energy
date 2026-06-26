@@ -21,6 +21,7 @@ public interface OptLogService {
      * @param packNum 组序号
      * @param type 操作类型
      * @param result 结果
+     * @return 记录ID
      */
     Long insert(Integer packNum, Integer type, Integer result);
 
@@ -29,6 +30,7 @@ public interface OptLogService {
      *
      * @param params 操作参数
      * @param result 结果
+     * @return 记录ID
      */
     Long insert(Map<String, Object> params, Integer result);
 
@@ -37,6 +39,7 @@ public interface OptLogService {
      *
      * @param packNum 组序号
      * @param packMap 操作参数
+     * @param oldInfo 旧电池信息
      */
     void insertBattery(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo);
 
@@ -45,6 +48,7 @@ public interface OptLogService {
      *
      * @param id 记录id
      * @param result 操作结果
+     * @param updateTime 更新时间
      */
     void update(Long id, Integer result, Date updateTime);
 

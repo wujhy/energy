@@ -11,11 +11,15 @@ import com.shanhe.project.device.opt.vo.BatterySetVO;
 public interface RestoreService {
     /**
      * 复位
+     *
+     * @param batterySetVO 电池设置参数
      */
     void restore(BatterySetVO batterySetVO);
 
     /**
      * 清除组数据
+     *
+     * @param batterySetVO 电池设置参数
      */
     void delPack(BatterySetVO batterySetVO);
 

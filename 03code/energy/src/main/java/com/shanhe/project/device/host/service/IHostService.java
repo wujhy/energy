@@ -99,6 +99,8 @@ public interface IHostService
 
     /**
      * 更新缓存
+     *
+     * @return 主机信息
      */
     Host updateCache();
 

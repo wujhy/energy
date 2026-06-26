@@ -98,11 +98,15 @@ public interface IBatteryPackService
 
     /**
      * 修改
+     *
+     * @param pack 电池组信息
      */
     void updateNew(BatteryPack pack);
 
     /**
      * 新增
+     *
+     * @param pack 电池组信息
      */
     void insertBatteryPackNew(BatteryPack pack);
 

@@ -15,6 +15,8 @@ public interface BatteryReportLogMapper {
 
     /**
      * 插入记录
+     *
+     * @param batteryReportLog 电池上报记录
      */
     void insert(BatteryReportLog batteryReportLog);
     /**
@@ -64,6 +66,9 @@ public interface BatteryReportLogMapper {
 
     /**
      * 计数
+     *
+     * @param params 查询参数
+     * @return 记录数
      */
     Long selectCount(BatteryReportLog params);
 }

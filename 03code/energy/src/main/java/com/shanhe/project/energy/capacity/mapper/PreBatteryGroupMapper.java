@@ -15,16 +15,23 @@ public interface PreBatteryGroupMapper {
 
     /**
      * 插入组容量信息
+     *
+     * @param groupVo 组容量信息
      */
     void insert(PreBatteryGroup groupVo);
 
     /**
      * 查询最新的组容量信息
+     *
+     * @param packNum 电池组编号
+     * @return 组容量信息
      */
     PreBatteryGroup selectLast(@Param("packNum") Integer packNum);
 
     /**
      * 根据电池组编号删除组容量信息
+     *
+     * @param packNum 电池组编号
      */
     void deleteByPackNum(@Param("packNum") Integer packNum);
 }

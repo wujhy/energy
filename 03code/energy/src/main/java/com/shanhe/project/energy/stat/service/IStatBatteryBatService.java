@@ -28,6 +28,7 @@ public interface IStatBatteryBatService {
      * 查询电池组统计列表
      *
      * @param statBatteryBat 查询条件
+     * @return 统计列表
      */
     List<StatBatteryBat> selectList(StatBatteryBat statBatteryBat);
 
