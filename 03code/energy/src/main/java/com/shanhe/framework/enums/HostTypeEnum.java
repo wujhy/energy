@@ -17,7 +17,9 @@ import java.util.Objects;
 @Getter
 public enum HostTypeEnum {
 
+    /** 3CM02N透传版动环主机 */
     _3CM02N("3CM02N", "3CM02N透传版动环主机"),
+    /** 2CM03N透传版动环主机 */
     _2CM03N("2CM03N", "2CM03N透传版动环主机");
 
     private final String dictValue;

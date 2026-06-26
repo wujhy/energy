@@ -16,8 +16,11 @@ import java.util.Objects;
 @Getter
 public enum ConnectionStatusEnum {
 
+    /** 未连接 */
     _0(0, "未连接"),
+    /** 已连接 */
     _1(1, "已连接"),
+    /** 连接异常 */
     _2(2, "连接异常");
 
     private final Integer dictValue;

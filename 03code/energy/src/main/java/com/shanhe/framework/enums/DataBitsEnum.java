@@ -16,9 +16,13 @@ import java.util.Objects;
 @Getter
 public enum DataBitsEnum {
 
+    /** 8位 */
     _3(3, "8位"),
+    /** 7位 */
     _2(2, "7位"),
+    /** 6位 */
     _1(1, "6位"),
+    /** 5位 */
     _0(0, "5位");
 
     private final Integer dictValue;

@@ -16,7 +16,9 @@ import java.util.Objects;
 @Getter
 public enum ResultEnum {
 
+    /** 成功 */
     TRUE(0, "成功"),
+    /** 失败 */
     FALSE(1, "失败");
 
     private final Integer dictValue;

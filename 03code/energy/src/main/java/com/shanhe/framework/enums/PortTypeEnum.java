@@ -16,13 +16,21 @@ import java.util.Objects;
 @Getter
 public enum PortTypeEnum {
 
+    /** 无效 */
     _0(0, "无效"),
+    /** RS485 */
     _1(1, "RS485"),
+    /** RS232 */
     _2(2, "RS232"),
+    /** 数字输入 */
     _3(3, "DI"),
+    /** 数字输出 */
     _4(4, "DO"),
+    /** 模拟输入 */
     _5(5, "AI"),
+    /** 模拟输出 */
     _6(6, "AO"),
+    /** IR红外 */
     _7(7, "IR红外");
 
     private final Integer dictValue;

@@ -16,7 +16,9 @@ import java.util.Objects;
 @Getter
 public enum YesNoEnum {
 
+    /** 是 */
     YES(0, "是"),
+    /** 否 */
     NO(1, "否");
 
     private final Integer dictValue;

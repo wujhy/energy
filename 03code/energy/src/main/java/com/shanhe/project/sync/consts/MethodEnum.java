@@ -12,56 +12,104 @@ import lombok.Getter;
 @Getter
 public enum MethodEnum {
 
+    /** 注册 */
     _1("join", "注册"),
+    /** 心跳 */
     _2("heartbeat", "心跳"),
+    /** 上传实时数据 */
     _3("uploadData", "上传实时数据"),
+    /** 上传告警数据 */
     _4("uploadAlarm", "上传告警数据"),
+    /** 同步设备信息 */
     _5("synDev", "同步设备信息"),
+    /** 同步设备信息响应 */
     _6("synDevRes", "同步设备信息响应"),
+    /** 删除设备信息 */
     _7("delDev", "删除设备信息"),
+    /** 删除设备信息响应 */
     _8("delDevRes", "删除设备信息响应"),
+    /** 同步串口信息 */
     _9("synDevPort", "同步串口信息"),
+    /** 同步串口信息响应 */
     _10("synDevPortRes", "同步串口信息响应"),
+    /** 修改设备IP */
     _11("editDevIp", "修改设备IP"),
+    /** 修改设备IP响应 */
     _12("editDevIpRes", "修改设备IP响应"),
+    /** 修改设备服务器IP */
     _13("editServerIp", "修改设备服务器IP"),
+    /** 修改设备服务器IP响应 */
     _14("editServerIpRes", "修改设备服务器IP响应"),
+    /** 同步设备时间 */
     _15("sysDevDate", "同步设备时间"),
+    /** 同步设备时间响应 */
     _16("sysDevDateRes", "同步设备时间响应"),
+    /** 同步测点参数 */
     _17("synAlarmConfigItem", "同步测点参数"),
+    /** 同步测点参数响应 */
     _18("editAlarmConfigItemRes", "同步测点参数响应"),
+    /** 删除测点参数 */
     _19("delAlarmConfigItem", "删除测点参数"),
+    /** 删除测点参数响应 */
     _20("delAlarmConfigItemRes", "删除测点参数响应"),
+    /** 同步设备指令 */
     _21("synAlarmOrder", "同步设备指令"),
+    /** 同步设备指令响应 */
     _22("synAlarmOrderRes", "同步设备指令响应"),
+    /** 删除设备指令 */
     _23("delAlarmOrder", "删除设备指令"),
+    /** 删除设备指令响应 */
     _24("delAlarmOrderRes", "删除设备指令响应"),
+    /** 屏蔽告警内容 */
     _25("shieldAlarm", "屏蔽告警内容"),
+    /** 屏蔽告警内容响应 */
     _26("shieldAlarmRes", "屏蔽告警内容响应"),
+    /** 控制设备 */
     _27("controlDev", "控制设备"),
+    /** 控制设备响应 */
     _28("controlDevRes", "控制设备响应"),
+    /** 下发升级指令 */
     _29("updateSoft", "下发升级指令"),
+    /** 下发升级指令响应 */
     _30("updateSoftRes", "下发升级指令响应"),
+    /** 升级成功 */
     _31("updateSoftResult", "升级成功"),
+    /** 上报测点数据 */
     _33("uploadAlarmConfigItem", "上报测点数据"),
+    /** 同步主机测点参数 */
     _34("reportSynAlarmConfigItem", "同步主机测点参数"),
+    /** 同步设备信息 */
     _35("reportSynDev", "同步设备信息"),
+    /** 上传设备数据 */
     _36("uploadDev", "上传设备数据"),
+    /** 同步主机测点参数响应 */
     _37("reportSynAlarmConfigItemRes", "同步主机测点参数响应"),
+    /** 同步设备信息响应 */
     _38("reportSynDevRes", "同步设备信息响应"),
+    /** 上报调试指令结果 */
     _41("updateCmdDebug", "上报调试指令结果"),
+    /** 上报测试计划 */
     _42("uploadBatteryOpt", "上报测试计划"),
+    /** 下发测试计划 */
     _43("syncBatteryOpt", "下发测试计划"),
 
+    /** 下发内阻初装值 */
     _44("syncBatteryMonomer", "下发内阻初装值"),
+    /** 下发内阻初装值响应 */
     _45("syncBatteryMonomerRes", "下发内阻初装值响应"),
 
+    /** 同步内阻初装值 */
     _46("reportSynBatteryMonomer", "同步内阻初装值"),
+    /** 同步内阻初装值响应 */
     _47("reportSynBatteryMonomerRes", "同步内阻初装值响应"),
 
+    /** 上报内阻初装值 */
     _48("uploadBatteryMonomer", "上报内阻初装值"),
+    /** 上报预估容量 */
     _49("uploadPreBatteryGroup", "上报预估容量"),
+    /** 安全认证 */
     _98("sign", "安全认证"),
+    /** 其他 */
     _99("other", "其他");
 
     private final String dictValue;

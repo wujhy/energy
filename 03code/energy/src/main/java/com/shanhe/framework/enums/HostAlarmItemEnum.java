@@ -11,11 +11,17 @@ import lombok.Getter;
 @Getter
 public enum HostAlarmItemEnum {
 
+    /** 主机故障 */
     _1("txzt", "主机故障！", "2"),
+    /** 漏水告警 */
     _2("lsgj", "漏水告警", "2"),
+    /** 冒烟告警 */
     _3("yggj", "冒烟告警", "2"),
+    /** 市电异常告警 */
     _4("sdjcgj", "市电异常告警", "2"),
+    /** 开关异常告警 */
     _5("kggj", "开关异常告警", "2"),
+    /** 通讯异常 */
     _6("txzt", "通讯异常", "2");
 
     private final String code;

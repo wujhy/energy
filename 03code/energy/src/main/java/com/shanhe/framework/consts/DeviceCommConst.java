@@ -93,8 +93,11 @@ public class DeviceCommConst {
      */
     @Getter
     public enum CommTypeEnum {
+        /** tcp连接 */
         TCP("tcp", "tcp连接"),
+        /** 串口连接 */
         PORT("port", "串口连接"),
+        /** mqtt连接 */
         MQTT("mqtt", "mqtt连接");
         private final String code;
         private final String desc;

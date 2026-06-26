@@ -16,9 +16,13 @@ import java.util.Objects;
 @Getter
 public enum AlarmLevelEnum {
 
+    /** 不告警 */
     _0("0", "不告警"),
+    /** 一般 */
     _1("1", "一般"),
+    /** 严重 */
     _2("2", "严重"),
+    /** 紧急 */
     _3("3", "紧急");
 
     private final String dictValue;

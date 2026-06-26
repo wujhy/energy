@@ -11,12 +11,17 @@ import lombok.Getter;
 @Getter
 public enum TcpCharEnum {
 
+    /** 蓄电池指令53开始位置 */
     HEAD_53("5354415254", "蓄电池指令53开始位置"),
+    /** 蓄电池指令0D结束位置 */
     END_0D("0D", "蓄电池指令0D结束位置"),
 
+    /** 测试响应指令编号 */
     _FF("FF", "测试响应指令编号"),
 
+    /** 指令AA开始位置 */
     _AA("AA", "指令AA开始位置"),
+    /** 指令55结束位置 */
     _55("55", "指令55结束位置");
 
     private final String dictValue;

@@ -13,9 +13,13 @@ import java.util.Objects;
 @Getter
 public enum ResistanceTestStatusEnum {
 
+    /** 不在内阻测试 */
     NOT_TESTING("0", "不在内阻测试"),
+    /** 正在内阻测试 */
     TESTING("6", "正在内阻测试"),
+    /** 内阻测试正常结束 */
     NORMAL_END("7", "内阻测试正常结束"),
+    /** 内阻测试异常结束 */
     ABNORMAL_END("8", "内阻测试异常结束");
 
     private final String code;

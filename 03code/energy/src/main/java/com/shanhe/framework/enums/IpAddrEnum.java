@@ -16,7 +16,9 @@ import java.util.List;
 @Getter
 public enum IpAddrEnum {
 
+    /** 有线连接 1 */
     _0("eth0", "ETH2", "有线连接 1"),
+    /** 有线连接 2 */
     _1("eth1", "ETH1", "有线连接 2");
 
     private final String dictValue;

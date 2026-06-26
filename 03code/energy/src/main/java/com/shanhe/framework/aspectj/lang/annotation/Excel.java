@@ -122,7 +122,14 @@ public @interface Excel {
 
     public enum Align
     {
-        AUTO(0), LEFT(1), CENTER(2), RIGHT(3);
+        /** 自动 */
+        AUTO(0),
+        /** 左对齐 */
+        LEFT(1),
+        /** 居中 */
+        CENTER(2),
+        /** 右对齐 */
+        RIGHT(3);
         private final int value;
 
         Align(int value)
@@ -143,7 +150,12 @@ public @interface Excel {
 
     public enum Type
     {
-        ALL(0), EXPORT(1), IMPORT(2);
+        /** 导出导入 */
+        ALL(0),
+        /** 仅导出 */
+        EXPORT(1),
+        /** 仅导入 */
+        IMPORT(2);
         private final int value;
 
         Type(int value)
@@ -159,7 +171,12 @@ public @interface Excel {
 
     public enum ColumnType
     {
-        NUMERIC(0), STRING(1), IMAGE(2);
+        /** 数值 */
+        NUMERIC(0),
+        /** 字符串 */
+        STRING(1),
+        /** 图片 */
+        IMAGE(2);
         private final int value;
 
         ColumnType(int value)

@@ -16,8 +16,11 @@ import java.util.Objects;
 @Getter
 public enum StopBitsEnum {
 
+    /** 1位 */
     _0(0, "1位"),
+    /** 1.5位 */
     _1(1, "1.5位"),
+    /** 2位 */
     _2(2, "2位");
 
     private final Integer dictValue;

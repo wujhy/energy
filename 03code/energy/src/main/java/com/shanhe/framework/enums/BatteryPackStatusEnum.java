@@ -13,12 +13,19 @@ import java.util.Objects;
 @Getter
 public enum BatteryPackStatusEnum {
 
+    /** 监控 */
     MONITOR("0", "监控"),
+    /** 充电 */
     CHARGE("1", "充电"),
+    /** 停电 */
     POWER_OFF("2", "停电"),
+    /** 核容 */
     CAPACITY_TEST("3", "核容"),
+    /** 未连接 */
     DISCONNECTED("4", "未连接"),
+    /** 备电 */
     BACKUP("5", "备电"),
+    /** 空闲 */
     IDLE("6", "空闲");
 
     private final String code;

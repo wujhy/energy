@@ -16,8 +16,11 @@ import java.util.Objects;
 @Getter
 public enum DataTypeEnum {
 
+    /** 开关量 */
     _1(1, "开关量"),
+    /** 模拟量 */
     _2(2, "模拟量"),
+    /** 枚举量 */
     _3(3, "枚举量");
 
     private final Integer dictValue;

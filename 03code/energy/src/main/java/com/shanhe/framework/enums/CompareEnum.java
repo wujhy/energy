@@ -16,8 +16,11 @@ import java.util.Objects;
 @Getter
 public enum CompareEnum {
 
+    /** 大于 */
     _1(1, "大于"),
+    /** 小于 */
     _2(2, "小于"),
+    /** 等于 */
     _3(3, "等于");
 
     private final Integer dictValue;

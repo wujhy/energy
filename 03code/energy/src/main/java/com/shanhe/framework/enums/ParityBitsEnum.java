@@ -16,10 +16,15 @@ import java.util.Objects;
 @Getter
 public enum ParityBitsEnum {
 
+    /** 无校验 */
     _0(0, "0：None"),
+    /** 奇校验 */
     _1(1, "1：Odd"),
+    /** 偶校验 */
     _2(2, "2：Even"),
+    /** 标记校验 */
     _3(3, "3：Mark"),
+    /** 空格校验 */
     _4(4, "4：Space");
 
     private final Integer dictValue;
