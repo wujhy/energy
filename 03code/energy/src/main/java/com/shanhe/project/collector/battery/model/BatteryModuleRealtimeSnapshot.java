@@ -55,30 +55,37 @@ public class BatteryModuleRealtimeSnapshot {
     /** 快照刷新时间。 */
     private Date refreshedAt;
 
+    /** 获取有效单体列表，null 安全。 */
     public List<BatteryModuleCellRealtime> getCells() {
         return cells == null ? Collections.emptyList() : cells;
     }
 
+    /** 获取单体编号索引映射，null 安全。 */
     public Map<Integer, BatteryModuleCellRealtime> getCellMap() {
         return cellMap == null ? Collections.emptyMap() : cellMap;
     }
 
+    /** 获取本轮采集到的单体编号集合，null 安全。 */
     public Set<Integer> getCurrentBatchCellNums() {
         return currentBatchCellNums == null ? Collections.emptySet() : currentBatchCellNums;
     }
 
+    /** 获取连续两轮未采集到的单体编号集合，null 安全。 */
     public Set<Integer> getStaleCellNums() {
         return staleCellNums == null ? Collections.emptySet() : staleCellNums;
     }
 
+    /** 获取当前配置数量下未补齐的单体编号集合，null 安全。 */
     public Set<Integer> getMissingCellNums() {
         return missingCellNums == null ? Collections.emptySet() : missingCellNums;
     }
 
+    /** 获取单体连续未采集轮数映射，null 安全。 */
     public Map<Integer, Integer> getCellMissCounts() {
         return cellMissCounts == null ? Collections.emptyMap() : cellMissCounts;
     }
 
+    /** 判断快照是否包含有效数据（组数据或单体数据至少一项存在）。 */
     public boolean isDataReady() {
         return group != null || !getCells().isEmpty();
     }

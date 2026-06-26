@@ -187,6 +187,11 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return runtimeViewService.getChannelSnapshots(channelStates);
     }
 
+    /**
+     * 获取采集运行指标（通道、队列、轮询、超时、快照）。
+     *
+     * @return 聚合指标
+     */
     public BatteryCollectorMetrics getMetrics() {
         return runtimeViewService.getMetrics(channelStates, realtimeSnapshotService);
     }

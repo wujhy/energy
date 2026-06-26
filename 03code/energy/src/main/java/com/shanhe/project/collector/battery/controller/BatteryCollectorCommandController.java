@@ -58,11 +58,17 @@ public class BatteryCollectorCommandController extends BaseController {
         return success(collectorService.getChannelSnapshots());
     }
 
+    /**
+     * 查询采集运行指标（通道、队列、轮询、超时、快照）。
+     */
     @GetMapping("/metrics")
     public AjaxResult metrics() {
         return success(collectorService.getMetrics());
     }
 
+    /**
+     * 查询指定电池组的当前状态（实时数据、状态、告警摘要）。
+     */
     @GetMapping("/currentState")
     public AjaxResult currentState(Integer packNum) {
         return success(batteryCurrentStateService.getCurrentState(packNum));
