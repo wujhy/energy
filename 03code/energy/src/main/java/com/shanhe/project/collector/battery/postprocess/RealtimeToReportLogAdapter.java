@@ -47,7 +47,7 @@ public class RealtimeToReportLogAdapter {
      * 将组实时数据转换为 packParam Map。
      */
     private static Map<String, Object> buildPackParam(BatteryModuleGroupRealtime group) {
-        Map<String, Object> packParam = new HashMap<>();
+        Map<String, Object> packParam = new HashMap<>(32);
         if (group == null) {
             return packParam;
         }

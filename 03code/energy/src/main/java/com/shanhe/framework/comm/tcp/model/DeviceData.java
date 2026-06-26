@@ -6,6 +6,9 @@ import java.io.Serializable;
 
 /**
  * 数据驱动
+ *
+ * @author wjh
+ * @since 2026/06/26
  */
 @Data
 public class DeviceData implements Serializable

@@ -1,6 +1,7 @@
 package com.shanhe.project.collector.battery.service;
 
 import com.fazecast.jSerialComm.SerialPort;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.shanhe.common.utils.Threads;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.UNSIGNED_BYTE_MAX;
@@ -163,8 +164,10 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         }
 
         running = true;
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("battery-collector-channel-%d").build();
         executorService = new ThreadPoolExecutor(enabledChannels.size(), enabledChannels.size(),
-                0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+                0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), threadFactory);
         for (BatteryCollectorChannelConfig channel : enabledChannels) {
             BatteryCollectorChannelState state = new BatteryCollectorChannelState(channel);
             channelStates.add(state);

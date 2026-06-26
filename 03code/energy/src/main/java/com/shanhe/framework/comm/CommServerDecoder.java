@@ -23,7 +23,7 @@ public class CommServerDecoder {
     /**
      * 粘包处理
      */
-    private static final CacheKeyEnum stickyCache = CacheKeyEnum.STICKY;
+    private static final CacheKeyEnum STICKY_CACHE = CacheKeyEnum.STICKY;
 
     /**
      * 解析数据，粘包处理
@@ -35,9 +35,9 @@ public class CommServerDecoder {
         int dataLen;
         try {
             // 存在粘包数据，先拼接数据
-            String stickyBag = Objects.toString(CacheUtils.get(stickyCache.getCache(), stickyCache.getKey()), null);
+            String stickyBag = Objects.toString(CacheUtils.get(STICKY_CACHE.getCache(), STICKY_CACHE.getKey()), null);
             if (StrUtil.isNotBlank(stickyBag)) {
-                CacheUtils.remove(stickyCache.getCache(), stickyCache.getKey());
+                CacheUtils.remove(STICKY_CACHE.getCache(), STICKY_CACHE.getKey());
                 reqStr = stickyBag + reqStr;
             }
 
@@ -54,7 +54,7 @@ public class CommServerDecoder {
                 if (StrUtil.equals(TcpCharEnum._AA.getDictValue(), subHeader)) {
                     // 数据长度小于HEAD_LENGTH*2，则是不完整包，放入缓存并跳出循环，等待后续数据提交
                     if (dataLen < headLength * 2) {
-                        CacheUtils.put(stickyCache.getCache(), stickyCache.getKey(), reqStr);
+                        CacheUtils.put(STICKY_CACHE.getCache(), STICKY_CACHE.getKey(), reqStr);
                         return;
                     }
 
@@ -62,7 +62,7 @@ public class CommServerDecoder {
                     int endIndex = getLength(reqStr);
                     // 获取的数据长度小于指令长度，不完整包，放入缓存退出循环
                     if (dataLen < endIndex) {
-                        CacheUtils.put(stickyCache.getCache(), stickyCache.getKey(), reqStr);
+                        CacheUtils.put(STICKY_CACHE.getCache(), STICKY_CACHE.getKey(), reqStr);
                         return;
                     }
 

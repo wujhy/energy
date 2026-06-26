@@ -105,7 +105,6 @@ public class GlobalExceptionHandler
     @ExceptionHandler(BindException.class)
     public AjaxResult handleBindException(BindException e)
     {
-//        log.error(e.getMessage(), e);
         String message = e.getAllErrors().get(0).getDefaultMessage();
         return AjaxResult.error(message);
     }

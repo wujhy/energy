@@ -102,7 +102,6 @@ public class ReflectUtils
         Field field = getAccessibleField(obj, fieldName);
         if (field == null)
         {
-            // throw new IllegalArgumentException("在 [" + obj.getClass() + "] 中，没有找到 [" + fieldName + "] 字段 ");
             log.debug("在 [{}] 中，没有找到 [{}] 字段 ", obj.getClass(), fieldName);
             return;
         }

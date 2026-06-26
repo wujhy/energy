@@ -49,8 +49,6 @@ public class TcpClient {
             @Override
             protected void initChannel(Channel ch) {
                 ChannelPipeline pipeline = ch.pipeline();
-//                pipeline.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
-//                pipeline.addLast("frameEncoder", new LengthFieldPrepender(4));
                 pipeline.addLast("decoder", new RotatingClientDecoder());
                 pipeline.addLast("encoder", new RotatingClientEncoder());
                 pipeline.addLast("handler", new TcpClientHandler(clientDeviceService));

@@ -215,7 +215,7 @@ public class CodingUtil {
         for (char c : sourceChar) {
             unicode = Integer.toHexString(c);
             if (unicode.length() <= 2) {
-                unicode = "00" + unicode;
+                sb.append("00");
             }
             sb.append(unicode.toUpperCase());
         }
@@ -853,7 +853,6 @@ public class CodingUtil {
                 if (line.startsWith("Receiving: AA")) {
                     list.add(line);
                 }
-                //list.add(line);
             }
         }
         br.close();

@@ -1,6 +1,7 @@
 package com.shanhe.project.modbus.rtu;
 
 import com.fazecast.jSerialComm.SerialPort;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.shanhe.project.collector.battery.service.BatteryModuleModbusReadMappingService;
 import com.shanhe.project.modbus.config.ModbusRtuProperties;
 import com.shanhe.project.modbus.service.ModbusIllegalDataAddressException;
@@ -14,6 +15,9 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Modbus RTU 从站服务。
@@ -55,7 +59,7 @@ public class ModbusRtuServer implements ApplicationRunner {
     private ModbusWriteMappingService writeMappingService;
 
     private volatile boolean running;
-    private Thread serverThread;
+    private ExecutorService serverExecutor;
     private SerialPort serialPort;
     private ModbusRtuFrameParser frameParser;
 
@@ -71,9 +75,10 @@ public class ModbusRtuServer implements ApplicationRunner {
         }
 
         running = true;
-        serverThread = new Thread(this::runServer, "modbus-rtu-server");
-        serverThread.setDaemon(true);
-        serverThread.start();
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("modbus-rtu-server").setDaemon(true).build();
+        serverExecutor = Executors.newSingleThreadExecutor(threadFactory);
+        serverExecutor.submit(this::runServer);
         log.info("Modbus RTU 从站已启动, 串口={}, 站号={}, 波特率={}",
                 modbusRtuProperties.getPortName(),
                 modbusRtuProperties.getStationAddress(),
@@ -292,8 +297,8 @@ public class ModbusRtuServer implements ApplicationRunner {
      */
     public void stop() {
         running = false;
-        if (serverThread != null) {
-            serverThread.interrupt();
+        if (serverExecutor != null) {
+            serverExecutor.shutdownNow();
         }
         closePort();
     }

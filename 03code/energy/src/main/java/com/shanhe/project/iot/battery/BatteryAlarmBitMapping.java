@@ -9,6 +9,9 @@ package com.shanhe.project.iot.battery;
  *
  * <p>energy parses one status byte with {@code CodingUtil.hexString2binaryString},
  * so index 0 points to physical bit7 and index 7 points to physical bit0.</p>
+ *
+ * @author wjh
+ * @since 2026/06/26
  */
 public final class BatteryAlarmBitMapping {
 

@@ -33,7 +33,7 @@ public class MessageFactory {
     /**
      * 当下异常的时候，状态缓存时间，缓存时间为30秒
      */
-    private final static Cache<String, Boolean> cache = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build();
+    private final static Cache<String, Boolean> CACHE = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build();
 
     /**
      * 数据处理队列
@@ -168,7 +168,7 @@ public class MessageFactory {
     private static void push(List<MonitorData> datas) {
 
         // 从现有的缓存中获取,如果缓存中有key,则返回value，如果没有则返回null
-        logOutPut = cache.getIfPresent("monitor");
+        logOutPut = CACHE.getIfPresent("monitor");
 
         if (logOutPut == null || logOutPut) {
             if (datas != null && !datas.isEmpty()) {
@@ -219,7 +219,7 @@ public class MessageFactory {
                 }
 
             }
-            cache.put("monitor", true);
+            CACHE.put("monitor", true);
         }
     }
 }

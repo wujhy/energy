@@ -84,7 +84,7 @@ public class BatteryModuleAlarmAdaptService {
     public Map<String, String> buildThresholdAlarmParam(Integer packNum,
                                                          List<BatteryModuleCellRealtime> cells,
                                                          BatteryModuleGroupRealtime group) {
-        Map<String, String> warnParam = new HashMap<>();
+        Map<String, String> warnParam = new HashMap<>(32);
         if (cells != null) {
             for (BatteryModuleCellRealtime cell : cells) {
                 if (cell == null || cell.getBatNum() == null) {

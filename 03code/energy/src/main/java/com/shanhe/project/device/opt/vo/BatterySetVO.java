@@ -41,7 +41,7 @@ public class BatterySetVO {
     public interface cmd76{}
 
     /** 需要异步等待响应 */
-    Boolean needDynResult = true;
+    Boolean needDynResult;
 
     /** 设备ID */
     private Long configId;

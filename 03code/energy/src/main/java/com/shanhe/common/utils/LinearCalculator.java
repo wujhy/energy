@@ -5,6 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 构造一元一次函数
+ *
+ * @author wjh
+ * @since 2026/06/26
  */
 @Slf4j
 public class LinearCalculator {

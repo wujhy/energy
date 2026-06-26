@@ -174,7 +174,6 @@ public class SerialPortHandler {
             serialPort.openPort();
         }
         // 设备id一样，通道开启
-//        return StrUtil.isNotBlank(deviceImei) && serialPort.isOpen();
         return serialPort.isOpen();
     }
 

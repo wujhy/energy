@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class StartupRunner implements ApplicationRunner {
 
-    private static final ThreadPoolExecutor threadPoolExecutor = getThreadPoolExecutor();
+    private static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = getThreadPoolExecutor();
 
     @Resource
     private BatteryReportLogMapper batteryReportLogMapper;
@@ -48,6 +48,6 @@ public class StartupRunner implements ApplicationRunner {
     public void run(ApplicationArguments args) throws Exception {
         //启动日志工厂
         MessageFactory.initQueue(10000, batteryReportLogMapper, statBatteryPackMapper, statBatteryBatMapper);
-        threadPoolExecutor.execute(() -> MessageFactory.starGainData(1000));
+        THREAD_POOL_EXECUTOR.execute(() -> MessageFactory.starGainData(1000));
     }
 }
