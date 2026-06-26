@@ -64,7 +64,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
 
-    // 缓存枚举
+    /** 缓存枚举 */
     CacheKeyEnum alarmCache = CacheKeyEnum.ALARM;
 
     /**

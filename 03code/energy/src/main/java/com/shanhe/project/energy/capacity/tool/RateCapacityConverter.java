@@ -12,7 +12,7 @@ import java.util.Map;
  * @since 2026-05-25
  */
 public class RateCapacityConverter {
-    // 铅酸电池典型Peukert常数
+    /** 铅酸电池典型Peukert常数 */
     private static final double PEUKERT_CONSTANT = 1.02;
 
     /**

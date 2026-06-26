@@ -32,9 +32,9 @@ public enum BatteryModelEnum {
     private final Integer dictValue;
 
     private final String dictLabel;
-    // 浮充 24 节以下下限
+    /** 浮充 24 节以下下限 */
     private final Integer floatingVoltage24Below;
-    // 浮充 24 节以上上限
+    /** 浮充 24 节以上上限 */
     private final Integer floatingVoltage24Above;
 
     BatteryModelEnum(Integer dictValue, String dictLabel, Integer floatingVoltage24Below, Integer floatingVoltage24Above) {

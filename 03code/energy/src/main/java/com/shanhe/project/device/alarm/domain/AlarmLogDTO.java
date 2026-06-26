@@ -39,11 +39,11 @@ public class AlarmLogDTO implements Serializable {
     /** 更新时间。 */
     @ExcelProperty("结束时间")
     private Date updateTime;
-    /** 持续时长描述。 */
+    /** 持续时长描述 */
     @ExcelProperty("持续时间 秒")
     private String durationStr;
 
-    //  0-是，1-否
+    /** 处置状态：0-是，1-否 */
     @ExcelProperty("处置状态")
     private String statusStr;
 

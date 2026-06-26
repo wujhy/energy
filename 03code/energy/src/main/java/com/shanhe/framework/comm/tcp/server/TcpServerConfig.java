@@ -37,11 +37,11 @@ public class TcpServerConfig implements ApplicationRunner {
     @Resource
     DeviceService deviceService;
 
-    // 用于监听端口并接受新的连接
+    /** 用于监听端口并接受新的连接 */
     private ChannelFuture channelFuture;
-    // 处理客户端连接的线程组
+    /** 处理客户端连接的线程组 */
     private EventLoopGroup bossGroup;
-    // 处理网络读写的线程组
+    /** 处理网络读写的线程组 */
     private EventLoopGroup workerGroup;
 
     @Override

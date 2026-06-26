@@ -12,12 +12,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class LinearCalculator {
 
-    /* 斜率 */
+    /** 斜率 */
     private final double k;
-    /* 截距 */
+    /** 截距 */
     private final double b;
 
-    // 构造函数
+    /**
+     * 构造函数
+     *
+     * @param k 斜率
+     * @param b 截距
+     */
     public LinearCalculator(double k, double b) {
         this.k = k;
         this.b = b;
