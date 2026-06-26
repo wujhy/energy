@@ -19,7 +19,7 @@ import java.util.List;
 @Component
 public class LoginInterceptor implements HandlerInterceptor
 {
-    private static final List<String> excludeSessionUrl =
+    private static final List<String> EXCLUDE_SESSION_URL =
             Arrays.asList("/vite.svg", "/index", "/login", "/logout", "/assets/", "/screen/", "/alarm/",
                     "/device/alarm/", "/alarm/level/list", "/battery/log/", "/battery/pack/list",
                     "/shim/southData", "/configuration/battery/", "/stat/battery/",
@@ -31,7 +31,7 @@ public class LoginInterceptor implements HandlerInterceptor
         if (StrUtil.equals("/", request.getRequestURI())) {
             return true;
         }
-        boolean startsWithAny = excludeSessionUrl.stream().anyMatch(request.getRequestURI()::startsWith);
+        boolean startsWithAny = EXCLUDE_SESSION_URL.stream().anyMatch(request.getRequestURI()::startsWith);
         if (startsWithAny) {
             return true;
         }
