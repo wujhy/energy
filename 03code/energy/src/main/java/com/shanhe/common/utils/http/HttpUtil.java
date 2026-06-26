@@ -55,10 +55,13 @@ public class HttpUtil {
 			}
 			HttpURLConnection conn = (HttpURLConnection) u.openConnection();
 			conn.setRequestProperty("Content-Type", "text/html; charset=UTF-8");
-			conn.setConnectTimeout(CONN_TIMEOUT);// 连接超时
-			conn.setReadTimeout(READ_TIMEOUT);// 读操作超时
+			// 连接超时
+			conn.setConnectTimeout(CONN_TIMEOUT);
+			// 读操作超时
+			conn.setReadTimeout(READ_TIMEOUT);
 			conn.connect();
-			flag = new StringBuilder(String.valueOf(conn.getResponseCode())); // suc=200
+			// suc=200
+			flag = new StringBuilder(String.valueOf(conn.getResponseCode()));
 
 			InputStream is = conn.getInputStream();
 			InputStreamReader in = new InputStreamReader(is, StandardCharsets.UTF_8);
@@ -119,8 +122,10 @@ public class HttpUtil {
 			conn.setDoOutput(true);
 			conn.setDoInput(true);
 			conn.setUseCaches(false);
-			conn.setConnectTimeout(CONN_TIMEOUT);// 连接超时
-			conn.setReadTimeout(READ_TIMEOUT);// 读操作超时
+			// 连接超时
+			conn.setConnectTimeout(CONN_TIMEOUT);
+			// 读操作超时
+			conn.setReadTimeout(READ_TIMEOUT);
 			if (StringUtils.isEmpty(encode)) {
 				encode = "utf-8";
 			}
@@ -139,7 +144,8 @@ public class HttpUtil {
 			inputStream = conn.getInputStream();
 			inputStreamReader = new InputStreamReader(inputStream);
 			reader = new BufferedReader(inputStreamReader);
-			result = new StringBuilder(String.valueOf(conn.getResponseCode())); // suc=200
+			// suc=200
+			result = new StringBuilder(String.valueOf(conn.getResponseCode()));
 			if (conn.getResponseCode() == 200) {
 				String line;
 				for (line = reader.readLine(); line != null; line = reader.readLine()) {
@@ -214,7 +220,8 @@ public class HttpUtil {
 
 			BufferedReader br = new BufferedReader(new InputStreamReader(
 					conn.getInputStream()));
-			result = new StringBuilder(String.valueOf(conn.getResponseCode())); // suc=200
+			// suc=200
+			result = new StringBuilder(String.valueOf(conn.getResponseCode()));
 			if (conn.getResponseCode() == 200) {
 				String line;
 				for (line = br.readLine(); line != null; line = br.readLine()) {

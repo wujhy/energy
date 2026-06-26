@@ -552,7 +552,10 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     {
         return (T) obj;
     }
-    // 方法3: 数学运算方式
+
+    /**
+     * 格式化为指定小数位数的double值
+     */
     public static double formatToDouble(double value, int decimals) {
         String formatted = String.format("%." + decimals + "f", value);
         return Double.parseDouble(formatted);

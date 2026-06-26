@@ -23,14 +23,16 @@ public class RotatingClientDecoder extends ByteToMessageDecoder {
     public static final Integer HEAD_LENGTH = 50;
     public static final Integer MAX_LENGTH = 1024 * 1024;
 
-    // 解码
+    /**
+     * 解码
+     */
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         if (!in.isReadable()) {
             return;
         }
 
-        //读取数据
+        // 读取数据
         try {
             // 检查是否有足够的字节，长度不足继续等待
             if (in.readableBytes() < HEAD_LENGTH) {

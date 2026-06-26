@@ -380,19 +380,24 @@ public class CodingUtil {
         long duration = -1;
         int[] packedSize = { 12, 13, 15, 17, 19, 20, 26, 31, 5, 0, 0, 0, 0, 0, 0, 0 };
 
-        final File file = File.createTempFile("temp"+CodingUtil.getRandomString(16), ".amr");//创建临时文件
+        // 创建临时文件
+        final File file = File.createTempFile("temp"+CodingUtil.getRandomString(16), ".amr");
         FileOutputStream fos = new FileOutputStream(file);
         fos.write(fileByte);
-        //关闭临时文件
+        // 关闭临时文件
         fos.flush();
         fos.close();
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")) {
-            long length = file.length();// 文件的长度
-            int pos = 6;// 设置初始位置
-            int frameCount = 0;// 初始帧数
+            // 文件的长度
+            long length = file.length();
+            // 设置初始位置
+            int pos = 6;
+            // 初始帧数
+            int frameCount = 0;
             int packedPos = -1;
 
-            byte[] data = new byte[1];// 初始数据值
+            // 初始数据值
+            byte[] data = new byte[1];
             while (pos <= length) {
                 randomAccessFile.seek(pos);
                 if (randomAccessFile.read(data, 0, 1) != 1) {
@@ -404,7 +409,8 @@ public class CodingUtil {
                 frameCount++;
             }
 
-            duration += frameCount * 20L;// 帧数*20
+            // 帧数*20
+            duration += frameCount * 20L;
         }
         //  向上取整用Math.ceil(1.21)  >>> 2.0
         //	向下取整用Math.floor(1.61) >>> 1.0
@@ -536,16 +542,20 @@ public class CodingUtil {
      * 十进制转换成二进制 ()
      */
     public static String decimalToBinary(int decimalSource) {
-        BigInteger bi = new BigInteger(String.valueOf(decimalSource));	//转换成BigInteger类型
-        return bi.toString(2);	//参数2指定的是转化成X进制，默认10进制
+        // 转换成BigInteger类型
+        BigInteger bi = new BigInteger(String.valueOf(decimalSource));
+        // 参数2指定的是转化成X进制，默认10进制
+        return bi.toString(2);
     }
 
     /**
      * 二进制转换成十进制
      */
     public static int binaryToDecimal(String binarySource) {
-        BigInteger bi = new BigInteger(binarySource, 2);    //转换为BigInteger类型
-        return Integer.parseInt(bi.toString());        //转换成十进制
+        // 转换为BigInteger类型
+        BigInteger bi = new BigInteger(binarySource, 2);
+        // 转换成十进制
+        return Integer.parseInt(bi.toString());
     }
 
     /**

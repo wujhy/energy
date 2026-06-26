@@ -1199,7 +1199,8 @@ public class ExcelUtil<T>
                     val = cell.getNumericCellValue();
                     if (DateUtil.isCellDateFormatted(cell))
                     {
-                        val = DateUtil.getJavaDate((Double) val); // POI Excel 日期格式转换
+                        // POI Excel 日期格式转换
+                        val = DateUtil.getJavaDate((Double) val);
                     }
                     else
                     {

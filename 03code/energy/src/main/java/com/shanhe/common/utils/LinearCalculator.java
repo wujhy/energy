@@ -63,12 +63,16 @@ public class LinearCalculator {
         return func1.findIntersection(func2);
     }
 
-    // 判断两条直线是否平行
+    /**
+     * 判断两条直线是否平行
+     */
     private boolean isParallelTo(LinearCalculator other) {
         return this.k == other.k;
     }
 
-    // 判断两条直线是否相同
+    /**
+     * 判断两条直线是否相同
+     */
     private boolean isSameAs(LinearCalculator other) {
         return this.k == other.k && this.b == other.b;
     }
