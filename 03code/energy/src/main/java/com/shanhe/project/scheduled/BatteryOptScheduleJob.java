@@ -17,6 +17,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -39,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BatteryOptScheduleJob {
 
     private static final long MIN_INTERVAL_MILLIS = 60_000L;
+    private static final int SCHEDULE_RESULT_MAX_LENGTH = 200;
 
     @Resource
     private IDevBatteryOptService devBatteryOptService;
@@ -91,18 +93,22 @@ public class BatteryOptScheduleJob {
             if (hasRunningOptLog(opt)) {
                 log.info("蓄电池测试计划到点执行跳过，已有测试运行中, packNum={}, testType={}",
                         opt.getPackNum(), opt.getTestType());
+                recordScheduleResult(opt, "SKIPPED", "已有测试运行中");
                 return;
             }
             AjaxResult result = controlBattery.executeBatteryOpt(opt, BatteryOptExecuteType.SCHEDULED);
             if (isSuccess(result)) {
+                recordScheduleResult(opt, "SUCCESS", resultMessage(result), false);
                 updateNextSchedule(opt, now);
             } else {
                 log.warn("蓄电池测试计划到点执行失败, packNum={}, testType={}, result={}",
                         opt.getPackNum(), opt.getTestType(), result);
+                recordScheduleResult(opt, "FAILED", resultMessage(result));
             }
         } catch (Exception e) {
             log.warn("蓄电池测试计划到点执行异常, packNum={}, testType={}, 原因={}",
                     opt.getPackNum(), opt.getTestType(), e.getMessage());
+            recordScheduleResult(opt, "ERROR", e.getMessage());
         } finally {
             runningKeys.remove(key);
         }
@@ -144,6 +150,39 @@ public class BatteryOptScheduleJob {
         Object code = result.get(AjaxResult.CODE_TAG);
         return Objects.equals(code, AjaxResult.Type.SUCCESS.value())
                 || Objects.equals(String.valueOf(code), String.valueOf(AjaxResult.Type.SUCCESS.value()));
+    }
+
+    /** 记录计划最近一次执行摘要。 */
+    private void recordScheduleResult(DevBatteryOpt opt, String status, String message) {
+        recordScheduleResult(opt, status, message, true);
+    }
+
+    /** 记录计划最近一次执行摘要，可选择是否立即写库。 */
+    private void recordScheduleResult(DevBatteryOpt opt, String status, String message, boolean updateNow) {
+        if (opt == null) {
+            return;
+        }
+        String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+        String summary = "schedule " + status + " " + time;
+        if (message != null && !message.trim().isEmpty()) {
+            summary = summary + " " + message.trim();
+        }
+        if (summary.length() > SCHEDULE_RESULT_MAX_LENGTH) {
+            summary = summary.substring(0, SCHEDULE_RESULT_MAX_LENGTH);
+        }
+        opt.setOptCommand(summary);
+        if (updateNow) {
+            devBatteryOptService.updateDevBatteryOpt(opt);
+        }
+    }
+
+    /** 读取 AjaxResult 返回文案。 */
+    private String resultMessage(AjaxResult result) {
+        if (result == null) {
+            return "无执行结果";
+        }
+        Object message = result.get(AjaxResult.MSG_TAG);
+        return message == null ? null : message.toString();
     }
 
     /** 更新下次调度时间，无间隔的计划执行后禁用。 */
