@@ -106,6 +106,14 @@ public class BatteryCollectorCommandService {
      * @return 命令结果
      */
     public BatteryCollectorCommandResult singleInternalResistanceTest(String channelName, int batteryGroup, int batteryNumber, Long timeoutMs) {
+        BatteryCollectorCommandResult runningResult = rejectRunningWorkMode(
+                BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST,
+                channelName,
+                batteryGroup,
+                BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+        if (runningResult != null) {
+            return runningResult;
+        }
         return execute(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST, channelName, timeoutMs, batteryGroup, batteryNumber);
     }
 
@@ -189,6 +197,14 @@ public class BatteryCollectorCommandService {
         }
         if (batteryGroup <= 0) {
             return BatteryCollectorCommandResult.builder().success(false).message("电池组编号无效").build();
+        }
+        BatteryCollectorCommandResult runningResult = rejectRunningWorkMode(
+                BatteryAggregateCommandDefinition.CONNECT_RESISTANCE_TEST,
+                channelName,
+                batteryGroup,
+                BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+        if (runningResult != null) {
+            return runningResult;
         }
         try {
             validateBatteryCount(batteryCount);
@@ -491,6 +507,26 @@ public class BatteryCollectorCommandService {
 
     private boolean queueModuleCommand(String channelName, BatteryModuleControlCommand moduleCommand) {
         return collectorService != null && collectorService.submitModuleCommand(channelName, moduleCommand);
+    }
+
+    /** 当前已有工作模式运行时，禁止采集测试重复入队。 */
+    private BatteryCollectorCommandResult rejectRunningWorkMode(BatteryAggregateCommandDefinition commandDefinition,
+                                                                  String channelName,
+                                                                  Integer batteryGroup,
+                                                                  Integer expectedMode) {
+        if (batteryGroup == null || batteryGroup <= 0 || batteryModeStatusService == null) {
+            return null;
+        }
+        BatteryModeInfo modeInfo = batteryModeStatusService.get(batteryGroup);
+        if (modeInfo == null
+                || !Objects.equals(modeInfo.getPackNum(), batteryGroup)
+                || !Objects.equals(modeInfo.getStatus(), 1)) {
+            return null;
+        }
+        if (Objects.equals(modeInfo.getMode(), expectedMode)) {
+            return blocked(commandDefinition, channelName, "当前电池组已有同类型测试运行中");
+        }
+        return blocked(commandDefinition, channelName, "当前电池组有其他测试运行中");
     }
 
     /** 当前已有工作模式运行时，禁止均衡命令插队。 */
