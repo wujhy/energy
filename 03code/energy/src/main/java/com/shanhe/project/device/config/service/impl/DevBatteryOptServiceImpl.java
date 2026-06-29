@@ -71,6 +71,10 @@ public class DevBatteryOptServiceImpl implements IDevBatteryOptService {
      */
     @Override
     public void insertDevBatteryOpt(DevBatteryOpt devBatteryOpt) {
+        if (devBatteryOpt == null) {
+            return;
+        }
+        normalizeSaveDefaults(devBatteryOpt);
         if (devBatteryOpt.getOptId() == null) {
             DevBatteryOpt bt = this.selectDevBatteryOptByPackNum(devBatteryOpt.getPackNum(), devBatteryOpt.getTestType());
             if (bt == null || bt.getOptId() == null) {
@@ -142,4 +146,16 @@ public class DevBatteryOptServiceImpl implements IDevBatteryOptService {
         devBatteryOptMapper.deleteByPackNum(packNum);
     }
 
+    /** 统一测试计划保存默认值，页面和同步入口只负责传入业务参数。 */
+    private void normalizeSaveDefaults(DevBatteryOpt devBatteryOpt) {
+        if (devBatteryOpt.getConfigId() == null) {
+            devBatteryOpt.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        }
+        if (devBatteryOpt.getExecCount() == null) {
+            devBatteryOpt.setExecCount(0);
+        }
+        if (devBatteryOpt.getIsSync() == null) {
+            devBatteryOpt.setIsSync(false);
+        }
+    }
 }
