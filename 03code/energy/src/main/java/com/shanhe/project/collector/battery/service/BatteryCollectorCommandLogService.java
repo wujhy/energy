@@ -83,11 +83,37 @@ public class BatteryCollectorCommandLogService {
         }
         try {
             String now = now();
-            String errorMessage = BatteryDeviceStateConstants.CommandStatus.TIMEOUT.equals(status) ? "命令响应超时" : null;
+            String errorMessage = errorMessageOf(status, responseCode, responsePayload);
             optLogMapper.updateCommandStatus(optLogId, status, resultOf(status), responseCode, now, errorMessage, responsePayload);
         } catch (Exception e) {
             log.warn("更新600模块命令日志失败, 日志ID={}, 原因={}", optLogId, e.getMessage());
         }
+    }
+
+    private String errorMessageOf(String status, Integer responseCode, String responsePayload) {
+        if (BatteryDeviceStateConstants.CommandStatus.SUCCESS.equals(status)
+                || BatteryDeviceStateConstants.CommandStatus.PENDING.equals(status)) {
+            return null;
+        }
+        String message;
+        if (BatteryDeviceStateConstants.CommandStatus.TIMEOUT.equals(status)) {
+            message = "命令响应超时";
+        } else if (BatteryDeviceStateConstants.CommandStatus.REJECTED.equals(status)) {
+            message = "命令队列拒绝";
+        } else if (BatteryDeviceStateConstants.CommandStatus.CANCELLED.equals(status)) {
+            message = "命令已取消";
+        } else if (BatteryDeviceStateConstants.CommandStatus.FAILED.equals(status)) {
+            message = "命令响应失败";
+        } else {
+            message = "命令执行失败";
+        }
+        if (responseCode != null) {
+            message += ", responseCode=" + responseCode;
+        }
+        if (responsePayload != null && !responsePayload.trim().isEmpty()) {
+            message += ", payload=" + responsePayload.trim();
+        }
+        return message;
     }
 
     private Integer resultOf(String status) {
