@@ -61,7 +61,8 @@ public class BatteryCollectorProperties {
     private Boolean jsonTcpRealtimeSourceEnabled = Boolean.FALSE;
 
     /**
-     * JSON/TCP 下发控制是否优先尝试独立模块命令服务。
+     * JSON/TCP/页面/计划控制是否优先尝试独立模块命令服务。
+     * 开启后 _2/_6 适配失败直接返回错误，不回退旧 980 链路；关闭时保留旧兼容链路。
      */
     private Boolean jsonTcpModuleCommandEnabled = Boolean.FALSE;
 

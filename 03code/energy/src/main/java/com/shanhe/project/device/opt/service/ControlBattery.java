@@ -265,7 +265,7 @@ public class ControlBattery extends ControlBase {
                 return new CommandInfo(
                         cmdBatteryControlService.genCmd05(config, "79", String.valueOf(opt.getPackNum())),
                         BatteryCidEnum._85.getDictValue(), false, false, false);
-            // 立即执行连接条电阻测试
+            // 立即执行连接条电阻测试：仅在600模块命令开关关闭时作为旧兼容链路。
             case _2:
                 return new CommandInfo(
                         cmdBatteryControlService.genCmd0F(config, opt),
@@ -280,7 +280,7 @@ public class ControlBattery extends ControlBase {
                 return new CommandInfo(
                         cmdBatteryControlService.genCmd30(config, opt.getPackNum(), "1", opt.getDischargeTime(), opt.getEndVoltage()),
                         BatteryCidEnum._E0.getDictValue(), true, false, true);
-            // 单节内阻测试
+            // 单节内阻测试：仅在600模块命令开关关闭时作为旧兼容链路。
             case _6:
                 return new CommandInfo(
                         cmdBatteryControlService.getCmd36(config, opt),
