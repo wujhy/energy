@@ -288,9 +288,24 @@ public class BatteryCollectorCommandQueueService {
         state.setLastPendingTimedOut(false);
         state.setRunState(BatteryCollectorRunState.READ);
         markCompletedCommand(state, command.getProtocolCode().name(), 0, true);
+        if (shouldUpdateNoResponseCommandLog(command)) {
+            commandLogService.updateCommandOptLog(
+                    command.getOptLogId(),
+                    BatteryDeviceStateConstants.CommandStatus.SUCCESS,
+                    null,
+                    null);
+        }
         if (shouldStopModeAfterNoResponseCommand(command)) {
             markModeStopped(command, true);
         }
+    }
+
+    /** 无响应命令发送成功后是否可直接完成命令日志。 */
+    private boolean shouldUpdateNoResponseCommandLog(BatteryModuleControlCommand command) {
+        if (command == null || command.getOptLogId() == null) {
+            return false;
+        }
+        return command.getProtocolCode() != BatteryDeviceProtocolCode.CONNECT_STRIP_RESISTANCE_TEST;
     }
 
     /**
