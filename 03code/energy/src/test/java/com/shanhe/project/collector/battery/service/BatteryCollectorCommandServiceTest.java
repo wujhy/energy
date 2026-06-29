@@ -4,6 +4,7 @@ import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelState;
+import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
@@ -408,6 +409,70 @@ class BatteryCollectorCommandServiceTest {
         Assertions.assertEquals(0, modeInfo.getAddress());
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldStopRunningTestAndCancelQueuedSameModeCommands() {
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        BatteryCollectorService collectorService = newCollectorService(modeStatusService);
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setName("battery-rs485-1");
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        List<BatteryCollectorChannelState> channelStates =
+                (List<BatteryCollectorChannelState>) ReflectionTestUtils.getField(collectorService, "channelStates");
+        channelStates.add(state);
+        ReflectionTestUtils.setField(service, "collectorService", collectorService);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        modeStatusService.markRunning(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 0);
+        state.getQueuedModuleCommands().add(BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.CONNECT_STRIP_RESISTANCE_TEST)
+                .batteryGroup(1)
+                .mode(BatteryModeStatusService.MODE_CONNECT_RESISTANCE)
+                .build());
+        state.getQueuedModuleCommands().add(BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST)
+                .batteryGroup(2)
+                .mode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE)
+                .build());
+
+        BatteryCollectorCommandResult result = service.stopRunningTest(
+                1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+
+        Assertions.assertTrue(result.isSuccess());
+        Assertions.assertTrue(result.getMessage().contains("已取消未下发命令1条"));
+        Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
+        Assertions.assertEquals(2, state.getQueuedModuleCommands().peek().getBatteryGroup());
+        BatteryModeInfo modeInfo = modeStatusService.get(1);
+        Assertions.assertEquals(0, modeInfo.getStatus());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+    }
+
+    @Test
+    void shouldRejectStopRunningTestWhenNoRunningMode() {
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+
+        BatteryCollectorCommandResult result = service.stopRunningTest(
+                1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+
+        Assertions.assertFalse(result.isSuccess());
+        Assertions.assertTrue(result.getMessage().contains("没有正在执行的测试"));
+    }
+
+    @Test
+    void shouldRejectStopRunningTestWhenModeDifferent() {
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        modeStatusService.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+
+        BatteryCollectorCommandResult result = service.stopRunningTest(
+                1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+
+        Assertions.assertFalse(result.isSuccess());
+        Assertions.assertTrue(result.getMessage().contains("类型与停止类型不一致"));
+        BatteryModeInfo modeInfo = modeStatusService.get(1);
+        Assertions.assertEquals(1, modeInfo.getStatus());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, modeInfo.getMode());
+    }
     @Test
     void shouldKeepAmbiguousSubmoduleIdUnsupported() {
         BatteryCollectorCommandResult result = service.execute(
