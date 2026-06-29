@@ -43,6 +43,8 @@ public class BatteryCurrentStateService {
     private IAlarmLogService alarmLogService;
     @Resource
     private OptLogService optLogService;
+    @Resource
+    private BatteryModeStatusService batteryModeStatusService;
 
     public BatteryCurrentState getCurrentState(Integer packNum) {
         BatteryCurrentState state = new BatteryCurrentState();
@@ -67,6 +69,7 @@ public class BatteryCurrentStateService {
                 ? Collections.emptyList() : alarmLogService.selectBatteryAlarmLogListCache(packNum)));
         state.setRunningOptLogs(optLogService == null
                 ? Collections.emptyList() : optLogService.selectRunningList(packNum));
+        state.setModeInfo(batteryModeStatusService == null ? null : batteryModeStatusService.get(packNum));
         state.setLastPollBatchNo(resolveLastPollBatchNo(group, cells));
         state.setFreshness(resolveFreshness(pack.getBatSinSize(), group, cells));
         return state;
