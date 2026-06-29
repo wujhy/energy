@@ -78,6 +78,25 @@ class ControlBatteryTest {
     }
 
     @Test
+    void shouldRejectConnectResistanceWhenReportMissing() {
+        ControlBattery service = service(true);
+        BatteryModuleReportLogAdapterService adapterService =
+                (BatteryModuleReportLogAdapterService) ReflectionTestUtils.getField(service, "batteryModuleReportLogAdapterService");
+        BatteryReportLogService reportLogService =
+                (BatteryReportLogService) ReflectionTestUtils.getField(service, "batteryReportLogService");
+        BatteryOptCollectorCommandAdapter commandAdapter =
+                (BatteryOptCollectorCommandAdapter) ReflectionTestUtils.getField(service, "batteryOptCollectorCommandAdapter");
+        Mockito.when(adapterService.buildReportLog(1)).thenReturn(null);
+        Mockito.when(reportLogService.lastCache(1)).thenReturn(null);
+
+        AjaxResult result = service.toSendBatteryCmdToOat(request(BatteryTestEnum._2.getDictValue()));
+
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertEquals("暂无上报数据", result.get(AjaxResult.MSG_TAG));
+        Mockito.verifyNoInteractions(commandAdapter);
+    }
+
+    @Test
     void shouldCheckConnectResistanceCurrentBeforeCollectorCommandAdapter() {
         ControlBattery service = service(true);
         BatteryModuleReportLogAdapterService adapterService =
@@ -99,6 +118,10 @@ class ControlBatteryTest {
     void shouldRejectStopForCollectorManagedTestTypes() {
         ControlBattery service = service(true);
         CmdBatteryControlService cmdService = (CmdBatteryControlService) ReflectionTestUtils.getField(service, "cmdBatteryControlService");
+        BatteryOptCollectorCommandAdapter commandAdapter =
+                (BatteryOptCollectorCommandAdapter) ReflectionTestUtils.getField(service, "batteryOptCollectorCommandAdapter");
+        Mockito.when(commandAdapter.tryStop(Mockito.any(DevBatteryOpt.class)))
+                .thenReturn(AjaxResult.error("当前电池组没有正在执行的测试", 0));
 
         AjaxResult result = service.toSendStopBatteryCmdToOat(request(BatteryTestEnum._2.getDictValue()));
 

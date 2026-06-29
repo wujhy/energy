@@ -156,13 +156,13 @@ public class ControlBattery extends ControlBase {
         Config config = this.getConfig(opt);
 
         // 校验上报数据和告警状态
-        AjaxResult validateResult = validateBeforeCommand(opt);
+        BatteryReportLog batteryReportLog = getCurrentReportLog(opt.getPackNum());
+        AjaxResult validateResult = validateBeforeCommand(opt, batteryReportLog);
         if (validateResult != null) {
             return validateResult;
         }
 
         // 校验测试条件
-        BatteryReportLog batteryReportLog = getCurrentReportLog(opt.getPackNum());
         AjaxResult conditionResult = validateTestCondition(testEnum, batteryReportLog);
         if (conditionResult != null) {
             return conditionResult;
@@ -189,8 +189,7 @@ public class ControlBattery extends ControlBase {
     /**
      * 校验上报数据和告警状态
      */
-    private AjaxResult validateBeforeCommand(DevBatteryOpt opt) {
-        BatteryReportLog batteryReportLog = getCurrentReportLog(opt.getPackNum());
+    private AjaxResult validateBeforeCommand(DevBatteryOpt opt, BatteryReportLog batteryReportLog) {
         if (null == batteryReportLog || null == batteryReportLog.getPackParam()) {
             return AjaxResult.error("暂无上报数据", 0);
         }
