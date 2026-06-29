@@ -17,7 +17,7 @@ import javax.annotation.Resource;
  * 蓄电池测试计划采集命令适配服务。
  *
  * <p>为后续 {@code /batteryOpt/doCmdOptBatteryTest} 切换 {@code _2/_6} 做准备。
- * 当独立采集命令开关开启且能找到通道时，优先走采集命令队列；否则返回 null 让旧链路兜底。</p>
+ * 当独立采集命令开关开启且能找到通道时，优先走采集命令队列。</p>
  *
  * @author wjh
  * @since 2026-06-22
@@ -50,9 +50,13 @@ public class BatteryOptCollectorCommandAdapter {
         if (!Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpModuleCommandEnabled())) {
             return null;
         }
+        Integer mode = resolveMode(opt.getTestType());
+        if (mode == null) {
+            return null;
+        }
         String channelName = batteryCollectorCommandService.resolveChannelName(opt.getPackNum());
         if (channelName == null || channelName.isEmpty()) {
-            return null;
+            return AjaxResult.error("未找到电池组采集通道", 0);
         }
 
         BatteryCollectorCommandResult result;

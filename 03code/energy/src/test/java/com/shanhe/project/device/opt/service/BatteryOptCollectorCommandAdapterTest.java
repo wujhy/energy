@@ -71,6 +71,22 @@ class BatteryOptCollectorCommandAdapterTest {
     }
 
     @Test
+    void shouldReturnErrorWhenCollectorChannelMissing() {
+        BatteryOptCollectorCommandAdapter adapter = adapter(true);
+        BatteryCollectorCommandService commandService =
+                (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
+        Mockito.when(commandService.resolveChannelName(1)).thenReturn(null);
+
+        AjaxResult result = adapter.tryExecute(opt(BatteryTestEnum._2.getDictValue(), null));
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertEquals("未找到电池组采集通道", result.get(AjaxResult.MSG_TAG));
+        Mockito.verify(commandService, Mockito.never())
+                .connectResistanceTest(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
     void shouldReturnErrorWhenCollectorCommandQueueFails() {
         BatteryOptCollectorCommandAdapter adapter = adapter(true);
         BatteryCollectorCommandService commandService =
