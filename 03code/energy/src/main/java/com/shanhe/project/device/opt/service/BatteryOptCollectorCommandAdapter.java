@@ -8,10 +8,12 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
 import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.framework.web.domain.AjaxResult;
+import com.shanhe.project.iot.model.BatteryModeInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Objects;
 
 /**
  * 蓄电池测试计划采集命令适配服务。
@@ -35,6 +37,9 @@ public class BatteryOptCollectorCommandAdapter {
     private BatteryCollectorCommandService batteryCollectorCommandService;
 
     @Resource
+    private BatteryModeStatusService batteryModeStatusService;
+
+    @Resource
     private IBatteryPackService batteryPackService;
 
     /**
@@ -53,6 +58,10 @@ public class BatteryOptCollectorCommandAdapter {
         Integer mode = resolveMode(opt.getTestType());
         if (mode == null) {
             return null;
+        }
+        AjaxResult runningResult = rejectWhenCollectorModeRunning(opt.getPackNum(), mode);
+        if (runningResult != null) {
+            return runningResult;
         }
         String channelName = batteryCollectorCommandService.resolveChannelName(opt.getPackNum());
         if (channelName == null || channelName.isEmpty()) {
@@ -122,6 +131,24 @@ public class BatteryOptCollectorCommandAdapter {
         }
         return null;
     }
+
+    /** 当前电池组已有600采集测试运行时拒绝重复入队。 */
+    private AjaxResult rejectWhenCollectorModeRunning(Integer packNum, Integer expectedMode) {
+        if (batteryModeStatusService == null || packNum == null || expectedMode == null) {
+            return null;
+        }
+        BatteryModeInfo modeInfo = batteryModeStatusService.get(packNum);
+        if (modeInfo == null
+                || !Objects.equals(modeInfo.getPackNum(), packNum)
+                || !Objects.equals(modeInfo.getStatus(), 1)) {
+            return null;
+        }
+        if (Objects.equals(modeInfo.getMode(), expectedMode)) {
+            return AjaxResult.error("当前电池组已有同类型测试运行中", 0);
+        }
+        return AjaxResult.error("当前电池组有其他测试运行中", 0);
+    }
+
     /**
      * 解析电池组单体数量，异常或空值时使用默认值 245。
      */
