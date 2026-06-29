@@ -9,6 +9,7 @@ import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
 import com.shanhe.project.device.opt.mapper.OptLogMapper;
+import com.shanhe.project.device.opt.service.OptLogService;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -422,6 +423,8 @@ class BatteryCollectorCommandServiceTest {
         channelStates.add(state);
         ReflectionTestUtils.setField(service, "collectorService", collectorService);
         ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        OptLogService optLogService = Mockito.mock(OptLogService.class);
+        ReflectionTestUtils.setField(service, "optLogService", optLogService);
         modeStatusService.markRunning(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 0);
         state.getQueuedModuleCommands().add(BatteryModuleControlCommand.builder()
                 .protocolCode(BatteryDeviceProtocolCode.CONNECT_STRIP_RESISTANCE_TEST)
@@ -444,6 +447,7 @@ class BatteryCollectorCommandServiceTest {
         BatteryModeInfo modeInfo = modeStatusService.get(1);
         Assertions.assertEquals(0, modeInfo.getStatus());
         Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Mockito.verify(optLogService).doStopTest(1, BatteryTestEnum._2.getDictValue());
     }
 
     @Test

@@ -6,6 +6,7 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
+import com.shanhe.project.device.opt.service.OptLogService;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 
 import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.MAX_CELL_ADDRESS;
@@ -64,6 +65,8 @@ public class BatteryCollectorCommandService {
     private BatteryCollectorProperties properties;
     @Resource
     private BatteryModeStatusService batteryModeStatusService;
+    @Resource
+    private OptLogService optLogService;
 
     /**
      * 独立采集服务，负责按通道线程串行下发显式模块端命令。
@@ -129,6 +132,7 @@ public class BatteryCollectorCommandService {
             return blocked(null, null, "当前运行测试类型与停止类型不一致");
         }
         int cancelled = collectorService == null ? 0 : collectorService.cancelQueuedModuleCommands(batteryGroup, mode);
+        closeRunningOptLog(batteryGroup, mode);
         batteryModeStatusService.markStopped(batteryGroup, mode, modeInfo.getAddress(), true);
         return BatteryCollectorCommandResult.builder()
                 .success(true)
@@ -498,6 +502,28 @@ public class BatteryCollectorCommandService {
         return modeInfo != null
                 && Objects.equals(modeInfo.getPackNum(), batteryGroup)
                 && Objects.equals(modeInfo.getStatus(), 1);
+    }
+
+    /** 关闭600采集测试对应的运行日志。 */
+    private void closeRunningOptLog(Integer batteryGroup, Integer mode) {
+        if (optLogService == null) {
+            return;
+        }
+        Integer optLogType = resolveCollectorOptLogType(mode);
+        if (optLogType != null) {
+            optLogService.doStopTest(batteryGroup, optLogType);
+        }
+    }
+
+    /** 根据600采集模式解析操作日志类型。 */
+    private Integer resolveCollectorOptLogType(Integer mode) {
+        if (Objects.equals(mode, BatteryModeStatusService.MODE_CONNECT_RESISTANCE)) {
+            return BatteryTestEnum._2.getDictValue();
+        }
+        if (Objects.equals(mode, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE)) {
+            return BatteryTestEnum._6.getDictValue();
+        }
+        return null;
     }
 
     /** 为模块命令设置电池组和工作模式上下文。 */
