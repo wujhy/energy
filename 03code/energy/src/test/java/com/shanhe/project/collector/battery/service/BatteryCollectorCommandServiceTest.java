@@ -459,6 +459,38 @@ class BatteryCollectorCommandServiceTest {
     }
 
     @Test
+    void shouldRejectStopRunningTestWhenPackNumOrModeInvalid() {
+        BatteryCollectorCommandResult nullPack = service.stopRunningTest(
+                null, BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+        BatteryCollectorCommandResult zeroPack = service.stopRunningTest(
+                0, BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+        BatteryCollectorCommandResult nullMode = service.stopRunningTest(1, null);
+
+        Assertions.assertFalse(nullPack.isSuccess());
+        Assertions.assertTrue(nullPack.getMessage().contains("电池组编号无效"));
+        Assertions.assertFalse(zeroPack.isSuccess());
+        Assertions.assertTrue(zeroPack.getMessage().contains("电池组编号无效"));
+        Assertions.assertFalse(nullMode.isSuccess());
+        Assertions.assertTrue(nullMode.getMessage().contains("测试类型不支持停止"));
+    }
+
+    @Test
+    void shouldRejectStopRunningTestWhenCachedRunningPackDifferent() {
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        modeStatusService.markRunning(2, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 0);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+
+        BatteryCollectorCommandResult result = service.stopRunningTest(
+                1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+
+        Assertions.assertFalse(result.isSuccess());
+        Assertions.assertTrue(result.getMessage().contains("没有正在执行的测试"));
+        BatteryModeInfo modeInfo = modeStatusService.get(2);
+        Assertions.assertEquals(1, modeInfo.getStatus());
+        Assertions.assertEquals(2, modeInfo.getPackNum());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, modeInfo.getMode());
+    }
+    @Test
     void shouldRejectStopRunningTestWhenModeDifferent() {
         BatteryModeStatusService modeStatusService = newModeStatusService();
         modeStatusService.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
