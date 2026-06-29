@@ -567,6 +567,24 @@ class BatteryCollectorCommandServiceTest {
     }
 
     @Test
+    void shouldEnsureRunningOptLogClearedAfterStopWithoutQueuedCommands() {
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        modeStatusService.markRunning(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 0);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        OptLogService optLogService = Mockito.mock(OptLogService.class);
+        ReflectionTestUtils.setField(service, "optLogService", optLogService);
+
+        BatteryCollectorCommandResult result = service.stopRunningTest(
+                1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+
+        Assertions.assertTrue(result.isSuccess());
+        BatteryModeInfo modeInfo = modeStatusService.get(1);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Assertions.assertEquals(0, modeInfo.getStatus());
+        Mockito.verify(optLogService).doStopTest(1, BatteryTestEnum._2.getDictValue());
+    }
+
+    @Test
     void shouldResolveChannelNameByBatteryGroup() {
         BatteryCollectorProperties properties = new BatteryCollectorProperties();
         BatteryCollectorChannelConfig first = new BatteryCollectorChannelConfig();
@@ -584,5 +602,65 @@ class BatteryCollectorCommandServiceTest {
         String channelName = service.resolveChannelName(2);
 
         Assertions.assertEquals("battery-rs485-2", channelName);
+    }
+
+    @Test
+    void shouldAcceptConnectResistanceTestAtMaxBoundary245() {
+        BatteryCollectorCommandResult result = service.connectResistanceTest("battery-rs485-1", 1, 245, 1000L);
+
+        Assertions.assertTrue(result.isMappedToModuleCommand());
+        Assertions.assertFalse(result.isSuccess());
+        Assertions.assertNotNull(result.getModuleControlCommand());
+        Assertions.assertEquals(245, result.getModuleControlCommand().getConnectResistanceMaxAddress());
+    }
+
+    @Test
+    void shouldMapSingleInternalResistanceTestWithBoundaryAddresses() {
+        // address = 1 (minimum valid)
+        BatteryCollectorCommandResult result1 = service.singleInternalResistanceTest("battery-rs485-1", 1, 1, 1000L);
+        Assertions.assertTrue(result1.isMappedToModuleCommand());
+        Assertions.assertEquals(1, result1.getModuleControlCommand().getAddress());
+
+        // address = 245 (maximum valid)
+        BatteryCollectorCommandResult result245 = service.singleInternalResistanceTest("battery-rs485-1", 1, 245, 1000L);
+        Assertions.assertTrue(result245.isMappedToModuleCommand());
+        Assertions.assertEquals(245, result245.getModuleControlCommand().getAddress());
+    }
+
+    // ---- TASK-AI-VERIFY-STOP-002: stop internal resistance闭环 tests ----
+
+    @Test
+    void shouldStopInternalResistanceTestWithCorrectOptLogType() {
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        modeStatusService.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        OptLogService optLogService = Mockito.mock(OptLogService.class);
+        ReflectionTestUtils.setField(service, "optLogService", optLogService);
+
+        BatteryCollectorCommandResult result = service.stopRunningTest(
+                1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+
+        Assertions.assertTrue(result.isSuccess());
+        BatteryModeInfo modeInfo = modeStatusService.get(1);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Assertions.assertEquals(0, modeInfo.getStatus());
+        Mockito.verify(optLogService).doStopTest(1, BatteryTestEnum._6.getDictValue());
+    }
+
+    @Test
+    void shouldNotAffectLegacyInternalResistanceWhenStoppingSingleIR() {
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        modeStatusService.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        OptLogService optLogService = Mockito.mock(OptLogService.class);
+        ReflectionTestUtils.setField(service, "optLogService", optLogService);
+
+        BatteryCollectorCommandResult result = service.stopRunningTest(
+                1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+
+        Assertions.assertTrue(result.isSuccess());
+        // _6 stop calls doStopTest with _6 type, NOT _1 type
+        Mockito.verify(optLogService).doStopTest(1, BatteryTestEnum._6.getDictValue());
+        Mockito.verify(optLogService, Mockito.never()).doStopTest(Mockito.anyInt(), Mockito.eq(BatteryTestEnum._1.getDictValue()));
     }
 }

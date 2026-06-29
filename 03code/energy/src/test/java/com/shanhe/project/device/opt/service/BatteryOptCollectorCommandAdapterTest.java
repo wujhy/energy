@@ -8,6 +8,7 @@ import com.shanhe.project.collector.battery.service.BatteryCollectorCommandServi
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.device.config.domain.DevBatteryOpt;
 import com.shanhe.project.device.config.service.IBatteryPackService;
+import com.shanhe.project.iot.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -186,6 +187,181 @@ class BatteryOptCollectorCommandAdapterTest {
 
         Assertions.assertNull(result);
         Mockito.verifyNoInteractions(commandService);
+    }
+
+    // ---- TASK-AI-VERIFY-STOP-001: stop path gap tests ----
+
+    @Test
+    void shouldReturnNullWhenTryStopWithNullOpt() {
+        BatteryOptCollectorCommandAdapter adapter = adapter(true);
+
+        AjaxResult result = adapter.tryStop(null);
+
+        Assertions.assertNull(result);
+    }
+
+    @Test
+    void shouldReturnNullWhenTryStopWithUnsupportedTestType() {
+        BatteryOptCollectorCommandAdapter adapter = adapter(true);
+        BatteryCollectorCommandService commandService =
+                (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
+
+        AjaxResult result = adapter.tryStop(opt(BatteryTestEnum._1.getDictValue(), null));
+
+        Assertions.assertNull(result);
+        Mockito.verifyNoInteractions(commandService);
+    }
+
+    @Test
+    void shouldReturnErrorWhenStopRunningTestReturnsNull() {
+        BatteryOptCollectorCommandAdapter adapter = adapter(true);
+        BatteryCollectorCommandService commandService =
+                (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
+        Mockito.when(commandService.stopRunningTest(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE))
+                .thenReturn(null);
+
+        AjaxResult result = adapter.tryStop(opt(BatteryTestEnum._2.getDictValue(), null));
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertEquals("停止测试失败", result.get(AjaxResult.MSG_TAG));
+    }
+
+    @Test
+    void shouldReturnNullWhenTryExecuteWithNullOpt() {
+        BatteryOptCollectorCommandAdapter adapter = adapter(true);
+
+        AjaxResult result = adapter.tryExecute(null);
+
+        Assertions.assertNull(result);
+    }
+
+    @Test
+    void shouldReturnNullWhenTryExecuteWithUnsupportedTestType() {
+        BatteryOptCollectorCommandAdapter adapter = adapter(true);
+        BatteryCollectorCommandService commandService =
+                (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
+
+        AjaxResult result = adapter.tryExecute(opt(BatteryTestEnum._1.getDictValue(), null));
+
+        Assertions.assertNull(result);
+        Mockito.verifyNoInteractions(commandService);
+    }
+
+    // ---- TASK-AI-VERIFY-EXEC-001: execution entry gap tests ----
+
+    @Test
+    void shouldReturnNullWhenTryExecuteWithNullTestType() {
+        BatteryOptCollectorCommandAdapter adapter = adapter(true);
+
+        AjaxResult result = adapter.tryExecute(opt(null, null));
+
+        Assertions.assertNull(result);
+    }
+
+    @Test
+    void shouldReturnNullWhenTryExecuteWithNullPackNum() {
+        BatteryOptCollectorCommandAdapter adapter = adapter(true);
+        DevBatteryOpt opt = new DevBatteryOpt();
+        opt.setTestType(BatteryTestEnum._2.getDictValue());
+        // don't set packNum
+
+        AjaxResult result = adapter.tryExecute(opt);
+
+        Assertions.assertNull(result);
+    }
+
+    @Test
+    void shouldReturnErrorWhenSingleInternalResistanceModelNumIsNull() {
+        BatteryOptCollectorCommandAdapter adapter = adapter(true);
+        BatteryCollectorCommandService commandService =
+                (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
+        IBatteryPackService batteryPackService =
+                (IBatteryPackService) ReflectionTestUtils.getField(adapter, "batteryPackService");
+        Mockito.when(commandService.resolveChannelName(1)).thenReturn("battery-group-1");
+        Mockito.when(batteryPackService.getBatteryMaxNumber(1)).thenReturn(24);
+
+        AjaxResult result = adapter.tryExecute(opt(BatteryTestEnum._6.getDictValue(), null));
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertEquals("单节内阻测试单体编号无效", result.get(AjaxResult.MSG_TAG));
+    }
+
+    @Test
+    void shouldReturnErrorWhenSingleInternalResistanceModelNumIsZero() {
+        BatteryOptCollectorCommandAdapter adapter = adapter(true);
+        BatteryCollectorCommandService commandService =
+                (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
+        IBatteryPackService batteryPackService =
+                (IBatteryPackService) ReflectionTestUtils.getField(adapter, "batteryPackService");
+        Mockito.when(commandService.resolveChannelName(1)).thenReturn("battery-group-1");
+        Mockito.when(batteryPackService.getBatteryMaxNumber(1)).thenReturn(24);
+
+        AjaxResult result = adapter.tryExecute(opt(BatteryTestEnum._6.getDictValue(), 0));
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertEquals("单节内阻测试单体编号无效", result.get(AjaxResult.MSG_TAG));
+    }
+
+    // ---- TASK-AI-VERIFY-EXEC-002: mutex tests ----
+
+    @Test
+    void shouldRejectExecuteWhenSameConnectResistanceModeRunning() {
+        BatteryOptCollectorCommandAdapter adapter = adapterWithModeRunning(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+
+        AjaxResult result = adapter.tryExecute(opt(BatteryTestEnum._2.getDictValue(), null));
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertTrue(result.get(AjaxResult.MSG_TAG).toString().contains("同类型测试运行中"));
+        BatteryCollectorCommandService commandService =
+                (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
+        Mockito.verify(commandService, Mockito.never())
+                .connectResistanceTest(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
+    void shouldRejectExecuteWhenSameInternalResistanceModeRunning() {
+        BatteryOptCollectorCommandAdapter adapter = adapterWithModeRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+
+        AjaxResult result = adapter.tryExecute(opt(BatteryTestEnum._6.getDictValue(), 8));
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertTrue(result.get(AjaxResult.MSG_TAG).toString().contains("同类型测试运行中"));
+        BatteryCollectorCommandService commandService =
+                (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
+        Mockito.verify(commandService, Mockito.never())
+                .singleInternalResistanceTest(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
+    void shouldRejectExecuteWhenDifferentModeRunning() {
+        BatteryOptCollectorCommandAdapter adapter = adapterWithModeRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+
+        AjaxResult result = adapter.tryExecute(opt(BatteryTestEnum._2.getDictValue(), null));
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertTrue(result.get(AjaxResult.MSG_TAG).toString().contains("其他测试运行中"));
+        BatteryCollectorCommandService commandService =
+                (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
+        Mockito.verify(commandService, Mockito.never())
+                .connectResistanceTest(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt(), Mockito.any());
+    }
+
+    private BatteryOptCollectorCommandAdapter adapterWithModeRunning(Integer packNum, Integer mode) {
+        BatteryOptCollectorCommandAdapter adapter = adapter(true);
+        BatteryModeStatusService modeStatusService = Mockito.mock(BatteryModeStatusService.class);
+        BatteryModeInfo modeInfo = new BatteryModeInfo();
+        modeInfo.setPackNum(packNum);
+        modeInfo.setMode(mode);
+        modeInfo.setStatus(1);
+        Mockito.when(modeStatusService.get(packNum)).thenReturn(modeInfo);
+        ReflectionTestUtils.setField(adapter, "batteryModeStatusService", modeStatusService);
+        return adapter;
     }
 
     private BatteryOptCollectorCommandAdapter adapter(boolean moduleCommandEnabled) {

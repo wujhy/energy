@@ -180,6 +180,38 @@ class AlarmLogServiceImplTest {
                 null, 2, null, Collections.singletonMap(ItemCode.TXZT.getCode(), "1")));
     }
 
+    @Test
+    void shouldIsolateCellAlarmCacheByModelNum() {
+        AlarmLog cell1Alarm = new AlarmLog();
+        cell1Alarm.setPackNum(1);
+        cell1Alarm.setModelNum(1);
+        cell1Alarm.setItemCode(ItemCode.DTDYGC.getCode());
+        cell1Alarm.setStatus(YesNoEnum.NO.getDictValue());
+        CacheUtils.put(CacheKeyEnum.ALARM.getCache(),
+                String.format(CacheKeyEnum.ALARM.getKey(), 1, 1, ItemCode.DTDYGC.getCode()),
+                cell1Alarm);
+
+        AlarmLog cell2Alarm = new AlarmLog();
+        cell2Alarm.setPackNum(1);
+        cell2Alarm.setModelNum(2);
+        cell2Alarm.setItemCode(ItemCode.DTDYGC.getCode());
+        cell2Alarm.setStatus(YesNoEnum.YES.getDictValue());
+        CacheUtils.put(CacheKeyEnum.ALARM.getCache(),
+                String.format(CacheKeyEnum.ALARM.getKey(), 1, 2, ItemCode.DTDYGC.getCode()),
+                cell2Alarm);
+
+        AlarmLog cached1 = (AlarmLog) CacheUtils.get(CacheKeyEnum.ALARM.getCache(),
+                String.format(CacheKeyEnum.ALARM.getKey(), 1, 1, ItemCode.DTDYGC.getCode()));
+        AlarmLog cached2 = (AlarmLog) CacheUtils.get(CacheKeyEnum.ALARM.getCache(),
+                String.format(CacheKeyEnum.ALARM.getKey(), 1, 2, ItemCode.DTDYGC.getCode()));
+
+        Assertions.assertNotNull(cached1);
+        Assertions.assertNotNull(cached2);
+        Assertions.assertEquals(YesNoEnum.NO.getDictValue(), cached1.getStatus());
+        Assertions.assertEquals(YesNoEnum.YES.getDictValue(), cached2.getStatus());
+        Assertions.assertNotSame(cached1, cached2);
+    }
+
     private BatteryDeviceState state(Integer packNum, Integer modelNum, String stateCode,
                                      String stateValue, String stateLevel) {
         BatteryDeviceState state = new BatteryDeviceState();

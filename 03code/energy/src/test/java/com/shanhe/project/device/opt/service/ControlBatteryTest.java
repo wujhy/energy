@@ -16,6 +16,7 @@ import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.config.service.IConfigService;
 import com.shanhe.project.device.config.service.IDevBatteryOptService;
 import com.shanhe.project.device.opt.cmd.CmdBatteryControlService;
+import com.shanhe.project.device.opt.service.OptLogService;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -130,6 +131,22 @@ class ControlBatteryTest {
     }
 
     @Test
+    void shouldDelegateStopToAdapterForSingleInternalResistance() {
+        ControlBattery service = service(true);
+        CmdBatteryControlService cmdService = (CmdBatteryControlService) ReflectionTestUtils.getField(service, "cmdBatteryControlService");
+        BatteryOptCollectorCommandAdapter commandAdapter =
+                (BatteryOptCollectorCommandAdapter) ReflectionTestUtils.getField(service, "batteryOptCollectorCommandAdapter");
+        Mockito.when(commandAdapter.tryStop(Mockito.any(DevBatteryOpt.class)))
+                .thenReturn(AjaxResult.success("stopped"));
+
+        AjaxResult result = service.toSendStopBatteryCmdToOat(request(BatteryTestEnum._6.getDictValue()));
+
+        Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
+        Mockito.verify(commandAdapter).tryStop(Mockito.any(DevBatteryOpt.class));
+        Mockito.verify(cmdService, Mockito.never()).genCmd30(Mockito.any(), Mockito.anyInt(), Mockito.anyString(), Mockito.anyInt(), Mockito.anyDouble());
+    }
+
+    @Test
     void shouldRejectUnsupportedScheduleCommandTypeBeforePersist() {
         ControlBattery service = service(true);
         IConfigService configService = (IConfigService) ReflectionTestUtils.getField(service, "configService");
@@ -214,5 +231,40 @@ class ControlBatteryTest {
         packParam.put("batteryPackStatus", batteryPackStatus);
         reportLog.setPackParam(packParam);
         return reportLog;
+    }
+
+    // ---- TASK-AI-VERIFY-STOP-003: stop routing tests ----
+
+    @Test
+    void shouldRouteStopForLegacyInternalResistanceToLocalPath() {
+        ControlBattery service = service(true);
+        BatteryOptCollectorCommandAdapter commandAdapter =
+                (BatteryOptCollectorCommandAdapter) ReflectionTestUtils.getField(service, "batteryOptCollectorCommandAdapter");
+        OptLogService optLogService = (OptLogService) ReflectionTestUtils.getField(service, "optLogService");
+        BatteryModuleReportLogAdapterService adapterService =
+                (BatteryModuleReportLogAdapterService) ReflectionTestUtils.getField(service, "batteryModuleReportLogAdapterService");
+        Mockito.when(adapterService.buildReportLog(1)).thenReturn(null);
+
+        AjaxResult result = service.toSendStopBatteryCmdToOat(request(BatteryTestEnum._1.getDictValue()));
+
+        Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
+        Mockito.verify(commandAdapter, Mockito.never()).tryStop(Mockito.any());
+        Mockito.verify(optLogService).doStopTest(1, BatteryTestEnum._1.getDictValue());
+    }
+
+    @Test
+    void shouldRouteStopForBackupToLegacyGenCmd30Path() {
+        ControlBattery service = service(true);
+        BatteryOptCollectorCommandAdapter commandAdapter =
+                (BatteryOptCollectorCommandAdapter) ReflectionTestUtils.getField(service, "batteryOptCollectorCommandAdapter");
+        CmdBatteryControlService cmdService = (CmdBatteryControlService) ReflectionTestUtils.getField(service, "cmdBatteryControlService");
+        Mockito.when(cmdService.genCmd30(Mockito.any(), Mockito.anyInt(), Mockito.anyString(), Mockito.anyInt(), Mockito.anyDouble()))
+                .thenReturn("mock-cmd");
+
+        AjaxResult result = service.toSendStopBatteryCmdToOat(request(BatteryTestEnum._3.getDictValue()));
+
+        Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
+        Mockito.verify(commandAdapter, Mockito.never()).tryStop(Mockito.any());
+        Mockito.verify(cmdService).genCmd30(Mockito.any(), Mockito.anyInt(), Mockito.anyString(), Mockito.anyInt(), Mockito.anyDouble());
     }
 }

@@ -1,5 +1,6 @@
 package com.shanhe.project.collector.battery.service;
 
+import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.model.BatteryCurrentState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
@@ -11,6 +12,8 @@ import com.shanhe.project.device.alarm.domain.AlarmLog;
 import com.shanhe.project.device.alarm.service.IAlarmLogService;
 import com.shanhe.project.device.config.domain.BatteryPack;
 import com.shanhe.project.device.config.service.IBatteryPackService;
+import com.shanhe.project.device.opt.domain.OptLog;
+import com.shanhe.project.device.opt.service.OptLogService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -179,6 +182,41 @@ class BatteryCurrentStateServiceTest {
         Assertions.assertEquals(BatteryCurrentState.FRESHNESS_NOT_COLLECTED, state.getFreshness());
         Assertions.assertNull(state.getGroup());
         Assertions.assertTrue(state.getCells().isEmpty());
+    }
+
+    @Test
+    void shouldIncludeRunningOptLogsInCurrentState() {
+        BatteryCurrentStateService service = newServiceWithPack(1, 2);
+        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        OptLogService optLogService = Mockito.mock(OptLogService.class);
+        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
+        ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
+        ReflectionTestUtils.setField(service, "optLogService", optLogService);
+
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackNum(1);
+        group.setDataFresh(true);
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
+                .packNum(1)
+                .batSinSize(2)
+                .group(group)
+                .cells(Arrays.asList(cell(1, 1, 2.10d), cell(1, 2, 2.11d)))
+                .build());
+
+        OptLog runningLog = new OptLog();
+        runningLog.setId(100L);
+        runningLog.setPackNum(1);
+        runningLog.setType(BatteryTestEnum._2.getDictValue());
+        runningLog.setStatus(BatteryDeviceStateConstants.CommandStatus.PENDING);
+        Mockito.when(optLogService.selectRunningList(1)).thenReturn(Collections.singletonList(runningLog));
+
+        BatteryCurrentState state = service.getCurrentState(1);
+
+        Assertions.assertNotNull(state.getRunningOptLogs());
+        Assertions.assertEquals(1, state.getRunningOptLogs().size());
+        Assertions.assertEquals(100L, state.getRunningOptLogs().get(0).getId());
+        Mockito.verify(optLogService).selectRunningList(1);
     }
 
     private BatteryCurrentStateService newServiceWithPack(Integer packNum, Integer batSinSize) {

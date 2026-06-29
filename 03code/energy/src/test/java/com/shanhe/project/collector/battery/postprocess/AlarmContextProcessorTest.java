@@ -281,6 +281,68 @@ class AlarmContextProcessorTest {
         Assertions.assertDoesNotThrow(() -> processor.process(null));
     }
 
+    @Test
+    void processShouldDispatchCellAlarmsIsolatedByBatNum() {
+        AlarmContextProcessor processor = newProcessor();
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryModuleAlarmContext alarmContext = alarmContext(1);
+        alarmContext.putCellWarn(1, ItemCode.DTDYGC.getCode(), "2.1");
+        alarmContext.putCellWarn(2, ItemCode.DTDYGC.getCode(), "2.2");
+        BatteryRealtimePostProcessContext context = contextWithAlarmContext(alarmContext);
+        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+
+        processor.process(context);
+
+        ArgumentCaptor<Map<String, String>> warnParamCaptor = ArgumentCaptor.forClass(Map.class);
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+                Mockito.eq(1), warnParamCaptor.capture());
+        Assertions.assertEquals("2.1", warnParamCaptor.getValue().get(ItemCode.DTDYGC.getCode()));
+
+        ArgumentCaptor<Map<String, String>> warnParamCaptor2 = ArgumentCaptor.forClass(Map.class);
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+                Mockito.eq(2), warnParamCaptor2.capture());
+        Assertions.assertEquals("2.2", warnParamCaptor2.getValue().get(ItemCode.DTDYGC.getCode()));
+    }
+
+    @Test
+    void processShouldCallAlarmFixWithActiveCellNumsForRecovery() {
+        AlarmContextProcessor processor = newProcessor();
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryModuleAlarmContext alarmContext = alarmContext(1);
+        alarmContext.putCellWarn(1, ItemCode.DTDYGC.getCode(), "2.1");
+        BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .pollBatchNo(POLL_BATCH_NO)
+                .alarmContext(alarmContext)
+                .cells(Arrays.asList(cell(1), cell(2)))
+                .build();
+        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+
+        processor.process(context);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<java.util.List<String>> codesCaptor = ArgumentCaptor.forClass(java.util.List.class);
+        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true),
+                Mockito.eq(Arrays.asList(1, 2)), codesCaptor.capture());
+        Assertions.assertFalse(codesCaptor.getValue().isEmpty());
+        Assertions.assertTrue(codesCaptor.getValue().contains(ItemCode.DTDYGC.getCode()));
+    }
+
+    @Test
+    void processShouldCallAlarmFixWithEmptyCellNumsWhenNoCellsInContext() {
+        AlarmContextProcessor processor = newProcessor();
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryModuleAlarmContext alarmContext = alarmContext(1);
+        alarmContext.putCellWarn(1, ItemCode.DTDYGC.getCode(), "2.1");
+        BatteryRealtimePostProcessContext context = contextWithAlarmContext(alarmContext);
+        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+
+        processor.process(context);
+
+        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true),
+                Mockito.eq(Collections.emptyList()), Mockito.anyList());
+    }
+
     private AlarmContextProcessor newProcessor() {
         return new AlarmContextProcessor();
     }

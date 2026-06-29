@@ -98,6 +98,40 @@ class BatteryCollectorCommandLogServiceTest {
     }
 
     @Test
+    void shouldUpdateSuccessCommandOptLogWithResultZero() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+
+        service.updateCommandOptLog(10L, BatteryDeviceStateConstants.CommandStatus.SUCCESS, 0x82, "0001");
+
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.SUCCESS),
+                Mockito.eq(0),
+                Mockito.eq(0x82),
+                Mockito.anyString(),
+                Mockito.isNull(),
+                Mockito.eq("0001"));
+    }
+
+    @Test
+    void shouldUpdatePendingCommandOptLogWithResultNull() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+
+        service.updateCommandOptLog(10L, BatteryDeviceStateConstants.CommandStatus.PENDING, null, null);
+
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.PENDING),
+                Mockito.isNull(),
+                Mockito.isNull(),
+                Mockito.anyString(),
+                Mockito.isNull(),
+                Mockito.isNull());
+    }
+
+    @Test
     void shouldSkipUpdateWhenOptLogIdIsNull() {
         OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
         ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
@@ -105,5 +139,56 @@ class BatteryCollectorCommandLogServiceTest {
         service.updateCommandOptLog(null, BatteryDeviceStateConstants.CommandStatus.SUCCESS, 0x82, "0001");
 
         Mockito.verifyNoInteractions(optLogMapper);
+    }
+
+    @Test
+    void shouldUpdateFailedCommandOptLogWithResultOne() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+
+        service.updateCommandOptLog(10L, BatteryDeviceStateConstants.CommandStatus.FAILED, 0x82, "0001");
+
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.FAILED),
+                Mockito.eq(1),
+                Mockito.eq(0x82),
+                Mockito.anyString(),
+                Mockito.eq("命令响应失败, responseCode=130, payload=0001"),
+                Mockito.eq("0001"));
+    }
+
+    @Test
+    void shouldUpdateRejectedCommandOptLogWithResultOne() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+
+        service.updateCommandOptLog(10L, BatteryDeviceStateConstants.CommandStatus.REJECTED, null, null);
+
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.REJECTED),
+                Mockito.eq(1),
+                Mockito.isNull(),
+                Mockito.anyString(),
+                Mockito.eq("命令队列拒绝"),
+                Mockito.isNull());
+    }
+
+    @Test
+    void shouldUpdateCancelledCommandOptLogWithResultOne() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+
+        service.updateCommandOptLog(10L, BatteryDeviceStateConstants.CommandStatus.CANCELLED, null, null);
+
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.CANCELLED),
+                Mockito.eq(1),
+                Mockito.isNull(),
+                Mockito.anyString(),
+                Mockito.eq("命令已取消"),
+                Mockito.isNull());
     }
 }
