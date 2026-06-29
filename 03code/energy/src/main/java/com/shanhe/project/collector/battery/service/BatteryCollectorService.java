@@ -542,6 +542,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     /** 静默关闭串口并重置通道状态。 */
     private void closeQuietly(BatteryCollectorChannelState state) {
         completePendingCommandBeforeClose(state);
+        completeQueuedCommandsBeforeClose(state);
         frameIoService.closeQuietly(state.getSerialPort());
         boolean wasOpened = state.getOpened().get();
         state.getOpened().set(false);
@@ -566,7 +567,34 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         if (pendingRequest == null || pendingRequest.isAutoPoll()) {
             return;
         }
-        commandQueueService.completeTimedOutExplicitCommand(state, pendingRequest);
+        commandQueueService.abortPendingExplicitCommand(
+                state,
+                pendingRequest,
+                BatteryDeviceStateConstants.CommandStatus.FAILED,
+                "采集通道关闭，命令未完成");
+    }
+
+    /** 串口关闭前取消尚未下发的显式命令，避免重连后执行过期测试。 */
+    private void completeQueuedCommandsBeforeClose(BatteryCollectorChannelState state) {
+        if (state == null) {
+            return;
+        }
+        int cancelled = 0;
+        BatteryModuleControlCommand command;
+        while ((command = state.getQueuedModuleCommands().poll()) != null) {
+            commandQueueService.markModeStopped(command, false);
+            commandLogService.updateCommandOptLog(
+                    command.getOptLogId(),
+                    BatteryDeviceStateConstants.CommandStatus.CANCELLED,
+                    null,
+                    "采集通道关闭，命令未下发");
+            cancelled++;
+        }
+        if (cancelled > 0) {
+            log.info("蓄电池采集通道关闭已取消未下发模块命令, 通道={}, count={}",
+                    state.getConfig() == null ? null : state.getConfig().getName(),
+                    cancelled);
+        }
     }
 
     /** 按调试配置输出协议收发日志。 */

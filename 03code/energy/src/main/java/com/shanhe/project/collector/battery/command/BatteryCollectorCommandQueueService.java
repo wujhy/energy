@@ -329,6 +329,33 @@ public class BatteryCollectorCommandQueueService {
     }
 
     /**
+     * 中止已下发但尚未响应的显式命令，用于串口关闭、服务停止或通道异常重连收口。
+     *
+     * @param state 通道状态
+     * @param pendingRequest 待中止请求
+     * @param status 命令状态
+     * @param reason 失败原因
+     */
+    public void abortPendingExplicitCommand(BatteryCollectorChannelState state,
+                                            BatteryPendingRequest pendingRequest,
+                                            String status,
+                                            String reason) {
+        if (state == null || pendingRequest == null || pendingRequest.isAutoPoll()) {
+            return;
+        }
+        String actualStatus = status == null || status.trim().isEmpty()
+                ? BatteryDeviceStateConstants.CommandStatus.FAILED
+                : status;
+        markCompletedCommand(state, pendingRequest.getName(), pendingRequest.getResponseCode(), false);
+        markModeStopped(pendingRequest, false);
+        commandLogService.updateCommandOptLog(
+                pendingRequest.getOptLogId(),
+                actualStatus,
+                pendingRequest.getResponseCode(),
+                reason);
+    }
+
+    /**
      * 完成显式命令响应收尾，并按需更新普通命令日志。
      *
      * @param state 通道状态
