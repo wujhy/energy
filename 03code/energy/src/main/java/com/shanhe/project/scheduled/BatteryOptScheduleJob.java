@@ -110,8 +110,8 @@ public class BatteryOptScheduleJob {
 
     /** 检查是否已有运行中的测试（opt_log 或采集模块工作模式）。 */
     private boolean hasRunningOptLog(DevBatteryOpt opt) {
-        OptLog running = optLogService.getRunningOptLog(opt.getPackNum(), opt.getTestType());
-        if (running != null) {
+        List<OptLog> runningLogs = optLogService.selectRunningList(opt.getPackNum());
+        if (runningLogs != null && !runningLogs.isEmpty()) {
             return true;
         }
         Integer expectedMode = resolveCollectorMode(opt.getTestType());
