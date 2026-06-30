@@ -1,4 +1,4 @@
-package com.shanhe.project.common;
+package com.shanhe.project.manage.common;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +39,7 @@ public class CommonController {
 
     /**
      * 通用下载请求
-     * 
+     *
      * @param fileName 文件名称
      * @param delete 是否删除
      */
@@ -93,7 +93,7 @@ public class CommonController {
             return AjaxResult.error(e.getMessage());
         }
     }
-    
+
     /**
      * 通用上传请求（多个）
      */
