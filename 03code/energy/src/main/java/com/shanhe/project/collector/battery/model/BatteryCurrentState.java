@@ -31,6 +31,11 @@ public class BatteryCurrentState {
     private List<BatteryCurrentCellState> cells = new ArrayList<>();
     private List<BatteryDeviceState> deviceStates = new ArrayList<>();
     private List<BatteryCurrentAlarmSummary> alarms = new ArrayList<>();
+    private List<String> unsupportedAlarmReasons = new ArrayList<>();
     private BatteryModeInfo modeInfo;
     private List<OptLog> runningOptLogs = new ArrayList<>();
+    /** 最近一条命令日志的 error_message 透传（来自 dev_opt_log.error_message）。 */
+    private String lastCommandErrorMessage;
+    /** 最近一条运行中命令日志的 status（pending/failed 等），无运行命令时为 null。 */
+    private String lastCommandStatus;
 }

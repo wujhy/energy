@@ -20,6 +20,11 @@ public class BatteryCurrentCellState {
     private Double temperature;
     private Double capacity;
     private Double resistanceRageSlip;
+    /**
+     * 连接条测试结果显示状态：OK 表示有有效电阻值，null 表示未测试或无数据。
+     * 不做临时计算，不伪造默认值。
+     */
+    private String connectResistanceStatus;
     private Double resistanceRateChange;
     private Double swollenVoltage;
     private Integer leakageStatus;

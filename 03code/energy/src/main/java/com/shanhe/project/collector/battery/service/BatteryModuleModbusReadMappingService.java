@@ -187,6 +187,9 @@ public class BatteryModuleModbusReadMappingService {
             throw new IllegalArgumentException("不支持的Modbus参考地址: " + address);
         }
         if (group == null) {
+            if (isCapacityStateAddress(address)) {
+                throw new IllegalStateException("电池组 " + snapshot.getPackNum() + " 容量状态数据未就绪");
+            }
             return 0;
         }
         switch (address) {
@@ -235,19 +238,19 @@ public class BatteryModuleModbusReadMappingService {
             case 411750:
                 return scaleWithOffset(first(group.getBatteryAvgTemperature(), group.getAvgCellTemperature()), 50d, 10d);
             case 411751:
-                return scale(group.getBatteryPackSoc(), 10d);
+                return scaleRequired(group.getBatteryPackSoc(), 10d, "SOC");
             case 411752:
-                return scale(group.getBatteryPackSoh(), 10d);
+                return scaleRequired(group.getBatteryPackSoh(), 10d, "SOH");
             case 411762:
                 return batteryStateRegister(group);
             case 411763:
-                return unsigned16(group.getBackupDuration());
+                return unsigned16Required(group.getBackupDuration(), "backupDuration");
             case 411764:
-                return scale(first(group.getBcapacity(), group.getCapacity()), 10d);
+                return scaleRequired(first(group.getBcapacity(), group.getCapacity()), 10d, "bcapacity");
             case 411765:
-                return unsigned16(group.getDisChargeDuration());
+                return unsigned16Required(group.getDisChargeDuration(), "disChargeDuration");
             case 411766:
-                return scale(group.getDisChargeCapacity(), 10d);
+                return scaleRequired(group.getDisChargeCapacity(), 10d, "disChargeCapacity");
             default:
                 throw new IllegalArgumentException("不支持的Modbus参考地址: " + address);
         }
@@ -400,6 +403,12 @@ public class BatteryModuleModbusReadMappingService {
         return address >= STATUS_START && address < STATUS_START + STATUS_COUNT;
     }
 
+    /** 判断是否为依赖轮询外容量/备电缓存的组寄存器。 */
+    private boolean isCapacityStateAddress(int address) {
+        return address == 411751 || address == 411752
+                || address >= 411763 && address <= 411766;
+    }
+
     /**
      * 判断地址是否落在指定单体寄存器区间。
      *
@@ -462,6 +471,13 @@ public class BatteryModuleModbusReadMappingService {
         return unsigned16((int) Math.round(value * multiplier));
     }
 
+    private int scaleRequired(Double value, double multiplier, String fieldName) {
+        if (value == null) {
+            throw new IllegalStateException(fieldName + " 数据未就绪");
+        }
+        return unsigned16((int) Math.round(value * multiplier));
+    }
+
     /**
      * 校验并返回16位无符号寄存器值。
      *
@@ -479,6 +495,13 @@ public class BatteryModuleModbusReadMappingService {
             return UNSIGNED_SHORT_MAX;
         }
         return value;
+    }
+
+    private int unsigned16Required(Integer value, String fieldName) {
+        if (value == null) {
+            throw new IllegalStateException(fieldName + " 数据未就绪");
+        }
+        return unsigned16(value);
     }
 
     /**

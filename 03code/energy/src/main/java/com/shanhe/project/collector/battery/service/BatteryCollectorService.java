@@ -510,11 +510,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         }
     }
 
-    /** 判断响应帧是否表示操作成功。已委托 commandQueueService。 */
-    private boolean isSuccessResponse(BatteryCollectorFrame frame, BatteryPendingRequest pendingRequest) {
-        return commandQueueService.isSuccessResponse(frame, pendingRequest);
-    }
-
     /** 已委托 commandQueueService。 */
     private boolean shouldResetModuleAddressCacheAfterCommand(BatteryPendingRequest pendingRequest) {
         return commandQueueService.shouldResetModuleAddressCacheAfterCommand(pendingRequest);
@@ -571,7 +566,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 state,
                 pendingRequest,
                 BatteryDeviceStateConstants.CommandStatus.FAILED,
-                "采集通道关闭，命令未完成");
+                BatteryDeviceStateConstants.CommandErrorReason.CHANNEL_CLOSED_PENDING);
     }
 
     /** 串口关闭前取消尚未下发的显式命令，避免重连后执行过期测试。 */
@@ -588,7 +583,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                     BatteryDeviceStateConstants.CommandStatus.CANCELLED,
                     null,
                     null,
-                    "采集通道关闭，命令未下发");
+                    BatteryDeviceStateConstants.CommandErrorReason.CHANNEL_CLOSED_QUEUED);
             cancelled++;
         }
         if (cancelled > 0) {
@@ -596,22 +591,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                     state.getConfig() == null ? null : state.getConfig().getName(),
                     cancelled);
         }
-    }
-
-    /** 按调试配置输出协议收发日志。 */
-    private void logProtocol(BatteryCollectorChannelState state, String stage, String message) {
-        if (!Boolean.TRUE.equals(properties.getDebugEnabled())) {
-            return;
-        }
-        List<String> debugChannels = properties.getDebugChannels();
-        if (debugChannels != null && !debugChannels.isEmpty() && !debugChannels.contains(state.getConfig().getName())) {
-            return;
-        }
-        log.info("蓄电池采集协议, 通道={}, 串口={}, 阶段={}, {}",
-                state.getConfig().getName(),
-                state.getConfig().getPortName(),
-                stage,
-                message);
     }
 
     /** 将字节数组转为十六进制字符串（null 安全）。 */
@@ -622,22 +601,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return BatteryCollectorFrameIoService.bytesToHex(bytes, bytes.length);
     }
 
-    /** 将字节数组转为十六进制字符串。 */
-    private String bytesToHex(byte[] bytes, int length) {
-        return BatteryCollectorFrameIoService.bytesToHex(bytes, length);
-    }
-
     int resolveLoopDelayMs() {
         return resolvePositiveInt(properties.getLoopDelayMs(), 300);
     }
 
     int resolveRequestGapMs() {
         return resolvePositiveInt(properties.getRequestGapMs(), 120);
-    }
-
-    long resolvePollIntervalMs(BatteryCollectorChannelConfig config) {
-        Long value = config == null ? null : config.getPollIntervalMs();
-        return resolvePositiveLong(value, 3000L);
     }
 
     int resolveReadBufferSize(BatteryCollectorChannelConfig config) {
@@ -650,43 +619,6 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return Math.max(resolvePositiveInt(value, 8192), 64);
     }
 
-    long resolveResponseTimeoutMs(BatteryCollectorChannelConfig config) {
-        Long value = config == null ? null : config.getResponseTimeoutMs();
-        return resolvePositiveLong(value, 1500L);
-    }
-
-    int resolveMaxRetryCount(BatteryCollectorChannelConfig config) {
-        Integer value = config == null ? null : config.getMaxRetryCount();
-        return value == null || value < 0 ? 2 : value;
-    }
-
-    int resolveExpectedCellCount(BatteryCollectorChannelConfig config) {
-        Integer configured = config == null ? null : config.getExpectedCellCount();
-        int count = sanitizeExpectedCellCount(configured);
-        if (count > 0) {
-            return count;
-        }
-        if (batteryPackService == null || config == null || config.getBatteryGroup() == null) {
-            return 0;
-        }
-        try {
-            return sanitizeExpectedCellCount(batteryPackService.getBatteryMaxNumber(config.getBatteryGroup()));
-        } catch (Exception e) {
-            log.warn("获取电池组期望单体数量失败, 电池组={}",
-                    config.getBatteryGroup(),
-                    e);
-            return 0;
-        }
-    }
-
-    /** 规范化期望单体数量，上限245。 */
-    private int sanitizeExpectedCellCount(Integer count) {
-        if (count == null || count <= 0) {
-            return 0;
-        }
-        return Math.min(count, 245);
-    }
-
     /** 解析正整数配置值，无效时返回默认值。 */
     private int resolvePositiveInt(Number value, int defaultValue) {
         if (value == null || value.longValue() <= 0 || value.longValue() > Integer.MAX_VALUE) {
@@ -695,17 +627,8 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         return value.intValue();
     }
 
-    private long resolvePositiveLong(Long value, long defaultValue) {
-        return value == null || value <= 0 ? defaultValue : value;
-    }
-
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
-    }
-
-    /** 判断地址是否为单体模块地址(1-245)。 */
-    private boolean isCellModuleAddress(Integer address) {
-        return address != null && address >= 1 && address <= 245;
     }
 
     /**

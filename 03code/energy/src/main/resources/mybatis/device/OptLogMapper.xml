@@ -97,8 +97,21 @@
             <if test="params != null and params.endedAtEnd != null and params.endedAtEnd != ''">
                 and ended_at &lt;= #{params.endedAtEnd}
             </if>
+            <if test="params != null and params.errorMessage != null and params.errorMessage != ''">
+                and error_message like '%' || #{params.errorMessage} || '%'
+            </if>
         </where>
-        order by id desc
+        <choose>
+            <when test="params != null and params.orderByColumn == 'create_time'">order by create_time</when>
+            <when test="params != null and params.orderByColumn == 'started_at'">order by started_at</when>
+            <when test="params != null and params.orderByColumn == 'ended_at'">order by ended_at</when>
+            <when test="params != null and params.orderByColumn == 'pack_num'">order by pack_num</when>
+            <otherwise>order by id</otherwise>
+        </choose>
+        <choose>
+            <when test="params != null and params.isAsc == 'asc'">asc</when>
+            <otherwise>desc</otherwise>
+        </choose>
     </select>
 
     <!-- 批量删除操作日志 -->

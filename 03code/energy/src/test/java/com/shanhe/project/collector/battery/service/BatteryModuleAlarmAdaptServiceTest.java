@@ -113,6 +113,17 @@ class BatteryModuleAlarmAdaptServiceTest {
     }
 
     @Test
+    void shouldIgnoreUnsupportedM460AlarmSourcesWithoutConfirmedEnergyMapping() {
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackNum(1);
+        group.setHydrogenConcentration(12.3d);
+
+        BatteryModuleAlarmContext context = service.buildContext(group, Collections.emptyList());
+
+        Assertions.assertTrue(context.getPackWarnParam().isEmpty());
+        Assertions.assertTrue(context.getCellWarnParam().isEmpty());
+    }
+    @Test
     void shouldBuildFlatThresholdAlarmCandidatesForHighAndLowItems() {
         BatteryModuleCellRealtime cell = cell(1, null);
         cell.setVoltage(2.1d);

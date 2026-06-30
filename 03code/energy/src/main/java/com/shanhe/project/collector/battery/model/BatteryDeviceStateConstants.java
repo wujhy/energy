@@ -117,4 +117,49 @@ public final class BatteryDeviceStateConstants {
         private StateLevel() {
         }
     }
+
+    /**
+     * 命令日志错误原因常量（dev_opt_log.error_message）。
+     * <p>
+     * 集中管理 600 模块命令失败/取消/超时时写入 error_message 的文案，
+     * 替换散落在各服务中的硬编码字符串。
+     */
+    public static final class CommandErrorReason {
+        /** 命令响应超时（pending 等待超过 timeoutMs）。 */
+        public static final String TIMEOUT = "命令响应超时";
+        /** 命令队列拒绝（队列已满或 offer 失败）。 */
+        public static final String REJECTED = "命令队列拒绝";
+        /** 命令已取消（手动停止或队列清理）。 */
+        public static final String CANCELLED = "命令已取消";
+        /** 命令响应失败（响应码不匹配或 payload 失败标志）。 */
+        public static final String FAILED = "命令响应失败";
+        /** 命令执行失败（兜底，未知原因）。 */
+        public static final String GENERIC_FAILED = "命令执行失败";
+        /** 采集通道关闭，pending 命令未完成。 */
+        public static final String CHANNEL_CLOSED_PENDING = "采集通道关闭，命令未完成";
+        /** 采集通道关闭，队列命令未下发。 */
+        public static final String CHANNEL_CLOSED_QUEUED = "采集通道关闭，命令未下发";
+
+        private CommandErrorReason() {
+        }
+
+        /**
+         * 拼接基础原因和可选的响应码/payload 后缀。
+         *
+         * @param baseReason     基础原因文案
+         * @param responseCode   响应码（可为 null）
+         * @param responsePayload 响应 payload hex（可为 null）
+         * @return 拼接后的完整错误原因
+         */
+        public static String compose(String baseReason, Integer responseCode, String responsePayload) {
+            StringBuilder sb = new StringBuilder(baseReason);
+            if (responseCode != null) {
+                sb.append(", responseCode=").append(responseCode);
+            }
+            if (responsePayload != null) {
+                sb.append(", payload=").append(responsePayload.trim());
+            }
+            return sb.toString();
+        }
+    }
 }

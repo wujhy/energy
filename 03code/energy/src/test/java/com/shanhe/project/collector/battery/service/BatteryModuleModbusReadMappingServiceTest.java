@@ -197,6 +197,41 @@ class BatteryModuleModbusReadMappingServiceTest {
     }
 
     @Test
+    void shouldThrowForCapacityStateRegistersWhenGroupMissing() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        Mockito.when(mapper.selectCells(1)).thenReturn(Arrays.asList(cell(1, 2.0d, 100, 25.0d, null)));
+        Mockito.when(mapper.selectGroup(1)).thenReturn(null);
+
+        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper, null, null);
+
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> service.readHoldingRegisters(1, 411751, 1));
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> service.readHoldingRegisters(1, 411763, 1));
+    }
+
+    @Test
+    void shouldThrowForMissingCapacityStateValues() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        Mockito.when(mapper.selectGroup(1)).thenReturn(new BatteryModuleGroupRealtime());
+
+        BatteryModuleModbusReadMappingService service = new BatteryModuleModbusReadMappingService(mapper, null, null);
+
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> service.readHoldingRegisters(1, 411751, 1));
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> service.readHoldingRegisters(1, 411752, 1));
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> service.readHoldingRegisters(1, 411763, 1));
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> service.readHoldingRegisters(1, 411764, 1));
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> service.readHoldingRegisters(1, 411765, 1));
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> service.readHoldingRegisters(1, 411766, 1));
+    }
+
+    @Test
     void shouldReturnOneForFreshGroup246Freshness() {
         BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);

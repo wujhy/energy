@@ -111,23 +111,18 @@ public class BatteryCollectorCommandLogService {
         }
         String message;
         if (BatteryDeviceStateConstants.CommandStatus.TIMEOUT.equals(status)) {
-            message = "命令响应超时";
+            message = BatteryDeviceStateConstants.CommandErrorReason.TIMEOUT;
         } else if (BatteryDeviceStateConstants.CommandStatus.REJECTED.equals(status)) {
-            message = "命令队列拒绝";
+            message = BatteryDeviceStateConstants.CommandErrorReason.REJECTED;
         } else if (BatteryDeviceStateConstants.CommandStatus.CANCELLED.equals(status)) {
-            message = "命令已取消";
+            message = BatteryDeviceStateConstants.CommandErrorReason.CANCELLED;
         } else if (BatteryDeviceStateConstants.CommandStatus.FAILED.equals(status)) {
-            message = "命令响应失败";
+            message = BatteryDeviceStateConstants.CommandErrorReason.FAILED;
         } else {
-            message = "命令执行失败";
+            message = BatteryDeviceStateConstants.CommandErrorReason.GENERIC_FAILED;
         }
-        if (responseCode != null) {
-            message += ", responseCode=" + responseCode;
-        }
-        if (responsePayload != null && !responsePayload.trim().isEmpty()) {
-            message += ", payload=" + responsePayload.trim();
-        }
-        return message;
+        return BatteryDeviceStateConstants.CommandErrorReason.compose(
+                message, responseCode, responsePayload);
     }
 
     private Integer resultOf(String status) {

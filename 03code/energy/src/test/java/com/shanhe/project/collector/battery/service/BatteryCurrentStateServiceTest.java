@@ -107,6 +107,14 @@ class BatteryCurrentStateServiceTest {
         Assertions.assertEquals(1, state.getDeviceStates().size());
         Assertions.assertEquals(1, state.getAlarms().size());
         Assertions.assertEquals("batteryOvercharge", state.getAlarms().get(0).getItemCode());
+        Assertions.assertTrue(state.getUnsupportedAlarmReasons().contains(
+                "M460_THERMAL_RUNAWAY: no energy realtime data source"));
+        Assertions.assertTrue(state.getUnsupportedAlarmReasons().contains(
+                "M460_HYDROGEN: no confirmed energy realtime data source"));
+        Assertions.assertTrue(state.getUnsupportedAlarmReasons().contains(
+                "M460_NETWORK: represented only by collector communication state when available"));
+        Assertions.assertTrue(state.getUnsupportedAlarmReasons().contains(
+                "M460_SENSOR: no independent sensor source in energy realtime model"));
         Mockito.verify(realtimeMapper, Mockito.never()).selectGroup(1);
         Mockito.verify(realtimeMapper, Mockito.never()).selectCells(1);
         Mockito.verify(snapshotService).getCachedSnapshot(1);

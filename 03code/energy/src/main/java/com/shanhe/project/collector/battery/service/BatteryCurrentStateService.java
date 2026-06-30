@@ -13,11 +13,13 @@ import com.shanhe.project.manage.alarm.domain.AlarmLog;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
+import com.shanhe.project.manage.opt.domain.OptLog;
 import com.shanhe.project.manage.opt.service.OptLogService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -30,6 +32,13 @@ import java.util.List;
  */
 @Service
 public class BatteryCurrentStateService {
+
+    private static final List<String> UNSUPPORTED_ALARM_REASONS = Arrays.asList(
+            "M460_THERMAL_RUNAWAY: no energy realtime data source",
+            "M460_HYDROGEN: no confirmed energy realtime data source",
+            "M460_NETWORK: represented only by collector communication state when available",
+            "M460_SENSOR: no independent sensor source in energy realtime model"
+    );
 
     @Resource
     private IBatteryPackService batteryPackService;
@@ -67,9 +76,15 @@ public class BatteryCurrentStateService {
                 ? Collections.emptyList() : safeStates(batteryDeviceStateService.selectByPackNum(packNum)));
         state.setAlarms(toAlarmSummaries(alarmLogService == null
                 ? Collections.emptyList() : alarmLogService.selectBatteryAlarmLogListCache(packNum)));
+        state.setUnsupportedAlarmReasons(UNSUPPORTED_ALARM_REASONS);
         state.setRunningOptLogs(optLogService == null
                 ? Collections.emptyList() : optLogService.selectRunningList(packNum));
         state.setModeInfo(batteryModeStatusService == null ? null : batteryModeStatusService.get(packNum));
+        if (!state.getRunningOptLogs().isEmpty()) {
+            OptLog latest = state.getRunningOptLogs().get(0);
+            state.setLastCommandErrorMessage(latest.getErrorMessage());
+            state.setLastCommandStatus(latest.getStatus());
+        }
         state.setLastPollBatchNo(resolveLastPollBatchNo(group, cells));
         state.setFreshness(resolveFreshness(pack.getBatSinSize(), group, cells));
         return state;
@@ -156,6 +171,7 @@ public class BatteryCurrentStateService {
             target.setTemperature(source.getTemperature());
             target.setCapacity(source.getCapacity());
             target.setResistanceRageSlip(source.getResistanceRageSlip());
+            target.setConnectResistanceStatus(source.getResistanceRageSlip() != null ? "OK" : null);
             target.setResistanceRateChange(source.getResistanceRateChange());
             target.setSwollenVoltage(source.getSwollenVoltage());
             target.setLeakageStatus(source.getLeakageStatus());
