@@ -340,6 +340,86 @@ class BatteryCurrentStateServiceTest {
         Assertions.assertEquals(1, state.getRunningOptLogs().size());
     }
 
+    // ---- TASK-AI-VERIFY-READ-004: connect resistance result reading default caliber ----
+
+    /**
+     * READ-004: 连接条测试结果 resistanceRageSlip 有值时 connectResistanceStatus 为 "OK"，
+     * 无数据时为 null，不伪造默认数值。
+     */
+    @Test
+    void shouldReturnConnectResistanceStatusOkWhenDataPresentAndNullWhenAbsent() {
+        BatteryCurrentStateService service = newServiceWithPack(1, 2);
+        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
+        ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
+
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackNum(1);
+        group.setDataFresh(true);
+        BatteryModuleCellRealtime cellWithData = cell(1, 1, 2.10d);
+        cellWithData.setResistanceRageSlip(1.5);
+        BatteryModuleCellRealtime cellWithoutData = cell(1, 2, 2.11d);
+        // cellWithoutData.resistanceRageSlip 保持 null（未测试/无数据）
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
+                .packNum(1)
+                .batSinSize(2)
+                .group(group)
+                .cells(Arrays.asList(cellWithData, cellWithoutData))
+                .build());
+
+        BatteryCurrentState state = service.getCurrentState(1);
+
+        Assertions.assertEquals(2, state.getCells().size());
+        Assertions.assertEquals("OK", state.getCells().get(0).getConnectResistanceStatus());
+        Assertions.assertEquals(1.5, state.getCells().get(0).getResistanceRageSlip());
+        Assertions.assertNull(state.getCells().get(1).getConnectResistanceStatus());
+        Assertions.assertNull(state.getCells().get(1).getResistanceRageSlip());
+    }
+
+    /**
+     * READ-004: 数据 stale 时不伪造连接条电阻值，connectResistanceStatus 仍按源数据判定。
+     */
+    @Test
+    void shouldNotFabricateResistanceValuesWhenDataIsStale() {
+        BatteryCurrentStateService service = newServiceWithPack(1, 2);
+        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackNum(1);
+        group.setDataFresh(false); // stale 数据
+        // stale 数据不提供 resistanceRageSlip
+        Mockito.when(realtimeMapper.selectGroup(1)).thenReturn(group);
+        Mockito.when(realtimeMapper.selectCells(1)).thenReturn(Arrays.asList(cell(1, 1, 2.10d), cell(1, 2, 2.11d)));
+
+        BatteryCurrentState state = service.getCurrentState(1);
+
+        Assertions.assertEquals(BatteryCurrentState.FRESHNESS_STALE, state.getFreshness());
+        for (com.shanhe.project.collector.battery.model.BatteryCurrentCellState cellState : state.getCells()) {
+            Assertions.assertNull(cellState.getConnectResistanceStatus(),
+                    "stale 数据不应伪造 connectResistanceStatus");
+            Assertions.assertNull(cellState.getResistanceRageSlip(),
+                    "stale 数据不应伪造 resistanceRageSlip");
+        }
+    }
+
+    /**
+     * READ-004: 完全无实时数据时（NOT_COLLECTED），connectResistanceStatus 为 null，不输出伪造数值。
+     */
+    @Test
+    void shouldReturnNullConnectResistanceWhenNotCollected() {
+        BatteryCurrentStateService service = newServiceWithPack(1, 1);
+        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
+        Mockito.when(realtimeMapper.selectGroup(1)).thenReturn(null);
+        Mockito.when(realtimeMapper.selectCells(1)).thenReturn(Collections.emptyList());
+
+        BatteryCurrentState state = service.getCurrentState(1);
+
+        Assertions.assertEquals(BatteryCurrentState.FRESHNESS_NOT_COLLECTED, state.getFreshness());
+        Assertions.assertTrue(state.getCells().isEmpty());
+    }
+
     private BatteryModeStatusService newRealModeStatusService() {
         BatteryModeStatusService modeStatusService = new BatteryModeStatusService();
         ReflectionTestUtils.setField(modeStatusService, "cacheAccessor", new TestCacheAccessor());

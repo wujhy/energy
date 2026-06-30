@@ -352,6 +352,71 @@ class BatteryOptCollectorCommandAdapterTest {
                 .connectResistanceTest(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt(), Mockito.any());
     }
 
+    // ---- TASK-AI-VERIFY-CONFIG-001: module command switch regression ----
+
+    /**
+     * CONFIG-001: 开关关闭时 tryExecute 和 tryStop 均返回 null，允许旧 980/CommServer 链路兜底。
+     */
+    @Test
+    void shouldReturnNullForExecuteAndStopWhenSwitchDisabled() {
+        BatteryOptCollectorCommandAdapter offAdapter = adapter(false);
+        BatteryCollectorCommandService commandService =
+                (BatteryCollectorCommandService) ReflectionTestUtils.getField(offAdapter, "batteryCollectorCommandService");
+
+        AjaxResult executeResult = offAdapter.tryExecute(opt(BatteryTestEnum._2.getDictValue(), null));
+        AjaxResult stopResult = offAdapter.tryStop(opt(BatteryTestEnum._2.getDictValue(), null));
+
+        Assertions.assertNull(executeResult, "开关关闭时 tryExecute 应返回 null 允许旧链路");
+        Assertions.assertNull(stopResult, "开关关闭时 tryStop 应返回 null 允许旧链路");
+        Mockito.verifyNoInteractions(commandService);
+    }
+
+    /**
+     * CONFIG-001: 开关开启时所有适配失败路径返回业务错误，不返回 null（不触发旧链路回退）。
+     */
+    @Test
+    void shouldReturnBusinessErrorsForAllFailurePathsWhenSwitchEnabled() {
+        BatteryOptCollectorCommandAdapter onAdapter = adapter(true);
+        BatteryCollectorCommandService commandService =
+                (BatteryCollectorCommandService) ReflectionTestUtils.getField(onAdapter, "batteryCollectorCommandService");
+        IBatteryPackService batteryPackService =
+                (IBatteryPackService) ReflectionTestUtils.getField(onAdapter, "batteryPackService");
+
+        // 失败路径 1: 通道未找到
+        Mockito.when(commandService.resolveChannelName(1)).thenReturn(null);
+        AjaxResult noChannel = onAdapter.tryExecute(opt(BatteryTestEnum._2.getDictValue(), null));
+        Assertions.assertNotNull(noChannel, "通道缺失不应返回 null");
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), noChannel.get(AjaxResult.CODE_TAG));
+
+        // 失败路径 2: 命令队列返回失败
+        Mockito.when(commandService.resolveChannelName(1)).thenReturn("battery-group-1");
+        Mockito.when(batteryPackService.getBatteryMaxNumber(1)).thenReturn(24);
+        Mockito.when(commandService.connectResistanceTest("battery-group-1", 1, 24, null))
+                .thenReturn(BatteryCollectorCommandResult.builder().success(false).message("queue full").build());
+        AjaxResult queueFail = onAdapter.tryExecute(opt(BatteryTestEnum._2.getDictValue(), null));
+        Assertions.assertNotNull(queueFail, "队列失败不应返回 null");
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), queueFail.get(AjaxResult.CODE_TAG));
+
+        // 失败路径 3: 命令服务抛异常
+        Mockito.when(commandService.connectResistanceTest("battery-group-1", 1, 24, null))
+                .thenThrow(new IllegalStateException("unexpected"));
+        AjaxResult exceptionPath = onAdapter.tryExecute(opt(BatteryTestEnum._2.getDictValue(), null));
+        Assertions.assertNotNull(exceptionPath, "异常不应返回 null");
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), exceptionPath.get(AjaxResult.CODE_TAG));
+
+        // 失败路径 4: _6 单体编号无效
+        AjaxResult invalidModel = onAdapter.tryExecute(opt(BatteryTestEnum._6.getDictValue(), 999));
+        Assertions.assertNotNull(invalidModel, "无效编号不应返回 null");
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), invalidModel.get(AjaxResult.CODE_TAG));
+
+        // 失败路径 5: 停止时 stopRunningTest 返回 null
+        Mockito.when(commandService.stopRunningTest(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE))
+                .thenReturn(null);
+        AjaxResult stopFail = onAdapter.tryStop(opt(BatteryTestEnum._2.getDictValue(), null));
+        Assertions.assertNotNull(stopFail, "停止失败不应返回 null");
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), stopFail.get(AjaxResult.CODE_TAG));
+    }
+
     private BatteryOptCollectorCommandAdapter adapterWithModeRunning(Integer packNum, Integer mode) {
         BatteryOptCollectorCommandAdapter adapter = adapter(true);
         BatteryModeStatusService modeStatusService = Mockito.mock(BatteryModeStatusService.class);

@@ -127,6 +127,77 @@ class BatteryCollectorRuntimeViewServiceTest {
         Mockito.verify(realtimeSnapshotService, Mockito.never()).getSnapshot(Mockito.any());
     }
 
+    /**
+     * METRICS-001: 无 pending 命令且无队列命令时，metrics 对应字段为 null / 0。
+     */
+    @Test
+    void shouldReportNullPendingAndZeroQueuedWhenNoCommands() {
+        BatteryCollectorChannelConfig config = new BatteryCollectorChannelConfig();
+        config.setName("idle-channel");
+        config.setBatteryGroup(2);
+        config.setEnabled(true);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(config);
+        // 不设置 pendingCommand，不添加 queue —— 模拟空闲通道
+
+        BatteryCollectorMetrics metrics = service.getMetrics(Collections.singletonList(state), null);
+
+        BatteryCollectorChannelMetrics channel = metrics.getChannels().get(0);
+        Assertions.assertNull(channel.getPendingCommandName());
+        Assertions.assertNull(channel.getPendingAutoPoll());
+        Assertions.assertEquals(0, channel.getQueuedModuleCommandCount());
+        Assertions.assertEquals(0, metrics.getTotalQueuedModuleCommandCount());
+    }
+
+    /**
+     * METRICS-001: 通道关闭后 pending 和 queue 被清除，metrics 正确反映清空状态。
+     * lastCompletedModuleCommandName/Success/Time 保留最近一次完成记录。
+     */
+    @Test
+    void shouldReportClearedMetricsAfterChannelClose() {
+        BatteryCollectorChannelState state = stateWithRuntimeData();
+        // 模拟通道关闭后 pending 和队列命令被清除
+        state.setPendingCommand(null);
+        state.getQueuedModuleCommands().clear();
+
+        BatteryCollectorMetrics metrics = service.getMetrics(Collections.singletonList(state), null);
+
+        BatteryCollectorChannelMetrics channel = metrics.getChannels().get(0);
+        Assertions.assertNull(channel.getPendingCommandName());
+        Assertions.assertNull(channel.getPendingAutoPoll());
+        Assertions.assertEquals(0, channel.getQueuedModuleCommandCount());
+        Assertions.assertEquals(0, metrics.getTotalQueuedModuleCommandCount());
+        // lastCompleted 不受通道关闭影响
+        Assertions.assertEquals("SET_MODULE_ADDRESS", channel.getLastCompletedModuleCommandName());
+        Assertions.assertTrue(channel.getLastCompletedModuleCommandSuccess());
+        Assertions.assertEquals(300L, channel.getLastCompletedModuleCommandTime());
+    }
+
+    /**
+     * METRICS-001: 多通道聚合 totalQueuedModuleCommandCount 正确累加。
+     */
+    @Test
+    void shouldAggregateQueuedCommandsAcrossMultipleChannels() {
+        BatteryCollectorChannelState state1 = stateWithRuntimeData(); // 1 queued command
+        BatteryCollectorChannelConfig config2 = new BatteryCollectorChannelConfig();
+        config2.setName("channel-2");
+        config2.setBatteryGroup(3);
+        config2.setEnabled(true);
+        BatteryCollectorChannelState state2 = new BatteryCollectorChannelState(config2);
+        state2.getQueuedModuleCommands().offer(BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.CONNECT_STRIP_RESISTANCE_TEST)
+                .address(1).requestCode(0x0F).responseCode(0x8F).payload(new byte[0]).build());
+        state2.getQueuedModuleCommands().offer(BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.CONNECT_STRIP_RESISTANCE_TEST)
+                .address(2).requestCode(0x11).responseCode(0x91).payload(new byte[0]).build());
+
+        BatteryCollectorMetrics metrics = service.getMetrics(Arrays.asList(state1, state2), null);
+
+        Assertions.assertEquals(2, metrics.getChannelCount());
+        Assertions.assertEquals(1, metrics.getChannels().get(0).getQueuedModuleCommandCount());
+        Assertions.assertEquals(2, metrics.getChannels().get(1).getQueuedModuleCommandCount());
+        Assertions.assertEquals(3, metrics.getTotalQueuedModuleCommandCount());
+    }
+
     private BatteryCollectorChannelState stateWithRuntimeData() {
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
         channelConfig.setName("battery-group-1");

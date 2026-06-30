@@ -110,15 +110,13 @@ public class BatteryCollectorCommandQueueService {
      * @return 是否匹配
      */
     public boolean isCurrentPendingResponse(BatteryCollectorChannelState state, BatteryCollectorFrame frame) {
-        BatteryPendingRequest pending = state.getPendingCommand();
+        BatteryPendingRequest pending = state == null ? null : state.getPendingCommand();
         if (pending == null || frame == null) {
             return false;
         }
-        if (pending.isAutoPoll()) {
-            return frame.getCommand() == state.getExpectedResponseCode();
-        }
         return frame.getCommand() == state.getExpectedResponseCode()
-                && frame.getCommand() != 0;
+                && frame.getCommand() != 0
+                && frame.getAddress() == pending.getRequestAddress();
     }
 
     /**

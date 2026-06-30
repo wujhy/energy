@@ -275,4 +275,104 @@ class BatteryCollectorCommandLogServiceTest {
                 Mockito.eq("命令已取消"),
                 Mockito.isNull());
     }
+
+    // ---- TASK-AI-VERIFY-LOG-004: error_message format edge cases ----
+
+    /**
+     * LOG-004: 长 payload 完整拼入 error_message，不做截断，保证页面可展示完整信息。
+     */
+    @Test
+    void shouldIncludeFullLongPayloadInErrorMessage() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+        StringBuilder longPayload = new StringBuilder();
+        for (int i = 0; i < 200; i++) {
+            longPayload.append("aabb");
+        }
+
+        service.updateCommandOptLog(10L, BatteryDeviceStateConstants.CommandStatus.FAILED,
+                0x82, longPayload.toString(), null);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.FAILED),
+                Mockito.eq(1),
+                Mockito.eq(0x82),
+                Mockito.anyString(),
+                messageCaptor.capture(),
+                Mockito.eq(longPayload.toString()));
+        String message = messageCaptor.getValue();
+        Assertions.assertTrue(message.startsWith("命令响应失败, responseCode=130, payload="));
+        Assertions.assertTrue(message.endsWith(longPayload.toString()));
+    }
+
+    /**
+     * LOG-004: responsePayload 为 null 时，error_message 不追加 ", payload=" 后缀。
+     */
+    @Test
+    void shouldOmitPayloadSuffixWhenPayloadIsNull() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+
+        service.updateCommandOptLog(10L, BatteryDeviceStateConstants.CommandStatus.FAILED,
+                0x82, null, null);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.FAILED),
+                Mockito.eq(1),
+                Mockito.eq(0x82),
+                Mockito.anyString(),
+                messageCaptor.capture(),
+                Mockito.isNull());
+        Assertions.assertEquals("命令响应失败, responseCode=130", messageCaptor.getValue());
+    }
+
+    /**
+     * LOG-004: responseCode 为 null 时，error_message 不追加 ", responseCode=" 后缀。
+     */
+    @Test
+    void shouldOmitResponseCodeSuffixWhenResponseCodeIsNull() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+
+        service.updateCommandOptLog(10L, BatteryDeviceStateConstants.CommandStatus.FAILED,
+                null, "abcd", null);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.FAILED),
+                Mockito.eq(1),
+                Mockito.isNull(),
+                Mockito.anyString(),
+                messageCaptor.capture(),
+                Mockito.eq("abcd"));
+        Assertions.assertEquals("命令响应失败, payload=abcd", messageCaptor.getValue());
+    }
+
+    /**
+     * LOG-004: responsePayload 含前后空白时被 trim，避免页面展示异常。
+     */
+    @Test
+    void shouldTrimPayloadInErrorMessage() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+
+        service.updateCommandOptLog(10L, BatteryDeviceStateConstants.CommandStatus.TIMEOUT,
+                0x03, "  abcd  ", null);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.TIMEOUT),
+                Mockito.eq(1),
+                Mockito.eq(0x03),
+                Mockito.anyString(),
+                messageCaptor.capture(),
+                Mockito.eq("  abcd  "));
+        Assertions.assertEquals("命令响应超时, responseCode=3, payload=abcd", messageCaptor.getValue());
+    }
 }

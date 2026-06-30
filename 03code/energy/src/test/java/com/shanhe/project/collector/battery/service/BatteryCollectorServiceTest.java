@@ -505,6 +505,31 @@ class BatteryCollectorServiceTest {
     }
 
     @Test
+    void commandQueueShouldMatchPendingResponseByCommandAndAddress() {
+        BatteryCollectorCommandQueueService commandQueueService =
+                newCommandQueueService(newModeStatusService(), commandLogService);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
+        state.setExpectedResponseCode(0x82);
+        state.setPendingCommand(BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
+                8,
+                new byte[0],
+                false));
+        BatteryCollectorFrame matched = BatteryCollectorFrame.builder()
+                .address(8)
+                .command(0x82)
+                .payload(new byte[0])
+                .build();
+        BatteryCollectorFrame latePollResponse = BatteryCollectorFrame.builder()
+                .address(7)
+                .command(0x82)
+                .payload(new byte[0])
+                .build();
+
+        Assertions.assertTrue(commandQueueService.isCurrentPendingResponse(state, matched));
+        Assertions.assertFalse(commandQueueService.isCurrentPendingResponse(state, latePollResponse));
+    }
+    @Test
     void shouldRemoveCachedModuleAddressAfterConsecutiveMisses() {
         BatteryCollectorProperties properties = new BatteryCollectorProperties();
         properties.setModuleAddressCacheEnabled(true);
