@@ -34,8 +34,10 @@ import java.util.*;
 @Service
 public class OptLogServiceImpl implements OptLogService {
 
+    /** 操作日志数据访问层。 */
     @Resource
     private OptLogMapper optLogMapper;
+    /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
 

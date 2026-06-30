@@ -63,7 +63,9 @@ public final class BatteryAlarmBitMapping {
 
     public static final class Group87Bit {
 
+        /** 告警状态字节序号。 */
         private final int statusByteNo;
+        /** 物理位编号。 */
         private final int physicalBit;
 
         private Group87Bit(int statusByteNo, int physicalBit) {

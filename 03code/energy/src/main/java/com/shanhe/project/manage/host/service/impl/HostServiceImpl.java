@@ -34,12 +34,16 @@ import java.util.Objects;
 @Slf4j
 @Service
 public class HostServiceImpl implements IHostService {
+    /** 主机映射。 */
     @Resource
     private HostMapper hostMapper;
+    /** TCP客户端。 */
     private TcpClient tcpClient;
+    /** 客户端上报服务。 */
     @Resource
     private ClientReportService clientReportService;
 
+    /** 最大离线次数。 */
     @Value("${job.offlineNum:10}")
     private int maxOffline;
 

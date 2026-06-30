@@ -27,8 +27,10 @@ public class DataService {
     /** 正常存储间隔：秒 */
     @Value("${storage.interval.data:60}")
     private Integer intervalData;
+    /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
+    /** 主机服务。 */
     @Resource
     private IHostService hostService;
 

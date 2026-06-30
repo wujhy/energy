@@ -37,10 +37,13 @@ import javax.annotation.Resource;
 @Service
 public class ConfigAttributeServiceImpl implements IConfigAttributeService
 {
+    /** 配置属性映射。 */
     @Resource
     private ConfigAttributeMapper configAttributeMapper;
+    /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
+    /** 客户端上报服务。 */
     @Resource
     private ClientReportService clientReportService;
 

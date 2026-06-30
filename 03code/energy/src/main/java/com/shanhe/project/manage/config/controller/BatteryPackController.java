@@ -20,6 +20,7 @@ import javax.annotation.Resource;
 @RestController
 @RequestMapping("/battery/pack")
 public class BatteryPackController extends BaseController {
+    /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
 

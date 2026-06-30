@@ -44,24 +44,34 @@ import java.util.*;
 @Service
 public class BatteryPackHandler {
 
+    /** 蓄电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
+    /** 配置服务。 */
     @Resource
     private IConfigService configService;
+    /** 蓄电池上报日志服务。 */
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
+    /** 电池组统计服务。 */
     @Resource
     private IStatBatteryPackService statBatteryPackService;
+    /** 电池内阻统计服务。 */
     @Resource
     private IStatBatteryResService statBatteryResService;
+    /** 蓄电池预测服务。 */
     @Resource
     private BatteryPredictorService batteryPredictorService;
+    /** 预估电池组服务。 */
     @Resource
     private PreBatteryGroupService preBatteryGroupService;
+    /** 数据服务。 */
     @Resource
     private DataService dataService;
+    /** 蓄电池模块上报日志适配服务。 */
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
 

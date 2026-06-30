@@ -43,22 +43,31 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class ConfigurationBatteryServiceImpl implements IConfigurationBatteryService {
+    /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
+    /** 电池上报日志服务。 */
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
+    /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
+    /** 电池单体配置服务。 */
     @Resource
     private IDevBatteryMonomerService devBatteryMonomerService;
+    /** 配置属性服务。 */
     @Resource
     private IConfigAttributeService configAttributeService;
+    /** 预估电池组服务。 */
     @Resource
     private PreBatteryGroupService preBatteryGroupService;
+    /** 电池采集器配置。 */
     @Resource
     private BatteryCollectorProperties batteryCollectorProperties;
+    /** 电池模组上报日志适配服务。 */
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
 

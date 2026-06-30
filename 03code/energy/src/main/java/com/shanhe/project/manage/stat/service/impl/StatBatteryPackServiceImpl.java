@@ -43,12 +43,16 @@ import java.util.stream.Collectors;
 @Service
 public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
 
+    /** 电池组统计数据访问层。 */
     @Resource
     private StatBatteryPackMapper statBatteryPackMapper;
+    /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
+    /** 单体电池统计服务。 */
     @Resource
     private IStatBatteryBatService statBatteryBatService;
+    /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
 

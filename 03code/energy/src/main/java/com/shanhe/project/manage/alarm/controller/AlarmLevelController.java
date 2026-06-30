@@ -21,6 +21,7 @@ import java.util.List;
 @RequestMapping("/alarm/level")
 public class AlarmLevelController extends BaseController {
 
+    /** 告警级别服务。 */
     @Resource
     private AlarmLevelService alarmLevelService;
 

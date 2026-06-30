@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class TcpServerConfig implements ApplicationRunner {
 
+    /** 设备通讯常量。 */
     @Resource
     private DeviceCommConst deviceCommConst;
     @Resource

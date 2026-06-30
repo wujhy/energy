@@ -20,9 +20,11 @@ import com.shanhe.common.xss.XssFilter;
 @Configuration
 @ConditionalOnProperty(name = "xss.enabled", havingValue = "true")
 public class FilterConfig {
+    /** XSS过滤排除的URL。 */
     @Value("${xss.excludes}")
     private String excludes;
 
+    /** XSS过滤匹配的URL模式。 */
     @Value("${xss.urlPatterns}")
     private String urlPatterns;
 

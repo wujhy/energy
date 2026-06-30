@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 @Component
 public class SerialPortConfig implements ApplicationRunner {
 
+    /** 设备通讯常量。 */
     @Resource
     private DeviceCommConst commConst;
     @Resource

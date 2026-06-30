@@ -32,10 +32,13 @@ import java.util.Set;
 @Service
 public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
 
+    /** 预估电池组映射。 */
     @Resource
     private PreBatteryGroupMapper preBatteryGroupMapper;
+    /** 客户端上报服务。 */
     @Resource
     private ClientReportService clientReportService;
+    /** 电池组映射。 */
     @Resource
     private BatteryPackMapper batteryPackMapper;
 

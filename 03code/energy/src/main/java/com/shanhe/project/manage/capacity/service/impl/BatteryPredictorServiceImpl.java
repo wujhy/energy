@@ -49,16 +49,22 @@ import java.util.Objects;
 @Service
 public class BatteryPredictorServiceImpl implements BatteryPredictorService {
 
+    /** 数据点服务。 */
     @Resource
     private DataPointService dataPointService;
+    /** 电池组信息服务。 */
     @Resource
     private IBatteryPackService devBatteryInfoService;
+    /** 电池上报日志服务。 */
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    /** 预估电池组服务。 */
     @Resource
     private PreBatteryGroupService preBatteryGroupService;
+    /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
+    /** 蓄电池单体服务。 */
     @Resource
     private IDevBatteryMonomerService devBatteryMonomerService;
 

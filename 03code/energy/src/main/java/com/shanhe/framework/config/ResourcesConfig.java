@@ -27,8 +27,10 @@ import javax.annotation.Resource;
 public class ResourcesConfig implements WebMvcConfigurer
 {
 
+    /** 防重复提交拦截器。 */
     @Resource
     private BaseRepeatSubmitInterceptor baseRepeatSubmitInterceptor;
+    /** 登录拦截器。 */
     @Resource
     private LoginInterceptor loginInterceptor;
 

@@ -28,6 +28,7 @@ public class ControlBase {
 
     @Resource
     public IConfigService configService;
+    /** 主机服务。 */
     @Resource
     private IHostService hostService;
 

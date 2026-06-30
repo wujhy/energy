@@ -25,6 +25,7 @@ import java.util.List;
 @RequestMapping("/opt/log")
 public class OptLogController extends BaseController
 {
+    /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
 

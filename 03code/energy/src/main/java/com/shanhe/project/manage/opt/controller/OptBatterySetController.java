@@ -21,6 +21,7 @@ import javax.annotation.Resource;
 @RequestMapping("/battery/set")
 public class OptBatterySetController extends BaseController {
 
+    /** 蓄电池设置控制服务。 */
     @Resource
     private ControlBatterySet controlBatterySet;
 

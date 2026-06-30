@@ -23,12 +23,15 @@ import java.util.List;
 @Service
 public class BatteryModuleRealtimeAdapterService {
 
+    /** 采集模块配置。 */
     @Resource
     private BatteryCollectorProperties properties;
 
+    /** 模块实时数据 Mapper。 */
     @Resource
     private BatteryModuleRealtimeMapper realtimeMapper;
 
+    /** 实时快照服务。 */
     @Resource
     private BatteryModuleRealtimeSnapshotService snapshotService;
 

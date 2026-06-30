@@ -25,6 +25,7 @@ public class BatteryModeStatusService {
 
     private static final String STATE_CODE_WORK_MODE = BatteryDeviceStateConstants.StateCode.WORK_MODE;
 
+    /** 电池设备状态服务。 */
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
 
@@ -54,6 +55,7 @@ public class BatteryModeStatusService {
     private static final int STATUS_RUNNING = 1;
     private static final String MODE_STATUS_KEY = "battery:mode:status:EB";
 
+    /** 缓存键枚举。 */
     private final CacheKeyEnum cacheKeyEnum = CacheKeyEnum.RESULT;
 
     private CacheAccessor cacheAccessor = new CacheUtilsAccessor();

@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class CodingUtil {
 
+    /** 天气编码列表。 */
     private static volatile Map<String,String> weatherCodeList;
     /**
      *  根据天气描述获取天气编码

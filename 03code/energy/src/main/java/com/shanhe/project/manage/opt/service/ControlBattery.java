@@ -42,26 +42,37 @@ public class ControlBattery extends ControlBase {
     /** 旧 M460/980 指令生成器，新测试控制不应继续扩展该链路。 */
     @Resource
     private CmdBatteryControlService cmdBatteryControlService;
+    /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
+    /** 蓄电池测试操作参数服务。 */
     @Resource
     private IDevBatteryOptService devBatteryOptService;
+    /** 客户端上报服务。 */
     @Resource
     private ClientReportService clientReportService;
+    /** 上报日志服务。 */
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    /** 模块上报日志适配服务。 */
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
+    /** 采集配置属性。 */
     @Resource
     private BatteryCollectorProperties batteryCollectorProperties;
+    /** 蓄电池设置控制服务。 */
     @Resource
     private ControlBatterySet controlBatterySet;
+    /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
+    /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
+    /** 测试计划采集命令适配器。 */
     @Resource
     private BatteryOptCollectorCommandAdapter batteryOptCollectorCommandAdapter;
+    /** 工作模式状态服务。 */
     @Resource
     private BatteryModeStatusService batteryModeStatusService;
 

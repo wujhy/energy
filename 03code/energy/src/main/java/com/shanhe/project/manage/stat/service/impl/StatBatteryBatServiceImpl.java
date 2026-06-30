@@ -22,6 +22,7 @@ import java.util.List;
 @Service
 public class StatBatteryBatServiceImpl implements IStatBatteryBatService {
 
+    /** 单体电池统计数据访问层。 */
     @Resource
     private StatBatteryBatMapper statBatteryBatMapper;
 

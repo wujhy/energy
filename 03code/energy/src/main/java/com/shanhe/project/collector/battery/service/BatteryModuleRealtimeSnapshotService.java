@@ -35,9 +35,11 @@ public class BatteryModuleRealtimeSnapshotService {
 
     private static final int STALE_MISS_THRESHOLD = 2;
 
+    /** 模块实时数据 Mapper。 */
     @Resource
     private BatteryModuleRealtimeMapper realtimeMapper;
 
+    /** 电池组配置服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
 

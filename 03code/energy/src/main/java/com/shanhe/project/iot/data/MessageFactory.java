@@ -45,10 +45,14 @@ public class MessageFactory {
      * 最近数据放入的时间戳
      */
     public static AtomicLong lastPushTime = new AtomicLong(0);
+    /** 日志输出开关。 */
     private static Boolean logOutPut = true;
 
+    /** 蓄电池上报日志Mapper。 */
     private static BatteryReportLogMapper batteryReportLogMapper;
+    /** 电池组统计Mapper。 */
     private static StatBatteryPackMapper statBatteryPackMapper;
+    /** 电池单体统计Mapper。 */
     private static StatBatteryBatMapper statBatteryBatMapper;
 
     /**

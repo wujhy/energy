@@ -24,6 +24,7 @@ import java.util.List;
 @Controller
 @RequestMapping("/file")
 public class SystemFileController extends BaseController {
+    /** 系统文件服务。 */
     @Resource
     private ISysFileService sysFileService;
 

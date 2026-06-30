@@ -28,6 +28,7 @@ import java.util.Objects;
 public class BatteryOptResHandler {
     /** 缓存结果 **/
     CacheKeyEnum cacheKeyEnum = CacheKeyEnum.RESULT;
+    /** 电池组工作模式状态服务。 */
     @Resource
     private BatteryModeStatusService batteryModeStatusService;
 

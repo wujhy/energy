@@ -99,7 +99,9 @@ public class DeviceCommConst {
         PORT("port", "串口连接"),
         /** mqtt连接 */
         MQTT("mqtt", "mqtt连接");
+        /** 通讯类型编码。 */
         private final String code;
+        /** 通讯类型描述。 */
         private final String desc;
 
         CommTypeEnum(String code, String desc) {

@@ -29,6 +29,7 @@ import java.util.List;
 @Component
 public class LoginService {
 
+    /** 用户服务。 */
     @Resource
     private IUserService userService;
 

@@ -32,12 +32,16 @@ import java.util.stream.Collectors;
 @RequestMapping("/battery/log")
 public class BatteryReportLogController extends BaseController
 {
+    /** 电池上报日志服务。 */
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    /** 电池模块上报日志适配服务。 */
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
+    /** 蓄电池采集配置。 */
     @Resource
     private BatteryCollectorProperties batteryCollectorProperties;
+    /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
 

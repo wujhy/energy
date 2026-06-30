@@ -24,6 +24,7 @@ import java.util.Map;
 @Service
 public class BatteryModuleAlarmAdaptService {
 
+    /** 电池设备状态服务。 */
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
 

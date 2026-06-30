@@ -19,6 +19,7 @@ import java.util.List;
  */
 @Service
 public class DevBatteryOptServiceImpl implements IDevBatteryOptService {
+    /** 蓄电池测试操作映射。 */
     @Resource
     private DevBatteryOptMapper devBatteryOptMapper;
 

@@ -24,12 +24,16 @@ import java.util.List;
 @RestController
 @RequestMapping("/configuration/battery")
 public class ConfigurationBatteryController extends BaseController {
+    /** 电池单体配置服务。 */
     @Resource
     private IDevBatteryMonomerService devBatteryMonomerService;
+    /** 电池配置服务。 */
     @Resource
     private IConfigurationBatteryService configurationBatteryService;
+    /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
+    /** 预估电池组服务。 */
     @Resource
     private PreBatteryGroupService preBatteryGroupService;
 

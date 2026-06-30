@@ -25,10 +25,13 @@ public class StartupRunner implements ApplicationRunner {
 
     private static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = getThreadPoolExecutor();
 
+    /** 蓄电池上报日志Mapper。 */
     @Resource
     private BatteryReportLogMapper batteryReportLogMapper;
+    /** 电池组统计Mapper。 */
     @Resource
     private StatBatteryPackMapper statBatteryPackMapper;
+    /** 电池单体统计Mapper。 */
     @Resource
     private StatBatteryBatMapper statBatteryBatMapper;
 

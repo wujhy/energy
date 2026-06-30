@@ -26,6 +26,7 @@ import javax.annotation.Resource;
 @RequestMapping("/device/alarm")
 public class AlarmLogController extends BaseController
 {
+    /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
 

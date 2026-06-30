@@ -13,36 +13,47 @@ import com.alibaba.druid.pool.DruidDataSource;
 @Configuration
 public class DruidProperties
 {
+    /** 连接池初始大小。 */
     @Value("${spring.datasource.druid.initialSize}")
     private int initialSize;
 
+    /** 连接池最小空闲连接数。 */
     @Value("${spring.datasource.druid.minIdle}")
     private int minIdle;
 
+    /** 连接池最大活跃连接数。 */
     @Value("${spring.datasource.druid.maxActive}")
     private int maxActive;
 
+    /** 获取连接最大等待时间（毫秒）。 */
     @Value("${spring.datasource.druid.maxWait}")
     private int maxWait;
 
+    /** 空闲连接检测间隔时间（毫秒）。 */
     @Value("${spring.datasource.druid.timeBetweenEvictionRunsMillis}")
     private int timeBetweenEvictionRunsMillis;
 
+    /** 连接在池中最小生存时间（毫秒）。 */
     @Value("${spring.datasource.druid.minEvictableIdleTimeMillis}")
     private int minEvictableIdleTimeMillis;
 
+    /** 连接在池中最大生存时间（毫秒）。 */
     @Value("${spring.datasource.druid.maxEvictableIdleTimeMillis}")
     private int maxEvictableIdleTimeMillis;
 
+    /** 连接有效性验证SQL查询。 */
     @Value("${spring.datasource.druid.validationQuery}")
     private String validationQuery;
 
+    /** 空闲时是否检测连接有效性。 */
     @Value("${spring.datasource.druid.testWhileIdle}")
     private boolean testWhileIdle;
 
+    /** 获取连接时是否检测连接有效性。 */
     @Value("${spring.datasource.druid.testOnBorrow}")
     private boolean testOnBorrow;
 
+    /** 归还连接时是否检测连接有效性。 */
     @Value("${spring.datasource.druid.testOnReturn}")
     private boolean testOnReturn;
 

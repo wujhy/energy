@@ -32,6 +32,7 @@ import com.shanhe.framework.web.domain.AjaxResult;
 @Controller
 public class CommonController {
 
+    /** 服务器配置。 */
     @Resource
     private ServerConfig serverConfig;
 

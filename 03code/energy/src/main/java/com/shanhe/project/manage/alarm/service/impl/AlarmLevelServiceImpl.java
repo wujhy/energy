@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 @Service
 public class AlarmLevelServiceImpl implements AlarmLevelService {
 
+    /** 告警级别映射。 */
     @Resource
     private AlarmLevelMapper alarmLevelMapper;
 

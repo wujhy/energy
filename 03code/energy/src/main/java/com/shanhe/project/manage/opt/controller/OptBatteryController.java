@@ -29,10 +29,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/batteryOpt")
 public class OptBatteryController extends BaseController {
+    /** 蓄电池测试操作参数服务。 */
     @Resource
     private IDevBatteryOptService devBatteryOptService;
+    /** 蓄电池设备控制服务。 */
     @Resource
     private ControlBattery controlBattery;
+    /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
 

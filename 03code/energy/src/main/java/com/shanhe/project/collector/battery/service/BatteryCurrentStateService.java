@@ -40,18 +40,25 @@ public class BatteryCurrentStateService {
             "M460_SENSOR: no independent sensor source in energy realtime model"
     );
 
+    /** 电池组配置服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
+    /** 模块实时数据 Mapper。 */
     @Resource
     private BatteryModuleRealtimeMapper realtimeMapper;
+    /** 实时快照服务。 */
     @Resource
     private BatteryModuleRealtimeSnapshotService snapshotService;
+    /** 电池设备状态服务。 */
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
+    /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
+    /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
+    /** 电池模式状态服务。 */
     @Resource
     private BatteryModeStatusService batteryModeStatusService;
 

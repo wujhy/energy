@@ -22,6 +22,7 @@ import javax.annotation.Resource;
 @Service
 public class CmdBatteryControlService {
 
+    /** 主机服务。 */
     @Resource
     private IHostService hostService;
 

@@ -18,6 +18,7 @@ import java.util.concurrent.Executors;
 @Configuration
 @EnableScheduling
 public class ScheduleConfig implements SchedulingConfigurer {
+    /** 调度线程池大小。 */
     @Value("${spring.task.scheduling.pool.size:2}")
     private int poolSize;
     @Override

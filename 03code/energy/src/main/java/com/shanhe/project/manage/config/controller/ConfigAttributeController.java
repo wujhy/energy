@@ -28,6 +28,7 @@ import javax.annotation.Resource;
 @RequestMapping("/device/config/attribute")
 public class ConfigAttributeController extends BaseController {
 
+    /** 配置属性服务。 */
     @Resource
     private IConfigAttributeService configAttributeService;
 

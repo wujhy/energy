@@ -23,12 +23,16 @@ import javax.annotation.Resource;
 @Service
 public class DeviceService {
 
+    /** 设备响应处理器。 */
     @Resource
     private DevResponseHandler devResponseHandler;
+    /** 数据上传处理器。 */
     @Resource
     private DataUploadHandler dataUploadHandler;
+    /** 数据交换处理器。 */
     @Resource
     private DataSwitchHandler dataSwitchHandler;
+    /** 客户端上报服务。 */
     @Resource
     private ClientReportService clientReportService;
 

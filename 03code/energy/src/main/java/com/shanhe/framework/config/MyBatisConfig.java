@@ -35,6 +35,7 @@ import com.shanhe.common.utils.StringUtils;
 @Slf4j
 @Configuration
 public class MyBatisConfig {
+    /** 环境配置。 */
     @Autowired
     private Environment env;
 

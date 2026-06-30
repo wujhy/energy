@@ -30,10 +30,13 @@ import java.util.stream.Collectors;
 @Service
 public class ConfigServiceImpl implements IConfigService {
 
+    /** 配置属性服务。 */
     @Resource
     private IConfigAttributeService configAttributeService;
+    /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
+    /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
 

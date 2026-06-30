@@ -62,12 +62,16 @@ public class BatteryCollectorCommandService {
      */
     @Resource
     private BatteryModuleControlCommandService moduleControlCommandService = new BatteryModuleControlCommandService();
+    /** 采集模块配置。 */
     @Resource
     private BatteryCollectorProperties properties;
+    /** 电池模式状态服务。 */
     @Resource
     private BatteryModeStatusService batteryModeStatusService;
+    /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
+    /** 电池组配置服务。 */
     @Autowired(required = false)
     private IBatteryPackService batteryPackService;
 

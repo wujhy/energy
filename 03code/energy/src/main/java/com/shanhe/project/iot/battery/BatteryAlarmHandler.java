@@ -33,10 +33,13 @@ import java.util.*;
 @Service
 public class BatteryAlarmHandler {
 
+    /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
+    /** 蓄电池上报日志服务。 */
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    /** 蓄电池模块上报日志适配服务。 */
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
 

@@ -30,6 +30,7 @@ public class BatteryModuleReportLogAdapterService {
     @Resource
     private BatteryModuleRealtimeMapper realtimeMapper;
 
+    /** 实时快照服务。 */
     @Resource
     private BatteryModuleRealtimeSnapshotService snapshotService;
 

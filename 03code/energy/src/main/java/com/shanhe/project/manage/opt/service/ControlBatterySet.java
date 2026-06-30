@@ -44,25 +44,35 @@ import java.util.Map;
 @Service
 public class ControlBatterySet extends ControlBase {
 
+    /** 上报日志服务。 */
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    /** 模块上报日志适配服务。 */
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
+    /** 采集配置属性。 */
     @Resource
     private BatteryCollectorProperties batteryCollectorProperties;
+    /** 配置属性服务。 */
     @Resource
     private IConfigAttributeService configAttributeService;
+    /** 复位服务。 */
     @Resource
     @Lazy
     private RestoreService restoreService;
+    /** 采集命令服务。 */
     @Resource
     private BatteryCollectorCommandService batteryCollectorCommandService;
+    /** 采集服务。 */
     @Resource
     private BatteryCollectorService batteryCollectorService;
+    /** 工作模式状态服务。 */
     @Resource
     private BatteryModeStatusService batteryModeStatusService;
+    /** 主机服务。 */
     @Resource
     private IHostService hostService;
+    /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
 

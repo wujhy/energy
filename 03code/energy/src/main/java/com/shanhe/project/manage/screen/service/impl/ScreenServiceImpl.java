@@ -35,20 +35,28 @@ import java.util.stream.Collectors;
 @Service
 public class ScreenServiceImpl implements ScreenService {
 
+    /** 网点服务。 */
     @Resource
     private IHostService hostService;
+    /** 配置服务。 */
     @Resource
     private IConfigService configService;
+    /** 配置属性服务。 */
     @Resource
     private IConfigAttributeService configAttributeService;
+    /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
+    /** 电池上报日志服务。 */
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    /** 电池采集器配置。 */
     @Resource
     private BatteryCollectorProperties batteryCollectorProperties;
+    /** 电池模组上报日志适配服务。 */
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
+    /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
 

@@ -48,19 +48,26 @@ import javax.annotation.Resource;
  */
 @Service
 public class AlarmLogServiceImpl implements IAlarmLogService {
+    /** 告警日志映射。 */
     @Resource
     private AlarmLogMapper alarmLogMapper;
 
+    /** 主机服务。 */
     @Resource
     private IHostService hostService;
+    /** 配置属性服务。 */
     @Resource
     private IConfigAttributeService configAttributeService;
+    /** 客户端上报服务。 */
     @Resource
     private ClientReportService clientReportService;
+    /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
+    /** 蓄电池控制集合。 */
     @Resource
     private ControlBatterySet controlBatterySet;
+    /** 蓄电池设备状态服务。 */
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
 

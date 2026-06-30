@@ -18,6 +18,7 @@ import javax.annotation.Resource;
 @RequestMapping("/screen")
 public class ScreenController extends BaseController {
 
+    /** 首页服务。 */
     @Resource
     private ScreenService screenService;
 

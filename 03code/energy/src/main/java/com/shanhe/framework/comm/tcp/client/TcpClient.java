@@ -34,6 +34,7 @@ public class TcpClient {
 
     CacheKeyEnum hostCache = CacheKeyEnum.HOST;
 
+    /** 客户端设备服务。 */
     @Resource
     private ClientDeviceService clientDeviceService;
 

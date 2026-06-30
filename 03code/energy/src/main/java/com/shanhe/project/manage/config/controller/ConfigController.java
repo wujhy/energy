@@ -21,6 +21,7 @@ import java.util.List;
 @RequestMapping("/device/config")
 public class ConfigController extends BaseController {
 
+    /** 设备配置服务。 */
     @Resource
     private IConfigService configService;
 

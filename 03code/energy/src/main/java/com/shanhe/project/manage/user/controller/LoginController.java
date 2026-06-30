@@ -22,6 +22,7 @@ import com.shanhe.framework.web.domain.AjaxResult;
 @Controller
 public class LoginController extends BaseController {
 
+    /** 登录服务。 */
     @Resource
     private LoginService loginService;
 

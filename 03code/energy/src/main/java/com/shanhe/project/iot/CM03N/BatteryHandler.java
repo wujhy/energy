@@ -27,12 +27,16 @@ import javax.annotation.Resource;
 @Service
 public class BatteryHandler {
 
+    /** 蓄电池参数处理器。 */
     @Resource
     private BatteryParamsHandler batteryParamsHandler;
+    /** 蓄电池操作响应处理器。 */
     @Resource
     private BatteryOptResHandler batteryOptResHandler;
+    /** 蓄电池告警处理器。 */
     @Resource
     private BatteryAlarmHandler batteryAlarmHandler;
+    /** 蓄电池组处理器。 */
     @Resource
     private BatteryPackHandler batteryPackHandler;
 

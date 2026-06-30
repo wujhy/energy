@@ -35,46 +35,66 @@ import javax.annotation.Resource;
 @Service
 public class RestoreServiceImpl implements RestoreService {
 
+    /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
+    /** 蓄电池单体服务。 */
     @Resource
     private IDevBatteryMonomerService devBatteryMonomerService;
+    /** 蓄电池测试操作参数服务。 */
     @Resource
     private IDevBatteryOptService devBatteryOptService;
+    /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
+    /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
+    /** 蓄电池单体统计服务。 */
     @Resource
     private IStatBatteryBatService statBatteryBatService;
+    /** 蓄电池组统计服务。 */
     @Resource
     private IStatBatteryPackService statBatteryPackService;
+    /** 蓄电池内阻统计服务。 */
     @Resource
     private IStatBatteryResService statBatteryResService;
+    /** 预估容量服务。 */
     @Resource
     private PreBatteryGroupService preBatteryGroupService;
+    /** 系统操作日志服务。 */
     @Resource
     private IOperLogService operLogService;
+    /** 主机服务。 */
     @Resource
     private IHostService hostService;
+    /** 蓄电池设置控制服务。 */
     @Resource
     private ControlBatterySet controlBatterySet;
+    /** 上报日志服务。 */
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    /** 配置属性服务。 */
     @Resource
     private IConfigAttributeService configAttributeService;
     @Resource
     public IConfigService configService;
+    /** 模块实时数据访问层。 */
     @Resource
     private BatteryModuleRealtimeMapper batteryModuleRealtimeMapper;
+    /** 设备状态服务。 */
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
+    /** 工作模式状态服务。 */
     @Resource
     private BatteryModeStatusService batteryModeStatusService;
+    /** 采集服务。 */
     @Resource
     private BatteryCollectorService batteryCollectorService;
+    /** 单体兼容性填充服务。 */
     @Resource
     private com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService compatibilityFillService;
+    /** 实时快照服务。 */
     @Resource
     private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
 

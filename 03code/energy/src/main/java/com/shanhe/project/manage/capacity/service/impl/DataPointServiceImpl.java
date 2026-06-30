@@ -23,9 +23,11 @@ import java.util.Map;
 @Service
 public class DataPointServiceImpl implements DataPointService {
 
+    /** 蓄电池单体统计映射。 */
     @Resource
     private StatBatteryBatMapper statBatteryBatMapper;
 
+    /** 蓄电池组统计映射。 */
     @Resource
     private StatBatteryPackMapper statBatteryPackMapper;
 

@@ -36,12 +36,16 @@ import java.util.Set;
 @Service
 public class BatteryPackServiceImpl implements IBatteryPackService {
 
+    /** 电池组映射。 */
     @Resource
     private BatteryPackMapper batteryPackMapper;
+    /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
+    /** 配置属性服务。 */
     @Resource
     private IConfigAttributeService configAttributeService;
+    /** 电池模块实时快照服务。 */
     @Resource
     private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
 

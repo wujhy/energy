@@ -20,8 +20,10 @@ import java.util.Objects;
 @Service
 public class DataUploadHandler {
 
+    /** 配置服务。 */
     @Resource
     private IConfigService configService;
+    /** 蓄电池处理器。 */
     @Resource
     private BatteryHandler batteryHandler;
 

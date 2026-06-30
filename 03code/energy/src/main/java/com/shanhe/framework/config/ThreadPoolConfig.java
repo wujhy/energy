@@ -26,10 +26,13 @@ public class ThreadPoolConfig {
      */
     @Value("${thread.corePoolSize:10}")
     private int corePoolSize = 10;
+    /** 线程池最大线程数。 */
     @Value("${thread.maxPoolSize:100}")
     private int maxPoolSize = 100;
+    /** 线程池队列容量。 */
     @Value("${thread.queueCapacity:1000}")
     private int queueCapacity = 1000;
+    /** 线程空闲存活时间（秒）。 */
     @Value("${thread.keepAliveSeconds:300}")
     private int keepAliveSeconds = 300;
 

@@ -29,6 +29,7 @@ import java.util.Objects;
 @RequestMapping("/device/host")
 public class HostController extends BaseController
 {
+    /** 主机服务。 */
     @Resource
     private IHostService hostService;
 

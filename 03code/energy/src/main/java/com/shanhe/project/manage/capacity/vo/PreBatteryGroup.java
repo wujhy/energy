@@ -31,9 +31,11 @@ public class PreBatteryGroup implements Cloneable, Serializable {
     private Integer minVoltageNum;
     /** 放电开始时间 */
     private Date startTime;
+    /** 开始时间字符串。 */
     private String startTimeStr;
     /** 放电截止时间 */
     private Date endTime;
+    /** 结束时间字符串。 */
     private String endTimeStr;
     /** 当前电流 */
     private Double current;
@@ -44,6 +46,7 @@ public class PreBatteryGroup implements Cloneable, Serializable {
     private Integer backUpDuration;
     /** 统计时间 */
     private Date staticTime;
+    /** 静态时间字符串。 */
     private String staticTimeStr;
 
     /** SOH健康度 */

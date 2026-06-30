@@ -22,6 +22,7 @@ import javax.sql.DataSource;
 @Configuration
 public class FlywayConfig {
 
+    /** 数据源。 */
     @Resource
     private DataSource dataSource;
 

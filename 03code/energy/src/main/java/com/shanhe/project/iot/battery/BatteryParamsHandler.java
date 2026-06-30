@@ -35,6 +35,7 @@ import java.util.Objects;
 @Service
 public class BatteryParamsHandler {
 
+    /** 配置属性服务。 */
     @Resource
     private IConfigAttributeService configAttributeService;
 

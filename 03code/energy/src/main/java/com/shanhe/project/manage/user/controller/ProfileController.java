@@ -21,6 +21,7 @@ import javax.annotation.Resource;
 @RequestMapping("/system/user")
 public class ProfileController extends BaseController {
 
+    /** 用户服务。 */
     @Resource
     private IUserService userService;
 

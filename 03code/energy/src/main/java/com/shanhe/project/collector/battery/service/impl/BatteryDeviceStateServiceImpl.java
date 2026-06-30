@@ -23,6 +23,7 @@ import java.util.List;
 @Service
 public class BatteryDeviceStateServiceImpl implements BatteryDeviceStateService {
 
+    /** 电池设备状态 Mapper。 */
     @Resource
     private BatteryDeviceStateMapper batteryDeviceStateMapper;
 

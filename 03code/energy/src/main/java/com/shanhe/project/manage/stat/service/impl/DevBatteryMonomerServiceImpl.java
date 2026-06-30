@@ -29,16 +29,22 @@ import java.util.stream.Collectors;
  */
 @Service
 public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
+    /** 电池单体数据访问层。 */
     @Resource
     private DevBatteryMonomerMapper devBatteryMonomerMapper;
+    /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
+    /** 电池上报日志服务。 */
     @Resource
     private BatteryReportLogService batteryReportLogService;
+    /** 电池采集器配置。 */
     @Resource
     private BatteryCollectorProperties batteryCollectorProperties;
+    /** 电池模组上报日志适配服务。 */
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
+    /** 客户端上报服务。 */
     @Resource
     private ClientReportService clientReportService;
 

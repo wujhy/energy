@@ -45,12 +45,16 @@ import java.util.stream.Collectors;
 @Service
 public class BatteryReportLogServiceImpl implements BatteryReportLogService {
 
+    /** 电池上报日志映射。 */
     @Resource
     private BatteryReportLogMapper batteryReportLogMapper;
+    /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
+    /** 电池组映射。 */
     @Resource
     private BatteryPackMapper batteryPackMapper;
+    /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
 

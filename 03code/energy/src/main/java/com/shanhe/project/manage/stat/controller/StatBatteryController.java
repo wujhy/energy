@@ -23,12 +23,16 @@ import javax.annotation.Resource;
 @RestController
 @RequestMapping("/stat/battery")
 public class StatBatteryController extends BaseController {
+    /** 电池内阻统计服务。 */
     @Resource
     private IStatBatteryResService statBatteryResService;
+    /** 电池组统计服务。 */
     @Resource
     private IStatBatteryPackService statBatteryPackService;
+    /** 单体电池统计服务。 */
     @Resource
     private IStatBatteryBatService statBatteryBatService;
+    /** 电池单体配置服务。 */
     @Resource
     private IDevBatteryMonomerService devBatteryMonomerService;
 

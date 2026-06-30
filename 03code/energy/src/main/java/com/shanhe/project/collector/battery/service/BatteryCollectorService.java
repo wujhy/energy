@@ -83,14 +83,19 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
      */
     @Resource
     private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
+    /** 采集运行视图服务。 */
     @Resource
     private BatteryCollectorRuntimeViewService runtimeViewService;
+    /** 采集缓存服务。 */
     @Resource
     private BatteryCollectorCacheService batteryCollectorCacheService;
+    /** 协议日志服务。 */
     @Resource
     private BatteryCollectorProtocolLogService protocolLogService;
+    /** 命令日志服务。 */
     @Resource
     private BatteryCollectorCommandLogService commandLogService;
+    /** 采集设备状态服务。 */
     @Resource
     private BatteryCollectorDeviceStateService collectorDeviceStateService;
 
@@ -117,8 +122,10 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
      */
     @Resource
     private com.shanhe.project.collector.battery.command.BatteryCollectorCommandQueueService commandQueueService;
+    /** 连接条电阻测试命令处理器。 */
     @Resource
     private BatteryConnectResistanceCommandProcessor connectResistanceCommandProcessor;
+    /** 采集超时服务。 */
     @Resource
     private BatteryCollectorTimeoutService timeoutService;
 

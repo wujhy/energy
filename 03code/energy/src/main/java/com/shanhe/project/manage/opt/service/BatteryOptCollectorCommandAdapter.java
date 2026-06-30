@@ -30,15 +30,19 @@ public class BatteryOptCollectorCommandAdapter {
 
     private static final int MAX_BATTERY_COUNT = 245;
 
+    /** 采集配置属性。 */
     @Resource
     private BatteryCollectorProperties batteryCollectorProperties;
 
+    /** 采集命令服务。 */
     @Resource
     private BatteryCollectorCommandService batteryCollectorCommandService;
 
+    /** 工作模式状态服务。 */
     @Resource
     private BatteryModeStatusService batteryModeStatusService;
 
+    /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
 

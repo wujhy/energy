@@ -34,6 +34,7 @@ public class AjaxResult extends HashMap<String, Object>
         WARN(301),
         /** 错误 */
         ERROR(500);
+        /** 状态值。 */
         private final int value;
 
         Type(int value)

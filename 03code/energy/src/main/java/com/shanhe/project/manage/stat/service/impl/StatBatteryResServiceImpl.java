@@ -36,8 +36,11 @@ import java.util.stream.Collectors;
 @Service
 public class StatBatteryResServiceImpl implements IStatBatteryResService {
 
+    /** 电池内阻统计数据访问层。 */
     private final StatBatteryResMapper statBatteryResMapper;
+    /** 电池单体配置服务。 */
     private final IDevBatteryMonomerService devBatteryMonomerService;
+    /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
 

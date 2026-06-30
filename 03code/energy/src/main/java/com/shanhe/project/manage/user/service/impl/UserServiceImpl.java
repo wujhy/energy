@@ -20,6 +20,7 @@ import java.util.List;
 @Service
 public class UserServiceImpl implements IUserService {
 
+    /** 用户数据访问层。 */
     @Resource
     private UserMapper userMapper;
 
