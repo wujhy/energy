@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Battery collector runtime metrics.
+ * 采集器运行时指标
  *
  * @author wjh
  * @since 2026-06-15

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 
 /**
- * Builds inputs for the realtime post-process pipeline.
+ * 构造实时数据后处理流水线的输入
  *
  * @author wjh
  * @since 2026-06-16

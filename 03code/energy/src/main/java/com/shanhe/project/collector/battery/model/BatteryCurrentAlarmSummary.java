@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.Date;
 
 /**
- * Current alarm summary for battery state query.
+ * 当前告警摘要，用于电池状态查询
  *
  * @author wjh
  * @since 2026-06-15

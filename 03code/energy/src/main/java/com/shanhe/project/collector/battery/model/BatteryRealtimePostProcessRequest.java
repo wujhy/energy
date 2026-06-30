@@ -4,7 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 /**
- * Request object for the realtime post-process pipeline.
+ * 实时数据后处理流水线请求对象
  *
  * @author wjh
  * @since 2026-06-16

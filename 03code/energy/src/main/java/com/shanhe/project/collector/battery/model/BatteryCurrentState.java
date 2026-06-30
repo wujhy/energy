@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Unified current battery state for pages and external protocols.
+ * 统一的电池当前状态，供页面展示和外部协议使用
  *
  * @author wjh
  * @since 2026-06-15

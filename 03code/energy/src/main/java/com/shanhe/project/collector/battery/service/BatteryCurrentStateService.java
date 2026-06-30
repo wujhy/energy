@@ -25,7 +25,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Unified current battery state query service.
+ * 统一的电池当前状态查询服务
  *
  * @author wjh
  * @since 2026-06-15

@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.Date;
 
 /**
- * Battery collector channel runtime metrics.
+ * 采集通道运行时指标
  *
  * @author wjh
  * @since 2026-06-15

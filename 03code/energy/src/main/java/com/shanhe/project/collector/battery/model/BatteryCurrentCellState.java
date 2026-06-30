@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.Date;
 
 /**
- * Current battery cell state.
+ * 当前单体电池状态
  *
  * @author wjh
  * @since 2026-06-15
