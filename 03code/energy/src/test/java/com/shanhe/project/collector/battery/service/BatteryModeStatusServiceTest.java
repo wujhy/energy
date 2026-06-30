@@ -94,6 +94,153 @@ class BatteryModeStatusServiceTest {
         Assertions.assertEquals(1, modeInfo.getAddress());
     }
 
+    @Test
+    void shouldClearCacheWhenPackNumMatches() {
+        service.markRunning(2, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
+
+        service.clear(2);
+
+        BatteryModeInfo modeInfo = service.get(2);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+    }
+
+    @Test
+    void shouldNotClearCacheWhenPackNumDoesNotMatch() {
+        service.markRunning(2, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
+
+        service.clear(3);
+
+        BatteryModeInfo modeInfo = service.get(2);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, modeInfo.getMode());
+        Assertions.assertEquals(1, modeInfo.getStatus());
+    }
+
+    @Test
+    void shouldClearCacheUnconditionallyWhenPackNumIsNull() {
+        service.markRunning(2, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 5);
+
+        service.clear(null);
+
+        BatteryModeInfo modeInfo = service.get(2);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+    }
+
+    @Test
+    void shouldNotThrowWhenClearOnEmptyCache() {
+        Assertions.assertDoesNotThrow(() -> service.clear(1));
+        Assertions.assertDoesNotThrow(() -> service.clear(null));
+    }
+
+    @Test
+    void shouldMarkStoppedWithFailureResultAndWarnLevel() {
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+
+        service.markRunning(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 5, 200L);
+        service.markStopped(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 5, false, 200L);
+
+        BatteryModeInfo modeInfo = service.get(1);
+        Assertions.assertEquals(1, modeInfo.getResult());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Assertions.assertEquals(0, modeInfo.getStatus());
+
+        ArgumentCaptor<BatteryDeviceState> captor = ArgumentCaptor.forClass(BatteryDeviceState.class);
+        Mockito.verify(stateService, Mockito.times(2)).upsert(captor.capture());
+        Assertions.assertEquals(BatteryDeviceStateConstants.StateLevel.WARN,
+                captor.getAllValues().get(1).getStateLevel());
+    }
+
+    @Test
+    void shouldFallbackLastModeWhenNoPreviousCacheEntry() {
+        service.markStopped(3, BatteryModeStatusService.MODE_BALANCE, 10, true);
+
+        BatteryModeInfo modeInfo = service.get(3);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Assertions.assertEquals(3, modeInfo.getLastPackNum());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_BALANCE, modeInfo.getLastMode());
+    }
+
+    @Test
+    void shouldIgnoreNullM460Input() {
+        Assertions.assertDoesNotThrow(() -> service.putFromM460(null));
+        BatteryModeInfo modeInfo = service.get(1);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+    }
+
+    @Test
+    void shouldApplyM460StopWhenAddressIsNotOne() {
+        service.markRunning(2, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
+        BatteryModeInfo m460Stop = new BatteryModeInfo();
+        m460Stop.setPackNum(2);
+        m460Stop.setResult(0);
+        m460Stop.setMode(BatteryModeStatusService.MODE_IDLE);
+        m460Stop.setStatus(0);
+        m460Stop.setAddress(5);
+
+        service.putFromM460(m460Stop);
+        BatteryModeInfo modeInfo = service.get(2);
+
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Assertions.assertEquals(0, modeInfo.getStatus());
+        Assertions.assertEquals(5, modeInfo.getAddress());
+    }
+
+    @Test
+    void shouldApplyM460RunningStatusDirectly() {
+        BatteryModeInfo running = new BatteryModeInfo();
+        running.setPackNum(1);
+        running.setResult(0);
+        running.setMode(BatteryModeStatusService.MODE_AUTO_MODEL_NUM);
+        running.setStatus(1);
+        running.setAddress(3);
+
+        service.putFromM460(running);
+        BatteryModeInfo modeInfo = service.get(1);
+
+        Assertions.assertEquals(BatteryModeStatusService.MODE_AUTO_MODEL_NUM, modeInfo.getMode());
+        Assertions.assertEquals(1, modeInfo.getStatus());
+        Assertions.assertEquals(3, modeInfo.getAddress());
+    }
+
+    @Test
+    void shouldSwallowPersistException() {
+        BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
+        Mockito.doThrow(new RuntimeException("db error")).when(stateService).upsert(Mockito.any());
+        ReflectionTestUtils.setField(service, "batteryDeviceStateService", stateService);
+
+        Assertions.assertDoesNotThrow(() ->
+                service.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8, 100L));
+
+        BatteryModeInfo modeInfo = service.get(1);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, modeInfo.getMode());
+        Assertions.assertEquals(1, modeInfo.getStatus());
+    }
+
+    @Test
+    void shouldReturnIdleWhenCacheContainsNonModeInfo() {
+        cacheAccessor.put("device-result", service.key(), "not-a-mode-info");
+
+        BatteryModeInfo modeInfo = service.get(5);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Assertions.assertEquals(5, modeInfo.getPackNum());
+    }
+
+    @Test
+    void shouldReturnExactKey() {
+        Assertions.assertEquals("battery:mode:status:EB", service.key());
+    }
+
+    @Test
+    void shouldNotPersistWhenDeviceStateServiceIsNull() {
+        ReflectionTestUtils.setField(service, "batteryDeviceStateService", null);
+
+        Assertions.assertDoesNotThrow(() ->
+                service.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8, 50L));
+
+        BatteryModeInfo modeInfo = service.get(1);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, modeInfo.getMode());
+    }
+
     private static class TestCacheAccessor implements BatteryModeStatusService.CacheAccessor {
         private final Map<String, Object> cache = new HashMap<>();
 

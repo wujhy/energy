@@ -87,6 +87,83 @@ class BatteryCollectorCacheServiceTest {
         Assertions.assertTrue(lastStateValues.isEmpty());
     }
 
+    @Test
+    void shouldNotThrowWhenResetSingleStateWithNull() {
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+
+        Assertions.assertDoesNotThrow(() -> service.resetModuleAddressCache(null, snapshotService));
+    }
+
+    @Test
+    void shouldResetStateAndSkipSnapshotEvictionWhenServiceIsNull() {
+        BatteryCollectorChannelState state = channelState("ch-1", 1);
+        state.getActiveModuleAddresses().add(5);
+        state.getModuleAddressMissCounts().put(5, 1);
+
+        service.resetModuleAddressCache(state, null);
+
+        Assertions.assertTrue(state.getActiveModuleAddresses().isEmpty());
+        Assertions.assertTrue(state.getModuleAddressMissCounts().isEmpty());
+        Assertions.assertTrue(state.getFullDiscoveryRequested().get());
+    }
+
+    @Test
+    void shouldNotThrowWhenClearRealtimeSnapshotWithNullService() {
+        BatteryCollectorChannelState state = channelState("ch-1", 1);
+        Assertions.assertDoesNotThrow(() -> service.clearRealtimeSnapshot(state, null));
+    }
+
+    @Test
+    void shouldNotThrowWhenClearRealtimeSnapshotWithNullState() {
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        Assertions.assertDoesNotThrow(() -> service.clearRealtimeSnapshot(null, snapshotService));
+        Mockito.verifyNoInteractions(snapshotService);
+    }
+
+    @Test
+    void shouldNotThrowWhenResetListWithNullChannelStates() {
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+
+        boolean matched = service.resetModuleAddressCache(null, snapshotService, "any");
+
+        Assertions.assertFalse(matched);
+    }
+
+    @Test
+    void shouldResetAllChannelsWhenBatteryGroupIsNull() {
+        BatteryCollectorChannelState ch1 = channelState("ch-1", 1);
+        ch1.getActiveModuleAddresses().add(5);
+        BatteryCollectorChannelState ch2 = channelState("ch-2", 2);
+        ch2.getActiveModuleAddresses().add(9);
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+
+        boolean matched = service.resetModuleAddressCacheByBatteryGroup(
+                Arrays.asList(ch1, ch2), snapshotService, null);
+
+        Assertions.assertTrue(matched);
+        Assertions.assertTrue(ch1.getActiveModuleAddresses().isEmpty());
+        Assertions.assertTrue(ch2.getActiveModuleAddresses().isEmpty());
+        Mockito.verify(snapshotService).evict(1);
+        Mockito.verify(snapshotService).evict(2);
+    }
+
+    @Test
+    void shouldReturnFalseWhenNoChannelMatchesName() {
+        BatteryCollectorChannelState ch1 = channelState("ch-1", 1);
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+
+        boolean matched = service.resetModuleAddressCache(
+                java.util.Collections.singletonList(ch1), snapshotService, "nonexistent");
+
+        Assertions.assertFalse(matched);
+    }
+
+    @Test
+    void shouldReturnZeroWhenClearDedupCacheWithNullMap() {
+        int removed = service.clearDeviceStateDedupCacheByBatteryGroup(null, null, 1);
+        Assertions.assertEquals(0, removed);
+    }
+
     private BatteryCollectorChannelState channelState(String name, Integer batteryGroup) {
         BatteryCollectorChannelConfig config = new BatteryCollectorChannelConfig();
         config.setName(name);

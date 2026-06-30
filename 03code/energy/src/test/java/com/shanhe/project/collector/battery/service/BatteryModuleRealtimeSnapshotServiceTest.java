@@ -121,6 +121,93 @@ class BatteryModuleRealtimeSnapshotServiceTest {
         Assertions.assertTrue(snapshot.getMissingCellNums().isEmpty());
     }
 
+    @Test
+    void shouldReturnNullFromRefreshAfterPollWhenPackNumIsNull() {
+        BatteryModulePollContext context = BatteryModulePollContext.builder()
+                .pollBatchNo("batch-1")
+                .cells(Collections.emptyList())
+                .groups(Collections.emptyList())
+                .build();
+
+        BatteryModuleRealtimeSnapshot result = service.refreshAfterPoll(null, context, null);
+        Assertions.assertNull(result);
+    }
+
+    @Test
+    void shouldReturnNullFromRefreshAfterPollWhenContextIsNull() {
+        BatteryModuleRealtimeSnapshot result = service.refreshAfterPoll(1, null, null);
+        Assertions.assertNull(result);
+    }
+
+    @Test
+    void shouldReturnNullFromGetSnapshotWhenPackNumIsNull() {
+        BatteryModuleRealtimeSnapshot result = service.getSnapshot(null);
+        Assertions.assertNull(result);
+    }
+
+    @Test
+    void shouldReturnNullFromGetCachedSnapshotWhenPackNumIsNull() {
+        BatteryModuleRealtimeSnapshot result = service.getCachedSnapshot(null);
+        Assertions.assertNull(result);
+    }
+
+    @Test
+    void shouldNotThrowWhenEvictWithNullPackNum() {
+        Assertions.assertDoesNotThrow(() -> service.evict(null));
+    }
+
+    @Test
+    void shouldBuildSnapshotWithNullPreviousSnapshot() {
+        BatteryModulePollContext current = BatteryModulePollContext.builder()
+                .pollBatchNo("batch-1")
+                .cells(Arrays.asList(cell(1), cell(2), cell(3)))
+                .groups(Collections.emptyList())
+                .build();
+
+        BatteryModuleRealtimeSnapshot snapshot = service.buildSnapshot(
+                1,
+                current,
+                Arrays.asList(cell(1), cell(2), cell(3)),
+                new BatteryModuleGroupRealtime(),
+                null);
+
+        Assertions.assertNotNull(snapshot);
+        Assertions.assertEquals(1, snapshot.getPackNum());
+        Assertions.assertEquals(Arrays.asList(1, 2, 3), nums(snapshot.getCells()));
+        Assertions.assertEquals(0, snapshot.getCellMissCounts().get(1));
+        Assertions.assertEquals(0, snapshot.getCellMissCounts().get(2));
+        Assertions.assertEquals(0, snapshot.getCellMissCounts().get(3));
+        Assertions.assertTrue(snapshot.getStaleCellNums().isEmpty());
+    }
+
+    @Test
+    void shouldBuildSnapshotWithEmptyCurrentCells() {
+        BatteryModulePollContext current = BatteryModulePollContext.builder()
+                .pollBatchNo("batch-2")
+                .cells(Collections.emptyList())
+                .groups(Collections.emptyList())
+                .build();
+        BatteryModuleRealtimeSnapshot previous = BatteryModuleRealtimeSnapshot.builder()
+                .packNum(1)
+                .batSinSize(3)
+                .cells(Arrays.asList(cell(1), cell(2), cell(3)))
+                .cellMap(map(Arrays.asList(cell(1), cell(2), cell(3))))
+                .cellMissCounts(Collections.emptyMap())
+                .build();
+
+        BatteryModuleRealtimeSnapshot snapshot = service.buildSnapshot(
+                1,
+                current,
+                Arrays.asList(cell(1), cell(2), cell(3)),
+                null,
+                previous);
+
+        Assertions.assertEquals(Arrays.asList(1, 2, 3), nums(snapshot.getCells()));
+        Assertions.assertEquals(1, snapshot.getCellMissCounts().get(1));
+        Assertions.assertEquals(1, snapshot.getCellMissCounts().get(2));
+        Assertions.assertEquals(1, snapshot.getCellMissCounts().get(3));
+    }
+
     private BatteryModuleCellRealtime cell(int batNum) {
         BatteryModuleCellRealtime cell = new BatteryModuleCellRealtime();
         cell.setPackNum(1);
