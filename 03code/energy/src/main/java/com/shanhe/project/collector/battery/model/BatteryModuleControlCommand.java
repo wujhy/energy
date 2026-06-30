@@ -86,5 +86,6 @@ public class BatteryModuleControlCommand {
      */
     private Integer connectResistanceMaxAddress;
 
+    /** 连接条测试过程中是否已出现失败。 */
     private boolean connectResistanceFailed;
 }
