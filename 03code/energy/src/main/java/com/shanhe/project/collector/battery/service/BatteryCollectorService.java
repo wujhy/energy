@@ -587,6 +587,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                     command.getOptLogId(),
                     BatteryDeviceStateConstants.CommandStatus.CANCELLED,
                     null,
+                    null,
                     "采集通道关闭，命令未下发");
             cancelled++;
         }

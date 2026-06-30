@@ -19,9 +19,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.shanhe.project.iot.model.BatteryModeInfo;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 class BatteryCurrentStateServiceTest {
 
@@ -243,5 +247,113 @@ class BatteryCurrentStateServiceTest {
         cell.setVoltage(voltage);
         cell.setPollBatchNo("batch-1");
         return cell;
+    }
+
+    /**
+     * READ-003: 当前态接口对失败/取消/超时后的运行态读取回归。
+     * 确认 _2/_6 失败、取消、超时后 modeInfo 不再显示 running，命令最近完成状态仍可追踪。
+     */
+    @Test
+    void shouldReturnIdleModeInfoAfterTestStoppedWithLastModePreserved() {
+        // 使用真实的 BatteryModeStatusService + TestCacheAccessor
+        BatteryModeStatusService modeStatusService = newRealModeStatusService();
+        BatteryCurrentStateService service = newServiceWithPack(1, 2);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        OptLogService optLogService = Mockito.mock(OptLogService.class);
+        ReflectionTestUtils.setField(service, "optLogService", optLogService);
+
+        // 模拟内阻测试(_6)启动后失败停止
+        modeStatusService.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8, 200L);
+        modeStatusService.markStopped(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8, false, 200L);
+
+        // 停止后 runningOptLogs 应为空（命令已完成）
+        Mockito.when(optLogService.selectRunningList(1)).thenReturn(Collections.emptyList());
+
+        BatteryCurrentState state = service.getCurrentState(1);
+
+        // modeInfo 应显示 IDLE，不再显示 running
+        BatteryModeInfo modeInfo = state.getModeInfo();
+        Assertions.assertNotNull(modeInfo);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Assertions.assertEquals(Integer.valueOf(0), modeInfo.getStatus());
+        // 上一次模式应被保留，用于追踪
+        Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, modeInfo.getLastMode());
+        Assertions.assertEquals(Integer.valueOf(1), modeInfo.getLastPackNum());
+        // 运行日志应为空
+        Assertions.assertTrue(state.getRunningOptLogs().isEmpty());
+    }
+
+    @Test
+    void shouldReturnIdleModeInfoAfterConnectResistanceStopped() {
+        // READ-003 补充：连接条电阻(_2) 测试停止后同样回归 IDLE
+        BatteryModeStatusService modeStatusService = newRealModeStatusService();
+        BatteryCurrentStateService service = newServiceWithPack(1, 2);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        OptLogService optLogService = Mockito.mock(OptLogService.class);
+        ReflectionTestUtils.setField(service, "optLogService", optLogService);
+
+        modeStatusService.markRunning(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 1, 100L);
+        modeStatusService.markStopped(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 1, true, 100L);
+        Mockito.when(optLogService.selectRunningList(1)).thenReturn(Collections.emptyList());
+
+        BatteryCurrentState state = service.getCurrentState(1);
+
+        BatteryModeInfo modeInfo = state.getModeInfo();
+        Assertions.assertNotNull(modeInfo);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Assertions.assertEquals(Integer.valueOf(0), modeInfo.getStatus());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, modeInfo.getLastMode());
+        Assertions.assertTrue(state.getRunningOptLogs().isEmpty());
+    }
+
+    @Test
+    void shouldReturnRunningModeInfoWhileTestIsActive() {
+        // READ-003 对照：测试运行中 modeInfo 应显示 running
+        BatteryModeStatusService modeStatusService = newRealModeStatusService();
+        BatteryCurrentStateService service = newServiceWithPack(1, 2);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        OptLogService optLogService = Mockito.mock(OptLogService.class);
+        ReflectionTestUtils.setField(service, "optLogService", optLogService);
+
+        modeStatusService.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8, 200L);
+        OptLog runningLog = new OptLog();
+        runningLog.setId(200L);
+        runningLog.setPackNum(1);
+        runningLog.setType(BatteryTestEnum._6.getDictValue());
+        runningLog.setStatus(BatteryDeviceStateConstants.CommandStatus.PENDING);
+        Mockito.when(optLogService.selectRunningList(1)).thenReturn(Collections.singletonList(runningLog));
+
+        BatteryCurrentState state = service.getCurrentState(1);
+
+        BatteryModeInfo modeInfo = state.getModeInfo();
+        Assertions.assertNotNull(modeInfo);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, modeInfo.getMode());
+        Assertions.assertEquals(Integer.valueOf(1), modeInfo.getStatus());
+        Assertions.assertEquals(1, state.getRunningOptLogs().size());
+    }
+
+    private BatteryModeStatusService newRealModeStatusService() {
+        BatteryModeStatusService modeStatusService = new BatteryModeStatusService();
+        ReflectionTestUtils.setField(modeStatusService, "cacheAccessor", new TestCacheAccessor());
+        return modeStatusService;
+    }
+
+    private static class TestCacheAccessor implements BatteryModeStatusService.CacheAccessor {
+        private final Map<String, Object> cache = new HashMap<>();
+
+        @Override
+        public Object get(String cacheName, String key) {
+            return cache.get(cacheName + ":" + key);
+        }
+
+        @Override
+        public void put(String cacheName, String key, Object value) {
+            cache.put(cacheName + ":" + key, value);
+        }
+
+        @Override
+        public void remove(String cacheName, String key) {
+            cache.remove(cacheName + ":" + key);
+        }
     }
 }

@@ -352,6 +352,7 @@ public class BatteryCollectorCommandQueueService {
                 pendingRequest.getOptLogId(),
                 actualStatus,
                 pendingRequest.getResponseCode(),
+                null,
                 reason);
     }
 

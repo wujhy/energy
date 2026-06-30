@@ -1550,7 +1550,7 @@ class BatteryCollectorServiceTest {
                 Mockito.eq(1),
                 Mockito.eq(0x91),
                 Mockito.anyString(),
-                Mockito.isNull(),
+                Mockito.anyString(),
                 Mockito.eq("0102030405060708"));
         BatteryModeInfo modeInfo = modeStatusService.get(2);
         Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
@@ -1624,6 +1624,107 @@ class BatteryCollectorServiceTest {
     }
 
     @Test
+    void shouldHandleSingleIRStatusResponsePayloadsWithoutFakeRealtimeValues() {
+        // SINGLEIR-002: _6 02/82 状态响应成功/失败/超时只更新命令日志和运行态，不写入伪造实时内阻值
+        // 02/82 是状态应答命令，handleCompletedPendingResponse 只走 completeExplicitCommandResponse + markModeStopped，
+        // 不调用 realtimeSnapshotService / realtimeConsumer，不伪造内阻数值。
+
+        // --- 成功场景: payload[0]==0x00 表示模块应答成功 ---
+        {
+            OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+            injectCommandLogMapper(optLogMapper);
+            BatteryModeStatusService modeStatusService = newModeStatusService();
+            injectModeStatusService(modeStatusService);
+            modeStatusService.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
+            BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
+            BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                    BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
+                    8, new byte[0], false);
+            pendingRequest.setOptLogId(10L);
+            pendingRequest.setBatteryGroup(1);
+            pendingRequest.setMode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+            BatteryCollectorFrame successFrame = new BatteryCollectorFrameCodec().buildRequest(8, 0x82,
+                    new byte[]{0x00, 0x02});
+
+            service.handleCompletedPendingResponse(state, successFrame, pendingRequest);
+
+            // 命令日志更新为 SUCCESS
+            Mockito.verify(optLogMapper).updateCommandStatus(
+                    Mockito.eq(10L),
+                    Mockito.eq(BatteryDeviceStateConstants.CommandStatus.SUCCESS),
+                    Mockito.eq(0),
+                    Mockito.eq(0x82),
+                    Mockito.anyString(),
+                    Mockito.isNull(),
+                    Mockito.eq("0002"));
+            // 模式已停止
+            Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeStatusService.get(1).getMode());
+        }
+
+        // --- 失败场景: payload[0]==0x01 表示模块应答失败 ---
+        {
+            OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+            injectCommandLogMapper(optLogMapper);
+            BatteryModeStatusService modeStatusService = newModeStatusService();
+            injectModeStatusService(modeStatusService);
+            modeStatusService.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
+            BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
+            BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                    BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
+                    8, new byte[0], false);
+            pendingRequest.setOptLogId(20L);
+            pendingRequest.setBatteryGroup(1);
+            pendingRequest.setMode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+            BatteryCollectorFrame failFrame = new BatteryCollectorFrameCodec().buildRequest(8, 0x82,
+                    new byte[]{0x01, 0x03});
+
+            service.handleCompletedPendingResponse(state, failFrame, pendingRequest);
+
+            // 命令日志更新为 FAILED
+            Mockito.verify(optLogMapper).updateCommandStatus(
+                    Mockito.eq(20L),
+                    Mockito.eq(BatteryDeviceStateConstants.CommandStatus.FAILED),
+                    Mockito.eq(1),
+                    Mockito.eq(0x82),
+                    Mockito.anyString(),
+                    Mockito.anyString(),
+                    Mockito.eq("0103"));
+            // 模式已停止（失败也停止）
+            Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeStatusService.get(1).getMode());
+        }
+
+        // --- 超时场景: 命令响应超时 ---
+        {
+            OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+            injectCommandLogMapper(optLogMapper);
+            BatteryModeStatusService modeStatusService = newModeStatusService();
+            injectModeStatusService(modeStatusService);
+            modeStatusService.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
+            BatteryCollectorCommandQueueService commandQueueService =
+                    newCommandQueueService(modeStatusService, commandLogService);
+            BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
+            BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                    BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
+                    8, new byte[0], false);
+            pendingRequest.setOptLogId(30L);
+            pendingRequest.setBatteryGroup(1);
+            pendingRequest.setMode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+
+            commandQueueService.completeTimedOutExplicitCommand(state, pendingRequest);
+
+            // 命令日志更新为 TIMEOUT
+            Mockito.verify(optLogMapper).updateCommandStatus(
+                    Mockito.eq(30L),
+                    Mockito.eq(BatteryDeviceStateConstants.CommandStatus.TIMEOUT),
+                    Mockito.eq(1),
+                    Mockito.isNull(),
+                    Mockito.anyString(),
+                    Mockito.eq("命令响应超时"),
+                    Mockito.isNull());
+        }
+    }
+
+    @Test
     void shouldRecordTimedOutModuleCommandAsFailed() {
         OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
         injectCommandLogMapper(optLogMapper);
@@ -1683,13 +1784,146 @@ class BatteryCollectorServiceTest {
         Assertions.assertFalse(state.isLastCompletedModuleCommandSuccess());
         Mockito.verify(optLogMapper).updateCommandStatus(
                 Mockito.eq(10L),
-                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.TIMEOUT),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.FAILED),
                 Mockito.eq(1),
-                Mockito.isNull(),
+                Mockito.eq(0x82),
                 Mockito.anyString(),
-                Mockito.eq("命令响应超时"),
+                Mockito.eq("采集通道关闭，命令未完成"),
                 Mockito.isNull());
     }
+
+    @Test
+    void shouldNotUpdateCommandLogWhenAutoPollPendingOnClose() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        injectCommandLogMapper(optLogMapper);
+        ReflectionTestUtils.setField(service, "frameIoService", Mockito.mock(BatteryCollectorFrameIoService.class));
+        BatteryCollectorChannelConfig channelConfig = newChannelConfig();
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        BatteryPendingRequest autoPollPending = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
+                8,
+                new byte[0],
+                true);
+        autoPollPending.setOptLogId(20L);
+        state.setPendingCommand(autoPollPending);
+        state.setExpectedResponseCode(0x82);
+        state.setCurrentRetryCount(1);
+        state.setRunState(BatteryCollectorRunState.WAIT_COMMAND_RESPONSE);
+
+        ReflectionTestUtils.invokeMethod(service, "closeQuietly", state);
+
+        Assertions.assertNull(state.getPendingCommand());
+        Assertions.assertEquals(0, state.getExpectedResponseCode());
+        Assertions.assertEquals(0, state.getCurrentRetryCount());
+        Assertions.assertEquals(BatteryCollectorRunState.READ, state.getRunState());
+        Mockito.verify(optLogMapper, Mockito.never()).updateCommandStatus(
+                Mockito.anyLong(), Mockito.anyString(), Mockito.anyInt(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void shouldCancelQueuedCommandsOnClose() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        injectCommandLogMapper(optLogMapper);
+        ReflectionTestUtils.setField(service, "frameIoService", Mockito.mock(BatteryCollectorFrameIoService.class));
+        BatteryCollectorChannelConfig channelConfig = newChannelConfig();
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+
+        BatteryModuleControlCommand cmd1 = BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.CONNECT_STRIP_RESISTANCE_TEST)
+                .address(1)
+                .requestCode(0x0F)
+                .payload(new byte[0])
+                .batteryGroup(1)
+                .mode(BatteryModeStatusService.MODE_CONNECT_RESISTANCE)
+                .optLogId(30L)
+                .build();
+        BatteryModuleControlCommand cmd2 = BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.CONNECT_STRIP_RESISTANCE_TEST)
+                .address(2)
+                .requestCode(0x0F)
+                .payload(new byte[0])
+                .batteryGroup(1)
+                .mode(BatteryModeStatusService.MODE_CONNECT_RESISTANCE)
+                .optLogId(31L)
+                .build();
+        state.getQueuedModuleCommands().add(cmd1);
+        state.getQueuedModuleCommands().add(cmd2);
+
+        ReflectionTestUtils.invokeMethod(service, "closeQuietly", state);
+
+        Assertions.assertTrue(state.getQueuedModuleCommands().isEmpty());
+        Mockito.verify(optLogMapper, Mockito.times(2)).updateCommandStatus(
+                Mockito.anyLong(),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.CANCELLED),
+                Mockito.eq(1),
+                Mockito.isNull(),
+                Mockito.any(),
+                Mockito.eq("采集通道关闭，命令未下发"),
+                Mockito.isNull());
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(30L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.CANCELLED),
+                Mockito.eq(1),
+                Mockito.isNull(),
+                Mockito.any(),
+                Mockito.eq("采集通道关闭，命令未下发"),
+                Mockito.isNull());
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(31L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.CANCELLED),
+                Mockito.eq(1),
+                Mockito.isNull(),
+                Mockito.any(),
+                Mockito.eq("采集通道关闭，命令未下发"),
+                Mockito.isNull());
+    }
+
+    @Test
+    void shouldResetModeStatusOnCloseWithPendingAndQueuedCommands() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        injectCommandLogMapper(optLogMapper);
+        ReflectionTestUtils.setField(service, "frameIoService", Mockito.mock(BatteryCollectorFrameIoService.class));
+        BatteryModeStatusService modeStatusService = (BatteryModeStatusService)
+                ReflectionTestUtils.getField(
+                        ReflectionTestUtils.getField(service, "commandQueueService"),
+                        "batteryModeStatusService");
+        BatteryCollectorChannelConfig channelConfig = newChannelConfig();
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
+                8,
+                new byte[0],
+                false);
+        pendingRequest.setBatteryGroup(1);
+        pendingRequest.setMode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+        pendingRequest.setOptLogId(40L);
+        state.setPendingCommand(pendingRequest);
+
+        BatteryModuleControlCommand queuedCmd = BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST)
+                .address(9)
+                .requestCode(0x02)
+                .responseCode(0x82)
+                .payload(new byte[0])
+                .batteryGroup(1)
+                .mode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE)
+                .optLogId(41L)
+                .build();
+        state.getQueuedModuleCommands().add(queuedCmd);
+
+        modeStatusService.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8, 40L);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, modeStatusService.get(1).getMode());
+
+        ReflectionTestUtils.invokeMethod(service, "closeQuietly", state);
+
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeStatusService.get(1).getMode());
+        Assertions.assertEquals(0, modeStatusService.get(1).getStatus());
+        Assertions.assertTrue(state.getQueuedModuleCommands().isEmpty());
+        Assertions.assertNull(state.getPendingCommand());
+    }
+
     @Test
     void shouldSkipPollingImmediatelyAfterAnySend() {
         BatteryCollectorProperties properties = new BatteryCollectorProperties();
@@ -1705,6 +1939,255 @@ class BatteryCollectorServiceTest {
 
         Assertions.assertEquals(0L, state.getPollRoundCount());
         Assertions.assertEquals(0L, state.getLastPollTime());
+    }
+
+    @Test
+    void shouldNotUpdateCommandLogAfter0FSendAndQueueFirst1191Read() {
+        // CONNRES-002: 0F 无响应发送成功后不会直接完成命令日志，首个 11/91 被排队
+        RecordingBatteryCollectorService recordingService = new RecordingBatteryCollectorService();
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        BatteryCollectorCommandLogService testCommandLogService = new BatteryCollectorCommandLogService();
+        ReflectionTestUtils.setField(testCommandLogService, "optLogMapper", optLogMapper);
+        ReflectionTestUtils.setField(recordingService, "commandLogService", testCommandLogService);
+        BatteryCollectorCommandQueueService commandQueueService =
+                newCommandQueueService(newModeStatusService(), testCommandLogService);
+        ReflectionTestUtils.setField(recordingService, "commandQueueService", commandQueueService);
+        injectConnectResistanceProcessor(recordingService, commandQueueService, null, null);
+        ReflectionTestUtils.setField(recordingService, "properties", new BatteryCollectorProperties());
+        ReflectionTestUtils.setField(recordingService, "protocolLogService", new BatteryCollectorProtocolLogService());
+        ReflectionTestUtils.setField(recordingService, "frameCodec", new BatteryCollectorFrameCodec());
+        ReflectionTestUtils.setField(recordingService, "frameIoService",
+                Mockito.mock(BatteryCollectorFrameIoService.class));
+
+        BatteryCollectorChannelConfig channelConfig = newChannelConfig();
+        channelConfig.setBatteryGroup(1);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+        state.setSerialPort(SerialPort.getCommPort("battery-test"));
+
+        BatteryModuleControlCommand cmd0F = BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.CONNECT_STRIP_RESISTANCE_TEST)
+                .address(8)
+                .requestCode(0x0F)
+                .payload(new byte[0])
+                .batteryGroup(1)
+                .mode(BatteryModeStatusService.MODE_CONNECT_RESISTANCE)
+                .optLogId(10L)
+                .configId(1L)
+                .connectResistanceNextAddress(1)
+                .connectResistanceMaxAddress(8)
+                .build();
+
+        BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(8, 0x0F, new byte[0]);
+
+        // Mode should NOT be stopped (mode=10 CONNECT_RESISTANCE skips mode stop)
+        // First mark running, then verify 0F doesn't stop it
+        BatteryModeStatusService modeStatusService = (BatteryModeStatusService)
+                ReflectionTestUtils.getField(commandQueueService, "batteryModeStatusService");
+        modeStatusService.markRunning(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 8, 10L);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, modeStatusService.get(1).getMode());
+
+        ReflectionTestUtils.invokeMethod(recordingService, "writeFrameWithoutPending", state, frame, cmd0F);
+
+        // Mode should still be CONNECT_RESISTANCE after 0F (not stopped)
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, modeStatusService.get(1).getMode());
+
+        // 0F should NOT update command log (connect resistance defers log update to final 91)
+        Mockito.verify(optLogMapper, Mockito.never()).updateCommandStatus(
+                Mockito.anyLong(), Mockito.anyString(), Mockito.anyInt(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+
+        // First 11/91 command should be queued
+        Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
+        BatteryModuleControlCommand queuedCmd = state.getQueuedModuleCommands().poll();
+        Assertions.assertNotNull(queuedCmd);
+        Assertions.assertEquals(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE,
+                queuedCmd.getProtocolCode());
+        Assertions.assertEquals(1, queuedCmd.getAddress());
+        Assertions.assertEquals(0x11, queuedCmd.getRequestCode());
+        Assertions.assertEquals(0x91, queuedCmd.getResponseCode());
+        Assertions.assertEquals(10L, queuedCmd.getOptLogId());
+        Assertions.assertEquals(1, queuedCmd.getBatteryGroup());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, queuedCmd.getMode());
+        Assertions.assertEquals(Integer.valueOf(2), queuedCmd.getConnectResistanceNextAddress());
+        Assertions.assertEquals(Integer.valueOf(8), queuedCmd.getConnectResistanceMaxAddress());
+    }
+
+    @Test
+    void shouldContinueConnectResistanceAfterMidAddressFailureAndFinallyFail() {
+        // CONNRES-003: 中间地址 11/91 响应 payload 不足导致失败，失败标记传播，最终命令日志为 FAILED 且模式关闭
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        injectCommandLogMapper(optLogMapper);
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        injectModeStatusService(modeStatusService);
+        modeStatusService.markRunning(2, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 3);
+        BatteryCollectorChannelConfig channelConfig = newChannelConfig();
+        channelConfig.setBatteryGroup(2);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+
+        // --- 地址 1: 成功响应 (8字节有效载荷) ---
+        BatteryPendingRequest request1 = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE,
+                1, new byte[0], false);
+        request1.setOptLogId(10L);
+        request1.setBatteryGroup(2);
+        request1.setMode(BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+        request1.setConnectResistanceNextAddress(2);
+        request1.setConnectResistanceMaxAddress(3);
+        BatteryCollectorFrame fullFrame1 = new BatteryCollectorFrameCodec().buildRequest(1, 0x91,
+                new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
+
+        service.handleCompletedPendingResponse(state, fullFrame1, request1);
+
+        // 地址 1 成功，不应更新命令日志（中间步骤不更新）
+        Mockito.verifyNoInteractions(optLogMapper);
+        // 地址 2 应被排队
+        Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
+        BatteryModuleControlCommand cmd2 = state.getQueuedModuleCommands().poll();
+        Assertions.assertNotNull(cmd2);
+        Assertions.assertEquals(2, cmd2.getAddress());
+        Assertions.assertFalse(cmd2.isConnectResistanceFailed());
+
+        // --- 地址 2: 失败响应 (payload 仅 3 字节, 不足 8 字节) ---
+        BatteryPendingRequest request2 = BatteryPendingRequest.fromProtocolCode(
+                cmd2.getProtocolCode(), cmd2.getAddress(), cmd2.getPayload(), false);
+        request2.setOptLogId(cmd2.getOptLogId());
+        request2.setBatteryGroup(cmd2.getBatteryGroup());
+        request2.setMode(cmd2.getMode());
+        request2.setConnectResistanceNextAddress(cmd2.getConnectResistanceNextAddress());
+        request2.setConnectResistanceMaxAddress(cmd2.getConnectResistanceMaxAddress());
+        request2.setConnectResistanceFailed(cmd2.isConnectResistanceFailed());
+        BatteryCollectorFrame shortFrame2 = new BatteryCollectorFrameCodec().buildRequest(2, 0x91,
+                new byte[]{0x01, 0x02, 0x03});
+
+        service.handleCompletedPendingResponse(state, shortFrame2, request2);
+
+        // 中间步骤仍不应直接更新命令日志
+        Mockito.verifyNoInteractions(optLogMapper);
+        // 失败后仍应继续排队地址 3
+        Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
+        BatteryModuleControlCommand cmd3 = state.getQueuedModuleCommands().poll();
+        Assertions.assertNotNull(cmd3);
+        Assertions.assertEquals(3, cmd3.getAddress());
+        // 失败标记应被传播到下一条排队命令
+        Assertions.assertTrue(cmd3.isConnectResistanceFailed());
+
+        // --- 地址 3: 成功载荷, 但因中间失败最终状态为 FAILED ---
+        BatteryPendingRequest request3 = BatteryPendingRequest.fromProtocolCode(
+                cmd3.getProtocolCode(), cmd3.getAddress(), cmd3.getPayload(), false);
+        request3.setOptLogId(cmd3.getOptLogId());
+        request3.setBatteryGroup(cmd3.getBatteryGroup());
+        request3.setMode(cmd3.getMode());
+        request3.setConnectResistanceNextAddress(cmd3.getConnectResistanceNextAddress());
+        request3.setConnectResistanceMaxAddress(cmd3.getConnectResistanceMaxAddress());
+        request3.setConnectResistanceFailed(cmd3.isConnectResistanceFailed());
+        BatteryCollectorFrame fullFrame3 = new BatteryCollectorFrameCodec().buildRequest(3, 0x91,
+                new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
+
+        service.handleCompletedPendingResponse(state, fullFrame3, request3);
+
+        // 最终命令日志应为 FAILED（中间失败传播）
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.FAILED),
+                Mockito.eq(1),
+                Mockito.eq(0x91),
+                Mockito.anyString(),
+                Mockito.anyString(),
+                Mockito.eq("0102030405060708"));
+        // 模式应已停止
+        BatteryModeInfo modeInfo = modeStatusService.get(2);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, modeInfo.getLastMode());
+    }
+
+    @Test
+    void shouldOnlyUpdateCommandLogAndStopModeOnFinalConnectResistanceSuccess() {
+        // CONNRES-004: 全部成功的 3 地址流程，中间步骤不触发日志更新和模式关闭，仅最终 11/91 统一执行
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        injectCommandLogMapper(optLogMapper);
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        injectModeStatusService(modeStatusService);
+        modeStatusService.markRunning(2, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 3);
+        BatteryCollectorChannelConfig channelConfig = newChannelConfig();
+        channelConfig.setBatteryGroup(2);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
+
+        // --- 地址 1: 成功响应 ---
+        BatteryPendingRequest request1 = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE,
+                1, new byte[0], false);
+        request1.setOptLogId(10L);
+        request1.setBatteryGroup(2);
+        request1.setMode(BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+        request1.setConnectResistanceNextAddress(2);
+        request1.setConnectResistanceMaxAddress(3);
+        BatteryCollectorFrame fullFrame1 = new BatteryCollectorFrameCodec().buildRequest(1, 0x91,
+                new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
+
+        service.handleCompletedPendingResponse(state, fullFrame1, request1);
+
+        // 中间步骤不更新命令日志
+        Mockito.verifyNoInteractions(optLogMapper);
+        // 模式仍为 CONNECT_RESISTANCE（未被关闭）
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE,
+                modeStatusService.get(2).getMode());
+        // 地址 2 被排队
+        BatteryModuleControlCommand cmd2 = state.getQueuedModuleCommands().poll();
+        Assertions.assertNotNull(cmd2);
+        Assertions.assertEquals(2, cmd2.getAddress());
+
+        // --- 地址 2: 成功响应（仍为中间步骤） ---
+        BatteryPendingRequest request2 = BatteryPendingRequest.fromProtocolCode(
+                cmd2.getProtocolCode(), cmd2.getAddress(), cmd2.getPayload(), false);
+        request2.setOptLogId(cmd2.getOptLogId());
+        request2.setBatteryGroup(cmd2.getBatteryGroup());
+        request2.setMode(cmd2.getMode());
+        request2.setConnectResistanceNextAddress(cmd2.getConnectResistanceNextAddress());
+        request2.setConnectResistanceMaxAddress(cmd2.getConnectResistanceMaxAddress());
+        request2.setConnectResistanceFailed(cmd2.isConnectResistanceFailed());
+        BatteryCollectorFrame fullFrame2 = new BatteryCollectorFrameCodec().buildRequest(2, 0x91,
+                new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
+
+        service.handleCompletedPendingResponse(state, fullFrame2, request2);
+
+        // 中间步骤仍不更新命令日志
+        Mockito.verifyNoInteractions(optLogMapper);
+        // 模式仍未被关闭
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE,
+                modeStatusService.get(2).getMode());
+        // 地址 3 被排队
+        BatteryModuleControlCommand cmd3 = state.getQueuedModuleCommands().poll();
+        Assertions.assertNotNull(cmd3);
+        Assertions.assertEquals(3, cmd3.getAddress());
+
+        // --- 地址 3: 最终成功响应 ---
+        BatteryPendingRequest request3 = BatteryPendingRequest.fromProtocolCode(
+                cmd3.getProtocolCode(), cmd3.getAddress(), cmd3.getPayload(), false);
+        request3.setOptLogId(cmd3.getOptLogId());
+        request3.setBatteryGroup(cmd3.getBatteryGroup());
+        request3.setMode(cmd3.getMode());
+        request3.setConnectResistanceNextAddress(cmd3.getConnectResistanceNextAddress());
+        request3.setConnectResistanceMaxAddress(cmd3.getConnectResistanceMaxAddress());
+        request3.setConnectResistanceFailed(cmd3.isConnectResistanceFailed());
+        BatteryCollectorFrame fullFrame3 = new BatteryCollectorFrameCodec().buildRequest(3, 0x91,
+                new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
+
+        service.handleCompletedPendingResponse(state, fullFrame3, request3);
+
+        // 最终步骤统一更新命令日志为 SUCCESS
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.SUCCESS),
+                Mockito.eq(0),
+                Mockito.eq(0x91),
+                Mockito.anyString(),
+                Mockito.isNull(),
+                Mockito.eq("0102030405060708"));
+        // 模式已停止
+        BatteryModeInfo modeInfo = modeStatusService.get(2);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Assertions.assertEquals(0, modeInfo.getStatus());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, modeInfo.getLastMode());
     }
 
     private BatteryCollectorChannelConfig newChannelConfig() {

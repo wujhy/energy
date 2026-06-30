@@ -191,4 +191,88 @@ class BatteryCollectorCommandLogServiceTest {
                 Mockito.eq("命令已取消"),
                 Mockito.isNull());
     }
+
+    /**
+     * LOG-003: failed 携带通道关闭原因 —— 显式 errorMessage 直接写入日志，不被 status 基础消息覆盖。
+     */
+    @Test
+    void shouldPreserveChannelCloseReasonForFailedCommand() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+
+        service.updateCommandOptLog(10L, BatteryDeviceStateConstants.CommandStatus.FAILED,
+                null, null, "采集通道关闭，命令未完成");
+
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.FAILED),
+                Mockito.eq(1),
+                Mockito.isNull(),
+                Mockito.anyString(),
+                Mockito.eq("采集通道关闭，命令未完成"),
+                Mockito.isNull());
+    }
+
+    /**
+     * LOG-003: cancelled 携带未下发原因 —— 通道关闭时取消的未下发命令使用专属原因。
+     */
+    @Test
+    void shouldPreserveChannelCloseReasonForCancelledCommand() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+
+        service.updateCommandOptLog(10L, BatteryDeviceStateConstants.CommandStatus.CANCELLED,
+                null, null, "采集通道关闭，命令未下发");
+
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.CANCELLED),
+                Mockito.eq(1),
+                Mockito.isNull(),
+                Mockito.anyString(),
+                Mockito.eq("采集通道关闭，命令未下发"),
+                Mockito.isNull());
+    }
+
+    /**
+     * LOG-003: timeout 不被误写成通道关闭原因 —— 无显式 errorMessage 时根据 status 自动生成。
+     */
+    @Test
+    void shouldNotWriteChannelCloseReasonForTimeout() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+
+        service.updateCommandOptLog(10L, BatteryDeviceStateConstants.CommandStatus.TIMEOUT,
+                null, null, null);
+
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.TIMEOUT),
+                Mockito.eq(1),
+                Mockito.isNull(),
+                Mockito.anyString(),
+                Mockito.eq("命令响应超时"),
+                Mockito.isNull());
+    }
+
+    /**
+     * LOG-003: 正常取消（非通道关闭）使用默认 "命令已取消"，不带通道关闭原因。
+     */
+    @Test
+    void shouldUseDefaultCancelMessageWhenNoExplicitReason() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
+
+        service.updateCommandOptLog(10L, BatteryDeviceStateConstants.CommandStatus.CANCELLED,
+                null, null, null);
+
+        Mockito.verify(optLogMapper).updateCommandStatus(
+                Mockito.eq(10L),
+                Mockito.eq(BatteryDeviceStateConstants.CommandStatus.CANCELLED),
+                Mockito.eq(1),
+                Mockito.isNull(),
+                Mockito.anyString(),
+                Mockito.eq("命令已取消"),
+                Mockito.isNull());
+    }
 }

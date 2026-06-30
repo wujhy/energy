@@ -78,13 +78,27 @@ public class BatteryCollectorCommandLogService {
      * @param responsePayload 响应载荷hex
      */
     public void updateCommandOptLog(Long optLogId, String status, Integer responseCode, String responsePayload) {
+        updateCommandOptLog(optLogId, status, responseCode, responsePayload, null);
+    }
+
+    /**
+     * 更新600模块命令操作日志状态，可指定自定义错误原因。
+     *
+     * @param optLogId 操作日志ID
+     * @param status 命令状态
+     * @param responseCode 响应码
+     * @param responsePayload 响应载荷hex
+     * @param errorMessage 自定义错误原因，为 null 时根据 status 自动生成
+     */
+    public void updateCommandOptLog(Long optLogId, String status, Integer responseCode, String responsePayload,
+                                    String errorMessage) {
         if (optLogId == null) {
             return;
         }
         try {
             String now = now();
-            String errorMessage = errorMessageOf(status, responseCode, responsePayload);
-            optLogMapper.updateCommandStatus(optLogId, status, resultOf(status), responseCode, now, errorMessage, responsePayload);
+            String resolvedMessage = errorMessage != null ? errorMessage : errorMessageOf(status, responseCode, responsePayload);
+            optLogMapper.updateCommandStatus(optLogId, status, resultOf(status), responseCode, now, resolvedMessage, responsePayload);
         } catch (Exception e) {
             log.warn("更新600模块命令日志失败, 日志ID={}, 原因={}", optLogId, e.getMessage());
         }

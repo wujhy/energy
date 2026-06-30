@@ -6,6 +6,7 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
+import com.shanhe.project.device.config.service.IBatteryPackService;
 import com.shanhe.project.device.opt.service.OptLogService;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 
@@ -67,6 +68,8 @@ public class BatteryCollectorCommandService {
     private BatteryModeStatusService batteryModeStatusService;
     @Resource
     private OptLogService optLogService;
+    @Autowired(required = false)
+    private IBatteryPackService batteryPackService;
 
     /**
      * 独立采集服务，负责按通道线程串行下发显式模块端命令。
@@ -114,9 +117,50 @@ public class BatteryCollectorCommandService {
         if (runningResult != null) {
             return runningResult;
         }
+        BatteryCollectorCommandResult addressResult = validateSingleInternalResistanceAddress(
+                channelName,
+                batteryGroup,
+                batteryNumber);
+        if (addressResult != null) {
+            return addressResult;
+        }
         return execute(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST, channelName, timeoutMs, batteryGroup, batteryNumber);
     }
 
+    private BatteryCollectorCommandResult validateSingleInternalResistanceAddress(String channelName,
+                                                                                  int batteryGroup,
+                                                                                  int batteryNumber) {
+        if (batteryGroup <= 0) {
+            return blocked(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST,
+                    channelName,
+                    "电池组编号无效");
+        }
+        if (batteryNumber < 1 || batteryNumber > MAX_CELL_ADDRESS) {
+            return blocked(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST,
+                    channelName,
+                    "单体编号必须在1到245之间");
+        }
+        Integer maxNumber = resolveBatteryMaxNumber(batteryGroup);
+        if (maxNumber != null && batteryNumber > maxNumber) {
+            return blocked(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST,
+                    channelName,
+                    "单体编号超过电池组实际单体数");
+        }
+        return null;
+    }
+
+    private Integer resolveBatteryMaxNumber(Integer batteryGroup) {
+        if (batteryPackService == null || batteryGroup == null || batteryGroup <= 0) {
+            return null;
+        }
+        try {
+            Integer maxNumber = batteryPackService.getBatteryMaxNumber(batteryGroup);
+            return maxNumber != null && maxNumber > 0 ? Math.min(maxNumber, MAX_CELL_ADDRESS) : null;
+        } catch (RuntimeException e) {
+            log.warn("查询电池组实际单体数失败, 电池组={}, 原因={}", batteryGroup, e.getMessage());
+            return null;
+        }
+    }
     /**
      * 停止指定电池组当前运行的采集测试，并取消队列中尚未下发的同类命令。
      *
@@ -126,18 +170,18 @@ public class BatteryCollectorCommandService {
      */
     public BatteryCollectorCommandResult stopRunningTest(Integer batteryGroup, Integer mode) {
         if (batteryGroup == null || batteryGroup <= 0) {
-            return blocked(null, null, "电池组编号无效");
+            return stopRejected("电池组编号无效");
         }
         if (mode == null) {
-            return blocked(null, null, "测试类型不支持停止");
+            return stopRejected("测试类型不支持停止");
         }
         BatteryModeInfo modeInfo = batteryModeStatusService == null ? null : batteryModeStatusService.get(batteryGroup);
         if (modeInfo == null || !Objects.equals(modeInfo.getPackNum(), batteryGroup)
                 || !Objects.equals(modeInfo.getStatus(), 1)) {
-            return blocked(null, null, "当前电池组没有正在执行的测试");
+            return stopRejected("当前电池组没有正在执行的测试");
         }
         if (!Objects.equals(modeInfo.getMode(), mode)) {
-            return blocked(null, null, "当前运行测试类型与停止类型不一致");
+            return stopRejected("当前运行测试类型与停止类型不一致");
         }
         int cancelled = collectorService == null ? 0 : collectorService.cancelQueuedModuleCommands(batteryGroup, mode);
         closeRunningOptLog(batteryGroup, mode);
@@ -148,6 +192,9 @@ public class BatteryCollectorCommandService {
                 .mappedToModuleCommand(true)
                 .message("测试停止成功，已取消未下发命令" + cancelled + "条")
                 .build();
+    }
+    private BatteryCollectorCommandResult stopRejected(String reason) {
+        return blocked(null, null, "未停止，原因是" + reason);
     }
     /**
      * 手动设置模块地址。
