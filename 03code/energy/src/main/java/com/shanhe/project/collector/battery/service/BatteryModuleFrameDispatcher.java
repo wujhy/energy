@@ -20,15 +20,11 @@ import java.util.List;
 @Component
 public class BatteryModuleFrameDispatcher {
 
-    /**
-     * 帧摘要服务。
-     */
+    /** 帧摘要服务。 */
     @Autowired
     private BatteryModuleFrameSummaryService summaryService;
 
-    /**
-     * 显式注册的帧消费者。
-     */
+    /** 显式注册的帧消费者。 */
     @Autowired(required = false)
     private List<BatteryModuleFrameConsumer> consumers = new ArrayList<>();
 

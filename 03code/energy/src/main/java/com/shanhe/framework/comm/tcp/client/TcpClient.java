@@ -115,9 +115,7 @@ public class TcpClient {
         return isTrue.get();
     }
 
-    /**
-     * 发送消息
-     */
+    /** 发送消息 */
     public void sendMsg(String msg) {
         try {
             if (channel == null || !channel.isOpen()) {
@@ -153,9 +151,7 @@ public class TcpClient {
         return (Host) CacheUtils.get(hostCache.getCache(), hostCache.getKey());
     }
 
-    /**
-     * 关闭netty
-     */
+    /** 关闭netty */
     @PreDestroy
     public void stop() {
         try {

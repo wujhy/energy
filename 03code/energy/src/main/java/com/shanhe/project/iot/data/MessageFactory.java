@@ -30,20 +30,14 @@ import java.util.concurrent.atomic.AtomicLong;
 @Slf4j
 public class MessageFactory {
 
-    /**
-     * 当下异常的时候，状态缓存时间，缓存时间为30秒
-     */
+    /** 当下异常的时候，状态缓存时间，缓存时间为30秒 */
     private final static Cache<String, Boolean> CACHE = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build();
 
-    /**
-     * 数据处理队列
-     */
+    /** 数据处理队列 */
     public static BlockingQueue<MonitorData> dataQueue;
 
     public static int queueSize = 10000;
-    /**
-     * 最近数据放入的时间戳
-     */
+    /** 最近数据放入的时间戳 */
     public static AtomicLong lastPushTime = new AtomicLong(0);
     /** 日志输出开关。 */
     private static Boolean logOutPut = true;

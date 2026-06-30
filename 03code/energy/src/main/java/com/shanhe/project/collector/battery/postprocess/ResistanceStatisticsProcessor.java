@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class ResistanceStatisticsProcessor implements BatteryRealtimePostProcessor {
 
+    /** 组级参数中内阻测试状态的字段名。 */
     private static final String RESISTANCE_TEST_STATUS = "resistanceTestStatus";
 
     private final Set<String> processedBatches = ConcurrentHashMap.newKeySet();

@@ -156,9 +156,7 @@ public interface IAlarmLogService
      */
     void closeAlarmLog(ConfigAttribute configAttribute);
 
-    /**
-     * 基于设备关闭告警
-     */
+    /** 基于设备关闭告警 */
     void closeDefaultDeviceAlarmLog();
 
     /**
@@ -193,9 +191,7 @@ public interface IAlarmLogService
      */
     int deleteAlarmLogByAlarmIds(String alarmIds);
 
-    /**
-     * 删除默认设备告警记录
-     */
+    /** 删除默认设备告警记录 */
     void deleteDefaultDeviceAlarmLogs();
 
     /**
@@ -205,9 +201,7 @@ public interface IAlarmLogService
      */
     void deleteAlarmLogByAlarmId(Long alarmId);
 
-    /**
-     * 更新告警缓存
-     */
+    /** 更新告警缓存 */
     void updateCache();
 
     /**
@@ -233,9 +227,7 @@ public interface IAlarmLogService
      */
     void export(AlarmLog alarmLog);
 
-    /**
-     * 删除所有告警日志
-     */
+    /** 删除所有告警日志 */
     void deleteAll();
 
     /**

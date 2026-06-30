@@ -40,6 +40,7 @@ public class ConfigServiceImpl implements IConfigService {
     @Resource
     private IAlarmLogService alarmLogService;
 
+    /** 默认设备配置模板。 */
     private static final Config DEFAULT_CONFIG = buildDefaultConfig();
 
     /**

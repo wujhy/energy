@@ -8,9 +8,7 @@ package com.shanhe.common.utils;
  */
 public class CheckCode {
 
-    /**
-     * 计算校验码 - 所有字节的模256的和
-     */
+    /** 计算校验码 - 所有字节的模256的和 */
     public static String check256(String tempStr) {
         if (tempStr == null || tempStr.isEmpty()) {
             return "";

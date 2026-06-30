@@ -14,16 +14,13 @@ import com.shanhe.common.utils.spring.SpringUtils;
  */
 public class AsyncManager {
 
-    /**
-     * 异步操作任务调度线程池
-     */
+    /** 异步操作任务调度线程池 */
     private final ScheduledExecutorService executor = SpringUtils.getBean("scheduledExecutorService");
 
-    /**
-     * 单例模式
-     */
+    /** 单例模式 */
     private AsyncManager() {}
 
+    /** AsyncManager 单例实例。 */
     private static final AsyncManager ME = new AsyncManager();
 
     public static AsyncManager me()
@@ -40,9 +37,7 @@ public class AsyncManager {
         executor.schedule(task, 10, TimeUnit.MILLISECONDS);
     }
 
-    /**
-     * 停止任务线程池
-     */
+    /** 停止任务线程池 */
     public void shutdown() {
         Threads.shutdownAndAwaitTermination(executor);
     }

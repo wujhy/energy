@@ -46,9 +46,7 @@ public interface OptLogMapper {
      */
     int deleteByIds(String[] ids);
 
-    /**
-     * 删除默认设备历史记录
-     */
+    /** 删除默认设备历史记录 */
     void deleteDefaultDeviceLogs();
 
     /**

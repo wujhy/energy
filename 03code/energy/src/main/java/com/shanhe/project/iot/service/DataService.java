@@ -95,9 +95,7 @@ public class DataService {
         return lastTime + intervalAlarm * 1000 <= currentTimeMillis;
     }
 
-    /**
-     * 获取存储间隔
-     */
+    /** 获取存储间隔 */
     private Integer getInterval() {
         // 主机
         Host host = hostService.getDetail();

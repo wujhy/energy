@@ -32,9 +32,7 @@ public class ResponseVo implements Serializable {
     /** 响应内容 **/
     private Object content;
 
-    /**
-     * 响应处理结果
-     */
+    /** 响应处理结果 */
     public ResponseVo(String imei, String method, String businessId, Object content) {
         this.timestamp = System.currentTimeMillis();
         this.imei = imei;
@@ -44,9 +42,7 @@ public class ResponseVo implements Serializable {
         this.content = content;
     }
 
-    /**
-     * 响应处理结果
-     */
+    /** 响应处理结果 */
     public ResponseVo(String imei, String method, String businessId, String message) {
         this.timestamp = System.currentTimeMillis();
         this.imei = imei;
@@ -56,9 +52,7 @@ public class ResponseVo implements Serializable {
         this.message = message;
     }
 
-    /**
-     * 响应处理结果
-     */
+    /** 响应处理结果 */
     public ResponseVo(String imei, String method, String businessId, Integer code, String message) {
         this.timestamp = System.currentTimeMillis();
         this.imei = imei;

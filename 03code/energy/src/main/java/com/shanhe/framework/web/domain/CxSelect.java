@@ -15,19 +15,13 @@ public class CxSelect implements Serializable
 {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 数据值字段名称
-     */
+    /** 数据值字段名称 */
     private String v;
 
-    /**
-     * 数据标题字段名称
-     */
+    /** 数据标题字段名称 */
     private String n;
 
-    /**
-     * 子集数据字段名称
-     */
+    /** 子集数据字段名称 */
     private List<CxSelect> s;
 
     public CxSelect()

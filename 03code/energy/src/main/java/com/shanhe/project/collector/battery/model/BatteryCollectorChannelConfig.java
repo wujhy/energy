@@ -32,47 +32,31 @@ public class BatteryCollectorChannelConfig {
     /** 超时时间（毫秒）。 */
     private Integer timeoutMs = 1000;
 
-    /**
-     * 采集轮询间隔。
-     */
+    /** 采集轮询间隔。 */
     private Long pollIntervalMs = 3000L;
 
-    /**
-     * 单个请求等待响应超时时间。
-     */
+    /** 单个请求等待响应超时时间。 */
     private Long responseTimeoutMs = 1500L;
 
-    /**
-     * 串口单次读取缓冲大小。
-     */
+    /** 串口单次读取缓冲大小。 */
     private Integer readBufferSize = 2048;
 
-    /**
-     * 接收缓冲最大保留长度。
-     */
+    /** 接收缓冲最大保留长度。 */
     private Integer receiveBufferLimit = 8192;
 
-    /**
-     * 请求超时后的最大重试次数。
-     */
+    /** 请求超时后的最大重试次数。 */
     private Integer maxRetryCount = 1;
 
     /** 设备地址。 */
     private Integer deviceAddress = 1;
 
-    /**
-     * 600节模块端轮询起始地址，默认单体1。
-     */
+    /** 600节模块端轮询起始地址，默认单体1。 */
     private Integer moduleAddressStart = 1;
 
-    /**
-     * 600节模块端轮询结束地址，默认包含电流温度模块246。
-     */
+    /** 600节模块端轮询结束地址，默认包含电流温度模块246。 */
     private Integer moduleAddressEnd = 246;
 
-    /**
-     * 期望单体数量；为空时优先按 batteryGroup 读取 BatteryPack.batSinSize。
-     */
+    /** 期望单体数量；为空时优先按 batteryGroup 读取 BatteryPack.batSinSize。 */
     private Integer expectedCellCount;
 
     /** 电池端口号。 */
@@ -81,14 +65,10 @@ public class BatteryCollectorChannelConfig {
     /** 电池通道号。 */
     private Integer batteryChannel;
 
-    /**
-     * 兼容旧配置字段，内部通道定位不再依赖该值。
-     */
+    /** 兼容旧配置字段，内部通道定位不再依赖该值。 */
     private Long configId;
 
-    /**
-     * 对应电池组编号。
-     */
+    /** 对应电池组编号。 */
     private Integer batteryGroup;
 
     /** 是否启用。 */

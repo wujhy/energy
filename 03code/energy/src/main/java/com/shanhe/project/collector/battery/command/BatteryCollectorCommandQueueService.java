@@ -35,7 +35,9 @@ import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtoco
 @Component
 public class BatteryCollectorCommandQueueService {
 
+    /** 自动编号载荷中的启动编址标志位。 */
     private static final int START_SET_ADDRESS = 1;
+    /** 自动编号载荷中的停止编址标志位。 */
     private static final int STOP_SET_ADDRESS = 2;
 
     @Resource
@@ -45,9 +47,7 @@ public class BatteryCollectorCommandQueueService {
     @Resource
     private BatteryCollectorFrameCodec frameCodec;
 
-    /**
-     * 有响应命令发送回调。
-     */
+    /** 有响应命令发送回调。 */
     @FunctionalInterface
     public interface PendingFrameWriter {
         /**
@@ -63,9 +63,7 @@ public class BatteryCollectorCommandQueueService {
                       BatteryCollectorRunState waitingState);
     }
 
-    /**
-     * 无响应命令发送回调。
-     */
+    /** 无响应命令发送回调。 */
     @FunctionalInterface
     public interface NoResponseFrameWriter {
         /**

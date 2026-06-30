@@ -35,9 +35,7 @@ public class AttributeHandler {
     private ClientReportService clientReportService;
     @Resource
     IConfigService configService;
-    /**
-     * 同步设备属性
-     */
+    /** 同步设备属性 */
     public ResponseVo synAlarmConfigItem(RequestVo request) {
         String msg = null;
         try {
@@ -89,9 +87,7 @@ public class AttributeHandler {
         return new ResponseVo(request.getImei(), MethodEnum._18.getDictValue(), request.getBusinessId(), msg);
     }
 
-    /**
-     * 删除设备属性
-     */
+    /** 删除设备属性 */
     public ResponseVo delAlarmConfigItem(RequestVo request) {
         String msg = null;
         try {
@@ -111,9 +107,7 @@ public class AttributeHandler {
         return new ResponseVo(request.getImei(), MethodEnum._20.getDictValue(), request.getBusinessId(), msg);
     }
 
-    /**
-     * 同步设备属性
-     */
+    /** 同步设备属性 */
     public ResponseVo reportSynAlarmConfigItem(RequestVo request) {
         String msg = null;
         try {

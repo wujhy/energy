@@ -37,57 +37,43 @@ public class ConfigurationBatteryController extends BaseController {
     @Resource
     private PreBatteryGroupService preBatteryGroupService;
 
-    /**
-     * 查询设备列表
-     */
+    /** 查询设备列表 */
     @GetMapping("/listMonomer")
     public AjaxResult list(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam Integer packNum) {
         List<DevBatteryMonomer> list = devBatteryMonomerService.selectList(packNum);
         return success(list);
     }
 
-    /**
-     * 内阻警戒线
-     */
+    /** 内阻警戒线 */
     @GetMapping("/getResWarnLine")
     public AjaxResult getResWarnLine(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam Integer packNum) {
         return success(configurationBatteryService.getResWarnLine(packNum));
     }
 
-    /**
-     * 温度警戒线
-     */
+    /** 温度警戒线 */
     @GetMapping("/getTempWarnLine")
     public AjaxResult getTempWarnLine(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam Integer packNum) {
         return success(configurationBatteryService.getTempWarnLine(packNum));
     }
 
-    /**
-     * 健康报告
-     */
+    /** 健康报告 */
     @GetMapping("/getBatteryHealthReport")
     public AjaxResult getBatteryHealthReport(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam Integer packNum) {
         return success(configurationBatteryService.getBatteryHealthReport(packNum));
     }
 
-    /**
-     * 电池信息
-     */
+    /** 电池信息 */
     @GetMapping("/getBatteryPack")
     public AjaxResult getBatteryPack(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam Integer packNum) {
         return success(batteryPackService.selectBatteryInfoByPackNum(packNum));
     }
 
-    /**
-     * 电池信息
-     */
+    /** 电池信息 */
     @GetMapping("/getVoltageBalance")
     public AjaxResult getVoltageBalance(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam Integer packNum) {
         return success(batteryPackService.getVoltageBalance(packNum));
     }
-    /**
-     * 清除预估容量
-     */
+    /** 清除预估容量 */
     @GetMapping("/clearPreBatteryGroup")
     public AjaxResult clearPreBatteryGroup(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam Integer packNum) {
         preBatteryGroupService.deleteByPackNum(packNum);

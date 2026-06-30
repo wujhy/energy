@@ -24,9 +24,7 @@ import java.util.Date;
 @Service
 public class BatteryCollectorCommandLogService {
 
-    /**
-     * 操作日志 Mapper。
-     */
+    /** 操作日志 Mapper。 */
     @Resource
     private OptLogMapper optLogMapper;
 

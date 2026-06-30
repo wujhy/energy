@@ -120,9 +120,13 @@ class BatteryCollectorRuntimeViewServiceTest {
         Assertions.assertEquals(BatteryCollectorRunState.WAIT_RESPONSE, channel.getRunState());
         Assertions.assertEquals("MODULE_INFO", channel.getPendingCommandName());
         Assertions.assertEquals("SET_MODULE_ADDRESS", channel.getLastCompletedModuleCommandName());
+        Assertions.assertNotNull(channel.getCurrentPollElapsedMs());
+        Assertions.assertEquals(0.5d, channel.getSnapshotHitRate());
+        Assertions.assertNotNull(channel.getSnapshotAgeMs());
         Assertions.assertEquals("batch-1", channel.getSnapshotPollBatchNo());
         Assertions.assertEquals(refreshedAt, channel.getSnapshotRefreshedAt());
         Assertions.assertTrue(channel.getSnapshotDataReady());
+        Assertions.assertEquals("CLOSED", channel.getChannelHealth());
         Mockito.verify(realtimeSnapshotService).getCachedSnapshot(1);
         Mockito.verify(realtimeSnapshotService, Mockito.never()).getSnapshot(Mockito.any());
     }
@@ -205,6 +209,7 @@ class BatteryCollectorRuntimeViewServiceTest {
         channelConfig.setBatteryGroup(1);
         channelConfig.setDeviceAddress(1);
         channelConfig.setEnabled(true);
+        channelConfig.setExpectedCellCount(4);
         BatteryCollectorChannelState state = new BatteryCollectorChannelState(channelConfig);
         state.setRunState(BatteryCollectorRunState.WAIT_RESPONSE);
         state.setLastSendTime(100L);

@@ -155,9 +155,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
         return isNotNull(object) && object.getClass().isArray();
     }
 
-    /**
-     * 去空格
-     */
+    /** 去空格 */
     public static String trim(String str)
     {
         return (str == null ? "" : str.trim());
@@ -347,9 +345,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
         return false;
     }
 
-    /**
-     * 驼峰转下划线命名
-     */
+    /** 驼峰转下划线命名 */
     public static String toUnderScoreCase(String str)
     {
         if (str == null)
@@ -553,9 +549,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
         return (T) obj;
     }
 
-    /**
-     * 格式化为指定小数位数的double值
-     */
+    /** 格式化为指定小数位数的double值 */
     public static double formatToDouble(double value, int decimals) {
         String formatted = String.format("%." + decimals + "f", value);
         return Double.parseDouble(formatted);

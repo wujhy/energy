@@ -60,12 +60,15 @@ public class DeviceOnlineJob {
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
 
+    /** 电池组在线状态码。 */
     private static final String STATE_CODE_ONLINE = BatteryDeviceStateConstants.StateCode.ONLINE;
 
     private final Map<Integer, Integer> offlineBatteryPackNumMap = new HashMap<>();
 
     private boolean isStart = true;
+    /** 服务启动时间戳（毫秒）。 */
     private static final long SERVER_START_TIME = System.currentTimeMillis();
+    /** 启动后延迟检查的时间窗口（2分钟），避免启动初期误判离线。 */
     private static final long STARTUP_CHECK_DELAY = TimeUnit.MINUTES.toMillis(2);
 
     @Scheduled(cron = "${job.deviceOnline}")

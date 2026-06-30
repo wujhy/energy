@@ -33,7 +33,9 @@ import java.util.List;
 @RequestMapping("/collector/battery")
 public class BatteryCollectorCommandController extends BaseController {
 
+    /** 帧日志默认查询条数上限。 */
     private static final int DEFAULT_FRAME_LOG_QUERY_LIMIT = 500;
+    /** 帧日志最大查询条数上限。 */
     private static final int MAX_FRAME_LOG_QUERY_LIMIT = 2000;
 
 
@@ -50,33 +52,25 @@ public class BatteryCollectorCommandController extends BaseController {
     @Resource
     private com.shanhe.project.collector.battery.config.BatteryCollectorProperties batteryCollectorProperties;
 
-    /**
-     * 查询采集通道运行状态快照。
-     */
+    /** 查询采集通道运行状态快照。 */
     @GetMapping("/status")
     public AjaxResult status() {
         return success(collectorService.getChannelSnapshots());
     }
 
-    /**
-     * 查询采集运行指标（通道、队列、轮询、超时、快照）。
-     */
+    /** 查询采集运行指标（通道、队列、轮询、超时、快照）。 */
     @GetMapping("/metrics")
     public AjaxResult metrics() {
         return success(collectorService.getMetrics());
     }
 
-    /**
-     * 查询指定电池组的当前状态（实时数据、状态、告警摘要）。
-     */
+    /** 查询指定电池组的当前状态（实时数据、状态、告警摘要）。 */
     @GetMapping("/currentState")
     public AjaxResult currentState(Integer packNum) {
         return success(batteryCurrentStateService.getCurrentState(packNum));
     }
 
-    /**
-     * 重置模块地址缓存，强制下一轮全量发现。
-     */
+    /** 重置模块地址缓存，强制下一轮全量发现。 */
     @Log(title = "蓄电池模块地址缓存重置", businessType = BusinessType.UPDATE)
     @PostMapping("/moduleAddressCache/reset")
     public AjaxResult resetModuleAddressCache(@RequestBody ResetModuleAddressCacheRequest request) {
@@ -84,9 +78,7 @@ public class BatteryCollectorCommandController extends BaseController {
         return success(collectorService.resetModuleAddressCache(channelName));
     }
 
-    /**
-     * 980 聚合命令兼容入口，映射到 600 模块端控制命令。
-     */
+    /** 980 聚合命令兼容入口，映射到 600 模块端控制命令。 */
     @Log(title = "蓄电池980聚合命令兼容入口", businessType = BusinessType.UPDATE)
     @PostMapping("/execute")
     public AjaxResult execute(@RequestBody ExecuteRequest request) {
@@ -104,9 +96,7 @@ public class BatteryCollectorCommandController extends BaseController {
         return success(result);
     }
 
-    /**
-     * 单体内阻测试。
-     */
+    /** 单体内阻测试。 */
     @Log(title = "蓄电池单体内阻测试", businessType = BusinessType.UPDATE)
     @PostMapping("/singleResistanceTest")
     public AjaxResult singleResistanceTest(@RequestBody SingleResistanceTestRequest request) {
@@ -120,9 +110,7 @@ public class BatteryCollectorCommandController extends BaseController {
                 request.getTimeoutMs()));
     }
 
-    /**
-     * 手动设置模块地址。
-     */
+    /** 手动设置模块地址。 */
     @Log(title = "蓄电池模块手动编号", businessType = BusinessType.UPDATE)
     @PostMapping("/manualModuleAddress")
     public AjaxResult manualModuleAddress(@RequestBody ManualModuleAddressRequest request) {
@@ -143,9 +131,7 @@ public class BatteryCollectorCommandController extends BaseController {
                 request.getTimeoutMs()));
     }
 
-    /**
-     * 连接条电阻测试。
-     */
+    /** 连接条电阻测试。 */
     @Log(title = "蓄电池连接条电阻测试", businessType = BusinessType.UPDATE)
     @PostMapping("/connectResistanceTest")
     public AjaxResult connectResistanceTest(@RequestBody ConnectResistanceTestRequest request) {
@@ -165,17 +151,13 @@ public class BatteryCollectorCommandController extends BaseController {
                 request.getTimeoutMs()));
     }
 
-    /**
-     * 查询指定电池组的设备状态。
-     */
+    /** 查询指定电池组的设备状态。 */
     @GetMapping("/deviceState")
     public AjaxResult deviceState(Integer packNum) {
         return success(batteryDeviceStateService.selectByPackNum(packNum));
     }
 
-    /**
-     * 查询原始帧日志。
-     */
+    /** 查询原始帧日志。 */
     @GetMapping("/frameLog")
     public AjaxResult frameLog(String channelName, Integer batteryGroup, String commandCode) {
         int limit = resolveFrameLogQueryLimit();
@@ -190,17 +172,13 @@ public class BatteryCollectorCommandController extends BaseController {
         return Math.min(configuredLimit, MAX_FRAME_LOG_QUERY_LIMIT);
     }
 
-    /**
-     * 条件查询设备状态列表。
-     */
+    /** 条件查询设备状态列表。 */
     @GetMapping("/deviceState/list")
     public AjaxResult deviceStateList(BatteryDeviceState query) {
         return success(batteryDeviceStateService.selectList(query));
     }
 
-    /**
-     * 删除指定设备状态记录。
-     */
+    /** 删除指定设备状态记录。 */
     @Log(title = "删除设备状态记录", businessType = BusinessType.DELETE)
     @DeleteMapping("/deviceState/{stateId}")
     public AjaxResult deleteDeviceState(@PathVariable Long stateId) {

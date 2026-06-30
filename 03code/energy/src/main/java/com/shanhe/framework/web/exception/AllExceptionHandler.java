@@ -32,9 +32,7 @@ public class AllExceptionHandler {
         writeJson();
     }
 
-    /**
-     * 写入结果集
-     */
+    /** 写入结果集 */
     private void writeJson(){
         HttpServletResponse response = ((ServletRequestAttributes) Objects.requireNonNull(RequestContextHolder.getRequestAttributes())).getResponse();
         if (response == null) {

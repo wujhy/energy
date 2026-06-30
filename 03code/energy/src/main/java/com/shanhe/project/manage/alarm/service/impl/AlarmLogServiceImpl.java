@@ -230,9 +230,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return alarmLogList;
     }
 
-    /**
-     * 设置主机参数
-     */
+    /** 设置主机参数 */
     private void setAlarmParam(AlarmLog alarm) {
         // 主机信息
         if (Objects.equals(alarm.getConfigId(), 1L)) {
@@ -271,9 +269,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         }
     }
 
-    /**
-     * 处理单个告警项
-     */
+    /** 处理单个告警项 */
     private void processAlarmItem(Config config, Integer packNum, Integer modelNum,
                                   String alarmValue, String itemCode,
                                   BatteryMonitor batteryMonitor, BatteryReportLog batteryReportLog) {
@@ -351,9 +347,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         this.insertAlarm(alarmLog, key);
     }
 
-    /**
-     * 处理告警屏蔽逻辑
-     */
+    /** 处理告警屏蔽逻辑 */
     private AlarmLog processShield(AlarmLog cacheLog, String key) {
         if (cacheLog == null) {
             return null;
@@ -371,9 +365,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return cacheLog;
     }
 
-    /**
-     * 匹配告警等级
-     */
+    /** 匹配告警等级 */
     private AlarmItemLevelVo matchAlarmLevel(ConfigAttribute configAttribute, String alarmValue) {
         AlarmItemLevelVo alarmItemLevel = null;
         if (StrUtil.isNotBlank(alarmValue)) {
@@ -618,9 +610,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         this.insertAlarm(alarmLog, key);
     }
 
-    /**
-     * 默认告警等级
-     */
+    /** 默认告警等级 */
     private AlarmItemLevelVo getDefaultLevel(ConfigAttribute configAttribute) {
         for (AlarmItemLevelVo levelVo : configAttribute.getListLevel()) {
             // 不需告警
@@ -632,9 +622,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return null;
     }
 
-    /**
-     * 匹配告警等级
-     */
+    /** 匹配告警等级 */
     private AlarmItemLevelVo getLevel(ConfigAttribute configAttribute, String value) {
         if (StrUtil.isBlank(value)) {
             return null;
@@ -677,9 +665,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return null;
     }
 
-    /**
-     * 蓄电池告警内容
-     */
+    /** 蓄电池告警内容 */
     private String getBatteryAlarmInfo(ConfigAttribute configAttribute, AlarmItemLevelVo alarmItemLevelVo, Integer modelNum, String value) {
         // 未匹配中告警等级，则无告警内容
         if (alarmItemLevelVo == null || StrUtil.equals(alarmItemLevelVo.getLevelCode(), AlarmLevelEnum._0.getDictValue())) {
@@ -725,9 +711,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return alarmInfo.toString();
     }
 
-    /**
-     * 告警内容
-     */
+    /** 告警内容 */
     private String getAlarmInfo(ConfigAttribute configAttribute, AlarmItemLevelVo alarmItemLevelVo, Integer modelNum, String value, Integer type) {
         // 蓄电池单独处理
         if (Objects.equals(type, DeviceTypeEnum._1.getDictValue())) {
@@ -787,9 +771,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return alarmInfo.toString();
     }
 
-    /**
-     *  单位
-     */
+    /**  单位 */
     private String getUnit(ConfigAttribute attribute) {
         if (StrUtil.isNotBlank(attribute.getUnit())) {
             return attribute.getUnit();
@@ -830,9 +812,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         }
     }
 
-    /**
-     * 关闭默认设备所有告警日志
-     */
+    /** 关闭默认设备所有告警日志 */
     @Override
     public void closeDefaultDeviceAlarmLog() {
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
@@ -957,9 +937,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return 1;
     }
 
-    /**
-     * 删除默认设备所有告警日志
-     */
+    /** 删除默认设备所有告警日志 */
     @Override
     public void deleteDefaultDeviceAlarmLogs() {
         alarmLogMapper.deleteDefaultDeviceAlarmLogs();
@@ -986,9 +964,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         alarmLogMapper.deleteAlarmLogByAlarmId(alarmLog.getAlarmId());
     }
 
-    /**
-     * 更新告警缓存
-     */
+    /** 更新告警缓存 */
     @Override
     public void updateCache() {
         List<String> startKeys = new ArrayList<>();
@@ -1177,9 +1153,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return 0L;
     }
 
-    /**
-     * 删除所有告警日志并清空缓存
-     */
+    /** 删除所有告警日志并清空缓存 */
     @Override
     public void deleteAll() {
         alarmLogMapper.deleteAll();
@@ -1252,9 +1226,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return listDTO;
     }
 
-    /**
-     * 格式化持续时长
-     */
+    /** 格式化持续时长 */
     private static String formatDuration(Long duration) {
         if (duration == null || duration <= 0) {
             return "0秒";
@@ -1275,9 +1247,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     }
 
 
-    /**
-     * 删除缓存
-     */
+    /** 删除缓存 */
     private void removeCache(AlarmLog alarmLog) {
         String key = String.format(alarmCache.getKey(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode());
         AlarmLog cacheLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);

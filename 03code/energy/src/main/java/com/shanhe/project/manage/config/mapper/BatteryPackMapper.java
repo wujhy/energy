@@ -63,9 +63,7 @@ public interface BatteryPackMapper {
      */
     void update(BatteryPack batteryPack);
 
-    /**
-     * 删除默认设备电池组
-     */
+    /** 删除默认设备电池组 */
     void deleteDefaultDevicePacks();
 
     /**

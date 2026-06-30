@@ -82,9 +82,7 @@ public interface OptLogService {
      */
     void deleteDefaultDeviceLogs();
 
-    /**
-     * 更新缓存
-     */
+    /** 更新缓存 */
     void updateCache();
 
     /**

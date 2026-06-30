@@ -15,22 +15,14 @@ import java.util.Map;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class BatteryReportLogIndex extends BaseEntity {
-    /**
-     * 主键
-     */
+    /** 主键 */
     private Long id;
-    /**
-     * 设备ID
-     */
+    /** 设备ID */
     private Long configId;
-    /**
-     * 包序号
-     */
+    /** 包序号 */
     private Integer packNum;
 
-    /**
-     * 包参数
-     */
+    /** 包参数 */
     private Map<String, Object> packParam;
 
     /** 是否告警 0-是，1-否 */

@@ -184,9 +184,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
     }
 
 
-    /**
-     * 获取所有单体预估容量
-     */
+    /** 获取所有单体预估容量 */
     private Map<String, PreBatteryVo> getPreBatteryVoMap(BatteryReportLog packInfo, Double current,
                                                          Date startTime, Date endTime,
                                                          Double aCapacity, int specSize) {
@@ -222,9 +220,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         return result;
     }
 
-    /**
-     * 处理单个电池的预估容量计算
-     */
+    /** 处理单个电池的预估容量计算 */
     private PreBatteryVo processSingleBattery(BatteryMonitor bat, Integer packNum,
                                                Date startTime, Date endTime,
                                                Double aCapacity, double crate, Double current,
@@ -273,9 +269,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         return initPreBatteryVo(bat, aCapacity, firstPoint.getVoltage(), lastPoint.getVoltage(), bCapacity, new Date());
     }
 
-    /**
-     * 计算预估点数
-     */
+    /** 计算预估点数 */
     private int calculatePreTotalSize(double voltage, double slope, int specSize, double diffSlope) {
         int preTotalSize = 0;
         // 分段处理, 2V一个拐点
@@ -306,9 +300,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         return preTotalSize;
     }
 
-    /**
-     * 调整斜率
-     */
+    /** 调整斜率 */
     private double adjustSlope(double slope, int specSize, double diffSlope, double threshold2V, double threshold12V) {
         if (specSize == 1) {
             if (Math.abs(slope) < threshold2V) {
@@ -325,9 +317,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
     }
 
 
-    /**
-     * 查找截止电压所在位置
-     */
+    /** 查找截止电压所在位置 */
     public int getCuffVoltagePoint(List<DataPoint> dataPoints, double cuffVoltage) {
         int i = 0;
         for (DataPoint point : dataPoints) {
@@ -341,9 +331,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         return i;
     }
 
-    /**
-     * 初始化 预测电池组对象
-     */
+    /** 初始化 预测电池组对象 */
     private PreBatteryGroup initPreBatteryGroupVo(BatteryPack batteryInfo, Double current, Date startTime, Date endTime,
                                                   double spec, Map<String, PreBatteryVo> batteryVoMap) {
         PreBatteryGroup groupVo = preBatteryGroupService.lastCache(batteryInfo.getPackNum());
@@ -413,17 +401,13 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         return groupVo;
     }
 
-    /**
-     * 获取剩余时间
-     */
+    /** 获取剩余时间 */
     private int getDuration(Double current, Double groupCapacity) {
         double dt = (groupCapacity / current) * 60 * -1;
         return (int) Math.round(dt);
     }
 
-    /**
-     * 获取放电容量 = packInfo.getPackCurrent() * 放电时间（小时）
-     */
+    /** 获取放电容量 = packInfo.getPackCurrent() * 放电时间（小时） */
     private double getDischargeCapacity(Double current, Date startTime, Date endTime, Double groupCapacity) {
         double diffMills = DateUtils.differentMillsByMillisecond(startTime, endTime);
         // 放电容量 = 放电电流 * 放电时间（h）
@@ -478,9 +462,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         return (1 - (double) roundedYears / 5) * 100;
     }
 
-    /**
-     * 获取电池组的投产时间
-     */
+    /** 获取电池组的投产时间 */
     private Date getProductionTime(BatteryPack batteryInfo) {
         String productionTime = batteryInfo.getProductionTime();
         if (StringUtils.isEmpty(productionTime)) {
@@ -492,9 +474,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         return DateUtils.parseDate(productionTime);
     }
 
-    /**
-     * 初始化 预测电池对象
-     */
+    /** 初始化 预测电池对象 */
     private static PreBatteryVo initPreBatteryVo(BatteryMonitor bat, Double aCapacity,
                                                  Double startVoltage, Double endVoltage,
                                                  double bCapacity, Date staticTime) {
@@ -514,9 +494,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
     }
 
 
-    /**
-     * 获取规格
-     */
+    /** 获取规格 */
     private static double getSpec(BatteryPack batteryInfo) {
         double spec = 2.0;
         Integer sinModel = batteryInfo.getBatSinModel();
@@ -547,9 +525,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         return slope;
     }
 
-    /**
-     * 预测当前斜率下，下一个点的时间
-     */
+    /** 预测当前斜率下，下一个点的时间 */
     private int calcPrePointTime(double startVoltage, double endVoltage, double slope) {
         // 防止除零异常
         if (slope == 0) {

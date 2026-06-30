@@ -40,6 +40,7 @@ public class ModbusRtuServer implements ApplicationRunner {
     private static final int FUNC_READ_HOLDING_REGISTERS = 0x03;
     /** Modbus 功能码：写单个寄存器。 */
     private static final int FUNC_WRITE_SINGLE_REGISTER = 0x06;
+    /** Modbus 功能码：写多个寄存器。 */
     private static final int FUNC_WRITE_MULTIPLE_REGISTERS = 0x10;
 
     /** Modbus 异常码：非法功能码。 */
@@ -298,9 +299,7 @@ public class ModbusRtuServer implements ApplicationRunner {
         }
     }
 
-    /**
-     * 停止 Modbus RTU 从站。
-     */
+    /** 停止 Modbus RTU 从站。 */
     public void stop() {
         running = false;
         if (serverExecutor != null) {

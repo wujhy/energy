@@ -74,9 +74,7 @@ public class CompatReportLogSyncProcessor implements BatteryRealtimePostProcesso
         }
     }
 
-    /**
-     * 同步本轮采集结果到旧 dev_battery_report_log 历史链路。
-     */
+    /** 同步本轮采集结果到旧 dev_battery_report_log 历史链路。 */
     private void sync(BatteryCollectorChannelConfig channelConfig,
                       BatteryModuleGroupRealtime group,
                       List<BatteryModuleCellRealtime> cells) {

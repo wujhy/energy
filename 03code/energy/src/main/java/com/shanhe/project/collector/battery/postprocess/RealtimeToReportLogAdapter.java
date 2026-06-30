@@ -43,9 +43,7 @@ public class RealtimeToReportLogAdapter {
         return report;
     }
 
-    /**
-     * 将组实时数据转换为 packParam Map。
-     */
+    /** 将组实时数据转换为 packParam Map。 */
     private static Map<String, Object> buildPackParam(BatteryModuleGroupRealtime group) {
         Map<String, Object> packParam = new HashMap<>(32);
         if (group == null) {
@@ -89,9 +87,7 @@ public class RealtimeToReportLogAdapter {
         return packParam;
     }
 
-    /**
-     * 将单体实时数据列表转换为 BatteryMonitor 列表。
-     */
+    /** 将单体实时数据列表转换为 BatteryMonitor 列表。 */
     private static List<BatteryMonitor> buildBatteryList(List<BatteryModuleCellRealtime> cells) {
         List<BatteryMonitor> list = new ArrayList<>();
         if (cells == null) {

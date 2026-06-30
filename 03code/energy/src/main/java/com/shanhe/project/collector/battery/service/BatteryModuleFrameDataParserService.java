@@ -18,9 +18,7 @@ import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtoco
 @Service
 public class BatteryModuleFrameDataParserService {
 
-    /**
-     * 电流温度模块固定地址。
-     */
+    /** 电流温度模块固定地址。 */
     private static final int ARRAY_MODULE_ADDRESS = GROUP_MODULE_ADDRESS;
 
     /**

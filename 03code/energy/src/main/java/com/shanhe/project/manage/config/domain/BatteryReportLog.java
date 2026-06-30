@@ -16,34 +16,22 @@ import java.util.Map;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class BatteryReportLog extends MonitorData {
-    /**
-     * 主键
-     */
+    /** 主键 */
     private Long id;
-    /**
-     * 设备ID
-     */
+    /** 设备ID */
     private Long configId;
-    /**
-     * 包序号
-     */
+    /** 包序号 */
     private Integer packNum;
 
-    /**
-     * 包参数
-     */
+    /** 包参数 */
     private String packData;
     /** 包参数（JSON） */
     private Map<String, Object> packParam;
-    /**
-     * 单体参数
-     */
+    /** 单体参数 */
     private String monitorData;
     /** 单体电池列表 */
     private List<BatteryMonitor> batteryList;
-    /**
-     * 扩展记录
-     */
+    /** 扩展记录 */
     private String extendData;
 
     /** 是否告警 0-是，1-否 */

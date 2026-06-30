@@ -48,39 +48,27 @@ import java.util.concurrent.*;
 @Component
 public class BatteryCollectorService implements ApplicationRunner, DisposableBean {
 
-    /**
-     * 采集模块配置。
-     */
+    /** 采集模块配置。 */
     @Resource
     private BatteryCollectorProperties properties;
 
-    /**
-     * 600 节模块端帧编解码器。
-     */
+    /** 600 节模块端帧编解码器。 */
     @Resource
     private BatteryCollectorFrameCodec frameCodec;
 
-    /**
-     * 实时数据消费器。
-     */
+    /** 实时数据消费器。 */
     @Resource
     private BatteryModuleRealtimeConsumer realtimeConsumer;
 
-    /**
-     * 旧后台电池组配置服务，用于读取每组期望单体数量。
-     */
+    /** 旧后台电池组配置服务，用于读取每组期望单体数量。 */
     @Resource
     private IBatteryPackService batteryPackService;
 
-    /**
-     * 旧页面/测试接口工作模式缓存。
-     */
+    /** 旧页面/测试接口工作模式缓存。 */
     @Resource
     private BatteryModeStatusService batteryModeStatusService;
 
-    /**
-     * 标准实时有效快照服务。
-     */
+    /** 标准实时有效快照服务。 */
     @Resource
     private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
     /** 采集运行视图服务。 */
@@ -99,27 +87,19 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     @Resource
     private BatteryCollectorDeviceStateService collectorDeviceStateService;
 
-    /**
-     * 串口帧收发协调服务。
-     */
+    /** 串口帧收发协调服务。 */
     @Resource
     private BatteryCollectorFrameIoService frameIoService;
 
-    /**
-     * 串口接收和响应分派服务。
-     */
+    /** 串口接收和响应分派服务。 */
     @Resource
     private BatteryCollectorFrameReceiveService frameReceiveService;
 
-    /**
-     * 轮询循环编排服务。
-     */
+    /** 轮询循环编排服务。 */
     @Resource
     private com.shanhe.project.collector.battery.runtime.BatteryCollectorPollingService pollingService;
 
-    /**
-     * 命令队列执行服务。
-     */
+    /** 命令队列执行服务。 */
     @Resource
     private com.shanhe.project.collector.battery.command.BatteryCollectorCommandQueueService commandQueueService;
     /** 连接条电阻测试命令处理器。 */
@@ -129,19 +109,13 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
     @Resource
     private BatteryCollectorTimeoutService timeoutService;
 
-    /**
-     * 当前运行的通道状态。
-     */
+    /** 当前运行的通道状态。 */
     private final List<BatteryCollectorChannelState> channelStates = new ArrayList<>();
 
-    /**
-     * 每个启用通道独立线程运行。
-     */
+    /** 每个启用通道独立线程运行。 */
     private ExecutorService executorService;
 
-    /**
-     * 采集服务运行标志。
-     */
+    /** 采集服务运行标志。 */
     private volatile boolean running;
 
     @Override

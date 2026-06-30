@@ -11,16 +11,13 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
  */
 public class AsyncTaskManager {
 
-    /**
-     * 异步IOT操作任务调度线程池
-     */
+    /** 异步IOT操作任务调度线程池 */
     private final ThreadPoolTaskExecutor executor = SpringUtils.getBean("threadPoolTaskExecutor");
 
-    /**
-     * 单例模式
-     */
+    /** 单例模式 */
     private AsyncTaskManager() {}
 
+    /** AsyncTaskManager 单例实例。 */
     private static final AsyncTaskManager ME = new AsyncTaskManager();
 
     public static AsyncTaskManager me()
@@ -37,9 +34,7 @@ public class AsyncTaskManager {
         executor.execute(runnable);
     }
 
-    /**
-     * 停止任务线程池
-     */
+    /** 停止任务线程池 */
     public void shutdown() {
         executor.shutdown();
     }

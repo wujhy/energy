@@ -31,9 +31,7 @@ public class CodingUtil {
 
     /** 天气编码列表。 */
     private static volatile Map<String,String> weatherCodeList;
-    /**
-     *  根据天气描述获取天气编码
-     */
+    /**  根据天气描述获取天气编码 */
     public static String getWeatherCode(String weatherDes) {
         if(weatherCodeList == null) {
             //0——晴? 1——阴?? 2——雨? 3——雪
@@ -91,9 +89,7 @@ public class CodingUtil {
         return code;
     }
 
-    /**
-     * utf转gbk
-     */
+    /** utf转gbk */
     public static String utf8ToGb2312(String str) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < str.length(); i++) {
@@ -125,9 +121,7 @@ public class CodingUtil {
         return null;
     }
 
-    /**
-     * GB2312 转 UTF-8
-     */
+    /** GB2312 转 UTF-8 */
     public static String gb2312ToUtf8(String str) {
         try {
             return URLEncoder.encode(str, "UTF-8");
@@ -135,9 +129,7 @@ public class CodingUtil {
         return "";
     }
 
-    /**
-     * GBK2312 转 中文字符
-     */
+    /** GBK2312 转 中文字符 */
     public static String getGbk2312Format(String gbk2312Str) throws UnsupportedEncodingException {
         byte[] bytes = new byte[gbk2312Str.length() / 2];
         for(int i = 0; i < bytes.length; i ++){
@@ -148,9 +140,7 @@ public class CodingUtil {
         return new String(bytes, "gbk");
     }
 
-    /**
-     * 随机生成字符串
-     */
+    /** 随机生成字符串 */
     public static String getRandomString(int length){
         //产生随机数
         Random random=new Random();
@@ -184,9 +174,7 @@ public class CodingUtil {
         return sb.toString();
     }
 
-    /**
-     * 判断是否是 jsonStr
-     */
+    /** 判断是否是 jsonStr */
     public static boolean isJson(String content) {
         try {
             JSONObject.parseObject(content);
@@ -196,9 +184,7 @@ public class CodingUtil {
         }
     }
 
-    /**
-     * 格式 去掉 JSON字符串中的 bom报头
-     */
+    /** 格式 去掉 JSON字符串中的 bom报头 */
     public static String formatJsonString(String s) {
         if (s != null) {
             s = s.replaceAll("\ufeff", "");
@@ -206,9 +192,7 @@ public class CodingUtil {
         return s;
     }
 
-    /**
-     * 对字符串进行unicode编码
-     */
+    /** 对字符串进行unicode编码 */
     public static String unicode(String source){
         StringBuilder sb = new StringBuilder();
         char [] sourceChar = source.toCharArray();
@@ -223,9 +207,7 @@ public class CodingUtil {
         return sb.toString();
     }
 
-    /**
-     * 对字符串进行unicode解码
-     */
+    /** 对字符串进行unicode解码 */
     public static String decodeUnicode(String unicode) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < unicode.length(); i+=4) {
@@ -235,9 +217,7 @@ public class CodingUtil {
         return sb.toString();
     }
 
-    /**
-     * 对字符串进行unicode 解码    (有  "\\u"  的字符串) eg :  "\\u0043\\u0045"
-     */
+    /** 对字符串进行unicode 解码    (有  "\\u"  的字符串) eg :  "\\u0043\\u0045" */
     public static String decodeUnicode2(String dataStr) {
         int start = 0;
         int end;
@@ -257,9 +237,7 @@ public class CodingUtil {
         return buffer.toString();
     }
 
-    /**
-     *  SJTC 协议的转义
-     */
+    /**  SJTC 协议的转义 */
     public static byte[] escapeByteArr(byte[] byteArr) {
         byte [] escDataArr = byteArr.clone();
         int arrlength = byteArr.length;
@@ -301,9 +279,7 @@ public class CodingUtil {
         return escDataArr;
     }
 
-    /**
-     * SJTC 协议的反转义
-     */
+    /** SJTC 协议的反转义 */
     public static byte[] theEscapeByteArr(byte[] byteArr) {
         byte [] escDataArr = byteArr.clone();
         int arrlength = byteArr.length;
@@ -345,9 +321,7 @@ public class CodingUtil {
 
     }
 
-    /**
-     *  删除byte数组里的某个元素
-     */
+    /**  删除byte数组里的某个元素 */
     public static byte[] deleteAt(byte[] bs, int index)
     {
         int length = bs.length - 1;
@@ -359,9 +333,7 @@ public class CodingUtil {
         return ret;
     }
 
-    /**
-     * byte数组里的某个位置插入元素
-     */
+    /** byte数组里的某个位置插入元素 */
     public static byte[] insertAt(byte[] bs, int index ,byte item)
     {
         int length = bs.length + 1;
@@ -374,9 +346,7 @@ public class CodingUtil {
         return ret;
     }
 
-    /**
-     * 得到amr的时长
-     */
+    /** 得到amr的时长 */
     public static int getAmrDuration(byte [] fileByte) throws IOException {
         long duration = -1;
         int[] packedSize = { 12, 13, 15, 17, 19, 20, 26, 31, 5, 0, 0, 0, 0, 0, 0, 0 };
@@ -420,9 +390,7 @@ public class CodingUtil {
         return (int)(Math.ceil(duration/1000.0));
     }
 
-    /**
-     * 收集异常堆栈信息
-     */
+    /** 收集异常堆栈信息 */
     public static String collectExceptionStackMsg(Exception e){
         StringWriter sw = new StringWriter();
         e.printStackTrace(new PrintWriter(sw, true));
@@ -449,9 +417,7 @@ public class CodingUtil {
         return sb.toString();
     }
 
-    /**
-     * 字节数组转字符串
-     */
+    /** 字节数组转字符串 */
     public static String bytesToString(byte[] b, String encode) throws Exception {
         return new String(b, encode);
     }
@@ -539,9 +505,7 @@ public class CodingUtil {
 
 
 
-    /**
-     * 十进制转换成二进制 ()
-     */
+    /** 十进制转换成二进制 () */
     public static String decimalToBinary(int decimalSource) {
         // 转换成BigInteger类型
         BigInteger bi = new BigInteger(String.valueOf(decimalSource));
@@ -549,9 +513,7 @@ public class CodingUtil {
         return bi.toString(2);
     }
 
-    /**
-     * 二进制转换成十进制
-     */
+    /** 二进制转换成十进制 */
     public static int binaryToDecimal(String binarySource) {
         // 转换为BigInteger类型
         BigInteger bi = new BigInteger(binarySource, 2);
@@ -559,9 +521,7 @@ public class CodingUtil {
         return Integer.parseInt(bi.toString());
     }
 
-    /**
-     * 转换为Ascii码
-     */
+    /** 转换为Ascii码 */
     public static String hexToAscii(String hex) {
         StringBuilder ascii = new StringBuilder();
         for (int i = 0; i < hex.length(); i += 2) {
@@ -571,9 +531,7 @@ public class CodingUtil {
         return ascii.toString();
     }
 
-    /**
-     * 二进制转换成十六进制
-     */
+    /** 二进制转换成十六进制 */
     public static String bin2hex(String input) {
         StringBuilder sb = new StringBuilder();
         int len = input.length();
@@ -589,9 +547,7 @@ public class CodingUtil {
         return sb.toString();
     }
 
-    /**
-     * 16进制字符串转为float （大端序）
-     */
+    /** 16进制字符串转为float （大端序） */
     public static float hexToFloat(String hex) {
         // 去除可能的前缀(如0x)
         hex = hex.replace("0x", "").replace("0X", "");
@@ -682,9 +638,7 @@ public class CodingUtil {
         }
     }
 
-    /**
-     * 十六进制字符串转无符号16位整形
-     */
+    /** 十六进制字符串转无符号16位整形 */
     public static int hexToU16(String hexString) {
         // 去除可能的前缀
         hexString = hexString.replace("0x", "").replace("0X", "");
@@ -701,9 +655,7 @@ public class CodingUtil {
         }
     }
 
-    /**
-     * 十六进制字符串转16位整形
-     */
+    /** 十六进制字符串转16位整形 */
     public static int hexToI16(String hexString) {
         int num = Integer.parseInt(hexString, 16);
         if (num >= 32768) {
@@ -712,18 +664,14 @@ public class CodingUtil {
         return num;
     }
 
-    /**
-     * 十六进制字符串转32位整形
-     */
+    /** 十六进制字符串转32位整形 */
     public static int hexToI32(String hexString) {
         // 将十六进制字符串转换为BigInteger
         BigInteger bigInteger = new BigInteger(hexString, 16);
         return bigInteger.intValue();
     }
 
-    /**
-     * 十六进制字符串转无符号32位整形
-     */
+    /** 十六进制字符串转无符号32位整形 */
     public static int hexToU32(String hexString) {
         // 去除可能的前缀
         hexString = hexString.replace("0x", "").replace("0X", "");
@@ -740,9 +688,7 @@ public class CodingUtil {
         }
     }
 
-    /**
-     * 计算校验和
-     */
+    /** 计算校验和 */
     public static String getCheckSum(String dataStr){
 //		String str  = "0052 0901 05000000000000080017D6D11FE202106241708090";
         String str = dataStr.replace(" ", "");
@@ -756,9 +702,7 @@ public class CodingUtil {
         return format.substring(1);
     }
 
-    /**
-     * 计算 异或和 校验位
-     */
+    /** 计算 异或和 校验位 */
     public static int getOrCheck(byte[] b) {
 
         byte x = 0;
@@ -768,9 +712,7 @@ public class CodingUtil {
         return x;
     }
 
-    /**
-     * data1 与 data2拼接的结果
-     */
+    /** data1 与 data2拼接的结果 */
     public static byte[] addBytes(byte[] data1, byte[] data2) {
         byte[] data3 = new byte[data1.length + data2.length];
         System.arraycopy(data1, 0, data3, 0, data1.length);
@@ -821,9 +763,7 @@ public class CodingUtil {
         return format;
     }
 
-    /**
-     * 能耗校验和
-     */
+    /** 能耗校验和 */
     public static String energyCheckSum(String tempStr){
         int data = 0;
         for (int i = 0; i < tempStr.length()/2; i++) {
@@ -846,9 +786,7 @@ public class CodingUtil {
         return bin2hex(binary);
     }
 
-    /**
-     * 读取一个文本 一行一行读取
-     */
+    /** 读取一个文本 一行一行读取 */
     public static List<String> readFile02(String path) throws IOException {
         // 使用一个字符串集合来存储文本中的路径 ，也可用String []数组
         List<String> list = new ArrayList<>();
@@ -872,9 +810,7 @@ public class CodingUtil {
         return list;
     }
 
-    /**
-     * 字符串转Double类型
-     */
+    /** 字符串转Double类型 */
     public static Double decimalDouble(Integer num, int calcNum){
         if (num == null) {
             return null;
@@ -885,9 +821,7 @@ public class CodingUtil {
         return num.doubleValue() / calcNum;
     }
 
-    /**
-     * 字符串转Double类型
-     */
+    /** 字符串转Double类型 */
     public static Double valueOfDouble(String str){
         if(StrUtil.isBlank(str)){
             return null;
@@ -895,9 +829,7 @@ public class CodingUtil {
         return Double.parseDouble(str);
     }
 
-    /**
-     * 计算校验码 - 所有字节的模256的和
-     */
+    /** 计算校验码 - 所有字节的模256的和 */
     public static String check256(String tempStr) {
         if (tempStr == null || tempStr.isEmpty()) {
             return "";
@@ -1009,9 +941,7 @@ public class CodingUtil {
         return intValue;
     }
 
-    /**
-     * 转换Integer类型
-     */
+    /** 转换Integer类型 */
     public static Integer valueOfInteger(String str){
         if(StrUtil.isBlank(str)){
             return null;

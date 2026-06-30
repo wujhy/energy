@@ -139,16 +139,12 @@ public class LogAspect {
         }
     }
 
-    /**
-     * 忽略敏感属性
-     */
+    /** 忽略敏感属性 */
     public PropertyPreFilters.MySimplePropertyPreFilter excludePropertyPreFilter() {
         return new PropertyPreFilters().addFilter().addExcludes(EXCLUDE_PROPERTIES);
     }
 
-    /**
-     * 参数拼装
-     */
+    /** 参数拼装 */
     private String argsArrayToString(Object[] paramsArray) {
         if (paramsArray == null) {
             return "";

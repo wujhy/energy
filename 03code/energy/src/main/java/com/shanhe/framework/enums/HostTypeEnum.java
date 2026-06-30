@@ -31,9 +31,7 @@ public enum HostTypeEnum {
         this.dictLabel = dictLabel;
     }
 
-    /**
-     * 转枚举
-     */
+    /** 转枚举 */
     public static HostTypeEnum fromCode(String code) {
         if (StrUtil.isBlank(code)) {
             return _2CM03N;
@@ -46,9 +44,7 @@ public enum HostTypeEnum {
         return _2CM03N;
     }
 
-    /**
-     * 通过值查标签名
-     */
+    /** 通过值查标签名 */
     public static String findByValue(Object value) {
         String dictValue;
         if (value instanceof String) {
@@ -64,9 +60,7 @@ public enum HostTypeEnum {
         return null;
     }
 
-    /**
-     * 转list
-     */
+    /** 转list */
     public static List<Dict> getDictList() {
         List<Dict> list = new ArrayList<>();
         for (HostTypeEnum dictEnum : HostTypeEnum.values()) {

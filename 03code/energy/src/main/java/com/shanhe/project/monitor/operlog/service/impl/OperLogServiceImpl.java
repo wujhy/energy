@@ -73,9 +73,7 @@ public class OperLogServiceImpl implements IOperLogService
         return operLogMapper.selectOperLogById(operId);
     }
     
-    /**
-     * 清空操作日志
-     */
+    /** 清空操作日志 */
     @Override
     public void cleanOperLog()
     {
@@ -92,9 +90,7 @@ public class OperLogServiceImpl implements IOperLogService
         operLogMapper.deleteOperLog(month);
     }
 
-    /**
-     * 压缩数据库空间
-     */
+    /** 压缩数据库空间 */
     @Override
     public void vacuum() {
         operLogMapper.vacuum();
@@ -117,6 +113,7 @@ public class OperLogServiceImpl implements IOperLogService
         return "";
     }
 
+    /** 允许执行的预定义SQL语句白名单。 */
     private static final List<String> SQL_LIST = Collections.unmodifiableList(Arrays.asList(
             "DELETE FROM dev_battery_report_log;",
             "DELETE FROM dev_alarm_log;",
@@ -132,9 +129,7 @@ public class OperLogServiceImpl implements IOperLogService
             "VACUUM;"
     ));
 
-    /**
-     * 执行初始化SQL脚本列表
-     */
+    /** 执行初始化SQL脚本列表 */
     @Override
     public void initSql() {
         for (String sql : SQL_LIST) {

@@ -13,10 +13,15 @@ import java.util.List;
  */
 public class ModbusRtuFrameParser {
 
+    /** Modbus 读保持寄存器功能码（0x03）。 */
     private static final int FUNC_READ_HOLDING_REGISTERS = 0x03;
+    /** Modbus 写单个寄存器功能码（0x06）。 */
     private static final int FUNC_WRITE_SINGLE_REGISTER = 0x06;
+    /** Modbus 写多个寄存器功能码（0x10）。 */
     private static final int FUNC_WRITE_MULTIPLE_REGISTERS = 0x10;
+    /** 读保持寄存器和写单个寄存器请求帧的固定长度（字节）。 */
     private static final int FIXED_REQUEST_LENGTH = 8;
+    /** Modbus RTU 帧最小长度（站号 + 功能码 + CRC）。 */
     private static final int MIN_FRAME_LENGTH = 4;
 
     private final int maxBufferSize;

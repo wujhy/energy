@@ -32,9 +32,7 @@ public class ControlBase {
     @Resource
     private IHostService hostService;
 
-    /**
-     * 获取在线的主机
-     */
+    /** 获取在线的主机 */
     public Host getHost() {
         Host host = hostService.onlineHost();
         if (host == null || !CommServer.isOpen()) {
@@ -43,9 +41,7 @@ public class ControlBase {
         return host;
     }
 
-    /**
-     * 获取设备
-     */
+    /** 获取设备 */
     public Config getConfig() {
         Config config = configService.selectDefaultConfig();
         if (config == null) {

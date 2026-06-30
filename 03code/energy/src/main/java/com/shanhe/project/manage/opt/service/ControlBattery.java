@@ -148,16 +148,12 @@ public class ControlBattery extends ControlBase {
         return super.getControlResult(resultKey, cacheKeyEnum);
     }
 
-    /**
-     * 统一执行蓄电池测试命令，页面立即执行和计划任务触发共用该入口。
-     */
+    /** 统一执行蓄电池测试命令，页面立即执行和计划任务触发共用该入口。 */
     public AjaxResult executeBatteryOpt(DevBatteryOpt opt, BatteryOptExecuteType executeType) {
         return toSendBatteryCmdToOat(opt);
     }
 
-    /**
-     * 立即执行蓄电池操作。
-     */
+    /** 立即执行蓄电池操作。 */
     public AjaxResult toSendBatteryCmdToOat(DevBatteryOpt opt) {
         BatteryTestEnum testEnum = BatteryTestEnum.find(opt.getTestType());
         if (isUnsupportedCommandType(testEnum)) {
@@ -197,9 +193,7 @@ public class ControlBattery extends ControlBase {
         return executeCommandAndLog(config, opt, testEnum, cmdInfo);
     }
 
-    /**
-     * 校验上报数据和告警状态
-     */
+    /** 校验上报数据和告警状态 */
     private AjaxResult validateBeforeCommand(DevBatteryOpt opt, BatteryReportLog batteryReportLog) {
         if (null == batteryReportLog || null == batteryReportLog.getPackParam()) {
             return AjaxResult.error("暂无上报数据", 0);
@@ -211,9 +205,7 @@ public class ControlBattery extends ControlBase {
         return null;
     }
 
-    /**
-     * 校验测试条件
-     */
+    /** 校验测试条件 */
     private AjaxResult validateTestCondition(BatteryTestEnum testEnum, BatteryReportLog batteryReportLog) {
         if (BatteryTestEnum._2.getDictValue().equals(testEnum.getDictValue())) {
             // 连接条测试
@@ -232,9 +224,7 @@ public class ControlBattery extends ControlBase {
         return null;
     }
 
-    /**
-     * 命令信息内部类
-     */
+    /** 命令信息内部类 */
     private static class CommandInfo {
         String cmdStr;
         String dynCid;
@@ -251,9 +241,7 @@ public class ControlBattery extends ControlBase {
         }
     }
 
-    /**
-     * 生成测试命令
-     */
+    /** 生成测试命令 */
     private CommandInfo generateCommand(BatteryTestEnum testEnum, Config config, DevBatteryOpt opt) {
         switch (testEnum) {
             // 立即执行内阻测试
@@ -301,9 +289,7 @@ public class ControlBattery extends ControlBase {
         }
     }
 
-    /**
-     * 执行命令并记录日志
-     */
+    /** 执行命令并记录日志 */
     private AjaxResult executeCommandAndLog(Config config, DevBatteryOpt opt, BatteryTestEnum testEnum, CommandInfo cmdInfo) {
         // 是否重复请求
         String resultKey = super.setControlStatus(config, opt.getPackNum(), cmdInfo.dynCid, cacheKeyEnum);
@@ -340,9 +326,7 @@ public class ControlBattery extends ControlBase {
         return ajaxResult;
     }
 
-    /**
-     * 立即执行停止备电操作
-     */
+    /** 立即执行停止备电操作 */
     public AjaxResult toSendStopBatteryCmdToOat(DevBatteryOpt opt) {
         // 校验设备
         Config config = this.getConfig(opt);
@@ -394,9 +378,7 @@ public class ControlBattery extends ControlBase {
         return AjaxResult.success();
     }
 
-    /**
-     * 校验设备信息
-     */
+    /** 校验设备信息 */
     private Config getConfig(DevBatteryOpt devBatteryOpt) {
         // 设备
         Config config = configService.selectDefaultConfig();
@@ -419,9 +401,7 @@ public class ControlBattery extends ControlBase {
         return config;
     }
 
-    /**
-     * 判断是否为当前控制链路不支持的测试类型。
-     */
+    /** 判断是否为当前控制链路不支持的测试类型。 */
     private boolean isUnsupportedCommandType(BatteryTestEnum testEnum) {
         return testEnum == null || BatteryTestEnum._99.equals(testEnum);
     }

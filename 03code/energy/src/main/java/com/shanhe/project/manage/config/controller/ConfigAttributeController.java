@@ -41,9 +41,7 @@ public class ConfigAttributeController extends BaseController {
             ItemCode.ZWDCGQ1GZ.getCode(), ItemCode.ZWDCGQ2GZ.getCode(), ItemCode.ZTDGJ.getCode(),
             ItemCode.ZSOCDGJ.getCode(), ItemCode.ZSOHDGJ.getCode());
 
-    /**
-     * 查询设备属性列表
-     */
+    /** 查询设备属性列表 */
     @PostMapping("/list")
     @ResponseBody
     public TableDataInfo list(ConfigAttribute configAttribute) {
@@ -59,9 +57,7 @@ public class ConfigAttributeController extends BaseController {
         return getDataTable(list);
     }
 
-    /**
-     * 导出设备属性列表
-     */
+    /** 导出设备属性列表 */
     @Log(title = "设备属性", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     @ResponseBody
@@ -71,9 +67,7 @@ public class ConfigAttributeController extends BaseController {
         return util.exportExcel(list, "设备属性数据");
     }
 
-    /**
-     * 新增保存设备属性
-     */
+    /** 新增保存设备属性 */
     @Log(title = "设备属性", businessType = BusinessType.INSERT)
     @PostMapping("/add")
     @ResponseBody
@@ -82,18 +76,14 @@ public class ConfigAttributeController extends BaseController {
         return success();
     }
 
-    /**
-     * 修改设备属性
-     */
+    /** 修改设备属性 */
     @GetMapping("/detail/{configAttrId}")
     @ResponseBody
     public AjaxResult detail(@PathVariable("configAttrId") Long configAttrId) {
         return success(configAttributeService.selectConfigAttributeByConfigAttrId(configAttrId));
     }
 
-    /**
-     * 修改保存设备属性
-     */
+    /** 修改保存设备属性 */
     @Log(title = "设备属性", businessType = BusinessType.UPDATE)
     @PostMapping("/edit")
     @ResponseBody
@@ -102,9 +92,7 @@ public class ConfigAttributeController extends BaseController {
         return success();
     }
 
-    /**
-     * 删除设备属性
-     */
+    /** 删除设备属性 */
     @Log(title = "设备属性", businessType = BusinessType.DELETE)
     @PostMapping("/remove")
     @ResponseBody

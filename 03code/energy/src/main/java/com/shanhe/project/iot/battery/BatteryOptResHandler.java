@@ -52,9 +52,7 @@ public class BatteryOptResHandler {
         CacheUtils.put(cacheKeyEnum.getCache(), key, softNum);
     }
 
-    /**
-     * 设置系统参数响应
-     */
+    /** 设置系统参数响应 */
     public void batteryResponse85(Config config, DeviceData deviceData) {
         try {
             String info = deviceData.getInfo().substring(16, deviceData.getInfo().length() - 4);
@@ -70,9 +68,7 @@ public class BatteryOptResHandler {
         }
     }
 
-    /**
-     * 电池组测试响应结果
-     */
+    /** 电池组测试响应结果 */
     public void uploadBatteryResponse(Config config, DeviceData deviceData) {
         try {
             String info = deviceData.getInfo().substring(16, deviceData.getInfo().length() - 4);
@@ -91,9 +87,7 @@ public class BatteryOptResHandler {
         }
     }
 
-    /**
-     * 电池组设置响应结果
-     */
+    /** 电池组设置响应结果 */
     public void setBatteryResponse(Config config, DeviceData deviceData) {
         try {
             String info = deviceData.getInfo().substring(16, deviceData.getInfo().length() - 4);
@@ -110,9 +104,7 @@ public class BatteryOptResHandler {
         }
     }
 
-    /**
-     * 电池组工作模式
-     */
+    /** 电池组工作模式 */
     public void getModeStatus(Config config, DeviceData deviceData) {
         try {
             String info = deviceData.getInfo().substring(16, deviceData.getInfo().length() - 4);

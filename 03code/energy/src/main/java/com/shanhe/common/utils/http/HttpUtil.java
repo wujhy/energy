@@ -18,9 +18,13 @@ import java.util.Map;
 @Slf4j
 public class HttpUtil {
 
+	/** HTTP请求成功状态码。 */
 	public final static String SUCCESS = "200";
+	/** HTTP请求失败状态码。 */
 	public final static String FAIL = "404";
+	/** HTTP连接超时时间（毫秒）。 */
 	public final static int CONN_TIMEOUT = 2000;
+	/** HTTP读取超时时间（毫秒）。 */
 	public final static int READ_TIMEOUT = 2000;
 
 	/**
@@ -42,9 +46,7 @@ public class HttpUtil {
 		return flag;
 	}
 
-	/**
-	 * URL请求
-	 */
+	/** URL请求 */
 	public static String httpGet(String urlStr) {
 		StringBuilder flag = new StringBuilder(FAIL);
 		URL u;
@@ -84,9 +86,7 @@ public class HttpUtil {
 		return flag.toString();
 	}
 
-	/**
-	 * HTTP POST
-	 */
+	/** HTTP POST */
 	public static String doPost(String urlStr, Map<String, String> params,
 			String encode, int retry) {
 		String flag = FAIL;
@@ -100,9 +100,7 @@ public class HttpUtil {
 		return flag;
 	}
 
-	/**
-	 * HTTP POST File请求
-	 */
+	/** HTTP POST File请求 */
 	public static String httpPostReq(String urlStr, Map<String, String> params,
 			String encode) {
 		StringBuilder result = new StringBuilder();

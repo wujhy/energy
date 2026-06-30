@@ -37,15 +37,11 @@ public class BatteryCollectorDeviceStateService {
     /** 去重缓存上限，超过后清理模块和pack级高基数条目。 */
     private static final int DEDUP_CACHE_LIMIT = 1000;
 
-    /**
-     * 设备状态持久化服务。
-     */
+    /** 设备状态持久化服务。 */
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
 
-    /**
-     * 状态去重缓存：key = scopeKey + stateCode，value = 上次写入的 stateValue。
-     */
+    /** 状态去重缓存：key = scopeKey + stateCode，value = 上次写入的 stateValue。 */
     private final ConcurrentHashMap<String, String> lastStateValues = new ConcurrentHashMap<>();
 
     /**

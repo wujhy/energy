@@ -97,9 +97,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         return result;
     }
 
-    /**
-     * 获取时间
-     */
+    /** 获取时间 */
     private static Set<String> getTime(List<StatBatteryRes> statBatteryRes, SimpleDateFormat dateFormat) {
         Set<String> time = new LinkedHashSet<>();
 
@@ -155,9 +153,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         return data;
     }
 
-    /**
-     * 获取基准值
-     */
+    /** 获取基准值 */
     private Map<Integer, Integer> getBaseValueMap(Integer packNum) {
         List<DevBatteryMonomer> devBatteryMonomers = devBatteryMonomerService.selectList(packNum);
         if (devBatteryMonomers == null || devBatteryMonomers.isEmpty()) {
@@ -169,9 +165,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
                 .collect(Collectors.toMap(DevBatteryMonomer::getBatNum, DevBatteryMonomer::getResistance, (v1, v2) -> v2));
     }
 
-    /**
-     * 获取最新的内阻测试记录（每个单体）
-     */
+    /** 获取最新的内阻测试记录（每个单体） */
     private static Map<Integer, Integer> getLatestResMap(List<StatBatteryRes> statBatteryRes, SimpleDateFormat dateFormat) {
         if (statBatteryRes == null || statBatteryRes.isEmpty()) {
             return new HashMap<>(0);
@@ -316,9 +310,7 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
     }
 
 
-    /**
-     * 生成内阻值
-     */
+    /** 生成内阻值 */
     private static List<StatBatteryRes> generateStatBatteryRes(Integer packNum, List<BatteryMonitor> batteryList) {
         List<StatBatteryRes> statBatteryResList = new ArrayList<>();
         for (BatteryMonitor batteryInfo : batteryList) {

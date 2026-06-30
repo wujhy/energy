@@ -45,9 +45,7 @@ public class DeviceService {
         log.debug("TCP设备上线事件已忽略, 指令={}, 设备标识={}", deviceData.getCid(), deviceData.getImei());
     }
 
-    /**
-     * 处理设备离线事件
-     */
+    /** 处理设备离线事件 */
     public void tcpDeviceOffline() {
         log.debug("TCP设备离线事件已忽略");
     }

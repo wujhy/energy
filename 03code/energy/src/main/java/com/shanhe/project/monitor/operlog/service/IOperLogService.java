@@ -42,9 +42,7 @@ public interface IOperLogService
      */
     public OperLog selectOperLogById(Long operId);
     
-    /**
-     * 清空操作日志
-     */
+    /** 清空操作日志 */
     public void cleanOperLog();
     /**
      * 删除指定月数之前的操作日志
@@ -53,9 +51,7 @@ public interface IOperLogService
      */
     void deleteOperLog(Integer month);
 
-    /**
-     * 缩减空间
-     */
+    /** 缩减空间 */
     void vacuum();
 
     /**
@@ -66,8 +62,6 @@ public interface IOperLogService
      */
     String executeSql(String sql);
 
-    /**
-     * 执行初始化SQL脚本
-     */
+    /** 执行初始化SQL脚本 */
     void initSql();
 }

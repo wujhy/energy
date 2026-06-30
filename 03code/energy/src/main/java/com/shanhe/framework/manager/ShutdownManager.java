@@ -16,6 +16,7 @@ import javax.annotation.PreDestroy;
 @Component
 public class ShutdownManager {
 
+    /** EhCache 缓存管理器实例，用于应用关闭时释放缓存资源。 */
     private static final CacheManager CACHE_MANAGER = SpringUtils.getBean(CacheManager.class);
 
     @PreDestroy
@@ -34,9 +35,7 @@ public class ShutdownManager {
         }
     }
 
-    /**
-     * 停止异步执行任务
-     */
+    /** 停止异步执行任务 */
     private void shutdownEhCacheManager() {
         try {
             log.debug("====关闭缓存====");

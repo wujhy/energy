@@ -11,16 +11,12 @@ import com.shanhe.framework.comm.tcp.server.TcpServerHandler;
  */
 public class CommServer {
 
-    /**
-     * 判断是否打开
-     */
+    /** 判断是否打开 */
     public static Boolean isOpen() {
         return SerialPortHandler.isOpen() || TcpServerHandler.isOpen();
     }
 
-    /**
-     * 获取IMEI
-     */
+    /** 获取IMEI */
     public static String getImei() {
         if (SerialPortHandler.isOpen()) {
             return SerialPortHandler.getImei();

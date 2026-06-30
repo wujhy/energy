@@ -73,9 +73,7 @@ public interface AlarmLogMapper
      */
     int updateAlarmLog(AlarmLog alarmLog);
 
-    /**
-     * 删除默认设备历史记录
-     */
+    /** 删除默认设备历史记录 */
     void deleteDefaultDeviceAlarmLogs();
 
     /**
@@ -93,9 +91,7 @@ public interface AlarmLogMapper
      */
     int deleteAlarmLogByAlarmIds(String[] alarmIds);
 
-    /**
-     * 删除设备告警记录信息
-     */
+    /** 删除设备告警记录信息 */
     void deleteAll();
 
     /**

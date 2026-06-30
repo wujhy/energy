@@ -15,9 +15,7 @@ public class RateCapacityConverter {
     /** 铅酸电池典型Peukert常数 */
     private static final double PEUKERT_CONSTANT = 1.02;
 
-    /**
-     * 预定义的转换系数表（提高计算效率）
-     */
+    /** 预定义的转换系数表（提高计算效率） */
     private static final Map<Double, Double> CONVERSION_TABLE = createConversionTable();
 
     /** 创建0.1C放电倍率到容量的转换表。 */
@@ -32,9 +30,7 @@ public class RateCapacityConverter {
         return table;
     }
 
-    /**
-     * 主转换方法 - 使用查表法（快速）
-     */
+    /** 主转换方法 - 使用查表法（快速） */
     public static double convertTo01C(double actualCapacity, double actualRate) {
         if(actualRate<0){
             actualRate = Math.abs(actualRate);
@@ -48,9 +44,7 @@ public class RateCapacityConverter {
         return calculateByFormula(actualCapacity, actualRate);
     }
 
-    /**
-     * 公式计算法（适用于任意倍率）
-     */
+    /** 公式计算法（适用于任意倍率） */
     public static double calculateByFormula(double actualCapacity, double actualRate) {
         double rateRatio = actualRate / 0.1;
         double factor = Math.pow(rateRatio, PEUKERT_CONSTANT - 1);
@@ -59,9 +53,7 @@ public class RateCapacityConverter {
         return StringUtils.formatToDouble(bCapacity,1);
     }
 
-    /**
-     * 批量转换方法
-     */
+    /** 批量转换方法 */
     public static Map<Double, Double> convertBatch(Map<Double, Double> rateCapacityMap) {
         Map<Double, Double> result = new HashMap<>(rateCapacityMap.size());
 

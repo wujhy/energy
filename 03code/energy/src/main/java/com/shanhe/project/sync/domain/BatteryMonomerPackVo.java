@@ -17,16 +17,10 @@ import java.util.List;
 public class BatteryMonomerPackVo implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 设备ID
-     */
+    /** 设备ID */
     private Long devId;
-    /**
-     * 组
-     */
+    /** 组 */
     private Integer packNum;
-    /**
-     * 内阻
-     */
+    /** 内阻 */
     private List<BatteryMonomerBatVo> childDev;
 }

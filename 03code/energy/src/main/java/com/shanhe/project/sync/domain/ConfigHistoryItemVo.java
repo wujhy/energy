@@ -13,13 +13,9 @@ import java.io.Serializable;
 @Data
 public class ConfigHistoryItemVo implements Serializable {
     private static final long serialVersionUID = 1L;
-    /**
-     * 设备主键ID
-     */
+    /** 设备主键ID */
     private String itemCode;
-    /**
-     * 蓄电池组编号，1,2,3,4
-     */
+    /** 蓄电池组编号，1,2,3,4 */
     private String itemValue;
 
     public ConfigHistoryItemVo() {}

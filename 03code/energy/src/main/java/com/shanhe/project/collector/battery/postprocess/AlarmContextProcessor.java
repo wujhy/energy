@@ -26,6 +26,7 @@ import java.util.Map;
 @Component
 public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
 
+    /** 所有单体电池告警编码列表，用于恢复本轮未上报数据的单体告警。 */
     private static final List<String> ALL_CELL_ALARM_CODES = Arrays.asList(
             ItemCode.DTDCWDD.getCode(),
             ItemCode.DTDCWDG.getCode(),

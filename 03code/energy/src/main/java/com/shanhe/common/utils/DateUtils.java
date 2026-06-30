@@ -23,6 +23,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils
 
     public static String YYYY_MM_DD_HH_MM_SS = "yyyy-MM-dd HH:mm:ss";
 
+    /** 日期解析格式模式数组。 */
     private static final String[] PARSE_PATTERNS = {
             "yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm", "yyyy-MM", 
             "yyyy/MM/dd", "yyyy/MM/dd HH:mm:ss", "yyyy/MM/dd HH:mm", "yyyy/MM",
@@ -85,39 +86,29 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils
         }
     }
 
-    /**
-     * 日期路径 即年/月/日 如2018/08/08
-     */
+    /** 日期路径 即年/月/日 如2018/08/08 */
     public static String datePath()
     {
         Date now = new Date();
         return DateFormatUtils.format(now, "yyyy/MM/dd");
     }
 
-    /**
-     * 日期路径 即年/月/日 如20180808
-     */
+    /** 日期路径 即年/月/日 如20180808 */
     public static String dateTime()
     {
         Date now = new Date();
         return DateFormatUtils.format(now, "yyyyMMdd");
     }
 
-    /**
-     * 计算相差分钟
-     */
+    /** 计算相差分钟 */
     public static int differentMillsByMillisecond(Date date1, Date date2) {
         return Math.abs((int) ((date2.getTime() - date1.getTime()) / (1000 * 60)));
     }
-    /**
-     * 计算相差秒
-     */
+    /** 计算相差秒 */
     public static int differentSecondByMillisecond(Date date1, Date date2) {
         return Math.abs((int) ((date2.getTime() - date1.getTime()) / (1000)));
     }
-    /**
-     * 日期型字符串转化为日期 格式
-     */
+    /** 日期型字符串转化为日期 格式 */
     public static Date parseDate(Object str)
     {
         if (str == null)
@@ -134,26 +125,20 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils
         }
     }
 
-    /**
-     * 获取服务器启动时间
-     */
+    /** 获取服务器启动时间 */
     public static Date getServerStartDate()
     {
         long time = ManagementFactory.getRuntimeMXBean().getStartTime();
         return new Date(time);
     }
 
-    /**
-     * 计算相差天数
-     */
+    /** 计算相差天数 */
     public static int differentDaysByMillisecond(Date date1, Date date2)
     {
         return Math.abs((int) ((date2.getTime() - date1.getTime()) / (1000 * 3600 * 24)));
     }
 
-    /**
-     * 计算两个时间差
-     */
+    /** 计算两个时间差 */
     public static String getDatePoor(Date endDate, Date nowDate)
     {
         long nd = 1000 * 24 * 60 * 60;

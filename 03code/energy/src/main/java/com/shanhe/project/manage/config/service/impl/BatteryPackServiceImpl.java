@@ -182,9 +182,7 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         CacheUtils.put(packInfoCache.getCache(), key, batteryPack);
     }
 
-    /**
-     * 删除默认设备所有电池组
-     */
+    /** 删除默认设备所有电池组 */
     @Override
     public void deleteDefaultDevicePacks() {
         batteryPackMapper.deleteDefaultDevicePacks();
@@ -216,9 +214,7 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         }
     }
 
-    /**
-     * 更新电池组缓存
-     */
+    /** 更新电池组缓存 */
     @Override
     public void updateCache() {
         // 属性键

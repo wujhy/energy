@@ -15,27 +15,17 @@ import java.util.Date;
 public class DataPoint implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 电压
-     */
+    /** 电压 */
     private Double voltage;
-    /**
-     * 电流
-     */
+    /** 电流 */
     private Double current;
-    /**
-     * 内阻值（2字节）单位：uΩ
-     */
+    /** 内阻值（2字节）单位：uΩ */
     private Double resistance;
 
-    /**
-     * 温度值（2字节）单位：℃
-     */
+    /** 温度值（2字节）单位：℃ */
     private Double temperature;
 
-    /**
-     * 采集时间
-     */
+    /** 采集时间 */
     private Date createTime;
 
 }

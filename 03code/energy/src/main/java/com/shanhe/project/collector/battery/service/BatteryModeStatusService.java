@@ -23,36 +23,30 @@ import java.util.Objects;
 @Service
 public class BatteryModeStatusService {
 
+    /** 工作模式对应的设备状态编码。 */
     private static final String STATE_CODE_WORK_MODE = BatteryDeviceStateConstants.StateCode.WORK_MODE;
 
     /** 电池设备状态服务。 */
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
 
-    /**
-     * 无测试。
-     */
+    /** 无测试。 */
     public static final int MODE_IDLE = 0;
-    /**
-     * 自动编号。
-     */
+    /** 自动编号。 */
     public static final int MODE_AUTO_MODEL_NUM = 1;
-    /**
-     * 内阻测试。
-     */
+    /** 内阻测试。 */
     public static final int MODE_INTERNAL_RESISTANCE = 6;
-    /**
-     * 连接条电阻测试。
-     */
+    /** 连接条电阻测试。 */
     public static final int MODE_CONNECT_RESISTANCE = 10;
 
-    /**
-     * 单体均衡。
-     */
+    /** 单体均衡。 */
     public static final int MODE_BALANCE = 11;
 
+    /** 工作模式状态值：停止。 */
     private static final int STATUS_STOP = 0;
+    /** 工作模式状态值：运行中。 */
     private static final int STATUS_RUNNING = 1;
+    /** 工作模式状态在缓存中的键。 */
     private static final String MODE_STATUS_KEY = "battery:mode:status:EB";
 
     /** 缓存键枚举。 */

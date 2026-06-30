@@ -14,43 +14,27 @@ import lombok.Data;
 @Builder
 public class BatteryModuleFrameSummary {
 
-    /**
-     * 匹配到的 600 节模块端协议码。
-     */
+    /** 匹配到的 600 节模块端协议码。 */
     private BatteryDeviceProtocolCode protocolCode;
 
-    /**
-     * 是否已知协议。
-     */
+    /** 是否已知协议。 */
     private boolean known;
 
-    /**
-     * 响应是否成功。
-     */
+    /** 响应是否成功。 */
     private boolean success;
 
-    /**
-     * 原始应答标志。
-     */
+    /** 原始应答标志。 */
     private int responseFlag;
 
-    /**
-     * 模块地址。
-     */
+    /** 模块地址。 */
     private Integer moduleAddress;
 
-    /**
-     * 信息域长度。
-     */
+    /** 信息域长度。 */
     private Integer payloadLength;
 
-    /**
-     * 信息域十六进制内容。
-     */
+    /** 信息域十六进制内容。 */
     private String payloadHex;
 
-    /**
-     * 摘要说明。
-     */
+    /** 摘要说明。 */
     private String description;
 }

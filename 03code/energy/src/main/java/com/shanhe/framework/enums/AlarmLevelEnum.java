@@ -34,9 +34,7 @@ public enum AlarmLevelEnum {
         this.dictLabel = dictLabel;
     }
 
-    /**
-     * 通过值查标签名
-     */
+    /** 通过值查标签名 */
     public static String findByValue(Object value) {
         for (AlarmLevelEnum dictEnum : AlarmLevelEnum.values()) {
             if (Objects.equals(dictEnum.getDictValue(), String.valueOf(value))) {
@@ -46,9 +44,7 @@ public enum AlarmLevelEnum {
         return null;
     }
 
-    /**
-     * 转list
-     */
+    /** 转list */
     public static List<Dict> getDictList() {
         List<Dict> list = new ArrayList<>();
         for (AlarmLevelEnum dictEnum : AlarmLevelEnum.values()) {

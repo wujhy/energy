@@ -113,9 +113,7 @@ public class TcpServerConfig implements ApplicationRunner {
         }
     }
 
-    /**
-     * 关闭netty
-     */
+    /** 关闭netty */
     @PreDestroy
     public void stop() throws Exception {
         try {

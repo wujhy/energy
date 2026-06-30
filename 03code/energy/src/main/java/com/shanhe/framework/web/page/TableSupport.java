@@ -10,9 +10,7 @@ import com.shanhe.common.constant.Constants;
  */
 public class TableSupport
 {
-    /**
-     * 封装分页对象
-     */
+    /** 封装分页对象 */
     public static PageDomain getPageDomain()
     {
         PageDomain pageDomain = new PageDomain();

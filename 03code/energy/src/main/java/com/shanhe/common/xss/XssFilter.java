@@ -20,9 +20,7 @@ import com.shanhe.common.utils.StringUtils;
  * @author ruoyi
  */
 public class XssFilter implements Filter {
-    /**
-     * 排除链接
-     */
+    /** 排除链接 */
     public List<String> excludes = new ArrayList<>();
 
     @Override

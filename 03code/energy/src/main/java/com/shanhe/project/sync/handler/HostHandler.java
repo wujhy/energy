@@ -41,9 +41,7 @@ public class HostHandler {
 
     CacheKeyEnum tokenCache = CacheKeyEnum.HOST_TOKEN;
 
-    /**
-     * 主机认证token
-     */
+    /** 主机认证token */
     public void validToken(RequestVo request) {
         if (StrUtil.equals(request.getMethod(), MethodEnum._98.getDictValue())) {
             return;
@@ -58,9 +56,7 @@ public class HostHandler {
         }
     }
 
-    /**
-     * 获取token
-     */
+    /** 获取token */
     public ResponseVo getToken(RequestVo request, Host host) {
         try {
             String contentStr = JSONObject.toJSONString(request.getContent());
@@ -90,9 +86,7 @@ public class HostHandler {
         }
     }
 
-    /**
-     * 修改设备IP
-     */
+    /** 修改设备IP */
     public ResponseVo editDevIp(RequestVo request, Host host) {
         String msg = null;
         try {
@@ -119,9 +113,7 @@ public class HostHandler {
         return new ResponseVo(request.getImei(), MethodEnum._12.getDictValue(), request.getBusinessId(), msg);
     }
 
-    /**
-     * 修改设备IP
-     */
+    /** 修改设备IP */
     public ResponseVo editServerIp(RequestVo request, Host host) {
         String msg = null;
         try {
@@ -150,9 +142,7 @@ public class HostHandler {
         return new ResponseVo(request.getImei(), MethodEnum._12.getDictValue(), request.getBusinessId(), msg);
     }
 
-    /**
-     * 服务器时间
-     */
+    /** 服务器时间 */
     public ResponseVo sysDevDate(RequestVo request) {
         String msg = null;
         // 同步本机服务器时间
@@ -168,9 +158,7 @@ public class HostHandler {
         return new ResponseVo(request.getImei(), MethodEnum._16.getDictValue(), request.getBusinessId(), msg);
     }
 
-    /**
-     * 控制指令
-     */
+    /** 控制指令 */
     public ResponseVo controlDev(RequestVo request) {
         String msg = null;
         try {
@@ -193,9 +181,7 @@ public class HostHandler {
         return new ResponseVo(request.getImei(), MethodEnum._28.getDictValue(), request.getBusinessId(), msg);
     }
 
-    /**
-     * 软件升级
-     */
+    /** 软件升级 */
     public ResponseVo updateSoft(RequestVo request) {
         String msg = null;
         try {

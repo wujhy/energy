@@ -43,9 +43,7 @@ public interface OperLogMapper
      */
     public OperLog selectOperLogById(Long operId);
     
-    /**
-     * 清空操作日志
-     */
+    /** 清空操作日志 */
     public void cleanOperLog();
 
     /**
@@ -55,9 +53,7 @@ public interface OperLogMapper
      */
     void deleteOperLog(Integer month);
 
-    /**
-     * 删除数据后，缩减SQLLITE的空间
-     */
+    /** 删除数据后，缩减SQLLITE的空间 */
     public void vacuum();
 
     /**

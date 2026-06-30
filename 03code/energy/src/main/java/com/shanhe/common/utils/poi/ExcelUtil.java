@@ -137,9 +137,7 @@ public class ExcelUtil<T>
         createTitle();
     }
 
-    /**
-     * 创建excel第一行标题
-     */
+    /** 创建excel第一行标题 */
     public void createTitle()
     {
         if (StringUtils.isNotEmpty(title))
@@ -456,9 +454,7 @@ public class ExcelUtil<T>
         exportExcel(response);
     }
 
-    /**
-     * 对list数据源将其里面的数据导入到excel表单
-     */
+    /** 对list数据源将其里面的数据导入到excel表单 */
     public void exportExcel(HttpServletResponse response)
     {
         try
@@ -504,9 +500,7 @@ public class ExcelUtil<T>
         }
     }
 
-    /**
-     * 创建写入数据到Sheet
-     */
+    /** 创建写入数据到Sheet */
     public void writeSheet()
     {
         // 取出一共有多少个sheet.
@@ -635,9 +629,7 @@ public class ExcelUtil<T>
         return styles;
     }
 
-    /**
-     * 创建单元格
-     */
+    /** 创建单元格 */
     public Cell createCell(Excel attr, Row row, int column)
     {
         // 创建列
@@ -682,9 +674,7 @@ public class ExcelUtil<T>
         }
     }
 
-    /**
-     * 获取画布
-     */
+    /** 获取画布 */
     public static Drawing<?> getDrawingPatriarch(Sheet sheet)
     {
         if (sheet.getDrawingPatriarch() == null)
@@ -694,9 +684,7 @@ public class ExcelUtil<T>
         return sheet.getDrawingPatriarch();
     }
 
-    /**
-     * 获取图片类型,设置图片插入类型
-     */
+    /** 获取图片类型,设置图片插入类型 */
     public int getImageType(byte[] value)
     {
         String type = FileTypeUtils.getFileExtendName(value);
@@ -711,9 +699,7 @@ public class ExcelUtil<T>
         return Workbook.PICTURE_TYPE_JPEG;
     }
 
-    /**
-     * 创建表格样式
-     */
+    /** 创建表格样式 */
     public void setDataValidation(Excel attr, Row row, int column)
     {
         if (attr.name().contains("注：")) {
@@ -734,9 +720,7 @@ public class ExcelUtil<T>
         }
     }
 
-    /**
-     * 添加单元格
-     */
+    /** 添加单元格 */
     public Cell addCell(Excel attr, Row row, T vo, Field field, int column)
     {
         Cell cell = null;
@@ -970,9 +954,7 @@ public class ExcelUtil<T>
         return Convert.toStr(value);
     }
 
-    /**
-     * 合计统计信息
-     */
+    /** 合计统计信息 */
     private void addStatisticsData(Integer index, String text, Excel entity)
     {
         if (entity != null && entity.isStatistics())
@@ -993,9 +975,7 @@ public class ExcelUtil<T>
         }
     }
 
-    /**
-     * 创建统计行
-     */
+    /** 创建统计行 */
     public void addStatisticsRow()
     {
         if (!statistics.isEmpty()) {
@@ -1015,9 +995,7 @@ public class ExcelUtil<T>
         }
     }
 
-    /**
-     * 编码文件名
-     */
+    /** 编码文件名 */
     public String encodingFilename(String filename)
     {
         filename = filename + "_" + UUID.randomUUID() + ".xlsx";
@@ -1068,9 +1046,7 @@ public class ExcelUtil<T>
         return o;
     }
 
-    /**
-     * 以类的属性的get方法方法形式获取值
-     */
+    /** 以类的属性的get方法方法形式获取值 */
     private Object getValue(Object o, String name) throws Exception
     {
         if (StringUtils.isNotNull(o) && StringUtils.isNotEmpty(name))
@@ -1083,9 +1059,7 @@ public class ExcelUtil<T>
         return o;
     }
 
-    /**
-     * 得到所有定义字段
-     */
+    /** 得到所有定义字段 */
     private void createExcelField()
     {
         this.fields = getFields();
@@ -1093,9 +1067,7 @@ public class ExcelUtil<T>
         this.maxHeight = getRowHeight();
     }
 
-    /**
-     * 获取字段注解信息
-     */
+    /** 获取字段注解信息 */
     public List<Object[]> getFields()
     {
         List<Object[]> fields = new ArrayList<>();
@@ -1133,9 +1105,7 @@ public class ExcelUtil<T>
         return fields;
     }
 
-    /**
-     * 根据注解获取最大行高
-     */
+    /** 根据注解获取最大行高 */
     public short getRowHeight()
     {
         double maxHeight = 0;
@@ -1147,9 +1117,7 @@ public class ExcelUtil<T>
         return (short) (maxHeight * 20);
     }
 
-    /**
-     * 创建一个工作簿
-     */
+    /** 创建一个工作簿 */
     public void createWorkbook()
     {
         this.wb = new SXSSFWorkbook(500);

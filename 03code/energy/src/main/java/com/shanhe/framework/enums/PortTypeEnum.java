@@ -42,9 +42,7 @@ public enum PortTypeEnum {
         this.dictLabel = dictLabel;
     }
 
-    /**
-     * 通过值查标签名
-     */
+    /** 通过值查标签名 */
     public static String findByValue(Object value) {
         Integer dictValue;
         if (value instanceof String) {
@@ -60,9 +58,7 @@ public enum PortTypeEnum {
         return null;
     }
 
-    /**
-     * 转list
-     */
+    /** 转list */
     public static List<Dict> getDictList() {
         List<Dict> list = new ArrayList<>();
         for (PortTypeEnum dictEnum : PortTypeEnum.values()) {

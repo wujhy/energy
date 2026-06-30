@@ -22,32 +22,56 @@ public final class HtmlFilter {
     /**
      * regex flag union representing /si modifiers in php
      **/
+    /** HTML注释块匹配正则（多行模式）。 */
     private static final Pattern P_COMMENTS = Pattern.compile("<!--(.*?)-->", Pattern.DOTALL);
+    /** 单条HTML注释内容匹配正则。 */
     private static final Pattern P_COMMENT = Pattern.compile("^!--(.*)--$", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    /** HTML标签匹配正则。 */
     private static final Pattern P_TAGS = Pattern.compile("<(.*?)>", Pattern.DOTALL);
+    /** HTML闭合标签匹配正则。 */
     private static final Pattern P_END_TAG = Pattern.compile("^/([a-z0-9]+)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    /** HTML开始标签匹配正则。 */
     private static final Pattern P_START_TAG = Pattern.compile("^([a-z0-9]+)(.*?)(/?)$", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    /** 带引号属性匹配正则。 */
     private static final Pattern P_QUOTED_ATTRIBUTES = Pattern.compile("([a-z0-9]+)=([\"'])(.*?)\\2", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    /** 无引号属性匹配正则。 */
     private static final Pattern P_UNQUOTED_ATTRIBUTES = Pattern.compile("([a-z0-9]+)(=)([^\"\\s']+)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    /** URL协议前缀匹配正则。 */
     private static final Pattern P_PROTOCOL = Pattern.compile("^([^:]+):", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    /** 十进制HTML实体编码匹配正则。 */
     private static final Pattern P_ENTITY = Pattern.compile("&#(\\d+);?");
+    /** 十六进制HTML实体编码匹配正则。 */
     private static final Pattern P_ENTITY_UNICODE = Pattern.compile("&#x([0-9a-f]+);?");
+    /** 百分号编码匹配正则。 */
     private static final Pattern P_ENCODE = Pattern.compile("%([0-9a-f]{2});?");
+    /** 合法HTML实体名称匹配正则。 */
     private static final Pattern P_VALID_ENTITIES = Pattern.compile("&([^&;]*)(?=(;|&|$))");
+    /** 标签间有效文本内容匹配正则。 */
     private static final Pattern P_VALID_QUOTES = Pattern.compile("(>|^)([^<]+?)(<|$)", Pattern.DOTALL);
+    /** 起始尖括号匹配正则。 */
     private static final Pattern P_END_ARROW = Pattern.compile("^>");
+    /** 未闭合标签体内容匹配正则。 */
     private static final Pattern P_BODY_TO_END = Pattern.compile("<([^>]*?)(?=<|$)");
+    /** XML文本内容匹配正则。 */
     private static final Pattern P_XML_CONTENT = Pattern.compile("(^|>)([^<]*?)(?=>)");
+    /** 孤立左尖括号匹配正则。 */
     private static final Pattern P_STRAY_LEFT_ARROW = Pattern.compile("<([^>]*?)(?=<|$)");
+    /** 孤立右尖括号匹配正则。 */
     private static final Pattern P_STRAY_RIGHT_ARROW = Pattern.compile("(^|>)([^<]*?)(?=>)");
+    /** 与号字符匹配正则。 */
     private static final Pattern P_AMP = Pattern.compile("&");
+    /** 双引号字符匹配正则。 */
     private static final Pattern P_QUOTE = Pattern.compile("\"");
+    /** 左尖括号字符匹配正则。 */
     private static final Pattern P_LEFT_ARROW = Pattern.compile("<");
+    /** 右尖括号字符匹配正则。 */
     private static final Pattern P_RIGHT_ARROW = Pattern.compile(">");
+    /** 左右尖括号对匹配正则。 */
     private static final Pattern P_BOTH_ARROWS = Pattern.compile("<>");
 
     /** @xxx could grow large... maybe use sesat's ReferenceMap */
     private static final ConcurrentMap<String, Pattern> P_REMOVE_PAIR_BLANKS = new ConcurrentHashMap<>();
+    /** 自包含空标签移除正则缓存。 */
     private static final ConcurrentMap<String, Pattern> P_REMOVE_SELF_BLANKS = new ConcurrentHashMap<>();
 
     /**
@@ -87,9 +111,7 @@ public final class HtmlFilter {
      * entities allowed within html markup
      **/
     private final String[] vAllowedEntities;
-    /**
-     * flag determining whether comments are allowed in input String.
-     */
+    /** flag determining whether comments are allowed in input String. */
     private final boolean stripComment;
     private final boolean encodeQuotes;
     /**
@@ -99,9 +121,7 @@ public final class HtmlFilter {
     @Getter
     private final boolean alwaysMakeTags;
 
-    /**
-     * Default constructor.
-     */
+    /** Default constructor. */
     public HtmlFilter()
     {
         vAllowed = new HashMap<>();
@@ -173,9 +193,7 @@ public final class HtmlFilter {
         vTagCounts.clear();
     }
 
-    /**
-     * my versions of some PHP library functions
-     */
+    /** my versions of some PHP library functions */
     public static String chr(final int decimal)
     {
         return String.valueOf((char) decimal);

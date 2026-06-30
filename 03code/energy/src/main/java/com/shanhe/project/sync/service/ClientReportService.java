@@ -39,24 +39,18 @@ public class ClientReportService {
     @Resource
     private TcpClient tcpClient;
 
-    /**
-     * 需要上报判断
-     */
+    /** 需要上报判断 */
     public Boolean needSend() {
         Host host = hostService.getDetail();
         return host != null && Objects.equals(host.getNeedReport(), YesNoEnum.YES.getDictValue());
     }
 
-    /**
-     * 上报判断
-     */
+    /** 上报判断 */
     public Boolean canSend() {
         return this.needSend() && tcpClient.isOpen();
     }
 
-    /**
-     * 取当前主机imei
-     */
+    /** 取当前主机imei */
     public String getImei() {
         // 是否同步、是否开启客户端
         if (!this.canSend()) {

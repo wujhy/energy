@@ -44,9 +44,7 @@ public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
 
     CacheKeyEnum cache = CacheKeyEnum.STAT_BATTERY_GROUP;
 
-    /**
-     * 初始化 预测电池组对象
-     */
+    /** 初始化 预测电池组对象 */
     @Override
     public void insert(PreBatteryGroup groupVo) {
         groupVo.setConfigId(Constants.DEFAULT_CONFIG_ID);
@@ -95,9 +93,7 @@ public class PreBatteryGroupServiceImpl implements PreBatteryGroupService {
         preBatteryGroupMapper.deleteByPackNum(packNum);
     }
 
-    /**
-     * 更新预测电池组缓存
-     */
+    /** 更新预测电池组缓存 */
     @Override
     public void updateCache() {
         // 旧缓存

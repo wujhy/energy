@@ -20,14 +20,10 @@ import java.util.Objects;
 @Slf4j
 public class CommServerDecoder {
 
-    /**
-     * 粘包处理
-     */
+    /** 粘包处理 */
     private static final CacheKeyEnum STICKY_CACHE = CacheKeyEnum.STICKY;
 
-    /**
-     * 解析数据，粘包处理
-     */
+    /** 解析数据，粘包处理 */
     public static void toDecode(String currentData, Integer headLength, List<Object> out) {
         String reqStr = currentData;
         // 起始位置、数据长度
@@ -94,9 +90,7 @@ public class CommServerDecoder {
         }
     }
 
-    /**
-     * 指令解析为对象属性
-     */
+    /** 指令解析为对象属性 */
     private static DeviceData toDataDevice(String str) {
 
         // 截去指令起始符、校验和、结束符

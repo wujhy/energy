@@ -32,9 +32,7 @@ public enum IpAddrEnum {
         this.label = label;
     }
 
-    /**
-     * 通过值查标签名
-     */
+    /** 通过值查标签名 */
     public static String findLabelByValue(Object value) {
         String dictValue = (String) value;
         for (IpAddrEnum dictEnum : IpAddrEnum.values()) {
@@ -45,9 +43,7 @@ public enum IpAddrEnum {
         return null;
     }
 
-    /**
-     * 通过值查标签名
-     */
+    /** 通过值查标签名 */
     public static String findByValue(Object value) {
         String dictValue = (String) value;
         for (IpAddrEnum dictEnum : IpAddrEnum.values()) {
@@ -58,9 +54,7 @@ public enum IpAddrEnum {
         return null;
     }
 
-    /**
-     * 转list
-     */
+    /** 转list */
     public static List<Dict> getDictList() {
         List<Dict> list = new ArrayList<>();
         for (IpAddrEnum dictEnum : IpAddrEnum.values()) {

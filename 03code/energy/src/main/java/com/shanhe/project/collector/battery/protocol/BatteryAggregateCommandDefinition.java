@@ -64,19 +64,13 @@ public enum BatteryAggregateCommandDefinition {
     READ_DEVICE_IP_ADDRESS(0x61, 0xB1, "读取设备IP地址"),
     READ_CLOUD_SERVER_IP_ADDRESS(0x62, 0xB2, "读取云服务器IP地址");
 
-    /**
-     * 980 聚合请求命令码。
-     */
+    /** 980 聚合请求命令码。 */
     private final int requestCode;
 
-    /**
-     * 980 聚合响应命令码。
-     */
+    /** 980 聚合响应命令码。 */
     private final int responseCode;
 
-    /**
-     * 命令说明。
-     */
+    /** 命令说明。 */
     private final String description;
 
     BatteryAggregateCommandDefinition(int requestCode, int responseCode, String description) {

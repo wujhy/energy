@@ -39,9 +39,7 @@ public class OptBatteryController extends BaseController {
     @Resource
     private OptLogService optLogService;
 
-    /**
-     * 查询【蓄电池测试操作参数】列表
-     */
+    /** 查询【蓄电池测试操作参数】列表 */
     @GetMapping("/list")
     public TableDataInfo list(DevBatteryOpt devBatteryOpt) {
         startPage();
@@ -49,9 +47,7 @@ public class OptBatteryController extends BaseController {
         return getDataTable(list);
     }
 
-    /**
-     * 获取【蓄电池测试操作参数】详细信息
-     */
+    /** 获取【蓄电池测试操作参数】详细信息 */
     @GetMapping(value = "/info")
     public AjaxResult getInfo(@RequestParam(name = "configId", required = false) Long ignoredConfigId,
                               @RequestParam Integer packNum,
@@ -59,9 +55,7 @@ public class OptBatteryController extends BaseController {
         return success(devBatteryOptService.selectDevBatteryOptByPackNum(packNum, testType));
     }
 
-    /**
-     * 计划执行任务
-     */
+    /** 计划执行任务 */
     @Log(title = "蓄电池测试操作", businessType = BusinessType.UPDATE)
     @PostMapping("/edit")
     public AjaxResult edit(@RequestBody DevBatteryOpt devBatteryOpt) {
@@ -70,9 +64,7 @@ public class OptBatteryController extends BaseController {
         return success();
     }
 
-    /**
-     * 立即执行蓄电池测试操作
-     */
+    /** 立即执行蓄电池测试操作 */
     @PostMapping("/doCmdOptBatteryTest")
     public AjaxResult doCmdOptBatteryTest(@RequestBody DevBatteryOpt devBatteryOpt) {
         normalizeLocalOpt(devBatteryOpt);
@@ -95,9 +87,7 @@ public class OptBatteryController extends BaseController {
         devBatteryOpt.setIsSync(false);
     }
 
-    /**
-     * 停止操作
-     */
+    /** 停止操作 */
     @PostMapping("/doCmdStopBattery")
     public AjaxResult doCmdStopBattery(@RequestBody DevBatteryOpt devBatteryOpt) {
         //发送指令到终端设备

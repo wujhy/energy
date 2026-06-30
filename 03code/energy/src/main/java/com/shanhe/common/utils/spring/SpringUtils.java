@@ -76,9 +76,7 @@ public final class SpringUtils implements BeanFactoryPostProcessor, ApplicationC
         return beanFactory.isSingleton(name);
     }
 
-    /**
-     * 注册对象的类型
-     */
+    /** 注册对象的类型 */
     public static Class<?> getType(String name) throws NoSuchBeanDefinitionException {
         return beanFactory.getType(name);
     }
@@ -91,9 +89,7 @@ public final class SpringUtils implements BeanFactoryPostProcessor, ApplicationC
         return beanFactory.getAliases(name);
     }
 
-    /**
-     * 获取aop代理对象
-     */
+    /** 获取aop代理对象 */
     @SuppressWarnings("unchecked")
     public static <T> T getAopProxy(T invoker) {
         return (T) AopContext.currentProxy();

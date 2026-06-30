@@ -33,9 +33,7 @@ public class HostController extends BaseController
     @Resource
     private IHostService hostService;
 
-    /**
-     * 获取主机详情
-     */
+    /** 获取主机详情 */
     @GetMapping("/detail")
     public AjaxResult detail() {
         Host host = hostService.getDetail();
@@ -147,9 +145,7 @@ public class HostController extends BaseController
         }
     }
 
-    /**
-     * 软件升级
-     */
+    /** 软件升级 */
     @Log(title = "软件升级", businessType = BusinessType.UPDATE)
     @GetMapping("/deploy")
     @ResponseBody

@@ -6,72 +6,38 @@ package com.shanhe.framework.enums;
  * @author ruoyi
  */
 public enum DictType {
-    /**
-     * 操作类型
-     */
+    /** 操作类型 */
     OPERATION_TYPE,
-    /**
-     * 结果
-     */
+    /** 结果 */
     RESULT,
-    /**
-     * 是否
-     */
+    /** 是否 */
     YES_NO,
-    /**
-     * 设备类型
-     */
+    /** 设备类型 */
     DEVICE_TYPE,
-    /**
-     * 数据类型
-     */
+    /** 数据类型 */
     DATA_TYPE,
-    /**
-     * 串口类型
-     */
+    /** 串口类型 */
     PORT_TYPE,
-    /**
-     * 波特率
-     */
+    /** 波特率 */
     BAUD_RATE,
-    /**
-     * 连接状态
-     */
+    /** 连接状态 */
     CONNECTION_STATUS,
-    /**
-     * 告警等级
-     */
+    /** 告警等级 */
     ALARM_LEVEL,
-    /**
-     * 校验位
-     */
+    /** 校验位 */
     PARITY_BITS,
-    /**
-     * 停止位
-     */
+    /** 停止位 */
     STOP_BITS,
-    /**
-     * 数据位
-     */
+    /** 数据位 */
     DATA_BITS,
-    /**
-     * 主机类型
-     */
+    /** 主机类型 */
     HOST_TYPE,
-    /**
-     * 比较
-     */
+    /** 比较 */
     COMPARE,
-    /**
-     * 蓄电池规格
-     */
+    /** 蓄电池规格 */
     BATTERY_MODEL,
-    /**
-     * 蓄电池品牌
-     */
+    /** 蓄电池品牌 */
     BATTERY_BRAND,
-    /**
-     * IP地址
-     */
+    /** IP地址 */
     IP_ADDR
 }

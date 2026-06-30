@@ -21,9 +21,7 @@ public class RotatingServerDecoder extends ByteToMessageDecoder {
     /** 指令头字节长度 */
     public static final Integer HEAD_LENGTH = 13;
 
-    /**
-     * 解码
-     */
+    /** 解码 */
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         try {

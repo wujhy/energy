@@ -15,50 +15,30 @@ import java.util.Map;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class OptLog extends BaseEntity {
-    /**
-     * 主键
-     */
+    /** 主键 */
     private Long id;
-    /**
-     * 设备ID
-     */
+    /** 设备ID */
     private Long configId;
-    /**
-     * 组序号
-     */
+    /** 组序号 */
     private Integer packNum;
-    /**
-     * 操作类型
-     */
+    /** 操作类型 */
     private Integer type;
-    /**
-     * 内容参数
-     */
+    /** 内容参数 */
     private String content;
-    /**
-     * 内容参数
-     */
+    /** 内容参数 */
     private Map<String, Object> params;
-    /**
-     * 操作结果
-     */
+    /** 操作结果 */
     private Integer result;
-    /**
-     * 额定容量 单位 A
-     */
+    /** 额定容量 单位 A */
     private Double batCapacity;
 
-    /**
-     * 预估容量 单位 AH
-     */
+    /** 预估容量 单位 AH */
     private Double bcapacity;
 
     /** 放电容量 */
     private Double dischargeCapacity;
 
-    /**
-     * 平均电流 单位 A
-     */
+    /** 平均电流 单位 A */
     private Double current;
 
     /** 更新时间 */

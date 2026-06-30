@@ -15,7 +15,9 @@ package com.shanhe.project.iot.battery;
  */
 public final class BatteryAlarmBitMapping {
 
+    /** 每个字节的位数。 */
     public static final int BITS_PER_BYTE = 8;
+    /** 87告警组status1中电平状态占用的位数。 */
     public static final int GROUP_87_LEVEL_BITS = 2;
 
     private BatteryAlarmBitMapping() {

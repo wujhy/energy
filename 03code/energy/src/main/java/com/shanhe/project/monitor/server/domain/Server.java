@@ -25,27 +25,18 @@ import oshi.util.Util;
 @Getter
 public class Server {
 
+    /** OSHI 采集 CPU 使用率时的采样等待时间（毫秒）。 */
     private static final int OSHI_WAIT_SECOND = 1000;
 
-    /**
-     * CPU相关信息
-     */
+    /** CPU相关信息 */
     private final Cpu cpu = new Cpu();
-    /**
-     * 內存相关信息
-     */
+    /** 內存相关信息 */
     private final Mem mem = new Mem();
-    /**
-     * JVM相关信息
-     */
+    /** JVM相关信息 */
     private final Jvm jvm = new Jvm();
-    /**
-     * 服务器相关信息
-     */
+    /** 服务器相关信息 */
     private final Sys sys = new Sys();
-    /**
-     * 磁盘相关信息
-     */
+    /** 磁盘相关信息 */
     private final List<SysFile> sysFiles = new LinkedList<>();
 
 
@@ -65,9 +56,7 @@ public class Server {
         setSysFiles(si.getOperatingSystem());
     }
 
-    /**
-     * 设置CPU信息
-     */
+    /** 设置CPU信息 */
     private void setCpuInfo(CentralProcessor processor) {
         // CPU信息
         long[] prevTicks = processor.getSystemCpuLoadTicks();
@@ -90,18 +79,14 @@ public class Server {
         cpu.setFree(idle);
     }
 
-    /**
-     * 设置内存信息
-     */
+    /** 设置内存信息 */
     private void setMemInfo(GlobalMemory memory) {
         mem.setTotal(memory.getTotal());
         mem.setUsed(memory.getTotal() - memory.getAvailable());
         mem.setFree(memory.getAvailable());
     }
 
-    /**
-     * 设置服务器信息
-     */
+    /** 设置服务器信息 */
     private void setSysInfo() {
         Properties props = System.getProperties();
         sys.setComputerName(IpUtils.getHostName());
@@ -111,9 +96,7 @@ public class Server {
         sys.setUserDir(props.getProperty("user.dir"));
     }
 
-    /**
-     * 设置Java虚拟机
-     */
+    /** 设置Java虚拟机 */
     private void setJvmInfo() {
         Properties props = System.getProperties();
         jvm.setTotal(Runtime.getRuntime().totalMemory());
@@ -123,9 +106,7 @@ public class Server {
         jvm.setHome(props.getProperty("java.home"));
     }
 
-    /**
-     * 设置磁盘信息
-     */
+    /** 设置磁盘信息 */
     private void setSysFiles(OperatingSystem os) {
         FileSystem fileSystem = os.getFileSystem();
         List<OSFileStore> fsArray = fileSystem.getFileStores();

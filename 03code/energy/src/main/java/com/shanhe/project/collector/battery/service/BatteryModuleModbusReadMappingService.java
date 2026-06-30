@@ -256,9 +256,7 @@ public class BatteryModuleModbusReadMappingService {
         }
     }
 
-    /**
-     * M460 Battery_State_Register：高字节低4位为电池组状态，低字节为内阻测试状态。
-     */
+    /** M460 Battery_State_Register：高字节低4位为电池组状态，低字节为内阻测试状态。 */
     private int batteryStateRegister(BatteryModuleGroupRealtime group) {
         return BatteryModuleStatusRegisterCodec.compose(group.getBatteryPackStatus(), group.getResistanceTestStatus());
     }
@@ -504,9 +502,7 @@ public class BatteryModuleModbusReadMappingService {
         return unsigned16(value);
     }
 
-    /**
-     * 单次Modbus读取使用的实时数据快照。
-     */
+    /** 单次Modbus读取使用的实时数据快照。 */
     private static class ModbusReadSnapshot {
 
         /** 按单体编号缓存单体实时数据。 */

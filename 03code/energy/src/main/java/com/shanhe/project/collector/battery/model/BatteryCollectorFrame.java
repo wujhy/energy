@@ -16,39 +16,25 @@ import java.util.Arrays;
 @Builder
 public class BatteryCollectorFrame {
 
-    /**
-     * 帧头，固定为 ASCII START。
-     */
+    /** 帧头，固定为 ASCII START。 */
     private byte[] start;
 
-    /**
-     * 模块地址。
-     */
+    /** 模块地址。 */
     private int address;
 
-    /**
-     * 命令码。
-     */
+    /** 命令码。 */
     private int command;
 
-    /**
-     * 信息域长度。
-     */
+    /** 信息域长度。 */
     private int length;
 
-    /**
-     * 信息域内容。
-     */
+    /** 信息域内容。 */
     private byte[] payload;
 
-    /**
-     * 累加校验值。
-     */
+    /** 累加校验值。 */
     private int check;
 
-    /**
-     * 帧尾，固定 0x0D。
-     */
+    /** 帧尾，固定 0x0D。 */
     private int end;
 
     /**

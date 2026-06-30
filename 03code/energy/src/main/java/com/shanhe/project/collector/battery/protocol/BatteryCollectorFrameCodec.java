@@ -19,14 +19,10 @@ import java.util.List;
 @Component
 public class BatteryCollectorFrameCodec {
 
-    /**
-     * 协议固定帧头。
-     */
+    /** 协议固定帧头。 */
     private static final byte[] START = "START".getBytes(StandardCharsets.US_ASCII);
 
-    /**
-     * 无载荷时的最小完整帧长度。
-     */
+    /** 无载荷时的最小完整帧长度。 */
     private static final int FIXED_LENGTH = 10;
 
     /**
@@ -151,14 +147,10 @@ public class BatteryCollectorFrameCodec {
     @Builder
     public static class DecodeResult {
 
-        /**
-         * 已解析出的完整帧。
-         */
+        /** 已解析出的完整帧。 */
         private final List<BatteryCollectorFrame> frames;
 
-        /**
-         * 未形成完整帧的残留字节。
-         */
+        /** 未形成完整帧的残留字节。 */
         private final byte[] remaining;
     }
 }

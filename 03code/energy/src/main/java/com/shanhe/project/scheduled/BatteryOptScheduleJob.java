@@ -39,7 +39,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @EnableScheduling
 public class BatteryOptScheduleJob {
 
+    /** 测试计划最小执行间隔（毫秒），即1分钟。 */
     private static final long MIN_INTERVAL_MILLIS = 60_000L;
+    /** 调度执行摘要文案的最大长度。 */
     private static final int SCHEDULE_RESULT_MAX_LENGTH = 200;
 
     @Resource
@@ -53,9 +55,7 @@ public class BatteryOptScheduleJob {
 
     private final Set<String> runningKeys = ConcurrentHashMap.newKeySet();
 
-    /**
-     * 扫描并执行到期的蓄电池测试计划。
-     */
+    /** 扫描并执行到期的蓄电池测试计划。 */
     @Scheduled(cron = "${job.batteryOptSchedule:0 0/1 * * * ?}")
     public void executeDueBatteryOpt() {
         DevBatteryOpt query = new DevBatteryOpt();

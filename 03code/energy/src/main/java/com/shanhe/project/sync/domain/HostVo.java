@@ -16,32 +16,18 @@ import java.io.Serializable;
 public class HostVo implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 设备名称
-     */
+    /** 设备名称 */
     private String devName;
-    /**
-     * 本地IP
-     */
+    /** 本地IP */
     private String ip;
-    /**
-     * 本地端口号
-     */
+    /** 本地端口号 */
     private Integer port;
-    /**
-     * MAC地址
-     */
+    /** MAC地址 */
     private String macAddr;
-    /**
-     * 设备类型_2CM03N带屏动环主机
-     */
+    /** 设备类型_2CM03N带屏动环主机 */
     private String devType;
-    /**
-     * 软件版本
-     */
+    /** 软件版本 */
     private String softNum;
-    /**
-     * 硬件版本
-     */
+    /** 硬件版本 */
     private String version;
 }

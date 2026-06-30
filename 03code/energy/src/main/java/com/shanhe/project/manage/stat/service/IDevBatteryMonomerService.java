@@ -30,9 +30,7 @@ public interface IDevBatteryMonomerService {
      */
     void init(Integer packNum);
 
-    /**
-     * 删除
-     */
+    /** 删除 */
     void delete();
 
     /**

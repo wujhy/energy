@@ -56,9 +56,7 @@ public enum DeviceTypeEnum {
         this.dictLabel = dictLabel;
     }
 
-    /**
-     * 通过值查标签名
-     */
+    /** 通过值查标签名 */
     public static String findByValue(Object value) {
         Integer dictValue;
         if (value instanceof String) {

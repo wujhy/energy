@@ -32,9 +32,7 @@ public enum DataTypeEnum {
         this.dictLabel = dictLabel;
     }
 
-    /**
-     * 通过值查枚举
-     */
+    /** 通过值查枚举 */
     public static DataTypeEnum find(Integer dictValue) {
         for (DataTypeEnum dictEnum : DataTypeEnum.values()) {
             if (Objects.equals(dictEnum.getDictValue(), dictValue)) {
@@ -44,9 +42,7 @@ public enum DataTypeEnum {
         return _2;
     }
 
-    /**
-     * 通过值查标签名
-     */
+    /** 通过值查标签名 */
     public static String findByValue(Object value) {
         Integer dictValue;
         if (value instanceof String) {
@@ -62,9 +58,7 @@ public enum DataTypeEnum {
         return null;
     }
 
-    /**
-     * 转list
-     */
+    /** 转list */
     public static List<Dict> getDictList() {
         List<Dict> list = new ArrayList<>();
         for (DataTypeEnum dictEnum : DataTypeEnum.values()) {

@@ -16,52 +16,28 @@ import java.io.Serializable;
 public class AlarmItemLevelVo implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 主键ID
-     */
+    /** 主键ID */
     private Long id;
-    /**
-     * 告警项ID
-     */
+    /** 告警项ID */
     private Long itemId;
-    /**
-     * 告警级别编号
-     */
+    /** 告警级别编号 */
     private String levelCode;
-    /**
-     * 级别名称
-     */
+    /** 级别名称 */
     private String levelCodeName;
-    /**
-     * 基准值
-     */
+    /** 基准值 */
     private Double standValue;
-    /**
-     * 大于值
-     */
+    /** 大于值 */
     private Double hightValue;
-    /**
-     * 小于值
-     */
+    /** 小于值 */
     private Double lowValue;
-    /**
-     * 恢复值比对方式1大于2小于3等于
-     */
+    /** 恢复值比对方式1大于2小于3等于 */
     private Integer recFlag;
-    /**
-     * 恢复值
-     */
+    /** 恢复值 */
     private Double recValue;
-    /**
-     * 枚举id
-     */
+    /** 枚举id */
     private String dictId;
-    /**
-     * 枚举名称
-     */
+    /** 枚举名称 */
     private String dictName;
-    /**
-     * 告警描述
-     */
+    /** 告警描述 */
     private String alarmDesc;
 }

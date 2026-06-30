@@ -21,6 +21,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
      *
      */
     private static class Holder {
+        /** 安全随机数生成器单例。 */
         static final SecureRandom NUMBER_GENERATOR = getSecureRandom();
     }
 
@@ -388,9 +389,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
         return Long.toHexString(hi | (val & (hi - 1))).substring(1);
     }
 
-    /**
-     * 检查是否为time-based版本UUID
-     */
+    /** 检查是否为time-based版本UUID */
     private void checkTimeBase() {
         if (version() != 1) {
             throw new UnsupportedOperationException("非基于时间的UUID");

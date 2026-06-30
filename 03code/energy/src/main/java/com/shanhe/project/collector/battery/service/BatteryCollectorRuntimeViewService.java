@@ -100,6 +100,7 @@ public class BatteryCollectorRuntimeViewService {
         metrics.setCurrentRetryCount(state.getCurrentRetryCount());
         metrics.setCurrentPollBatchNo(state.getCurrentPollBatchNo());
         metrics.setCurrentPollStartedAt(state.getCurrentPollStartedAt());
+        metrics.setCurrentPollElapsedMs(elapsedSince(state.getCurrentPollStartedAt()));
         metrics.setCurrentPollAddress(state.getCurrentPollAddress());
         metrics.setPollRoundCount(state.getPollRoundCount());
         metrics.setCurrentFullDiscovery(state.isCurrentFullDiscovery());
@@ -110,6 +111,7 @@ public class BatteryCollectorRuntimeViewService {
         metrics.setLastCompletedModuleCommandSuccess(state.isLastCompletedModuleCommandSuccess());
         metrics.setLastCompletedModuleCommandTime(state.getLastCompletedModuleCommandTime());
         metrics.setReceiveBufferSize(state.getReceiveBuffer().size());
+        metrics.setChannelHealth(resolveChannelHealth(metrics, state));
         BatteryPendingRequest pendingRequest = state.getPendingCommand();
         if (pendingRequest != null) {
             metrics.setPendingCommandName(pendingRequest.getName());
@@ -187,10 +189,48 @@ public class BatteryCollectorRuntimeViewService {
         metrics.setSnapshotCurrentBatchCellCount(snapshot.getCurrentBatchCellNums().size());
         metrics.setSnapshotStaleCellCount(snapshot.getStaleCellNums().size());
         metrics.setSnapshotMissingCellCount(snapshot.getMissingCellNums().size());
+        metrics.setSnapshotHitRate(snapshotHitRate(config, snapshot));
+        metrics.setSnapshotAgeMs(snapshotAgeMs(snapshot));
         metrics.setSnapshotPollBatchNo(snapshot.getPollBatchNo());
         metrics.setSnapshotPollStartedAt(snapshot.getPollStartedAt());
         metrics.setSnapshotRefreshedAt(snapshot.getRefreshedAt());
         metrics.setSnapshotDataReady(snapshot.isDataReady());
+    }
+
+    private Long elapsedSince(long startedAt) {
+        return startedAt <= 0 ? null : Math.max(0L, System.currentTimeMillis() - startedAt);
+    }
+
+    private Long snapshotAgeMs(BatteryModuleRealtimeSnapshot snapshot) {
+        return snapshot.getRefreshedAt() == null ? null
+                : Math.max(0L, System.currentTimeMillis() - snapshot.getRefreshedAt().getTime());
+    }
+
+    private Double snapshotHitRate(BatteryCollectorChannelConfig config, BatteryModuleRealtimeSnapshot snapshot) {
+        Integer expected = config == null ? null : config.getExpectedCellCount();
+        if (expected == null || expected <= 0) {
+            expected = snapshot.getBatSinSize();
+        }
+        if (expected == null || expected <= 0) {
+            return null;
+        }
+        return Math.min(1.0d, snapshot.getCurrentBatchCellNums().size() * 1.0d / expected);
+    }
+
+    private String resolveChannelHealth(BatteryCollectorChannelMetrics metrics, BatteryCollectorChannelState state) {
+        if (!Boolean.TRUE.equals(metrics.getEnabled())) {
+            return "DISABLED";
+        }
+        if (!Boolean.TRUE.equals(metrics.getOpened())) {
+            return "CLOSED";
+        }
+        if (state.isLastPendingTimedOut()) {
+            return "PENDING_TIMEOUT";
+        }
+        if (safeInt(metrics.getTimeoutCount()) > 0) {
+            return "TIMEOUTS";
+        }
+        return "OK";
     }
 
     /** 拷贝通道状态列表，避免遍历时受并发修改影响。 */

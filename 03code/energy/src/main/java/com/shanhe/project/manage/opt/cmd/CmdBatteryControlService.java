@@ -63,9 +63,7 @@ public class CmdBatteryControlService {
         return DeviceModel.getCmd(hostService.getDetail(), config, info.toString(), TcpCidEnum._54.getDictValue(), BatteryCidEnum._E1.getDictValue());
     }
 
-    /**
-     * 统一加校验和、指令头尾
-     */
+    /** 统一加校验和、指令头尾 */
     private void appendHeadAndEnd(StringBuilder info) {
         // 校验和
         info.append(CodingUtil.energyCheckSum(info.toString()));

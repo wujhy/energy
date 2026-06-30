@@ -51,9 +51,7 @@ public enum BatteryTestEnum {
         return _99;
     }
 
-    /**
-     * 通过值查标签名
-     */
+    /** 通过值查标签名 */
     public static String findByValue(Object value) {
         Integer dictValue;
         if (value instanceof String) {
@@ -69,9 +67,7 @@ public enum BatteryTestEnum {
         return null;
     }
 
-    /**
-     * 转list
-     */
+    /** 转list */
     public static List<Dict> getDictList() {
         List<Dict> list = new ArrayList<>();
         for (BatteryTestEnum dictEnum : BatteryTestEnum.values()) {

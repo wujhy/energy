@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class IpUtils
 {
+    /** 本地回环IP地址。 */
     private static final String INTERNAL_IP = "127.0.0.1";
 
     public static String getIpAddr(HttpServletRequest request)
@@ -170,9 +171,7 @@ public class IpUtils
         return bytes;
     }
 
-    /**
-     * 取本机IP
-     */
+    /** 取本机IP */
     public static String getHostIp()
     {
         try {
@@ -181,9 +180,7 @@ public class IpUtils
         return "127.0.0.1";
     }
 
-    /**
-     * 取本机网络名
-     */
+    /** 取本机网络名 */
     public static String getHostName()
     {
         try {
@@ -192,9 +189,7 @@ public class IpUtils
         return "未知";
     }
 
-    /**
-     * 长度转IP掩码格式
-     */
+    /** 长度转IP掩码格式 */
     public static String calcMaskByPrefixLength(int length) {
         int mask = -1 << (32 - length);
         int partsNum = 4;
@@ -215,9 +210,7 @@ public class IpUtils
         return result.toString();
     }
 
-    /**
-     * 通过IP、掩码计算网关IP（广播地址加1）
-     */
+    /** 通过IP、掩码计算网关IP（广播地址加1） */
     public static String calcSubnetAddress(InetAddress ipAddress, String mask) {
         StringBuilder result = new StringBuilder();
         try {
@@ -242,9 +235,7 @@ public class IpUtils
         return result.toString();
     }
 
-    /**
-     * IP转整数
-     */
+    /** IP转整数 */
     public static int ipToInteger(InetAddress address) {
         byte[] addrBytes = address.getAddress();
         return ((addrBytes[0] & 0xFF) << 24) | ((addrBytes[1] & 0xFF) << 16) | ((addrBytes[2] & 0xFF) << 8) | (addrBytes[3] & 0xFF);
@@ -275,9 +266,7 @@ public class IpUtils
         }
     }
 
-    /**
-     * 计算广播IP
-     */
+    /** 计算广播IP */
     public static String broadcastIp(int ipInt, int maskInt) {
         try {
 
@@ -290,9 +279,7 @@ public class IpUtils
         }
     }
 
-    /**
-     * 整数转IP
-     */
+    /** 整数转IP */
     public static InetAddress integerToIp(int ipInt) throws UnknownHostException {
         byte[] addrBytes = new byte[] {
                 (byte) ((ipInt >> 24) & 0xFF),

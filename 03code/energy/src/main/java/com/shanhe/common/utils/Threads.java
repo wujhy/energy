@@ -16,11 +16,10 @@ import lombok.extern.slf4j.Slf4j;
 public class Threads
 {
 
+    /** 线程池关闭等待超时时间（秒）。 */
     private static final long SHUTDOWN_TIMEOUT_SECONDS = 120L;
 
-    /**
-     * sleep等待,单位为毫秒
-     */
+    /** sleep等待,单位为毫秒 */
     public static void sleep(long milliseconds)
     {
         try
@@ -64,9 +63,7 @@ public class Threads
         }
     }
     
-    /**
-     * 打印线程异常信息
-     */
+    /** 打印线程异常信息 */
     public static void printException(Runnable r, Throwable t)
     {
         if (t == null && r instanceof Future<?>)

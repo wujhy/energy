@@ -32,9 +32,7 @@ public enum StopBitsEnum {
         this.dictLabel = dictLabel;
     }
 
-    /**
-     * 通过值查标签名
-     */
+    /** 通过值查标签名 */
     public static String findByValue(Object value) {
         Integer dictValue;
         if (value instanceof String) {
@@ -50,9 +48,7 @@ public enum StopBitsEnum {
         return null;
     }
 
-    /**
-     * 转list
-     */
+    /** 转list */
     public static List<Dict> getDictList() {
         List<Dict> list = new ArrayList<>();
         for (StopBitsEnum dictEnum : StopBitsEnum.values()) {

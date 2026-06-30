@@ -16,10 +16,15 @@ import java.util.List;
 @Data
 public class BatteryCurrentState {
 
+    /** 数据新鲜度状态：未配置电池组。 */
     public static final String FRESHNESS_NO_CONFIG = "NO_CONFIG";
+    /** 数据新鲜度状态：尚未采集到数据。 */
     public static final String FRESHNESS_NOT_COLLECTED = "NOT_COLLECTED";
+    /** 数据新鲜度状态：数据新鲜。 */
     public static final String FRESHNESS_FRESH = "FRESH";
+    /** 数据新鲜度状态：数据过期。 */
     public static final String FRESHNESS_STALE = "STALE";
+    /** 数据新鲜度状态：部分单体缺失。 */
     public static final String FRESHNESS_PARTIAL = "PARTIAL";
 
     /** 电池组编号。 */

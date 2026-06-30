@@ -15,24 +15,16 @@ import lombok.EqualsAndHashCode;
 public class DevBatteryMonomer extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 蓄电池组ID
-     */
+    /** 蓄电池组ID */
     private Long id;
 
-    /**
-     * 蓄电池组ID
-     */
+    /** 蓄电池组ID */
     private Long packId;
 
-    /**
-     * 单体电池编号
-     */
+    /** 单体电池编号 */
     private Integer batNum;
 
-    /**
-     * 电池 初装内阻值（ 2 字节）单位：uΩ
-     */
+    /** 电池 初装内阻值（ 2 字节）单位：uΩ */
     private Integer resistance;
 
     public DevBatteryMonomer() {

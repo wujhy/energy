@@ -9,9 +9,11 @@ import lombok.Getter;
  * @since 2025/7/14
  */
 public class Crc16m {
+    /** 十六进制字符表。 */
     static final String HEXES = "0123456789ABCDEF";
     byte uchCrcHi = (byte) 0xFF;
     byte uchCrcLo = (byte) 0xFF;
+    /** CRC16校验高位查找表。 */
     private static final byte[] AUTH_CRC_HI = { 0x00, (byte) 0xC1, (byte) 0x81,
             (byte) 0x40, (byte) 0x01, (byte) 0xC0, (byte) 0x80, (byte) 0x41,
             (byte) 0x01, (byte) 0xC0, (byte) 0x80, (byte) 0x41, (byte) 0x00,
@@ -65,6 +67,7 @@ public class Crc16m {
             (byte) 0x01, (byte) 0xC0, (byte) 0x80, (byte) 0x41, (byte) 0x00,
             (byte) 0xC1, (byte) 0x81, (byte) 0x40 };
 
+    /** CRC16校验低位查找表。 */
     private static final byte[] AUTH_CRC_LO = { (byte) 0x00, (byte) 0xC0, (byte) 0xC1,
             (byte) 0x01, (byte) 0xC3, (byte) 0x03, (byte) 0x02, (byte) 0xC2,
             (byte) 0xC6, (byte) 0x06, (byte) 0x07, (byte) 0xC7, (byte) 0x05,
@@ -136,18 +139,14 @@ public class Crc16m {
         value = ((((int) uchCrcHi) << 8 | (((int) uchCrcLo) & 0xff))) & 0xffff;
     }
 
-    /**
-     * 重置
-     */
+    /** 重置 */
     public void reset() {
         value = 0;
         uchCrcHi = (byte) 0xff;
         uchCrcLo = (byte) 0xff;
     }
 
-    /**
-     * 字节
-     */
+    /** 字节 */
     private static byte uniteBytes(byte src0, byte src1) {
         byte b0 = Byte.decode("0x" + new String(new byte[]{src0}));
         b0 = (byte) (b0 << 4);
@@ -155,9 +154,7 @@ public class Crc16m {
         return (byte) (b0 ^ b1);
     }
 
-    /**
-     * 十六进制字符串转字节数组
-     */
+    /** 十六进制字符串转字节数组 */
     private static byte[] hexString2Buf(String src) {
         int len = src.length();
         byte[] ret = new byte[len / 2+2];
@@ -168,9 +165,7 @@ public class Crc16m {
         return ret;
     }
 
-    /**
-     * 内容转字节数组
-     */
+    /** 内容转字节数组 */
     public static byte[] getSendBuf(String toSend){
         byte[] bb = hexString2Buf(toSend);
         Crc16m crc16 = new Crc16m();
@@ -181,9 +176,7 @@ public class Crc16m {
         return bb;
     }
 
-    /**
-     * 校验结果
-     */
+    /** 校验结果 */
     public static boolean checkBuf(byte[] bb){
         Crc16m crc16 = new Crc16m();
         crc16.update(bb, bb.length-2);

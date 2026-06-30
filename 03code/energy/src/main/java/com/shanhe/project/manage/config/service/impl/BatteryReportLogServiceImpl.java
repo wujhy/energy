@@ -232,9 +232,7 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         batteryReportLogMapper.deleteByDays(dayNum);
     }
 
-    /**
-     * 更新上报日志缓存
-     */
+    /** 更新上报日志缓存 */
     @Override
     public void updateCache() {
         // 旧缓存
@@ -355,9 +353,7 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         }
     }
 
-    /**
-     * 转换格式
-     */
+    /** 转换格式 */
     public static List<Object> batteryPackMonitorOfExcel(BatteryReportLog item, Integer batteryMaxNumber) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         List<Object> excelData = new ArrayList<>();

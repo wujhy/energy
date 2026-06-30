@@ -92,9 +92,7 @@ public interface BatteryDeviceStateService {
      */
     void deleteByPackNum(Integer packNum);
 
-    /**
-     * 删除全部设备状态。
-     */
+    /** 删除全部设备状态。 */
     void deleteAll();
 
     /**

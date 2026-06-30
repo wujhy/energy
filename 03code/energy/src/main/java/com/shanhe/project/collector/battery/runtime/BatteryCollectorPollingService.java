@@ -149,9 +149,7 @@ public class BatteryCollectorPollingService {
         protocolLogService.logPollSummary(state, fullDiscovery, polledCommands, completedCommands);
     }
 
-    /**
-     * 判断是否需要全量发现。
-     */
+    /** 判断是否需要全量发现。 */
     public boolean shouldRunFullDiscovery(BatteryCollectorChannelState state, long now) {
         if (!Boolean.TRUE.equals(properties.getModuleAddressCacheEnabled())) {
             return true;
@@ -168,9 +166,7 @@ public class BatteryCollectorPollingService {
                 && now - state.getLastFullDiscoveryTime() >= interval;
     }
 
-    /**
-     * 解析本轮轮询的模块地址列表。
-     */
+    /** 解析本轮轮询的模块地址列表。 */
     public List<Integer> resolvePollingAddresses(BatteryCollectorChannelState state, boolean fullDiscovery) {
         if (!Boolean.TRUE.equals(properties.getModuleAddressCacheEnabled()) || fullDiscovery) {
             return fullModuleAddressRange(state.getConfig());
@@ -184,9 +180,7 @@ public class BatteryCollectorPollingService {
         return activeAddresses;
     }
 
-    /**
-     * 判断是否应跳过剩余单体地址发现。
-     */
+    /** 判断是否应跳过剩余单体地址发现。 */
     public boolean shouldSkipRemainingCellDiscovery(boolean fullDiscovery,
                                                       Integer currentAddress,
                                                       int completedCellCount,
@@ -197,9 +191,7 @@ public class BatteryCollectorPollingService {
                 && completedCellCount >= expectedCellCount;
     }
 
-    /**
-     * 更新模块地址缓存：响应成功时加入/保留，连续未响应时移除。
-     */
+    /** 更新模块地址缓存：响应成功时加入/保留，连续未响应时移除。 */
     public void updateModuleAddressCache(BatteryCollectorChannelState state, int address, boolean responded) {
         if (address == GROUP_MODULE_ADDRESS) {
             collectorDeviceStateService.persistGroup246Freshness(state.getConfig(), responded);

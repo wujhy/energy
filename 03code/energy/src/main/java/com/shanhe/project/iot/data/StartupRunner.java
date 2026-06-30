@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class StartupRunner implements ApplicationRunner {
 
+    /** 数据处理任务线程池。 */
     private static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = getThreadPoolExecutor();
 
     /** 蓄电池上报日志Mapper。 */

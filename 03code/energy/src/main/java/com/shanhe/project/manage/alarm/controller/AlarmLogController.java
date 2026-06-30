@@ -30,9 +30,7 @@ public class AlarmLogController extends BaseController
     @Resource
     private IAlarmLogService alarmLogService;
 
-    /**
-     * 查询设备历史记录列表
-     */
+    /** 查询设备历史记录列表 */
     @PostMapping("/list")
     @ResponseBody
     public TableDataInfo list(AlarmLog alarmLog)
@@ -43,9 +41,7 @@ public class AlarmLogController extends BaseController
         return getDataTable(list);
     }
 
-    /**
-     * 导出设备历史记录列表
-     */
+    /** 导出设备历史记录列表 */
     @Log(title = "设备告警记录", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     @ResponseBody
@@ -59,9 +55,7 @@ public class AlarmLogController extends BaseController
         return success();
     }
 
-    /**
-     * 新增保存设备历史记录
-     */
+    /** 新增保存设备历史记录 */
     @Log(title = "设备告警记录", businessType = BusinessType.INSERT)
     @PostMapping("/add")
     @ResponseBody
@@ -71,9 +65,7 @@ public class AlarmLogController extends BaseController
         return success();
     }
 
-    /**
-     * 修改设备告警记录
-     */
+    /** 修改设备告警记录 */
     @GetMapping("/info/{alarmId}")
     @ResponseBody
     public AjaxResult info(@PathVariable("alarmId") Long alarmId)
@@ -81,9 +73,7 @@ public class AlarmLogController extends BaseController
         return success(alarmLogService.selectAlarmLogByAlarmId(alarmId));
     }
 
-    /**
-     * 修改保存设备告警记录
-     */
+    /** 修改保存设备告警记录 */
     @Log(title = "设备告警记录", businessType = BusinessType.UPDATE)
     @PostMapping("/edit")
     @ResponseBody
@@ -93,9 +83,7 @@ public class AlarmLogController extends BaseController
         return success();
     }
 
-    /**
-     * 删除设备告警记录
-     */
+    /** 删除设备告警记录 */
     @Log(title = "设备告警记录", businessType = BusinessType.DELETE)
     @PostMapping( "/remove")
     @ResponseBody
@@ -105,9 +93,7 @@ public class AlarmLogController extends BaseController
         return success();
     }
 
-    /**
-     * 查询设备列表
-     */
+    /** 查询设备列表 */
     @GetMapping("/getCurrentAlarmCount")
     @ResponseBody
     public AjaxResult list(@RequestParam String itemCode) {
@@ -122,9 +108,7 @@ public class AlarmLogController extends BaseController
         return success();
     }
 
-    /**
-     * 删除设备告警记录
-     */
+    /** 删除设备告警记录 */
     @Log(title = "设备告警记录", businessType = BusinessType.DELETE)
     @PostMapping( "/removeAll")
     @ResponseBody

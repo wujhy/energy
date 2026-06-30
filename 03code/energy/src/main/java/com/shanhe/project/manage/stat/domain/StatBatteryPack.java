@@ -17,13 +17,9 @@ import java.util.List;
 public class StatBatteryPack extends MonitorData {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 主键
-     */
+    /** 主键 */
     private Long id;
-    /**
-     * 配置ID
-     */
+    /** 配置ID */
     private Long configId;
 
     /** 蓄电池主编号，1,2,3,4 */

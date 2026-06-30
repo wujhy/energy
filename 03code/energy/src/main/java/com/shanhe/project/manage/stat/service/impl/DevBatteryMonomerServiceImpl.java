@@ -110,9 +110,7 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
         clientReportService.uploadBatteryMonomer(packNum, devBatteryMonomers, null);
     }
 
-    /**
-     * 删除所有单体数据
-     */
+    /** 删除所有单体数据 */
     @Override
     public void delete() {
         devBatteryMonomerMapper.delete();

@@ -19,20 +19,14 @@ import java.util.List;
 @Service
 public class BatteryModuleGroupCalculationService {
 
-    /**
-     * 默认单体实时数据新鲜度阈值。
-     */
+    /** 默认单体实时数据新鲜度阈值。 */
     private static final long DEFAULT_STALE_THRESHOLD_MS = 180_000L;
 
-    /**
-     * 实时数据 Mapper。
-     */
+    /** 实时数据 Mapper。 */
     @Resource
     private BatteryModuleRealtimeMapper realtimeMapper;
 
-    /**
-     * 电池组旧协议兼容字段填充服务。
-     */
+    /** 电池组旧协议兼容字段填充服务。 */
     @Resource
     private BatteryModuleGroupCompatibilityFillService compatibilityFillService;
 

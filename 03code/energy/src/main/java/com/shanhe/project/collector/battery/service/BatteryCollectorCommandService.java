@@ -29,37 +29,30 @@ import java.util.Objects;
 @Service
 public class BatteryCollectorCommandService {
 
+    /** 自动编号命令中的组模块地址。 */
     private static final int GROUP_MODULE_ADDRESS = 246;
+    /** 自动编号命令的起始地址。 */
     private static final int START_SET_ADDRESS = 1;
+    /** 清除所有调试参数的命令值。 */
     private static final int CLEAR_ALL_DEBUG_PARAMETER = 0x0F;
 
-    /**
-     * 980 聚合命令不允许直发 600 节下行总线时的提示。
-     */
+    /** 980 聚合命令不允许直发 600 节下行总线时的提示。 */
     private static final String AGGREGATE_COMMAND_UNSUPPORTED =
             "980聚合命令不能直接发送到600模块通道，请先实现显式模块控制映射";
 
-    /**
-     * 已映射但未能加入串口下发队列时的提示。
-     */
+    /** 已映射但未能加入串口下发队列时的提示。 */
     private static final String MODULE_COMMAND_MAPPED =
             "980聚合命令已映射为600模块命令，但未加入串口下发队列，请检查通道状态和队列容量";
 
-    /**
-     * 已映射并加入600节模块端串口下发队列时的提示。
-     */
+    /** 已映射并加入600节模块端串口下发队列时的提示。 */
     private static final String MODULE_COMMAND_QUEUED =
             "980聚合命令已映射为600模块命令并加入串口下发队列";
 
-    /**
-     * 已有测试/维护模式运行时的提示。
-     */
+    /** 已有测试/维护模式运行时的提示。 */
     private static final String MODE_BUSY_MESSAGE =
             "当前有其他测试运行中，无法执行均衡操作";
 
-    /**
-     * 600节模块端显式控制命令构造服务。
-     */
+    /** 600节模块端显式控制命令构造服务。 */
     @Resource
     private BatteryModuleControlCommandService moduleControlCommandService = new BatteryModuleControlCommandService();
     /** 采集模块配置。 */
@@ -75,9 +68,7 @@ public class BatteryCollectorCommandService {
     @Autowired(required = false)
     private IBatteryPackService batteryPackService;
 
-    /**
-     * 独立采集服务，负责按通道线程串行下发显式模块端命令。
-     */
+    /** 独立采集服务，负责按通道线程串行下发显式模块端命令。 */
     @Autowired(required = false)
     private BatteryCollectorService collectorService;
 

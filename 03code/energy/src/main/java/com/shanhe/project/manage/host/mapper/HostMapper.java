@@ -26,13 +26,9 @@ public interface HostMapper
      */
     int updateHost(Host host);
 
-    /**
-     * 还原主机
-     */
+    /** 还原主机 */
     void delete();
 
-    /**
-     * 插入主机信息
-     */
+    /** 插入主机信息 */
     void inset();
 }

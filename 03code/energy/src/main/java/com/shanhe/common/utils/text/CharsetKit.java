@@ -70,9 +70,7 @@ public class CharsetKit {
         return new String(source.getBytes(srcCharset), destCharset);
     }
 
-    /**
-     * @return 系统字符集编码
-     */
+    /** @return 系统字符集编码 */
     public static String systemCharset() {
         return Charset.defaultCharset().name();
     }

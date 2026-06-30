@@ -259,9 +259,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         configAttributeMapper.deleteConfigAttributeByConfigAttrId(attribute.getConfigAttrId());
     }
 
-    /**
-     * 删除默认设备所有属性
-     */
+    /** 删除默认设备所有属性 */
     @Override
     public void deleteDefaultDeviceAttributes() {
         configAttributeMapper.deleteDefaultDeviceAttributes();
@@ -336,9 +334,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         return configAttribute != null ? configAttribute.getName() : null;
     }
 
-    /**
-     * 更新设备属性缓存
-     */
+    /** 更新设备属性缓存 */
     @Override
     public void updateCache() {
         // 属性键
@@ -397,9 +393,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         return configList;
     }
 
-    /**
-     * 更新缓存
-     */
+    /** 更新缓存 */
     private void updateCache(Long configAttrId, boolean needUpdate, boolean needReport) {
         // 更新缓存
         ConfigAttribute attribute = configAttributeMapper.selectConfigAttributeByConfigAttrId(configAttrId);
@@ -438,9 +432,7 @@ public class ConfigAttributeServiceImpl implements IConfigAttributeService
         );
     }
 
-    /**
-     * 补充参数
-     */
+    /** 补充参数 */
     private void setParam(ConfigAttribute configAttribute) {
         // 模拟量、补充线性值
         if (Objects.equals(configAttribute.getType(), DataTypeEnum._2.getDictValue())

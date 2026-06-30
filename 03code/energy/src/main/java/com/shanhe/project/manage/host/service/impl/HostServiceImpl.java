@@ -277,9 +277,7 @@ public class HostServiceImpl implements IHostService {
         return host;
     }
 
-    /**
-     * 恢复主机默认配置
-     */
+    /** 恢复主机默认配置 */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void restore() {
@@ -292,7 +290,5 @@ public class HostServiceImpl implements IHostService {
         updateCache();
     }
 
-    /**
-     * 更新主机告警项。
-     */
+    /** 更新主机告警项。 */
 }

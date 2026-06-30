@@ -33,6 +33,7 @@ import java.util.Set;
 @Service
 public class BatteryModuleRealtimeSnapshotService {
 
+    /** 单体连续缺失判定为过期的阈值次数，达到后不再用历史值填充。 */
     private static final int STALE_MISS_THRESHOLD = 2;
 
     /** 模块实时数据 Mapper。 */
@@ -102,9 +103,7 @@ public class BatteryModuleRealtimeSnapshotService {
         CacheUtils.remove(CacheKeyEnum.BATTERY_REPORT.getCache(), snapshotKey(packNum));
     }
 
-    /**
-     * 删除全部标准实时快照缓存。
-     */
+    /** 删除全部标准实时快照缓存。 */
     public void evictAll() {
         for (String key : CacheUtils.getCacheKeys(CacheKeyEnum.BATTERY_REPORT.getCache())) {
             if (key != null && key.startsWith("battery:module:snapshot:")) {

@@ -86,9 +86,7 @@ public class FileUploadUtils {
         return getPathFileName(baseDir, fileName);
     }
 
-    /**
-     * 编码文件名
-     */
+    /** 编码文件名 */
     public static String extractFilename(MultipartFile file) {
         String fileName = file.getOriginalFilename();
         String extension = getExtension(file);
@@ -96,9 +94,7 @@ public class FileUploadUtils {
         return fileName;
     }
 
-    /**
-     * 创建文件路径
-     */
+    /** 创建文件路径 */
     public static File getAbsoluteFile(String uploadDir, String fileName) {
         File desc = new File(uploadDir + File.separator + fileName);
         if (!desc.exists()) {
@@ -161,9 +157,7 @@ public class FileUploadUtils {
 
     }
 
-    /**
-     * 判断MIME类型是否是允许的MIME类型
-     */
+    /** 判断MIME类型是否是允许的MIME类型 */
     public static boolean isAllowedExtension(String extension, String[] allowedExtension) {
         for (String str : allowedExtension) {
             if (str.equalsIgnoreCase(extension)) {

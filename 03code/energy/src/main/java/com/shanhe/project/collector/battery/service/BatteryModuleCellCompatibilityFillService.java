@@ -21,14 +21,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class BatteryModuleCellCompatibilityFillService {
 
-    /**
-     * 连接条电阻缓存，后续由显式连接条测试流程写入。
-     */
+    /** 连接条电阻缓存，后续由显式连接条测试流程写入。 */
     private final Map<String, Double> connectResistanceCache = new ConcurrentHashMap<>();
 
-    /**
-     * 旧预估容量缓存服务，缺失时不影响600节实时采集。
-     */
+    /** 旧预估容量缓存服务，缺失时不影响600节实时采集。 */
     @Autowired(required = false)
     private PreBatteryGroupService preBatteryGroupService;
 

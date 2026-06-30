@@ -87,9 +87,7 @@ public class DataReportJob {
         }
     }
 
-    /**
-     * 上报告警数据
-     */
+    /** 上报告警数据 */
     private void alarmReport(String imei) {
         try {
             log.debug("上报平台告警数据，开始同步");

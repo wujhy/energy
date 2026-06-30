@@ -13,9 +13,7 @@ public final class BatteryDeviceStateConstants {
     private BatteryDeviceStateConstants() {
     }
 
-    /**
-     * 作用域类型。
-     */
+    /** 作用域类型。 */
     public static final class ScopeType {
         /** 系统级。 */
         public static final String SYSTEM = "system";
@@ -30,9 +28,7 @@ public final class BatteryDeviceStateConstants {
         }
     }
 
-    /**
-     * 状态码。
-     */
+    /** 状态码。 */
     public static final class StateCode {
         /** 设备在线状态。 */
         public static final String ONLINE = "ONLINE";
@@ -57,9 +53,7 @@ public final class BatteryDeviceStateConstants {
         }
     }
 
-    /**
-     * 状态来源。
-     */
+    /** 状态来源。 */
     public static final class Source {
         /** 600 采集模块端。 */
         public static final String COLLECTOR = "collector";
@@ -80,9 +74,7 @@ public final class BatteryDeviceStateConstants {
         }
     }
 
-    /**
-     * 命令状态（dev_opt_log.status）。
-     */
+    /** 命令状态（dev_opt_log.status）。 */
     public static final class CommandStatus {
         /** 等待执行。 */
         public static final String PENDING = "pending";
@@ -101,9 +93,7 @@ public final class BatteryDeviceStateConstants {
         }
     }
 
-    /**
-     * 状态等级。
-     */
+    /** 状态等级。 */
     public static final class StateLevel {
         /** 正常。 */
         public static final String NORMAL = "normal";

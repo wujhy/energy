@@ -22,21 +22,15 @@ import javax.annotation.Resource;
 @Component
 public class BatteryModuleFrameLogConsumer implements BatteryModuleFrameConsumer {
 
-    /**
-     * 采集模块配置。
-     */
+    /** 采集模块配置。 */
     @Resource
     private BatteryCollectorProperties properties;
 
-    /**
-     * 600 节模块端帧解析服务。
-     */
+    /** 600 节模块端帧解析服务。 */
     @Resource
     private BatteryModuleFrameDataParserService parserService;
 
-    /**
-     * 原始帧日志 Mapper。
-     */
+    /** 原始帧日志 Mapper。 */
     @Resource
     private BatteryModuleFrameLogMapper frameLogMapper;
 

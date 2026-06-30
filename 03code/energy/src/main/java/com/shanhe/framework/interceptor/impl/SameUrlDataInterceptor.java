@@ -61,9 +61,7 @@ public class SameUrlDataInterceptor extends BaseRepeatSubmitInterceptor
         return false;
     }
 
-    /**
-     * 判断参数是否相同
-     */
+    /** 判断参数是否相同 */
     private boolean compareParams(Map<String, Object> nowMap, Map<String, Object> preMap)
     {
         String nowParams = Objects.toString(nowMap.get(REPEAT_PARAMS), null);
@@ -71,9 +69,7 @@ public class SameUrlDataInterceptor extends BaseRepeatSubmitInterceptor
         return Objects.equals(nowParams, preParams);
     }
 
-    /**
-     * 判断两次间隔时间
-     */
+    /** 判断两次间隔时间 */
     private boolean compareTime(Map<String, Object> nowMap, Map<String, Object> preMap, int interval)
     {
         long time1 = nowMap.get(REPEAT_TIME) instanceof Number ? ((Number) nowMap.get(REPEAT_TIME)).longValue() : 0L;

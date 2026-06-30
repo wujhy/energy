@@ -113,9 +113,7 @@ public interface IConfigAttributeService
      */
     void deleteConfigAttribute(ConfigAttribute configAttribute);
 
-    /**
-     * 删除默认设备所有属性
-     */
+    /** 删除默认设备所有属性 */
     void deleteDefaultDeviceAttributes();
 
     /**
@@ -167,9 +165,7 @@ public interface IConfigAttributeService
      */
     String getNameByCache(Integer packNum, String code);
 
-    /**
-     * 更新全部缓存
-     */
+    /** 更新全部缓存 */
     void updateCache();
 
     /**

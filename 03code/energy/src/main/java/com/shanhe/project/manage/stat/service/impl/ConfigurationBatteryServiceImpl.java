@@ -419,9 +419,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         }
     }
 
-    /**
-     * 获取内阻变化率
-     */
+    /** 获取内阻变化率 */
     private EvaluationFactors getResistanceStr(BatteryPack batteryPack, BatteryHealthReport batteryHealthReport, Map<String, List<AlarmLog>> logMap) {
 
         long dtnzggCount = logMap.getOrDefault(ItemCode.DTNZGD.getCode(), Collections.emptyList()).size();

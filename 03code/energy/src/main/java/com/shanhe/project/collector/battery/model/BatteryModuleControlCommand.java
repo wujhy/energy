@@ -14,76 +14,48 @@ import lombok.Data;
 @Builder
 public class BatteryModuleControlCommand {
 
-    /**
-     * 600节模块端协议定义。
-     */
+    /** 600节模块端协议定义。 */
     private BatteryDeviceProtocolCode protocolCode;
 
-    /**
-     * 目标模块地址，广播命令使用0。
-     */
+    /** 目标模块地址，广播命令使用0。 */
     private int address;
 
-    /**
-     * 请求负载。
-     */
+    /** 请求负载。 */
     private byte[] payload;
 
-    /**
-     * 请求命令码。
-     */
+    /** 请求命令码。 */
     private int requestCode;
 
-    /**
-     * 期望响应命令码；无明确响应时为空。
-     */
+    /** 期望响应命令码；无明确响应时为空。 */
     private Integer responseCode;
 
-    /**
-     * 命令说明。
-     */
+    /** 命令说明。 */
     private String description;
 
-    /**
-     * 旧业务设备ID，用于兼容 BatteryModeInfo 状态缓存。
-     */
+    /** 旧业务设备ID，用于兼容 BatteryModeInfo 状态缓存。 */
     private Long configId;
 
-    /**
-     * 电池组编号，用于兼容 BatteryModeInfo 状态缓存。
-     */
+    /** 电池组编号，用于兼容 BatteryModeInfo 状态缓存。 */
     private Integer batteryGroup;
 
-    /**
-     * 旧 BatteryModeInfo 工作模式。
-     */
+    /** 旧 BatteryModeInfo 工作模式。 */
     private Integer mode;
 
-    /**
-     * 自动编号目标单体数量。
-     */
+    /** 自动编号目标单体数量。 */
     private Integer autoAddressBatteryCount;
 
-    /**
-     * 自动编号电池规格。
-     */
+    /** 自动编号电池规格。 */
     private Integer autoAddressBatterySpecification;
 
-    /**
-     * 关联的操作日志ID。
-     */
+    /** 关联的操作日志ID。 */
     private Long optLogId;
     /** 兼容 dev_opt_log 的操作类型，不设置时按 99 模块命令记录。 */
     private Integer optLogType;
 
-    /**
-     * 连接条测试下一个待测单体地址。
-     */
+    /** 连接条测试下一个待测单体地址。 */
     private Integer connectResistanceNextAddress;
 
-    /**
-     * 连接条测试最大单体地址。
-     */
+    /** 连接条测试最大单体地址。 */
     private Integer connectResistanceMaxAddress;
 
     /** 连接条测试过程中是否已出现失败。 */

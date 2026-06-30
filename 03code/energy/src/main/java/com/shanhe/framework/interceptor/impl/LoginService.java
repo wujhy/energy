@@ -40,9 +40,7 @@ public class LoginService {
 
     static CacheKeyEnum loginCache = CacheKeyEnum.LOGIN;
 
-    /**
-     * 登录
-     */
+    /** 登录 */
     public User login(String username, String password) {
         // 用户名或密码为空 错误
         if (StringUtils.isEmpty(username) || StringUtils.isEmpty(password)) {
@@ -86,9 +84,7 @@ public class LoginService {
         return user;
     }
 
-    /**
-     * 注销
-     */
+    /** 注销 */
     public void logout(HttpServletRequest request) {
         try {
             String sessionId = request.getHeader(AUTH_PARAM);

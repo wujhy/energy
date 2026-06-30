@@ -41,9 +41,7 @@ public class SslUtils {
 		public void checkClientTrusted(X509Certificate[] certs, String authType) {}
 	}
 
-	/**
-	 * 忽略HTTPS请求的SSL证书，必须在openConnection之前调用
-	 */
+	/** 忽略HTTPS请求的SSL证书，必须在openConnection之前调用 */
 	public static void ignoreSsl() throws Exception {
 		HostnameVerifier hv = (urlHostName, session) -> {
 			log.warn("URL主机名不匹配: {} vs. {}", urlHostName, session.getPeerHost());

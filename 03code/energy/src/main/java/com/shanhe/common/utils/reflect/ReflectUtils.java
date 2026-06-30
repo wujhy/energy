@@ -25,10 +25,13 @@ import com.shanhe.common.utils.text.Convert;
 @SuppressWarnings("rawtypes")
 public class ReflectUtils
 {
+    /** Setter方法前缀。 */
     private static final String SETTER_PREFIX = "set";
 
+    /** Getter方法前缀。 */
     private static final String GETTER_PREFIX = "get";
 
+    /** CGLIB代理类名分隔符。 */
     private static final String CGLIB_CLASS_SEPARATOR = "$$";
 
     /**
@@ -70,9 +73,7 @@ public class ReflectUtils
         }
     }
 
-    /**
-     * 直接读取对象属性值, 无视private/protected修饰符, 不经过getter函数.
-     */
+    /** 直接读取对象属性值, 无视private/protected修饰符, 不经过getter函数. */
     @SuppressWarnings("unchecked")
     public static <E> E getFieldValue(final Object obj, final String fieldName)
     {
@@ -94,9 +95,7 @@ public class ReflectUtils
         return result;
     }
 
-    /**
-     * 直接设置对象属性值, 无视private/protected修饰符, 不经过setter函数.
-     */
+    /** 直接设置对象属性值, 无视private/protected修饰符, 不经过setter函数. */
     public static <E> void setFieldValue(final Object obj, final String fieldName, final E value)
     {
         Field field = getAccessibleField(obj, fieldName);
@@ -306,9 +305,7 @@ public class ReflectUtils
         return null;
     }
 
-    /**
-     * 改变private/protected的方法为public，尽量不调用实际改动的语句，避免JDK的SecurityManager抱怨。
-     */
+    /** 改变private/protected的方法为public，尽量不调用实际改动的语句，避免JDK的SecurityManager抱怨。 */
     public static void makeAccessible(Method method)
     {
         if ((!Modifier.isPublic(method.getModifiers()) || !Modifier.isPublic(method.getDeclaringClass().getModifiers()))
@@ -318,9 +315,7 @@ public class ReflectUtils
         }
     }
 
-    /**
-     * 改变private/protected的成员变量为public，尽量不调用实际改动的语句，避免JDK的SecurityManager抱怨。
-     */
+    /** 改变private/protected的成员变量为public，尽量不调用实际改动的语句，避免JDK的SecurityManager抱怨。 */
     public static void makeAccessible(Field field)
     {
         if ((!Modifier.isPublic(field.getModifiers()) || !Modifier.isPublic(field.getDeclaringClass().getModifiers())
@@ -389,9 +384,7 @@ public class ReflectUtils
 
     }
 
-    /**
-     * 将反射时的checked exception转换为unchecked exception.
-     */
+    /** 将反射时的checked exception转换为unchecked exception. */
     public static RuntimeException convertReflectionExceptionToUnchecked(String msg, Exception e)
     {
         if (e instanceof IllegalAccessException || e instanceof IllegalArgumentException

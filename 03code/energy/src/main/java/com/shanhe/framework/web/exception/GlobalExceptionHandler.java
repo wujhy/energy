@@ -29,9 +29,7 @@ import java.io.IOException;
 public class GlobalExceptionHandler
 {
 
-    /**
-     * 请求方式不支持
-     */
+    /** 请求方式不支持 */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public AjaxResult handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException e,
                                                           HttpServletRequest request)
@@ -40,9 +38,7 @@ public class GlobalExceptionHandler
         return AjaxResult.error(e.getMessage());
     }
 
-    /**
-     * 拦截未知的运行时异常
-     */
+    /** 拦截未知的运行时异常 */
     @ExceptionHandler(RuntimeException.class)
     public AjaxResult handleRuntimeException(RuntimeException e, HttpServletRequest request)
     {
@@ -63,9 +59,7 @@ public class GlobalExceptionHandler
         return AjaxResult.error(e.getMessage());
     }
 
-    /**
-     * 系统异常
-     */
+    /** 系统异常 */
     @ExceptionHandler(Exception.class)
     public AjaxResult handleException(Exception e, HttpServletRequest request)
     {
@@ -79,9 +73,7 @@ public class GlobalExceptionHandler
         return AjaxResult.error(e.getMessage());
     }
 
-    /**
-     * 系统异常
-     */
+    /** 系统异常 */
     @ExceptionHandler(MyBatisSystemException.class)
     public AjaxResult handleMyBatisSystemException(MyBatisSystemException e, HttpServletRequest request)
     {
@@ -89,9 +81,7 @@ public class GlobalExceptionHandler
         return AjaxResult.error("数据库操作异常，请稍后重试");
     }
 
-    /**
-     * 业务异常
-     */
+    /** 业务异常 */
     @ExceptionHandler(ServiceException.class)
     public Object handleServiceException(ServiceException e, HttpServletRequest request)
     {
@@ -99,9 +89,7 @@ public class GlobalExceptionHandler
         return AjaxResult.error(e.getMessage());
     }
 
-    /**
-     * 自定义验证异常
-     */
+    /** 自定义验证异常 */
     @ExceptionHandler(BindException.class)
     public AjaxResult handleBindException(BindException e)
     {

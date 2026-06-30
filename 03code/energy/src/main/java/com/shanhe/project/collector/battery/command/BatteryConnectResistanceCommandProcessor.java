@@ -113,9 +113,7 @@ public class BatteryConnectResistanceCommandProcessor {
         }
     }
 
-    /**
-     * 解析 91 响应帧中的连接条测试电压并计算电阻。
-     */
+    /** 解析 91 响应帧中的连接条测试电压并计算电阻。 */
     private void storeConnectResistanceResult(BatteryPendingRequest pendingRequest, BatteryCollectorFrame frame) {
         try {
             byte[] payload = frame.getPayloadSafe();

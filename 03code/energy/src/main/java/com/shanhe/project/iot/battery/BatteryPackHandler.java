@@ -128,9 +128,7 @@ public class BatteryPackHandler {
         executePostSaveProcesses(config, packNum, batteryPack, packMap, batteryList, oldInfo);
     }
 
-    /**
-     * 解析单体电池数据
-     */
+    /** 解析单体电池数据 */
     private void parseBatteryMonitors(String serviceType, String info, String dataStr,
                                        Config config, int packNum, Map<String, Object> packMap,
                                        List<BatteryMonitor> batteryList) {
@@ -157,9 +155,7 @@ public class BatteryPackHandler {
         }
     }
 
-    /**
-     * 解析类型3的单体电池数据
-     */
+    /** 解析类型3的单体电池数据 */
     private void parseBatteryInfo3(String info, String dataStr, Config config, int packNum,
                                     int index82, List<BatteryMonitor> batteryList) {
         index82 = index82 + 14;
@@ -168,9 +164,7 @@ public class BatteryPackHandler {
         this.getBatteryInfo3(num, batteryInfos, config.getConfigId(), packNum, batteryList);
     }
 
-    /**
-     * 解析类型4的单体电池数据
-     */
+    /** 解析类型4的单体电池数据 */
     private void parseBatteryInfo4(String info, String dataStr, Config config, int packNum,
                                     Map<String, Object> packMap, List<BatteryMonitor> batteryList) {
         String bcapacity = null;
@@ -216,9 +210,7 @@ public class BatteryPackHandler {
         this.getBatteryInfo4(num, batteryInfos, config.getConfigId(), packNum, batteryList, batteryVoMap);
     }
 
-    /**
-     * 解析默认类型的单体电池数据
-     */
+    /** 解析默认类型的单体电池数据 */
     private void parseBatteryInfoDefault(String info, String dataStr, Config config, int packNum,
                                           int index82, List<BatteryMonitor> batteryList) {
         index82 = index82 + 14;
@@ -310,9 +302,7 @@ public class BatteryPackHandler {
         }
     }
 
-    /**
-     * 浮充结束更新电压极差
-     */
+    /** 浮充结束更新电压极差 */
     private void updateVoltageRange(BatteryPack batteryPack, Map<String, Object> packMap, List<BatteryMonitor> batteryList, BatteryReportLog oldInfo) {
         if (null == oldInfo) {
             return;
@@ -358,9 +348,7 @@ public class BatteryPackHandler {
         batteryPackService.update(batteryPack);
     }
 
-    /**
-     * 负数处理
-     */
+    /** 负数处理 */
     private int negative(int num) {
         if (num >= 32768) {
             num = num - 65536;
@@ -411,9 +399,7 @@ public class BatteryPackHandler {
         return packMap;
     }
 
-    /**
-     * 校验电池组数据有效性
-     */
+    /** 校验电池组数据有效性 */
     private boolean validatePackData(int packOuterVoltage, int packCurrent, int packVoltage, int et1) {
         boolean validPack = Objects.equals(packOuterVoltage, 0)
                 && Objects.equals(packCurrent, 0) && Objects.equals(packVoltage, 0)
@@ -425,9 +411,7 @@ public class BatteryPackHandler {
         return true;
     }
 
-    /**
-     * 解析电压统计信息
-     */
+    /** 解析电压统计信息 */
     private void parseVoltageInfo(String info, Map<String, Object> packMap) {
         packMap.put("maxVoltageBatteryNumber", CodingUtil.hexStringToString(info.substring(26, 28)));
         packMap.put("batteryMaxVoltage", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(28, 32)), "#.000", 1000));
@@ -438,9 +422,7 @@ public class BatteryPackHandler {
         packMap.put("batteryVoltageRange", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(46, 50)), "#.000", 1000));
     }
 
-    /**
-     * 解析内阻信息
-     */
+    /** 解析内阻信息 */
     private void parseResistanceInfo(String info, Map<String, Object> packMap) {
         packMap.put("maxResistanceBatteryNumber", CodingUtil.hexStringToString(info.substring(50, 52)));
         packMap.put("batteryMaxResistance", String.valueOf(CodingUtil.hexStringToInteger(info.substring(52, 56))));
@@ -449,9 +431,7 @@ public class BatteryPackHandler {
         packMap.put("batteryAvgResistance", String.valueOf(CodingUtil.hexStringToInteger(info.substring(62, 66))));
     }
 
-    /**
-     * 解析温度信息
-     */
+    /** 解析温度信息 */
     private void parseTemperatureInfo(String info, Map<String, Object> packMap) {
         packMap.put("maxTemperatureBatteryNumber", CodingUtil.hexStringToString(info.substring(66, 68)));
         int bMaxT = this.negative(CodingUtil.hexStringToInteger(info.substring(68, 72)));
@@ -463,9 +443,7 @@ public class BatteryPackHandler {
         packMap.put("batteryAvgTemperature", CodingUtil.decimal(bAvgT, "#.0", 10));
     }
 
-    /**
-     * 解析容量和状态信息
-     */
+    /** 解析容量和状态信息 */
     private void parseCapacityAndStatusInfo(String info, Map<String, Object> packMap, int packCurrent) {
         packMap.put("batteryPackSoc", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(82, 86)), "#.0", 10));
         packMap.put("batteryPackSoh", CodingUtil.decimal(CodingUtil.hexStringToInteger(info.substring(86, 90)), "#.0", 10));
@@ -638,9 +616,7 @@ public class BatteryPackHandler {
         }
     }
 
-    /**
-     * 上传电池组注册
-     */
+    /** 上传电池组注册 */
     public void uploadBatterPack(Config config, DeviceData deviceData) {
         // 指令信息
         String info = deviceData.getInfo().substring(16, deviceData.getInfo().length() - 4);

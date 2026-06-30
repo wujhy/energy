@@ -19,7 +19,9 @@ public class JarUploadUtils {
 
     /** 升级jar包大小：最小、最大 */
     public static final long JAR_MIN_SIZE = 80 * 1024 * 1024;
+    /** 升级jar包最大允许大小。 */
     public static final long JAR_MAX_SIZE = 120 * 1024 * 1024;
+    /** jar包文件扩展名。 */
     public static final String JAR_EXTENSION = ".jar";
 
     /**
@@ -52,9 +54,7 @@ public class JarUploadUtils {
         }
     }
 
-    /**
-     * 校验jar文件大小
-     */
+    /** 校验jar文件大小 */
     public static boolean validJarSize(Long size) {
         return size < JAR_MIN_SIZE || size > JAR_MAX_SIZE;
     }

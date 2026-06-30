@@ -28,9 +28,7 @@ import com.shanhe.project.manage.user.domain.User;
 @Slf4j
 public class BaseController {
 
-    /**
-     * 将前台传递过来的日期格式的字符串，自动转化为Date类型
-     */
+    /** 将前台传递过来的日期格式的字符串，自动转化为Date类型 */
     @InitBinder
     public void initBinder(WebDataBinder binder) {
         // Date 类型转换
@@ -42,9 +40,7 @@ public class BaseController {
         });
     }
 
-    /**
-     * 设置请求分页数据
-     */
+    /** 设置请求分页数据 */
     protected void startPage() {
         PageDomain pageDomain = TableSupport.buildPageRequest();
         Integer pageNum = pageDomain.getPageNum();
@@ -55,9 +51,7 @@ public class BaseController {
         }
     }
 
-    /**
-     * 设置请求排序数据
-     */
+    /** 设置请求排序数据 */
     protected void startOrderBy() {
         PageDomain pageDomain = TableSupport.buildPageRequest();
         if (StringUtils.isNotEmpty(pageDomain.getOrderBy())) {
@@ -66,9 +60,7 @@ public class BaseController {
         }
     }
 
-    /**
-     * 响应请求分页数据
-     */
+    /** 响应请求分页数据 */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     protected TableDataInfo getDataTable(List<?> list) {
         TableDataInfo rspData = new TableDataInfo();
@@ -98,80 +90,60 @@ public class BaseController {
         return result ? success() : error();
     }
 
-    /**
-     * 返回成功
-     */
+    /** 返回成功 */
     public AjaxResult success()
     {
         return AjaxResult.success();
     }
 
-    /**
-     * 返回失败消息
-     */
+    /** 返回失败消息 */
     public AjaxResult error()
     {
         return AjaxResult.error("操作失败");
     }
 
-    /**
-     * 返回成功消息
-     */
+    /** 返回成功消息 */
     public AjaxResult success(String message)
     {
         return AjaxResult.success(message);
     }
 
-    /**
-     * 返回成功数据
-     */
+    /** 返回成功数据 */
     public static AjaxResult success(Object data)
     {
         return AjaxResult.success("操作成功", data);
     }
 
-    /**
-     * 返回失败消息
-     */
+    /** 返回失败消息 */
     public AjaxResult error(String message)
     {
         return AjaxResult.error(message);
     }
 
-    /**
-     * 返回错误码消息
-     */
+    /** 返回错误码消息 */
     public AjaxResult error(Type type, String message)
     {
         return new AjaxResult(type, message);
     }
 
-    /**
-     * 页面跳转
-     */
+    /** 页面跳转 */
     public String redirect(String url)
     {
         return StringUtils.format("redirect:{}", url);
     }
 
-    /**
-     * 获取用户缓存信息
-     */
+    /** 获取用户缓存信息 */
     public User getSysUser() {
         return LoginService.getUserBy();
     }
 
-    /**
-     * 获取登录用户id
-     */
+    /** 获取登录用户id */
     public Long getUserId()
     {
         return getSysUser().getUserId();
     }
 
-    /**
-     * 获取登录用户名
-     */
+    /** 获取登录用户名 */
     public String getLoginName()
     {
         return getSysUser().getLoginName();

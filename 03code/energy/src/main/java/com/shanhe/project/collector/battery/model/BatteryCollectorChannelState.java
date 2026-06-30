@@ -20,34 +20,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Data
 public class BatteryCollectorChannelState {
 
-    /**
-     * 通道静态配置。
-     */
+    /** 通道静态配置。 */
     private final BatteryCollectorChannelConfig config;
 
-    /**
-     * 当前运行状态。
-     */
+    /** 当前运行状态。 */
     private volatile BatteryCollectorRunState runState = BatteryCollectorRunState.READ;
 
-    /**
-     * 当前串口对象。
-     */
+    /** 当前串口对象。 */
     private SerialPort serialPort;
 
-    /**
-     * 最后接收时间戳。
-     */
+    /** 最后接收时间戳。 */
     private volatile long lastReceiveTime;
 
-    /**
-     * 最后发送时间戳。
-     */
+    /** 最后发送时间戳。 */
     private volatile long lastSendTime;
 
-    /**
-     * 最后轮询时间戳。
-     */
+    /** 最后轮询时间戳。 */
     private volatile long lastPollTime;
 
     /** 最近一次超时时间戳。 */
@@ -77,24 +65,16 @@ public class BatteryCollectorChannelState {
     /** 最近一次命令是否超时。 */
     private volatile boolean lastPendingTimedOut;
 
-    /**
-     * 最近完成的显式模块端命令名称。
-     */
+    /** 最近完成的显式模块端命令名称。 */
     private volatile String lastCompletedModuleCommandName;
 
-    /**
-     * 最近完成的显式模块端命令响应码。
-     */
+    /** 最近完成的显式模块端命令响应码。 */
     private volatile int lastCompletedModuleResponseCode;
 
-    /**
-     * 最近完成的显式模块端命令是否成功。
-     */
+    /** 最近完成的显式模块端命令是否成功。 */
     private volatile boolean lastCompletedModuleCommandSuccess;
 
-    /**
-     * 最近完成的显式模块端命令完成时间戳。
-     */
+    /** 最近完成的显式模块端命令完成时间戳。 */
     private volatile long lastCompletedModuleCommandTime;
 
     /** 当前轮询批次号。 */
@@ -112,38 +92,24 @@ public class BatteryCollectorChannelState {
     /** 当前是否为全地址发现轮询。 */
     private volatile boolean currentFullDiscovery;
 
-    /**
-     * 最近一次全量发现时间戳。
-     */
+    /** 最近一次全量发现时间戳。 */
     private volatile long lastFullDiscoveryTime;
 
-    /**
-     * 当前缓存的有响应模块地址。
-     */
+    /** 当前缓存的有响应模块地址。 */
     private final Set<Integer> activeModuleAddresses = ConcurrentHashMap.newKeySet();
 
-    /**
-     * 有响应地址的连续无响应次数。
-     */
+    /** 有响应地址的连续无响应次数。 */
     private final ConcurrentMap<Integer, Integer> moduleAddressMissCounts = new ConcurrentHashMap<>();
 
-    /**
-     * 下轮是否强制执行全量发现。
-     */
+    /** 下轮是否强制执行全量发现。 */
     private final AtomicBoolean fullDiscoveryRequested = new AtomicBoolean(true);
 
-    /**
-     * 等待下发的显式600节模块端控制命令。
-     */
+    /** 等待下发的显式600节模块端控制命令。 */
     private final Queue<BatteryModuleControlCommand> queuedModuleCommands = new ConcurrentLinkedQueue<>();
 
-    /**
-     * 串口接收缓冲。
-     */
+    /** 串口接收缓冲。 */
     private final ByteArrayOutputStream receiveBuffer = new ByteArrayOutputStream();
 
-    /**
-     * 串口打开状态。
-     */
+    /** 串口打开状态。 */
     private final AtomicBoolean opened = new AtomicBoolean(false);
 }

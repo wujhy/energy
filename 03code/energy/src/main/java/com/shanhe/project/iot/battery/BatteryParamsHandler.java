@@ -589,9 +589,7 @@ public class BatteryParamsHandler {
         configAttributeService.updateCache(YesNoEnum.YES.getDictValue());
     }
 
-    /**
-     * 更新屏蔽报警
-     */
+    /** 更新屏蔽报警 */
     private void doUpdateAlarmData(ConfigAttribute attribute, String msg) {
         if (null == msg) {
             return;

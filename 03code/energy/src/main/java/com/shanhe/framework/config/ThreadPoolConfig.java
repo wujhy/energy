@@ -36,9 +36,7 @@ public class ThreadPoolConfig {
     @Value("${thread.keepAliveSeconds:300}")
     private int keepAliveSeconds = 300;
 
-    /**
-     * 任务线程池参数
-     */
+    /** 任务线程池参数 */
     @Bean(name = "threadPoolTaskExecutor")
     public ThreadPoolTaskExecutor threadPoolTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -51,9 +49,7 @@ public class ThreadPoolConfig {
         return executor;
     }
 
-    /**
-     * 执行周期性或定时任务
-     */
+    /** 执行周期性或定时任务 */
     @Bean(name = "scheduledExecutorService")
     protected ScheduledExecutorService scheduledExecutorService() {
         return new ScheduledThreadPoolExecutor(corePoolSize,

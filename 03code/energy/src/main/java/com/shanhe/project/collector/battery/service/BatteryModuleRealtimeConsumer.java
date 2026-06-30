@@ -39,55 +39,40 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer {
 
+    /** 后处理线程池的线程编号计数器。 */
     private static final AtomicInteger POST_PROCESS_THREAD_INDEX = new AtomicInteger(1);
 
-    /**
-     * 轮询外后处理线程池，避免兼容历史和告警上下文占用采集轮询线程。
-     */
+    /** 轮询外后处理线程池，避免兼容历史和告警上下文占用采集轮询线程。 */
     private final ExecutorService postProcessExecutor = new ThreadPoolExecutor(2, 2,
             0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), postProcessThreadFactory());
 
-    /**
-     * 采集模块配置。
-     */
+    /** 采集模块配置。 */
     @Resource
     private BatteryCollectorProperties properties;
 
-    /**
-     * 600 节模块端帧解析服务。
-     */
+    /** 600 节模块端帧解析服务。 */
     @Resource
     private BatteryModuleFrameDataParserService parserService;
 
-    /**
-     * 实时数据 Mapper。
-     */
+    /** 实时数据 Mapper。 */
     @Resource
     private BatteryModuleRealtimeMapper realtimeMapper;
 
-    /**
-     * 电池组指标计算服务。
-     */
+    /** 电池组指标计算服务。 */
     @Resource
     private BatteryModuleGroupCalculationService calculationService;
 
-    /**
-     * 实时数据后处理流水线服务。
-     */
+    /** 实时数据后处理流水线服务。 */
     @Resource
     private BatteryRealtimePostProcessService postProcessService;
     @Resource
     private BatteryRealtimePostProcessContextFactory postProcessContextFactory = new BatteryRealtimePostProcessContextFactory();
 
-    /**
-     * 单体兼容字段缓存填充服务。
-     */
+    /** 单体兼容字段缓存填充服务。 */
     @Resource
     private BatteryModuleCellCompatibilityFillService compatibilityFillService;
 
-    /**
-     * 标准实时有效快照服务。
-     */
+    /** 标准实时有效快照服务。 */
     @Resource
     private BatteryModuleRealtimeSnapshotService snapshotService;
 

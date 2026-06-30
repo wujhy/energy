@@ -26,9 +26,7 @@ public class AlarmHandler {
     @Resource
     private IAlarmLogService alarmLogService;
 
-    /**
-     * 屏蔽告警
-     */
+    /** 屏蔽告警 */
     public ResponseVo shieldAlarm(RequestVo request) {
         String msg = null;
         try {

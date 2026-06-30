@@ -16,12 +16,8 @@ import java.io.Serializable;
 public class BatteryMonomerBatVo implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 组
-     */
+    /** 组 */
     private Integer batNum;
-    /**
-     * 内阻
-     */
+    /** 内阻 */
     private Double resistance;
 }

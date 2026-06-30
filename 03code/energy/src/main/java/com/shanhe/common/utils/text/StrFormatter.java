@@ -9,9 +9,13 @@ import com.shanhe.common.utils.StringUtils;
  * @since 2024/12/19
  */
 public class StrFormatter {
+    /** 空JSON占位符。 */
     public static final String EMPTY_JSON = "{}";
+    /** 反斜杠转义字符。 */
     public static final char C_BACKSLASH = '\\';
+    /** 占位符起始字符。 */
     public static final char C_DELIM_START = '{';
+    /** 占位符结束字符。 */
     public static final char C_DELIM_END = '}';
 
     /**

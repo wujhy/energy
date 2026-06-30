@@ -24,9 +24,7 @@ import java.util.Map;
 @Service
 public class BatteryModuleReportLogAdapterService {
 
-    /**
-     * 600节模块端标准实时数据 Mapper。
-     */
+    /** 600节模块端标准实时数据 Mapper。 */
     @Resource
     private BatteryModuleRealtimeMapper realtimeMapper;
 

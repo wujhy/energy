@@ -15,20 +15,12 @@ import java.util.List;
 @Data
 public class ConfigHistoryVo implements Serializable {
     private static final long serialVersionUID = 1L;
-    /**
-     * 设备主键ID
-     */
+    /** 设备主键ID */
     private Long devId;
-    /**
-     * 蓄电池组编号，1,2,3,4
-     */
+    /** 蓄电池组编号，1,2,3,4 */
     private Integer packNum;
-    /**
-     * 测点历史数据
-     */
+    /** 测点历史数据 */
     private List<ConfigHistoryItemVo> listData;
-    /**
-     * 单体蓄电池
-     */
+    /** 单体蓄电池 */
     private List<BatteryMonitor> listData2;
 }

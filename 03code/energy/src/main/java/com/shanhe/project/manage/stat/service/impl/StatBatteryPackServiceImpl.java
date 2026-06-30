@@ -191,9 +191,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         return beginTime.toString().replaceAll("-", "").replaceAll(":", "").replaceAll(" ", "_");
     }
 
-    /**
-     * 转换格式
-     */
+    /** 转换格式 */
     public static List<Object> batteryPackMonitorOfExcel(StatBatteryPack item, Integer batteryMaxNumber) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         List<Object> excelData = new ArrayList<>();
@@ -251,9 +249,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         excelData.addAll(resistanceList);
     }
 
-    /**
-     * double
-     */
+    /** double */
     private static Double getDouble(Double value) {
         if (null == value || Double.isNaN(value)) {
             return 0.0D;
@@ -284,9 +280,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         MessageFactory.pushData(statBatteries);
     }
 
-    /**
-     * 组电压
-     */
+    /** 组电压 */
     private Double getPackVoltage( Map<String, Object> packMap) {
         // 组电压
         String voltage = Objects.toString(packMap.get("batteryPackOuterVoltage"), null);

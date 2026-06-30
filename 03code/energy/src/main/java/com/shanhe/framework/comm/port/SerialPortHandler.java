@@ -33,11 +33,10 @@ public class SerialPortHandler {
     /** 指令头字节长度 */
     public static final Integer HEAD_LENGTH = 13;
 
+    /** 解码器输出缓存（线程级），用于暂存单次解码产生的多条结果。 */
     private static final ThreadLocal<List<Object>> DECODER_OUTPUT_CACHE = ThreadLocal.withInitial(ArrayList::new);
 
-    /**
-     * 串口读取数据
-     */
+    /** 串口读取数据 */
     public static void readFromPort() {
         try {
             // 分包
@@ -177,9 +176,7 @@ public class SerialPortHandler {
         return serialPort.isOpen();
     }
 
-    /**
-     * 当前设备ID
-     */
+    /** 当前设备ID */
     public static String getImei() {
         return deviceImei;
     }

@@ -25,26 +25,20 @@ public class AlarmLevelController extends BaseController {
     @Resource
     private AlarmLevelService alarmLevelService;
 
-    /**
-     * 等级列表
-     */
+    /** 等级列表 */
     @GetMapping("/list")
     public AjaxResult list(AlarmLevel alarmLevel) {
         List<AlarmLevel> list = alarmLevelService.selectAlarmLevelList(alarmLevel);
         return success(list);
     }
 
-    /**
-     * 查询告警级别
-     */
+    /** 查询告警级别 */
     @GetMapping(value = "/info/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id) {
         return success(alarmLevelService.selectAlarmLevelById(id));
     }
 
-    /**
-     * 新增告警级别
-     */
+    /** 新增告警级别 */
     @Log(title = "新增告警级别", businessType = BusinessType.INSERT)
     @PostMapping("/add")
     public AjaxResult add(@RequestBody AlarmLevel alarmLevel) {

@@ -12,15 +12,14 @@ import java.util.Random;
  */
 public class IdUtils {
 
+    /** 雪花算法ID生成器实例。 */
     private static final Snowflake SNOWFLAKE = new Snowflake(0L, 0L);
 
     public static long getSnowflakeId() {
         return SNOWFLAKE.nextId();
     }
 
-    /**
-     * 基于雪花ID生成随机十位整数
-     */
+    /** 基于雪花ID生成随机十位整数 */
     public static String genImei() {
         // 获取雪花算法生成的id
         long snowflakeId = getSnowflakeId();

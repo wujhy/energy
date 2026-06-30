@@ -426,16 +426,12 @@ public class ControlBatterySet extends ControlBase {
         return AjaxResult.success();
     }
 
-    /**
-     * 监听控制指令执行结果
-     */
+    /** 监听控制指令执行结果 */
     public BatteryModeInfo getModelResult(Integer packNum) {
         return batteryModeStatusService.get(packNum);
     }
 
-    /**
-     * 清除编号数据
-     */
+    /** 清除编号数据 */
     /**
      * 读取内阻基准页使用的当前平均内阻。
      * <p>

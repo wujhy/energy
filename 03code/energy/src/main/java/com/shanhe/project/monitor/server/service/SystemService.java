@@ -24,9 +24,7 @@ import java.util.*;
 @Slf4j
 public class SystemService {
 
-    /**
-     * 更新本地IP
-     */
+    /** 更新本地IP */
     public static void updateConnectionIp(Host host) {
         try {
             Process process;
@@ -72,9 +70,7 @@ public class SystemService {
         }
     }
 
-    /**
-     * 获取本机IP
-     */
+    /** 获取本机IP */
     public static void getIp(Host host) {
         try {
             if (StrUtil.isBlank(host.getIpAddr()) || isWin() ) {
@@ -154,9 +150,7 @@ public class SystemService {
         }
     }
 
-    /**
-     * 开启浏览器客户端
-     */
+    /** 开启浏览器客户端 */
     public static void chromiumApp() {
         try {
             if(isWin()) {
@@ -171,9 +165,7 @@ public class SystemService {
         }
     }
 
-    /**
-     * 开启看门狗
-     */
+    /** 开启看门狗 */
     public static void openWatchDog() {
         try {
             if(isWin()) {
@@ -191,9 +183,7 @@ public class SystemService {
         }
     }
 
-    /**
-     * 喂狗
-     */
+    /** 喂狗 */
     public static void feedWatchDog() {
         try {
             if(isWin()) {
@@ -209,9 +199,7 @@ public class SystemService {
         }
     }
 
-    /**
-     * 关闭看门狗
-     */
+    /** 关闭看门狗 */
     public static void closeWatchDog() {
         try {
             if(isWin()) {
@@ -229,9 +217,7 @@ public class SystemService {
         }
     }
 
-    /**
-     * 重启浏览器客户端
-     */
+    /** 重启浏览器客户端 */
     public static void resChromiumApp() {
         try {
             if(isWin()) {
@@ -246,9 +232,7 @@ public class SystemService {
         }
     }
 
-    /**
-     * 触发升级
-     */
+    /** 触发升级 */
     public static void deploy() {
         try {
             if(isWin()) {
@@ -261,9 +245,7 @@ public class SystemService {
         }
     }
 
-    /**
-     * 判断当前操作系统是否为Windows
-     */
+    /** 判断当前操作系统是否为Windows */
     public static Boolean isWin() {
         return StrUtil.containsIgnoreCase(System.getProperty("os.name"), "win");
     }

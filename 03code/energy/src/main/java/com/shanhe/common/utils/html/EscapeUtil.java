@@ -8,8 +8,10 @@ import com.shanhe.common.utils.StringUtils;
  * @author ruoyi
  */
 public class EscapeUtil {
+    /** HTML标签匹配正则表达式。 */
     public static final String RE_HTML_MARK = "(<[^<]*?>)|(<[\\s]*?/[^<]*?>)|(<[^<]*?/[\\s]*?>)";
 
+    /** HTML特殊字符转义映射表。 */
     private static final char[][] TEXT = new char[64][];
 
     static

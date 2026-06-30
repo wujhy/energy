@@ -14,74 +14,46 @@ import lombok.Data;
 @Builder
 public class BatteryPendingRequest {
 
-    /**
-     * 请求命令码。
-     */
+    /** 请求命令码。 */
     private int requestCode;
 
-    /**
-     * 期望响应命令码。
-     */
+    /** 期望响应命令码。 */
     private int responseCode;
 
-    /**
-     * 本次请求发送的模块地址。
-     */
+    /** 本次请求发送的模块地址。 */
     private int requestAddress;
 
-    /**
-     * 请求信息域。
-     */
+    /** 请求信息域。 */
     private byte[] payload;
 
-    /**
-     * 请求名称。
-     */
+    /** 请求名称。 */
     private String name;
 
-    /**
-     * 是否自动轮询产生。
-     */
+    /** 是否自动轮询产生。 */
     private boolean autoPoll;
 
-    /**
-     * 旧业务设备ID，用于兼容 BatteryModeInfo 状态缓存。
-     */
+    /** 旧业务设备ID，用于兼容 BatteryModeInfo 状态缓存。 */
     private Long configId;
 
-    /**
-     * 电池组编号，用于兼容 BatteryModeInfo 状态缓存。
-     */
+    /** 电池组编号，用于兼容 BatteryModeInfo 状态缓存。 */
     private Integer batteryGroup;
 
-    /**
-     * 旧 BatteryModeInfo 工作模式。
-     */
+    /** 旧 BatteryModeInfo 工作模式。 */
     private Integer mode;
 
-    /**
-     * 自动编号目标单体数量。
-     */
+    /** 自动编号目标单体数量。 */
     private Integer autoAddressBatteryCount;
 
-    /**
-     * 自动编号电池规格。
-     */
+    /** 自动编号电池规格。 */
     private Integer autoAddressBatterySpecification;
 
-    /**
-     * 关联的操作日志ID。
-     */
+    /** 关联的操作日志ID。 */
     private Long optLogId;
 
-    /**
-     * 连接条测试下一个待测单体地址。
-     */
+    /** 连接条测试下一个待测单体地址。 */
     private Integer connectResistanceNextAddress;
 
-    /**
-     * 连接条测试最大单体地址。
-     */
+    /** 连接条测试最大单体地址。 */
     private Integer connectResistanceMaxAddress;
 
     /** 连接条测试过程中是否已出现失败。 */

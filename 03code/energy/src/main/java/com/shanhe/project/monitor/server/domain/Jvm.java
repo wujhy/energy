@@ -14,29 +14,19 @@ import lombok.Data;
 @Data
 public class Jvm
 {
-    /**
-     * 当前JVM占用的内存总数(M)
-     */
+    /** 当前JVM占用的内存总数(M) */
     private double total;
 
-    /**
-     * JVM最大可用内存总数(M)
-     */
+    /** JVM最大可用内存总数(M) */
     private double max;
 
-    /**
-     * JVM空闲内存(M)
-     */
+    /** JVM空闲内存(M) */
     private double free;
 
-    /**
-     * JDK版本
-     */
+    /** JDK版本 */
     private String version;
 
-    /**
-     * JDK路径
-     */
+    /** JDK路径 */
     private String home;
 
     public double getTotal()
@@ -63,23 +53,17 @@ public class Jvm
     {
         return ArithmeticUtils.mul(ArithmeticUtils.div(total - free, total, 4), 100);
     }
-    /**
-     * 获取JDK名称
-     */
+    /** 获取JDK名称 */
     public String getName()
     {
         return ManagementFactory.getRuntimeMXBean().getVmName();
     }
-    /**
-     * JDK启动时间
-     */
+    /** JDK启动时间 */
     public String getStartTime()
     {
         return DateUtils.parseDateToStr(DateUtils.YYYY_MM_DD_HH_MM_SS, DateUtils.getServerStartDate());
     }
-    /**
-     * JDK运行时间
-     */
+    /** JDK运行时间 */
     public String getRunTime()
     {
         return DateUtils.getDatePoor(DateUtils.getNowDate(), DateUtils.getServerStartDate());

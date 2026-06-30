@@ -60,9 +60,7 @@ public class CacheService {
         CacheUtils.remove(cacheName, cacheKey);
     }
 
-    /**
-     * 清理所有缓存
-     */
+    /** 清理所有缓存 */
     public void clearAll() {
         String[] cacheNames = getCacheNames();
         for (String cacheName : cacheNames) {

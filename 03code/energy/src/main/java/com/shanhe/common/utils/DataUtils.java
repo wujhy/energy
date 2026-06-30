@@ -10,6 +10,7 @@ import java.util.Objects;
  */
 public class DataUtils {
 
+    /** 浮点数比较精度阈值。 */
     static final double EPSILON = 1e-10;
 
     /**

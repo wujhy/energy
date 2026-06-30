@@ -15,60 +15,34 @@ import org.springframework.context.annotation.Lazy;
 @Configuration
 @Lazy(false)
 public class SysConst {
-    /**
-     * 系统名称
-     */
+    /** 系统名称 */
     public static String name;
-    /**
-     * 应用包名称
-     */
+    /** 应用包名称 */
     public static String applicationName;
-    /**
-     * 应用端口号
-     */
+    /** 应用端口号 */
     public static Integer port;
-    /**
-     * 系统版本
-     */
+    /** 系统版本 */
     public static String version;
-    /**
-     * 系统上传路径
-     */
+    /** 系统上传路径 */
     public static String profile;
-    /**
-     * 网卡名称
-     */
+    /** 网卡名称 */
     public static String networkCardName;
-    /**
-     * 获取ip地址开关
-     */
+    /** 获取ip地址开关 */
     public static Boolean addressEnabled = false;
-    /**
-     * 用户管理-账号初始密码
-     */
+    /** 用户管理-账号初始密码 */
     public static String initPassword = "shanHe@168";
-    /**
-     * 主机管理-账号初始密码
-     */
+    /** 主机管理-账号初始密码 */
     public static String initHostPassword = "shanHe168";
-    /**
-     * 项目部署根路径
-     */
+    /** 项目部署根路径 */
     public static String deployPath;
-    /**
-     * 项目部署日期yyyyMMdd
-     */
+    /** 项目部署日期yyyyMMdd */
     public static String deployDay;
 
-    /**
-     * 获取导入上传路径
-     */
+    /** 获取导入上传路径 */
     public static String getImportPath() {
         return profile + "/import";
     }
-    /**
-     * 获取下载路径
-     */
+    /** 获取下载路径 */
     public static String getDownloadPath() {
         return profile + "/download/";
     }
@@ -76,21 +50,15 @@ public class SysConst {
     public static String getSoftDownloadPath() {
         return String.format("%s/softDownload/%s.jar", profile, applicationName);
     }
-    /**
-     * 获取上传路径
-     */
+    /** 获取上传路径 */
     public static String getUploadPath() {
         return profile + "/upload";
     }
-    /**
-     * 项目配置路径
-     */
+    /** 项目配置路径 */
     public static String getConfigPath() {
         return deployPath + "/config";
     }
-    /**
-     * 项目脚本
-     */
+    /** 项目脚本 */
     public static String getScriptFilePath() {
         return "/opt/energy/energy.sh";
     }

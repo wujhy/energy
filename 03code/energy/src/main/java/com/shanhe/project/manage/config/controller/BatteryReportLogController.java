@@ -45,9 +45,7 @@ public class BatteryReportLogController extends BaseController
     @Resource
     private IAlarmLogService alarmLogService;
 
-    /**
-     * 单体电池历史记录
-     */
+    /** 单体电池历史记录 */
     @PostMapping("/list")
     @ResponseBody
     public TableDataInfo list(BatteryReportLog batteryReportLog)
@@ -58,9 +56,7 @@ public class BatteryReportLogController extends BaseController
         return getDataTable(list);
     }
 
-    /**
-     * 单体电池最新记录
-     */
+    /** 单体电池最新记录 */
     @GetMapping("/{configId}/{packNum}")
     @ResponseBody
     public AjaxResult detailList(@PathVariable("configId") Long ignoredConfigId, @PathVariable Integer packNum)
@@ -74,9 +70,7 @@ public class BatteryReportLogController extends BaseController
         return success(log);
     }
 
-    /**
-     * 查询当前态详情，并在实时切源开启时优先使用标准实时快照。
-     */
+    /** 查询当前态详情，并在实时切源开启时优先使用标准实时快照。 */
     private BatteryReportLog selectCurrentHasAlarm(Integer packNum) {
         if (Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
             try {
@@ -121,9 +115,7 @@ public class BatteryReportLogController extends BaseController
         log.setAlarm(alarmLogs.isEmpty() ? 1 : 0);
     }
 
-    /**
-     * 删除记录
-     */
+    /** 删除记录 */
     @Log(title = "单体电池记录", businessType = BusinessType.DELETE)
     @PostMapping( "/remove")
     @ResponseBody

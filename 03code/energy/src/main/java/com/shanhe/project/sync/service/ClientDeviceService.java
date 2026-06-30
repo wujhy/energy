@@ -38,9 +38,7 @@ public class ClientDeviceService {
     @Resource
     private TcpClient tcpClient;
 
-    /**
-     * tcp解析
-     */
+    /** tcp解析 */
     public void readByTcp(RequestVo request) {
         try {
             tcpClient.sendMsg(this.read(request));
@@ -49,9 +47,7 @@ public class ClientDeviceService {
         }
     }
 
-    /**
-     * http解析
-     */
+    /** http解析 */
     public String readByHttp(RequestVo request) {
         // 认证token
         try {

@@ -8,15 +8,15 @@ package com.shanhe.project.collector.battery.protocol;
  */
 public final class BatteryModuleStatusRegisterCodec {
 
+    /** 电池组状态位掩码，取高字节低4位。 */
     private static final int BATTERY_STATUS_MASK = 0x0F;
+    /** 内阻测试状态位掩码，取低字节全部8位。 */
     private static final int TEST_STATUS_MASK = 0xFF;
 
     private BatteryModuleStatusRegisterCodec() {
     }
 
-    /**
-     * M460 Battery_State_Register：高字节低 4 位为电池组状态，低字节为内阻测试状态。
-     */
+    /** M460 Battery_State_Register：高字节低 4 位为电池组状态，低字节为内阻测试状态。 */
     public static int compose(Integer batteryPackStatus, Integer resistanceTestStatus) {
         int batteryStatus = batteryPackStatus == null ? 0 : batteryPackStatus & BATTERY_STATUS_MASK;
         int testStatus = resistanceTestStatus == null ? 0 : resistanceTestStatus & TEST_STATUS_MASK;

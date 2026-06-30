@@ -44,9 +44,7 @@ public enum BatteryModelEnum {
         this.floatingVoltage24Above = floatingVoltage24Above;
     }
 
-    /**
-     * 通过值查标签名
-     */
+    /** 通过值查标签名 */
     public static String findByValue(Object value) {
         Integer dictValue;
         if (value instanceof String) {
@@ -71,9 +69,7 @@ public enum BatteryModelEnum {
         }
         return _2;
     }
-    /**
-     * 转list
-     */
+    /** 转list */
     public static List<Dict> getDictList() {
         List<Dict> list = new ArrayList<>();
         for (BatteryModelEnum dictEnum : BatteryModelEnum.values()) {

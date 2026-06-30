@@ -16,9 +16,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class BatteryModuleGroupCompatibilityFillService {
 
-    /**
-     * 旧预估容量缓存服务，缺失时不影响600节实时采集。
-     */
+    /** 旧预估容量缓存服务，缺失时不影响600节实时采集。 */
     @Autowired(required = false)
     private PreBatteryGroupService preBatteryGroupService;
 

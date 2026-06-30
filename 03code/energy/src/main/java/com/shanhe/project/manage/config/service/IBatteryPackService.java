@@ -64,9 +64,7 @@ public interface IBatteryPackService
      */
     void update(BatteryPack batteryPack);
 
-    /**
-     * 删除默认设备所有电池组
-     */
+    /** 删除默认设备所有电池组 */
     void deleteDefaultDevicePacks();
 
     /**
@@ -76,9 +74,7 @@ public interface IBatteryPackService
      */
     void deleteBatteryPackByBatPackIds(List<Long> packIds);
 
-    /**
-     * 更新缓存
-     */
+    /** 更新缓存 */
     void updateCache();
 
     /**

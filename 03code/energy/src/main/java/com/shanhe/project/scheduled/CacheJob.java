@@ -32,9 +32,7 @@ public class CacheJob {
     @Resource
     private IBatteryPackService batteryPackService;
 
-    /**
-     * 定时更新设备配置缓存
-     */
+    /** 定时更新设备配置缓存 */
     @Scheduled(cron = "${job.configCache}")
     public void configJob() {
         try {
@@ -46,9 +44,7 @@ public class CacheJob {
         }
     }
 
-    /**
-     * 定时更新设备告警缓存
-     */
+    /** 定时更新设备告警缓存 */
     @Scheduled(cron = "${job.alarmCache}")
     public void alarmJob() {
         try {
@@ -59,9 +55,7 @@ public class CacheJob {
         }
     }
 
-    /**
-     * 定时更新电池组缓存
-     */
+    /** 定时更新电池组缓存 */
     @Scheduled(cron = "${job.batteryCache}")
     public void batteryJob() {
         try {

@@ -30,9 +30,7 @@ public class TcpServerHandler extends SimpleChannelInboundHandler<Object> {
     private static String deviceImei;
     /** 注入设备消费方法 */
     private final DeviceService deviceService;
-    /**
-     * 构造方法，注入
-     */
+    /** 构造方法，注入 */
     public TcpServerHandler(DeviceService deviceService) {
         this.deviceService = deviceService;
     }
@@ -157,24 +155,18 @@ public class TcpServerHandler extends SimpleChannelInboundHandler<Object> {
         return StrUtil.isNotBlank(deviceImei) && deviceChannel != null && deviceChannel.isOpen();
     }
 
-    /**
-     * 当前设备ID
-     */
+    /** 当前设备ID */
     public static String getImei() {
         return deviceImei;
     }
 
-    /**
-     * 读数据完成
-     */
+    /** 读数据完成 */
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) {
         log.debug("数据读取完成，hashcode->{}", ctx.channel().hashCode());
     }
 
-    /**
-     * 定时心跳检测，做下线处理
-     */
+    /** 定时心跳检测，做下线处理 */
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
         // 处理IdleState.READER_IDLE时间
@@ -187,9 +179,7 @@ public class TcpServerHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    /**
-     * 连接异常
-     */
+    /** 连接异常 */
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         // 下线处理

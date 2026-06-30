@@ -36,9 +36,7 @@ public class SerialPortConfig implements ApplicationRunner {
     /** 串口 **/
     SerialPort serialPort;
 
-    /**
-     * 启动串口
-     */
+    /** 启动串口 */
     @Override
     public void run(ApplicationArguments args) throws Exception {
         try {
@@ -99,9 +97,7 @@ public class SerialPortConfig implements ApplicationRunner {
         }
     }
 
-    /**
-     * 关闭串口连接
-     */
+    /** 关闭串口连接 */
     @PreDestroy
     public void stop() throws Exception {
         try {

@@ -46,9 +46,7 @@ public class ResourcesConfig implements WebMvcConfigurer
         registry.setOrder(Ordered.HIGHEST_PRECEDENCE);
     }
 
-    /**
-     * 静态资源配置
-     */
+    /** 静态资源配置 */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         /* 本地文件上传路径 */
@@ -61,18 +59,14 @@ public class ResourcesConfig implements WebMvcConfigurer
         registry.addResourceHandler("/**").addResourceLocations("classpath:/dist/");
     }
 
-    /**
-     * 拦截器配置
-     */
+    /** 拦截器配置 */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(baseRepeatSubmitInterceptor).addPathPatterns("/**").order(1);
         registry.addInterceptor(loginInterceptor).addPathPatterns("/**").order(1);
     }
 
-    /**
-     * 跨域配置
-     */
+    /** 跨域配置 */
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();

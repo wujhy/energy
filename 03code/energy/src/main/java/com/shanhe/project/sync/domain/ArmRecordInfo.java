@@ -19,70 +19,40 @@ import java.util.Objects;
 public class ArmRecordInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 告警记录ID
-     */
+    /** 告警记录ID */
     private Long alarmId;
-    /**
-     * 设备主键ID
-     */
+    /** 设备主键ID */
     private Long devId;
-    /**
-     * 报警数据项编号
-     */
+    /** 报警数据项编号 */
     private String itemCode;
-    /**
-     * 蓄电池组编号，1,2,3,4
-     */
+    /** 蓄电池组编号，1,2,3,4 */
     private Integer packNum;
-    /**
-     * 模块地址(单体电池编号，设备端口编号)
-     */
+    /** 模块地址(单体电池编号，设备端口编号) */
     private Integer modelNum;
 
-    /**
-     * 告警级别1一般告警2紧急告警3严重告警
-     */
+    /** 告警级别1一般告警2紧急告警3严重告警 */
     private String alarmLevel;
-    /**
-     * 告警描述
-     */
+    /** 告警描述 */
     private String description;
-    /**
-     * 告警开始时间
-     */
+    /** 告警开始时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date startTime;
-    /**
-     * 告警结束时间
-     */
+    /** 告警结束时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date endTime;
-    /**
-     * 报警持续时间(秒)
-     */
+    /** 报警持续时间(秒) */
     private Long duration;
-    /**
-     * 报警状态0未处置，1已处置
-     */
+    /** 报警状态0未处置，1已处置 */
     private Integer status;
-    /**
-     * 处理时间
-     */
+    /** 处理时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date dealTime;
-    /**
-     * 处置方式 0 自动 1 屏蔽
-     */
+    /** 处置方式 0 自动 1 屏蔽 */
     private Integer dealMethod;
-    /**
-     * 屏蔽结束时间yyyy-MM-dd HH:mm:ss
-     */
+    /** 屏蔽结束时间yyyy-MM-dd HH:mm:ss */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date shieldEndTime;
-    /**
-     * 报警处理人员姓名
-     */
+    /** 报警处理人员姓名 */
     private String dealUserName;
 
     /**

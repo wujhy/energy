@@ -33,6 +33,7 @@ import java.util.List;
 @Service
 public class BatteryCurrentStateService {
 
+    /** M460不支持的告警类型及原因说明列表，用于在状态接口中告知前端。 */
     private static final List<String> UNSUPPORTED_ALARM_REASONS = Arrays.asList(
             "M460_THERMAL_RUNAWAY: no energy realtime data source",
             "M460_HYDROGEN: no confirmed energy realtime data source",

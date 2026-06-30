@@ -10,9 +10,7 @@ import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
  */
 public final class BatteryModulePollContextHolder {
 
-    /**
-     * 当前轮询线程上下文。
-     */
+    /** 当前轮询线程上下文。 */
     private static final ThreadLocal<BatteryModulePollContext> CONTEXT = new ThreadLocal<>();
 
     private BatteryModulePollContextHolder() {
@@ -36,9 +34,7 @@ public final class BatteryModulePollContextHolder {
         return CONTEXT.get();
     }
 
-    /**
-     * 清理当前线程轮询上下文。
-     */
+    /** 清理当前线程轮询上下文。 */
     public static void clear() {
         CONTEXT.remove();
     }

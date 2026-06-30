@@ -28,6 +28,7 @@ import java.util.Objects;
 @Service
 public class BatteryOptCollectorCommandAdapter {
 
+    /** 电池单体数量上限默认值。 */
     private static final int MAX_BATTERY_COUNT = 245;
 
     /** 采集配置属性。 */
@@ -153,9 +154,7 @@ public class BatteryOptCollectorCommandAdapter {
         return AjaxResult.error("当前电池组有其他测试运行中", 0);
     }
 
-    /**
-     * 解析电池组单体数量，异常或空值时使用默认值 245。
-     */
+    /** 解析电池组单体数量，异常或空值时使用默认值 245。 */
     private int resolveBatteryCount(Integer packNum) {
         try {
             Integer count = batteryPackService.getBatteryMaxNumber(packNum);

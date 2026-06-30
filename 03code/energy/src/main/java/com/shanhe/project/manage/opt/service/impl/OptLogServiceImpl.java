@@ -208,9 +208,7 @@ public class OptLogServiceImpl implements OptLogService {
         update(optLog.getId(), YesNoEnum.YES.getDictValue(), endTime);
     }
 
-    /**
-     * 状态转换
-     */
+    /** 状态转换 */
     private Integer getTestType(String batteryPackStatus) {
         Integer testType = null;
 
@@ -331,17 +329,13 @@ public class OptLogServiceImpl implements OptLogService {
         return optLogMapper.deleteByIds(Convert.toStrArray(ids));
     }
 
-    /**
-     * 删除默认设备操作日志
-     */
+    /** 删除默认设备操作日志 */
     @Override
     public void deleteDefaultDeviceLogs() {
         optLogMapper.deleteDefaultDeviceLogs();
     }
 
-    /**
-     * 更新操作日志缓存
-     */
+    /** 更新操作日志缓存 */
     @Override
     public void updateCache() {
         // 旧缓存

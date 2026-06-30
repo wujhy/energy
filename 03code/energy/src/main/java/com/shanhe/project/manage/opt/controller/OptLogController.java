@@ -29,9 +29,7 @@ public class OptLogController extends BaseController
     @Resource
     private OptLogService optLogService;
 
-    /**
-     * 操作记录
-     */
+    /** 操作记录 */
     @PostMapping("/list")
     @ResponseBody
     public TableDataInfo list(OptLog optLog)
@@ -41,9 +39,7 @@ public class OptLogController extends BaseController
         return getDataTable(list);
     }
 
-    /**
-     * 删除记录
-     */
+    /** 删除记录 */
     @Log(title = "单体电池记录", businessType = BusinessType.DELETE)
     @PostMapping( "/remove")
     @ResponseBody

@@ -15,9 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TcpClientHandler extends SimpleChannelInboundHandler<Object> {
 
-	/**
-	 * 注入实现类
-	 */
+	/** 注入实现类 */
 	private final ClientDeviceService clientDeviceService;
 
 	public TcpClientHandler(ClientDeviceService clientDeviceService) {

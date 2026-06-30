@@ -32,9 +32,7 @@ public enum CompareEnum {
         this.dictLabel = dictLabel;
     }
 
-    /**
-     * 通过值查标签名
-     */
+    /** 通过值查标签名 */
     public static String findByValue(Object value) {
         Integer dictValue;
         if (value instanceof String) {
@@ -52,9 +50,7 @@ public enum CompareEnum {
         return null;
     }
 
-    /**
-     * 转list
-     */
+    /** 转list */
     public static List<Dict> getDictList() {
         List<Dict> list = new ArrayList<>();
         for (CompareEnum dictEnum : CompareEnum.values()) {

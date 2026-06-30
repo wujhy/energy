@@ -28,41 +28,31 @@ public class ScreenController extends BaseController {
         return AjaxResult.success(screenService.main());
     }
 
-    /**
-     * 网点信息
-     */
+    /** 网点信息 */
     @GetMapping("/host")
     public AjaxResult host() {
         return success(screenService.host());
     }
 
-    /**
-     * 设备列表
-     */
+    /** 设备列表 */
     @GetMapping("/config")
     public AjaxResult config() {
         return success(screenService.configList());
     }
 
-    /**
-     * 设备详情
-     */
+    /** 设备详情 */
     @GetMapping("/configDetail")
     public AjaxResult configDetail(@RequestParam(name = "configId", required = false) Long ignoredConfigId) {
         return success(screenService.config());
     }
 
-    /**
-     * 设备属性列表
-     */
+    /** 设备属性列表 */
     @GetMapping("/attribute")
     public AjaxResult viewList(@RequestParam(name = "configId", required = false) Long ignoredConfigId, @RequestParam(required = false) Integer packNum, @RequestParam(required = false) Integer screen) {
         return success(screenService.attribute(packNum, screen));
     }
 
-    /**
-     * 设备属性下拉列表
-     */
+    /** 设备属性下拉列表 */
     @GetMapping("/attributeSelect")
     public AjaxResult selectList(@RequestParam(name = "configId", required = false) Long ignoredConfigId,
                                  @RequestParam(required = false) Integer packNum,
@@ -78,9 +68,7 @@ public class ScreenController extends BaseController {
         return "screen";
     }
 
-    /**
-     * 电池
-     */
+    /** 电池 */
     @GetMapping("/batteryList")
     @ResponseBody
     public AjaxResult batteryList()
@@ -88,9 +76,7 @@ public class ScreenController extends BaseController {
         return success(screenService.batteryList());
     }
 
-    /**
-     * 网点信息
-     */
+    /** 网点信息 */
     @GetMapping("/alarmCount")
     @ResponseBody
     public AjaxResult alarmCount() {

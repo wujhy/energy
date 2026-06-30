@@ -121,9 +121,7 @@ public enum MethodEnum {
         this.dictLabel = dictLabel;
     }
 
-    /**
-     * 转枚举
-     */
+    /** 转枚举 */
     public static MethodEnum fromCode(String code) {
         if (StrUtil.isBlank(code)) {
             return _99;

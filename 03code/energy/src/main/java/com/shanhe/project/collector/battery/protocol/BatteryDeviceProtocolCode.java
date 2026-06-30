@@ -23,24 +23,16 @@ public enum BatteryDeviceProtocolCode {
     AUTO_SET_MODULE_ADDRESS(0x18, 0xA8, false, "自动设置模块地址"),
     SET_CALIBRATION_PARAMETER(0x76, 0xF6, true, "设置校准参数（工厂用）");
 
-    /**
-     * 请求命令码。
-     */
+    /** 请求命令码。 */
     private final int requestCode;
 
-    /**
-     * 响应命令码；无明确响应的广播命令为空。
-     */
+    /** 响应命令码；无明确响应的广播命令为空。 */
     private final Integer responseCode;
 
-    /**
-     * 是否为 1 字节状态应答。
-     */
+    /** 是否为 1 字节状态应答。 */
     private final boolean statusResponse;
 
-    /**
-     * 协议功能说明。
-     */
+    /** 协议功能说明。 */
     private final String description;
 
     BatteryDeviceProtocolCode(int requestCode, Integer responseCode, boolean statusResponse, String description) {

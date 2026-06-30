@@ -58,9 +58,7 @@ public class CacheInit implements ApplicationRunner {
         log.info("-----------------初始化缓存结束------------");
     }
 
-    /**
-     * 初始化主机信息缓存
-     */
+    /** 初始化主机信息缓存 */
     public void initHost() {
         try {
             // 初始化主机未下线且imei为空
@@ -73,9 +71,7 @@ public class CacheInit implements ApplicationRunner {
         }
     }
 
-    /**
-     * 初始化设备配置缓存
-     */
+    /** 初始化设备配置缓存 */
     public void initConfig() {
         try {
             configAttributeService.updateCache();
@@ -85,9 +81,7 @@ public class CacheInit implements ApplicationRunner {
         }
     }
 
-    /**
-     * 初始化告警缓存
-     */
+    /** 初始化告警缓存 */
     public void initAlarm() {
         try {
             alarmLogService.updateCache();
@@ -96,9 +90,7 @@ public class CacheInit implements ApplicationRunner {
         }
     }
 
-    /**
-     * 初始化电池组相关缓存
-     */
+    /** 初始化电池组相关缓存 */
     public void initBattery() {
         try {
             batteryPackService.updateCache();

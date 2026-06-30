@@ -14,19 +14,13 @@ import java.util.Map;
 @Data
 public class BatteryModuleAlarmContext {
 
-    /**
-     * 电池组编号。
-     */
+    /** 电池组编号。 */
     private Integer packNum;
 
-    /**
-     * 组级告警候选，key 为旧告警 itemCode，value 为告警值。
-     */
+    /** 组级告警候选，key 为旧告警 itemCode，value 为告警值。 */
     private Map<String, String> packWarnParam = new LinkedHashMap<>();
 
-    /**
-     * 单体告警候选，第一层 key 为单体编号，第二层 key 为旧告警 itemCode。
-     */
+    /** 单体告警候选，第一层 key 为单体编号，第二层 key 为旧告警 itemCode。 */
     private Map<Integer, Map<String, String>> cellWarnParam = new LinkedHashMap<>();
 
     /**

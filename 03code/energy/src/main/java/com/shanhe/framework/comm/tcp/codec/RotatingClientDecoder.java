@@ -21,11 +21,10 @@ import java.util.List;
 public class RotatingClientDecoder extends ByteToMessageDecoder {
     /** 字节长度 */
     public static final Integer HEAD_LENGTH = 50;
+    /** 最大允许解码字节长度（1MB），超过此长度视为异常数据。 */
     public static final Integer MAX_LENGTH = 1024 * 1024;
 
-    /**
-     * 解码
-     */
+    /** 解码 */
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         if (!in.isReadable()) {

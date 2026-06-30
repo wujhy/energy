@@ -89,13 +89,9 @@ public interface IHostService
      */
     Map<String, Object> getExtend();
 
-    /**
-     * 上线
-     */
+    /** 上线 */
 
-    /**
-     * 下线
-     */
+    /** 下线 */
 
     /**
      * 更新缓存
@@ -104,8 +100,6 @@ public interface IHostService
      */
     Host updateCache();
 
-    /**
-     * 清理数据
-     */
+    /** 清理数据 */
     void restore();
 }
