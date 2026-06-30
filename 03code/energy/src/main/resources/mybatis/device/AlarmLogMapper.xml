@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.shanhe.project.device.alarm.mapper.AlarmLogMapper">
+<mapper namespace="com.shanhe.project.manage.alarm.mapper.AlarmLogMapper">
 
-    <resultMap type="com.shanhe.project.device.alarm.domain.AlarmLog" id="AlarmLogResult">
+    <resultMap type="com.shanhe.project.manage.alarm.domain.AlarmLog" id="AlarmLogResult">
         <result property="alarmId"    column="alarm_id"    />
         <result property="configId"    column="config_id"    />
         <result property="configName"    column="config_Name"    />
@@ -30,7 +30,7 @@
     </sql>
 
     <!-- 查询告警日志列表 -->
-    <select id="selectAlarmLogList" parameterType="com.shanhe.project.device.alarm.domain.AlarmLog" resultMap="AlarmLogResult">
+    <select id="selectAlarmLogList" parameterType="com.shanhe.project.manage.alarm.domain.AlarmLog" resultMap="AlarmLogResult">
         <include refid="selectAlarmLogVo"/>
         <where>
             and l.config_id = 1
@@ -77,7 +77,7 @@
     </select>
 
     <!-- 查询所有告警日志 -->
-    <select id="allAlarmLog" parameterType="com.shanhe.project.device.alarm.domain.AlarmLog" resultMap="AlarmLogResult">
+    <select id="allAlarmLog" parameterType="com.shanhe.project.manage.alarm.domain.AlarmLog" resultMap="AlarmLogResult">
         select
             l.alarm_id, l.config_id, l.pack_num, l.model_num, l.item_code, l.alarm_level, l.data_info, l.status, l.shied, l.shied_time, l.duration, l.remark, l.create_time, l.update_time
         from dev_alarm_log l
@@ -101,7 +101,7 @@
     </select>
 
     <!-- 查询告警数量 -->
-    <select id="alarmNum" parameterType="com.shanhe.project.device.alarm.domain.AlarmLog" resultType="Long">
+    <select id="alarmNum" parameterType="com.shanhe.project.manage.alarm.domain.AlarmLog" resultType="Long">
         select count(0) from dev_alarm_log l
         <where>
             <if test="configId != null "> and l.config_id = #{configId}</if>
@@ -138,7 +138,7 @@
     </select>
 
     <!-- 插入告警日志 -->
-    <insert id="insertAlarmLog" parameterType="com.shanhe.project.device.alarm.domain.AlarmLog">
+    <insert id="insertAlarmLog" parameterType="com.shanhe.project.manage.alarm.domain.AlarmLog">
         insert into dev_alarm_log
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="alarmId != null">alarm_id,</if>
@@ -167,7 +167,7 @@
     </insert>
 
     <!-- 更新告警日志 -->
-    <update id="updateAlarmLog" parameterType="com.shanhe.project.device.alarm.domain.AlarmLog">
+    <update id="updateAlarmLog" parameterType="com.shanhe.project.manage.alarm.domain.AlarmLog">
         update dev_alarm_log
         <trim prefix="SET">
             <if test="status != null">status = #{status},</if>

@@ -1,0 +1,47 @@
+package com.shanhe.project.manage.stat.service;
+
+import com.shanhe.project.manage.config.domain.BatteryMonitor;
+import com.shanhe.project.manage.stat.domain.StatBatteryPack;
+
+import java.util.List;
+import java.util.Map;
+
+
+/**
+ * 电池组统计Service接口
+ *
+ * @author wjh
+ * @since 2026-05-25
+ */
+public interface IStatBatteryPackService {
+    /**
+     * 查询电池组统计列表
+     *
+     * @param statBatteryPack 查询条件
+     * @return 电池组统计集合
+     */
+    List<StatBatteryPack> selectList(StatBatteryPack statBatteryPack);
+
+    /**
+     * 新增电池组统计
+     *
+     * @param packNum 电池组编号
+     * @param packMap 电池组参数
+     * @param batteryList 单体数据
+     */
+    void insertList(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList);
+
+    /**
+     * 删除记录
+     *
+     * @param packNum 电池组编号；为空时删除默认设备全部电池组统计
+     */
+    void deleteByPackNum(Integer packNum);
+
+    /**
+     * 导出数据
+     *
+     * @param params 查询参数
+     */
+    void export(StatBatteryPack params);
+}

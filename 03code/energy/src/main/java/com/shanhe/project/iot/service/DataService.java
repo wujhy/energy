@@ -2,9 +2,9 @@ package com.shanhe.project.iot.service;
 
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
-import com.shanhe.project.device.alarm.service.IAlarmLogService;
-import com.shanhe.project.device.host.domain.Host;
-import com.shanhe.project.device.host.service.IHostService;
+import com.shanhe.project.manage.alarm.service.IAlarmLogService;
+import com.shanhe.project.manage.host.domain.Host;
+import com.shanhe.project.manage.host.service.IHostService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 

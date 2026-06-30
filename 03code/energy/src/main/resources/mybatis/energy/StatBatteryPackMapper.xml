@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.shanhe.project.energy.stat.mapper.StatBatteryPackMapper">
+<mapper namespace="com.shanhe.project.manage.stat.mapper.StatBatteryPackMapper">
     <sql id="selectStatBatteryPackVo">
         id as id ,
                 create_time as createTime ,
@@ -18,8 +18,8 @@
     </sql>
 
     <!-- 查询电池包统计列表 -->
-    <select id="selectList" parameterType="com.shanhe.project.energy.stat.domain.StatBatteryPack"
-            resultType="com.shanhe.project.energy.stat.domain.StatBatteryPack">
+    <select id="selectList" parameterType="com.shanhe.project.manage.stat.domain.StatBatteryPack"
+            resultType="com.shanhe.project.manage.stat.domain.StatBatteryPack">
         select
         <include refid="selectStatBatteryPackVo"/>
         from stat_battery_pack pack
@@ -70,7 +70,7 @@
 
 
     <!-- 批量新增电池包统计 -->
-    <insert id="insertList" parameterType="com.shanhe.project.energy.stat.domain.StatBatteryPack">
+    <insert id="insertList" parameterType="com.shanhe.project.manage.stat.domain.StatBatteryPack">
         insert into stat_battery_pack (
         id,
         create_time,
@@ -137,7 +137,7 @@
     </select>
 
     <!-- 查询电池包统计数量 -->
-    <select id="selectCount" parameterType="com.shanhe.project.energy.stat.domain.StatBatteryPack"
+    <select id="selectCount" parameterType="com.shanhe.project.manage.stat.domain.StatBatteryPack"
             resultType="java.lang.Long">
         select count()
         from stat_battery_pack pack

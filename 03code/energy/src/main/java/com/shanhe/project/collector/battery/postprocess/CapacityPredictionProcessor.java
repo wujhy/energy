@@ -3,8 +3,8 @@ package com.shanhe.project.collector.battery.postprocess;
 
 import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
-import com.shanhe.project.device.config.domain.BatteryReportLog;
-import com.shanhe.project.energy.capacity.service.BatteryPredictorService;
+import com.shanhe.project.manage.config.domain.BatteryReportLog;
+import com.shanhe.project.manage.capacity.service.BatteryPredictorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

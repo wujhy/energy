@@ -5,7 +5,7 @@ import com.shanhe.common.exception.ServiceException;
 import com.shanhe.common.utils.IpUtils;
 import com.shanhe.framework.consts.SysConst;
 import com.shanhe.framework.enums.IpAddrEnum;
-import com.shanhe.project.device.host.domain.Host;
+import com.shanhe.project.manage.host.domain.Host;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;

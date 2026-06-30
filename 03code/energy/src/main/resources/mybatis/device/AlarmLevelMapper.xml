@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.shanhe.project.device.alarm.mapper.AlarmLevelMapper">
+<mapper namespace="com.shanhe.project.manage.alarm.mapper.AlarmLevelMapper">
 
     <sql id="selectAlarmLevelVo">
         select id,
@@ -30,8 +30,8 @@
     </sql>
 
     <!-- 查询告警级别列表 -->
-    <select id="selectAlarmLevelList" parameterType="com.shanhe.project.device.alarm.domain.AlarmLevel"
-            resultType="com.shanhe.project.device.alarm.domain.AlarmLevel">
+    <select id="selectAlarmLevelList" parameterType="com.shanhe.project.manage.alarm.domain.AlarmLevel"
+            resultType="com.shanhe.project.manage.alarm.domain.AlarmLevel">
         <include refid="selectAlarmLevelVo"/>
         <where>
             <if test="levelCode != null  and levelCode != ''">
@@ -46,13 +46,13 @@
 
     <!-- 按ID查询告警级别 -->
     <select id="selectAlarmLevelById" parameterType="Long"
-            resultType="com.shanhe.project.device.alarm.domain.AlarmLevel">
+            resultType="com.shanhe.project.manage.alarm.domain.AlarmLevel">
         <include refid="selectAlarmLevelVo"/>
         where id = #{id}
     </select>
 
     <!-- 插入告警级别 -->
-    <insert id="insertAlarmLevel" parameterType="com.shanhe.project.device.alarm.domain.AlarmLevel">
+    <insert id="insertAlarmLevel" parameterType="com.shanhe.project.manage.alarm.domain.AlarmLevel">
         insert into dev_alarm_level (id,
                                  level_code,
                                  level_name,
@@ -95,7 +95,7 @@
     </insert>
 
     <!-- 更新告警级别 -->
-    <update id="updateAlarmLevel" parameterType="com.shanhe.project.device.alarm.domain.AlarmLevel">
+    <update id="updateAlarmLevel" parameterType="com.shanhe.project.manage.alarm.domain.AlarmLevel">
         update dev_alarm_level
         set
         <if test="levelCode != null and levelCode != ''">

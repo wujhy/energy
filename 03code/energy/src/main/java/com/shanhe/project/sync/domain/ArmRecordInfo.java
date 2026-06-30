@@ -2,7 +2,7 @@ package com.shanhe.project.sync.domain;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.shanhe.framework.enums.YesNoEnum;
-import com.shanhe.project.device.alarm.domain.AlarmLog;
+import com.shanhe.project.manage.alarm.domain.AlarmLog;
 import lombok.Data;
 
 import java.io.Serializable;

@@ -3,9 +3,9 @@ package com.shanhe.project.collector.battery.service;
 import com.shanhe.common.constant.Constants;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
-import com.shanhe.project.energy.capacity.service.PreBatteryGroupService;
-import com.shanhe.project.energy.capacity.vo.PreBatteryGroup;
-import com.shanhe.project.energy.capacity.vo.PreBatteryVo;
+import com.shanhe.project.manage.capacity.service.PreBatteryGroupService;
+import com.shanhe.project.manage.capacity.vo.PreBatteryGroup;
+import com.shanhe.project.manage.capacity.vo.PreBatteryVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

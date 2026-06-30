@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.shanhe.project.energy.stat.mapper.DevBatteryMonomerMapper">
+<mapper namespace="com.shanhe.project.manage.stat.mapper.DevBatteryMonomerMapper">
 
-    <resultMap type="com.shanhe.project.energy.stat.domain.DevBatteryMonomer" id="DevBatteryMonomerResult">
+    <resultMap type="com.shanhe.project.manage.stat.domain.DevBatteryMonomer" id="DevBatteryMonomerResult">
         <result property="id" column="id"/>
         <result property="packId" column="pack_id"/>
         <result property="batNum" column="bat_num"/>
@@ -21,8 +21,8 @@
     </sql>
 
     <!-- 查询单体内阻列表 -->
-    <select id="selectList" parameterType="com.shanhe.project.energy.stat.domain.DevBatteryMonomer"
-            resultType="com.shanhe.project.energy.stat.domain.DevBatteryMonomer">
+    <select id="selectList" parameterType="com.shanhe.project.manage.stat.domain.DevBatteryMonomer"
+            resultType="com.shanhe.project.manage.stat.domain.DevBatteryMonomer">
         select
         <include refid="selectDevBatteryMonomerVo"/>
         from dev_battery_monomer

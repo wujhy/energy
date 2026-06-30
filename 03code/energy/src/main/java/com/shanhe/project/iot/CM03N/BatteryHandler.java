@@ -3,7 +3,7 @@ package com.shanhe.project.iot.CM03N;
 import cn.hutool.core.util.StrUtil;
 import com.shanhe.framework.enums.BatteryCidEnum;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
-import com.shanhe.project.device.config.domain.Config;
+import com.shanhe.project.manage.config.domain.Config;
 import com.shanhe.project.iot.battery.BatteryAlarmHandler;
 import com.shanhe.project.iot.battery.BatteryOptResHandler;
 import com.shanhe.project.iot.battery.BatteryPackHandler;

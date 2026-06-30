@@ -1,8 +1,8 @@
 package com.shanhe.project.scheduled;
 
-import com.shanhe.project.device.alarm.service.IAlarmLogService;
-import com.shanhe.project.device.config.service.*;
-import com.shanhe.project.device.opt.service.OptLogService;
+import com.shanhe.project.manage.alarm.service.IAlarmLogService;
+import com.shanhe.project.manage.config.service.*;
+import com.shanhe.project.manage.opt.service.OptLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;

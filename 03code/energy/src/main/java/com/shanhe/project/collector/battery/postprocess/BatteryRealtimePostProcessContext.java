@@ -5,7 +5,7 @@ import com.shanhe.project.collector.battery.model.BatteryModuleAlarmContext;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
-import com.shanhe.project.device.config.domain.BatteryReportLog;
+import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import lombok.Builder;
 import lombok.Data;
 

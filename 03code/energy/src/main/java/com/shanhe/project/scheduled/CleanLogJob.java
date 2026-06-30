@@ -1,9 +1,9 @@
 package com.shanhe.project.scheduled;
 
 import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
-import com.shanhe.project.device.config.service.BatteryReportLogService;
-import com.shanhe.project.device.host.domain.Host;
-import com.shanhe.project.device.host.service.IHostService;
+import com.shanhe.project.manage.config.service.BatteryReportLogService;
+import com.shanhe.project.manage.host.domain.Host;
+import com.shanhe.project.manage.host.service.IHostService;
 import com.shanhe.project.monitor.operlog.service.IOperLogService;
 import com.shanhe.project.monitor.server.service.SystemService;
 import lombok.extern.slf4j.Slf4j;

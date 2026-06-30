@@ -6,7 +6,7 @@ import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.framework.comm.tcp.codec.RotatingClientDecoder;
 import com.shanhe.framework.comm.tcp.codec.RotatingClientEncoder;
-import com.shanhe.project.device.host.domain.Host;
+import com.shanhe.project.manage.host.domain.Host;
 import com.shanhe.project.sync.service.ClientDeviceService;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;

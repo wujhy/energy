@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.shanhe.project.device.host.mapper.HostMapper">
+<mapper namespace="com.shanhe.project.manage.host.mapper.HostMapper">
 
-    <resultMap type="com.shanhe.project.device.host.domain.Host" id="HostResult">
+    <resultMap type="com.shanhe.project.manage.host.domain.Host" id="HostResult">
         <result property="hostId"    column="host_id"    />
         <result property="name"    column="name"    />
         <result property="account"    column="account"    />
@@ -57,7 +57,7 @@
     </select>
 
     <!-- 更新主机信息 -->
-    <update id="updateHost" parameterType="com.shanhe.project.device.host.domain.Host">
+    <update id="updateHost" parameterType="com.shanhe.project.manage.host.domain.Host">
         update dev_host
         <trim prefix="SET" suffixOverrides=",">
             <if test="name != null">name = #{name},</if>

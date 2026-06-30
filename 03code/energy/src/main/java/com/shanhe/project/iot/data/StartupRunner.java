@@ -1,8 +1,8 @@
 package com.shanhe.project.iot.data;
 
-import com.shanhe.project.device.config.mapper.BatteryReportLogMapper;
-import com.shanhe.project.energy.stat.mapper.StatBatteryBatMapper;
-import com.shanhe.project.energy.stat.mapper.StatBatteryPackMapper;
+import com.shanhe.project.manage.config.mapper.BatteryReportLogMapper;
+import com.shanhe.project.manage.stat.mapper.StatBatteryBatMapper;
+import com.shanhe.project.manage.stat.mapper.StatBatteryPackMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;

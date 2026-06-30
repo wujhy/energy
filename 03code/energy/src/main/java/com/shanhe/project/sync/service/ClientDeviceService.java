@@ -2,8 +2,8 @@ package com.shanhe.project.sync.service;
 
 import cn.hutool.core.util.StrUtil;
 import com.shanhe.framework.comm.tcp.client.TcpClient;
-import com.shanhe.project.device.host.domain.Host;
-import com.shanhe.project.device.host.service.IHostService;
+import com.shanhe.project.manage.host.domain.Host;
+import com.shanhe.project.manage.host.service.IHostService;
 import com.shanhe.project.sync.consts.MethodEnum;
 import com.shanhe.project.sync.domain.RequestVo;
 import com.shanhe.project.sync.domain.ResponseVo;

@@ -21,7 +21,7 @@ import com.shanhe.project.collector.battery.runtime.BatteryCollectorFrameIoServi
 import com.shanhe.project.collector.battery.runtime.BatteryCollectorFrameReceiveService;
 import com.shanhe.project.collector.battery.runtime.BatteryCollectorTimeoutService;
 import com.shanhe.project.collector.battery.state.BatteryCollectorDeviceStateService;
-import com.shanhe.project.device.config.service.IBatteryPackService;
+import com.shanhe.project.manage.config.service.IBatteryPackService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.ApplicationArguments;

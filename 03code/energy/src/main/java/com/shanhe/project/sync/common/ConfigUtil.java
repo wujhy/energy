@@ -3,8 +3,8 @@ package com.shanhe.project.sync.common;
 import cn.hutool.core.bean.BeanUtil;
 import com.shanhe.framework.enums.DeviceTypeEnum;
 import com.shanhe.framework.enums.YesNoEnum;
-import com.shanhe.project.device.config.domain.BatteryPack;
-import com.shanhe.project.device.config.domain.Config;
+import com.shanhe.project.manage.config.domain.BatteryPack;
+import com.shanhe.project.manage.config.domain.Config;
 import com.shanhe.project.sync.domain.*;
 
 import java.util.ArrayList;

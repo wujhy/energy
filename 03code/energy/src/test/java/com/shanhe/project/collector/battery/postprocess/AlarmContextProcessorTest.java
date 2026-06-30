@@ -6,7 +6,7 @@ import com.shanhe.project.collector.battery.model.BatteryModuleAlarmContext;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.service.BatteryModuleAlarmAdaptService;
-import com.shanhe.project.device.alarm.service.IAlarmLogService;
+import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

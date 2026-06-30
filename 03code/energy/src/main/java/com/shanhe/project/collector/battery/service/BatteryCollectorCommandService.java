@@ -6,8 +6,8 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
 import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefinition;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
-import com.shanhe.project.device.config.service.IBatteryPackService;
-import com.shanhe.project.device.opt.service.OptLogService;
+import com.shanhe.project.manage.config.service.IBatteryPackService;
+import com.shanhe.project.manage.opt.service.OptLogService;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 
 import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.MAX_CELL_ADDRESS;

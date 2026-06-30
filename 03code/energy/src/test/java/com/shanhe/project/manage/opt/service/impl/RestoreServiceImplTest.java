@@ -1,0 +1,163 @@
+package com.shanhe.project.manage.opt.service.impl;
+
+import com.shanhe.common.constant.Constants;
+import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
+import com.shanhe.project.collector.battery.service.BatteryCollectorService;
+import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
+import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
+import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
+import com.shanhe.project.manage.alarm.service.IAlarmLogService;
+import com.shanhe.project.manage.config.domain.BatteryPack;
+import com.shanhe.project.manage.config.domain.Config;
+import com.shanhe.project.manage.config.service.BatteryReportLogService;
+import com.shanhe.project.manage.config.service.IBatteryPackService;
+import com.shanhe.project.manage.config.service.IConfigAttributeService;
+import com.shanhe.project.manage.config.service.IConfigService;
+import com.shanhe.project.manage.config.service.IDevBatteryOptService;
+import com.shanhe.project.manage.host.service.IHostService;
+import com.shanhe.project.manage.opt.service.ControlBatterySet;
+import com.shanhe.project.manage.opt.service.OptLogService;
+import com.shanhe.project.manage.opt.vo.BatterySetVO;
+import com.shanhe.project.manage.capacity.service.PreBatteryGroupService;
+import com.shanhe.project.manage.stat.service.IDevBatteryMonomerService;
+import com.shanhe.project.manage.stat.service.IStatBatteryBatService;
+import com.shanhe.project.manage.stat.service.IStatBatteryPackService;
+import com.shanhe.project.manage.stat.service.IStatBatteryResService;
+import com.shanhe.project.monitor.operlog.service.IOperLogService;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.test.util.ReflectionTestUtils;
+
+class RestoreServiceImplTest {
+
+    @Test
+    void delPackShouldIgnoreRequestConfigIdAndUseDefaultConfig() {
+        RestoreServiceImpl service = new RestoreServiceImpl();
+        IConfigService configService = Mockito.mock(IConfigService.class);
+        IBatteryPackService batteryPackService = Mockito.mock(IBatteryPackService.class, Mockito.CALLS_REAL_METHODS);
+        IDevBatteryMonomerService devBatteryMonomerService = Mockito.mock(IDevBatteryMonomerService.class);
+        IDevBatteryOptService devBatteryOptService = Mockito.mock(IDevBatteryOptService.class);
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class, Mockito.CALLS_REAL_METHODS);
+        BatteryReportLogService batteryReportLogService = Mockito.mock(BatteryReportLogService.class, Mockito.CALLS_REAL_METHODS);
+        BatteryModuleRealtimeMapper batteryModuleRealtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        OptLogService optLogService = Mockito.mock(OptLogService.class);
+        IStatBatteryBatService statBatteryBatService = Mockito.mock(IStatBatteryBatService.class, Mockito.CALLS_REAL_METHODS);
+        IStatBatteryPackService statBatteryPackService = Mockito.mock(IStatBatteryPackService.class, Mockito.CALLS_REAL_METHODS);
+        IStatBatteryResService statBatteryResService = Mockito.mock(IStatBatteryResService.class, Mockito.CALLS_REAL_METHODS);
+        PreBatteryGroupService preBatteryGroupService = Mockito.mock(PreBatteryGroupService.class, Mockito.CALLS_REAL_METHODS);
+        BatteryDeviceStateService batteryDeviceStateService = Mockito.mock(BatteryDeviceStateService.class);
+        BatteryModeStatusService batteryModeStatusService = Mockito.mock(BatteryModeStatusService.class);
+        BatteryCollectorService batteryCollectorService = Mockito.mock(BatteryCollectorService.class);
+        com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService compatibilityFillService =
+                Mockito.mock(com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService.class);
+        BatteryModuleRealtimeSnapshotService realtimeSnapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+
+        Config config = new Config();
+        config.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        Mockito.when(configService.selectDefaultConfig()).thenReturn(config);
+        BatteryPack batteryPack = new BatteryPack();
+        batteryPack.setPackId(12L);
+        Mockito.when(batteryPackService.selectBatteryInfoByPackNum(2)).thenReturn(batteryPack);
+
+        ReflectionTestUtils.setField(service, "configService", configService);
+        ReflectionTestUtils.setField(service, "batteryPackService", batteryPackService);
+        ReflectionTestUtils.setField(service, "devBatteryMonomerService", devBatteryMonomerService);
+        ReflectionTestUtils.setField(service, "devBatteryOptService", devBatteryOptService);
+        ReflectionTestUtils.setField(service, "alarmLogService", alarmLogService);
+        ReflectionTestUtils.setField(service, "batteryReportLogService", batteryReportLogService);
+        ReflectionTestUtils.setField(service, "batteryModuleRealtimeMapper", batteryModuleRealtimeMapper);
+        ReflectionTestUtils.setField(service, "optLogService", optLogService);
+        ReflectionTestUtils.setField(service, "statBatteryBatService", statBatteryBatService);
+        ReflectionTestUtils.setField(service, "statBatteryPackService", statBatteryPackService);
+        ReflectionTestUtils.setField(service, "statBatteryResService", statBatteryResService);
+        ReflectionTestUtils.setField(service, "preBatteryGroupService", preBatteryGroupService);
+        ReflectionTestUtils.setField(service, "batteryDeviceStateService", batteryDeviceStateService);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", batteryModeStatusService);
+        ReflectionTestUtils.setField(service, "batteryCollectorService", batteryCollectorService);
+        ReflectionTestUtils.setField(service, "compatibilityFillService", compatibilityFillService);
+        ReflectionTestUtils.setField(service, "realtimeSnapshotService", realtimeSnapshotService);
+
+        BatterySetVO request = new BatterySetVO();
+        request.setConfigId(99L);
+        request.setPackNum(2);
+
+        service.delPack(request);
+
+        Mockito.verify(configService).selectDefaultConfig();
+        Mockito.verify(batteryPackService).selectBatteryInfoByPackNum(2);
+        Mockito.verify(devBatteryOptService).deleteByPackNum(2);
+        Mockito.verify(alarmLogService).deleteBatteryAlarmLogByPackNum(2);
+        Mockito.verify(batteryReportLogService).deleteByPackNum(2);
+        Mockito.verify(optLogService).deleteByPackNum(2);
+        Mockito.verify(statBatteryBatService).deleteByPackNum(2);
+        Mockito.verify(statBatteryPackService).deleteByPackNum(2);
+        Mockito.verify(statBatteryResService).deleteByPackNum(2);
+        Mockito.verify(preBatteryGroupService).deleteByPackNum(2);
+        Mockito.verify(batteryDeviceStateService).deleteByPackNum(2);
+        Mockito.verify(batteryModeStatusService).clear(2);
+        Mockito.verify(batteryCollectorService).resetModuleAddressCacheByBatteryGroup(2);
+        Mockito.verify(batteryCollectorService).clearDeviceStateDedupCacheByBatteryGroup(2);
+        Mockito.verify(compatibilityFillService).clearConnectResistanceCache(2);
+        Mockito.verify(realtimeSnapshotService).evict(2);
+    }
+
+    @Test
+    void restoreShouldClearAllCollectorCaches() {
+        RestoreServiceImpl service = new RestoreServiceImpl();
+        IConfigService configService = Mockito.mock(IConfigService.class);
+        IDevBatteryMonomerService devBatteryMonomerService = Mockito.mock(IDevBatteryMonomerService.class);
+        IDevBatteryOptService devBatteryOptService = Mockito.mock(IDevBatteryOptService.class);
+        IConfigAttributeService configAttributeService = Mockito.mock(IConfigAttributeService.class);
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryReportLogService batteryReportLogService = Mockito.mock(BatteryReportLogService.class);
+        OptLogService optLogService = Mockito.mock(OptLogService.class);
+        IStatBatteryBatService statBatteryBatService = Mockito.mock(IStatBatteryBatService.class);
+        IStatBatteryPackService statBatteryPackService = Mockito.mock(IStatBatteryPackService.class);
+        IStatBatteryResService statBatteryResService = Mockito.mock(IStatBatteryResService.class);
+        PreBatteryGroupService preBatteryGroupService = Mockito.mock(PreBatteryGroupService.class);
+        BatteryDeviceStateService batteryDeviceStateService = Mockito.mock(BatteryDeviceStateService.class);
+        BatteryModeStatusService batteryModeStatusService = Mockito.mock(BatteryModeStatusService.class);
+        BatteryCollectorService batteryCollectorService = Mockito.mock(BatteryCollectorService.class);
+        com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService compatibilityFillService =
+                Mockito.mock(com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService.class);
+        BatteryModuleRealtimeSnapshotService realtimeSnapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        IOperLogService operLogService = Mockito.mock(IOperLogService.class);
+        IBatteryPackService batteryPackService = Mockito.mock(IBatteryPackService.class);
+        IHostService hostService = Mockito.mock(IHostService.class);
+        ControlBatterySet controlBatterySet = Mockito.mock(ControlBatterySet.class);
+
+        Config config = new Config();
+        config.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        Mockito.when(configService.selectDefaultConfig()).thenReturn(config);
+
+        ReflectionTestUtils.setField(service, "configService", configService);
+        ReflectionTestUtils.setField(service, "devBatteryMonomerService", devBatteryMonomerService);
+        ReflectionTestUtils.setField(service, "devBatteryOptService", devBatteryOptService);
+        ReflectionTestUtils.setField(service, "configAttributeService", configAttributeService);
+        ReflectionTestUtils.setField(service, "alarmLogService", alarmLogService);
+        ReflectionTestUtils.setField(service, "batteryReportLogService", batteryReportLogService);
+        ReflectionTestUtils.setField(service, "optLogService", optLogService);
+        ReflectionTestUtils.setField(service, "statBatteryBatService", statBatteryBatService);
+        ReflectionTestUtils.setField(service, "statBatteryPackService", statBatteryPackService);
+        ReflectionTestUtils.setField(service, "statBatteryResService", statBatteryResService);
+        ReflectionTestUtils.setField(service, "preBatteryGroupService", preBatteryGroupService);
+        ReflectionTestUtils.setField(service, "batteryDeviceStateService", batteryDeviceStateService);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", batteryModeStatusService);
+        ReflectionTestUtils.setField(service, "batteryCollectorService", batteryCollectorService);
+        ReflectionTestUtils.setField(service, "compatibilityFillService", compatibilityFillService);
+        ReflectionTestUtils.setField(service, "realtimeSnapshotService", realtimeSnapshotService);
+        ReflectionTestUtils.setField(service, "operLogService", operLogService);
+        ReflectionTestUtils.setField(service, "batteryPackService", batteryPackService);
+        ReflectionTestUtils.setField(service, "hostService", hostService);
+        ReflectionTestUtils.setField(service, "controlBatterySet", controlBatterySet);
+
+        service.restore(new BatterySetVO());
+
+        Mockito.verify(batteryDeviceStateService).deleteAll();
+        Mockito.verify(batteryModeStatusService).clear(null);
+        Mockito.verify(batteryCollectorService).resetModuleAddressCacheByBatteryGroup(null);
+        Mockito.verify(batteryCollectorService).clearDeviceStateDedupCacheByBatteryGroup(null);
+        Mockito.verify(compatibilityFillService).clearConnectResistanceCache(null);
+        Mockito.verify(realtimeSnapshotService).evictAll();
+    }
+}

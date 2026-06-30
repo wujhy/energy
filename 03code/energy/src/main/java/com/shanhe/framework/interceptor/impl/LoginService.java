@@ -9,8 +9,8 @@ import com.shanhe.common.utils.StringUtils;
 import com.shanhe.common.utils.uuid.IdUtils;
 import com.shanhe.framework.consts.SysConst;
 import com.shanhe.framework.enums.CacheKeyEnum;
-import com.shanhe.project.system.user.domain.User;
-import com.shanhe.project.system.user.service.IUserService;
+import com.shanhe.project.manage.user.domain.User;
+import com.shanhe.project.manage.user.service.IUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

@@ -18,7 +18,7 @@ import com.shanhe.framework.web.domain.AjaxResult.Type;
 import com.shanhe.framework.web.page.PageDomain;
 import com.shanhe.framework.web.page.TableDataInfo;
 import com.shanhe.framework.web.page.TableSupport;
-import com.shanhe.project.system.user.domain.User;
+import com.shanhe.project.manage.user.domain.User;
 
 /**
  * web层通用数据处理

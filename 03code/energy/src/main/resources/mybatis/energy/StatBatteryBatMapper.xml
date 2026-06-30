@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.shanhe.project.energy.stat.mapper.StatBatteryBatMapper">
+<mapper namespace="com.shanhe.project.manage.stat.mapper.StatBatteryBatMapper">
     <sql id="selectStatBatteryVo">
         id as id ,
                 pack_id as packId ,
@@ -17,7 +17,7 @@
     </sql>
 
     <!-- 按包ID查询单体统计 -->
-    <select id="selectListByPackIds" resultType="com.shanhe.project.energy.stat.domain.StatBatteryBat">
+    <select id="selectListByPackIds" resultType="com.shanhe.project.manage.stat.domain.StatBatteryBat">
         select
         <include refid="selectStatBatteryVo"/>
         from stat_battery_bat pack
@@ -42,7 +42,7 @@
     </select>
 
     <!-- 批量新增单体统计 -->
-    <insert id="insertList" parameterType="com.shanhe.project.energy.stat.domain.StatBatteryBat">
+    <insert id="insertList" parameterType="com.shanhe.project.manage.stat.domain.StatBatteryBat">
         insert into stat_battery_bat (
         pack_id ,
         create_time ,
@@ -70,7 +70,7 @@
     </insert>
 
     <!-- 查询单体统计列表 -->
-    <select id="selectList" resultType="com.shanhe.project.energy.stat.domain.StatBatteryBat">
+    <select id="selectList" resultType="com.shanhe.project.manage.stat.domain.StatBatteryBat">
         select
         <include refid="selectStatBatteryVo"/>
         from stat_battery_bat pack
@@ -96,7 +96,7 @@
     </select>
 
     <!-- 查询单体数据点列表 -->
-    <select id="selectDataPointList" resultType="com.shanhe.project.energy.capacity.vo.DataPoint">
+    <select id="selectDataPointList" resultType="com.shanhe.project.manage.capacity.vo.DataPoint">
         select
         <include refid="selectStatBatteryVo"/>
         from stat_battery_bat pack

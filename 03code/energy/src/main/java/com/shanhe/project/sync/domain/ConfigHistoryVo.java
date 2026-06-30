@@ -1,6 +1,6 @@
 package com.shanhe.project.sync.domain;
 
-import com.shanhe.project.device.config.domain.BatteryMonitor;
+import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import lombok.Data;
 
 import java.io.Serializable;

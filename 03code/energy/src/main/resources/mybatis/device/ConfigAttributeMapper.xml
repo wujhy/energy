@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.shanhe.project.device.config.mapper.ConfigAttributeMapper">
+<mapper namespace="com.shanhe.project.manage.config.mapper.ConfigAttributeMapper">
     
-    <resultMap type="com.shanhe.project.device.config.domain.ConfigAttribute" id="ConfigAttributeResult">
+    <resultMap type="com.shanhe.project.manage.config.domain.ConfigAttribute" id="ConfigAttributeResult">
         <result property="configAttrId"    column="config_attr_id"    />
         <result property="configId"    column="config_id"    />
         <result property="packNum"    column="pack_num"    />
@@ -42,7 +42,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </sql>
 
     <!-- 查询配置属性列表 -->
-    <select id="selectConfigAttributeList" parameterType="com.shanhe.project.device.config.domain.ConfigAttribute" resultMap="ConfigAttributeResult">
+    <select id="selectConfigAttributeList" parameterType="com.shanhe.project.manage.config.domain.ConfigAttribute" resultMap="ConfigAttributeResult">
         <include refid="selectConfigAttributeVo"/>
         <where>  
             <if test="code != null  and code != ''"> and code = #{code}</if>
@@ -83,7 +83,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 
     <!-- 校验属性名称唯一 -->
-    <select id="hasName" parameterType="com.shanhe.project.device.config.domain.ConfigAttribute" resultType="Long">
+    <select id="hasName" parameterType="com.shanhe.project.manage.config.domain.ConfigAttribute" resultType="Long">
         SELECT count(0) FROM dev_config_attribute
         WHERE (name = #{name} OR code = #{code}) AND config_id = #{configId}
         <if test="packNum != null "> and pack_num = #{packNum}</if>
@@ -91,7 +91,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 
     <!-- 插入配置属性 -->
-    <insert id="insertConfigAttribute" parameterType="com.shanhe.project.device.config.domain.ConfigAttribute">
+    <insert id="insertConfigAttribute" parameterType="com.shanhe.project.manage.config.domain.ConfigAttribute">
         insert into dev_config_attribute
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="configAttrId != null">config_attr_id,</if>
@@ -195,7 +195,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </insert>
 
     <!-- 更新配置属性 -->
-    <update id="updateConfigAttribute" parameterType="com.shanhe.project.device.config.domain.ConfigAttribute">
+    <update id="updateConfigAttribute" parameterType="com.shanhe.project.manage.config.domain.ConfigAttribute">
         update dev_config_attribute
         <trim prefix="SET" suffixOverrides=",">
             <if test="configId != null">config_id = #{configId},</if>

@@ -9,11 +9,11 @@ import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
-import com.shanhe.project.device.alarm.domain.AlarmLog;
-import com.shanhe.project.device.alarm.service.IAlarmLogService;
-import com.shanhe.project.device.config.domain.BatteryPack;
-import com.shanhe.project.device.config.service.IBatteryPackService;
-import com.shanhe.project.device.opt.service.OptLogService;
+import com.shanhe.project.manage.alarm.domain.AlarmLog;
+import com.shanhe.project.manage.alarm.service.IAlarmLogService;
+import com.shanhe.project.manage.config.domain.BatteryPack;
+import com.shanhe.project.manage.config.service.IBatteryPackService;
+import com.shanhe.project.manage.opt.service.OptLogService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;

@@ -1,7 +1,7 @@
 package com.shanhe.project.collector.battery.postprocess;
 
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
-import com.shanhe.project.device.config.domain.BatteryReportLog;
+import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

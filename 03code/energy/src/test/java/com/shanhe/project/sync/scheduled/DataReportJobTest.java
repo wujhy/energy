@@ -2,9 +2,9 @@ package com.shanhe.project.sync.scheduled;
 
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
-import com.shanhe.project.device.config.domain.BatteryMonitor;
-import com.shanhe.project.device.config.domain.BatteryReportLog;
-import com.shanhe.project.device.config.service.BatteryReportLogService;
+import com.shanhe.project.manage.config.domain.BatteryMonitor;
+import com.shanhe.project.manage.config.domain.BatteryReportLog;
+import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

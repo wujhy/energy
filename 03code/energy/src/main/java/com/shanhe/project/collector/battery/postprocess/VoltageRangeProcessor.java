@@ -2,8 +2,8 @@ package com.shanhe.project.collector.battery.postprocess;
 
 
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
-import com.shanhe.project.device.config.domain.BatteryPack;
-import com.shanhe.project.device.config.service.IBatteryPackService;
+import com.shanhe.project.manage.config.domain.BatteryPack;
+import com.shanhe.project.manage.config.service.IBatteryPackService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

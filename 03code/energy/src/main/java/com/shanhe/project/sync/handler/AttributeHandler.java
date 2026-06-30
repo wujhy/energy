@@ -2,10 +2,10 @@ package com.shanhe.project.sync.handler;
 
 import com.alibaba.fastjson.JSONObject;
 import com.shanhe.common.exception.ServiceException;
-import com.shanhe.project.device.config.domain.Config;
-import com.shanhe.project.device.config.domain.ConfigAttribute;
-import com.shanhe.project.device.config.service.IConfigAttributeService;
-import com.shanhe.project.device.config.service.IConfigService;
+import com.shanhe.project.manage.config.domain.Config;
+import com.shanhe.project.manage.config.domain.ConfigAttribute;
+import com.shanhe.project.manage.config.service.IConfigAttributeService;
+import com.shanhe.project.manage.config.service.IConfigService;
 import com.shanhe.project.sync.common.AttributeUtil;
 import com.shanhe.project.sync.consts.MethodEnum;
 import com.shanhe.project.sync.domain.AlarmItemVo;

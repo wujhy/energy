@@ -2,8 +2,8 @@ package com.shanhe.project.collector.battery.postprocess;
 
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
-import com.shanhe.project.device.config.domain.BatteryMonitor;
-import com.shanhe.project.device.config.domain.BatteryReportLog;
+import com.shanhe.project.manage.config.domain.BatteryMonitor;
+import com.shanhe.project.manage.config.domain.BatteryReportLog;
 
 import java.util.ArrayList;
 import java.util.HashMap;

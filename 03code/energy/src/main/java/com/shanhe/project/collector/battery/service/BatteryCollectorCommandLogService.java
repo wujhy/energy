@@ -5,8 +5,8 @@ import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.model.BatteryModuleControlCommand;
-import com.shanhe.project.device.opt.domain.OptLog;
-import com.shanhe.project.device.opt.mapper.OptLogMapper;
+import com.shanhe.project.manage.opt.domain.OptLog;
+import com.shanhe.project.manage.opt.mapper.OptLogMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

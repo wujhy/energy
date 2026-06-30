@@ -2,8 +2,8 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.shanhe.project.energy.capacity.mapper.PreBatteryGroupMapper">
-    <resultMap type="com.shanhe.project.energy.capacity.vo.PreBatteryGroup" id="PreBatteryGroupResult">
+<mapper namespace="com.shanhe.project.manage.capacity.mapper.PreBatteryGroupMapper">
+    <resultMap type="com.shanhe.project.manage.capacity.vo.PreBatteryGroup" id="PreBatteryGroupResult">
         <result property="id" column="id"/>
         <result property="configId" column="config_id"/>
         <result property="packNum" column="pack_num"/>

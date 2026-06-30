@@ -4,7 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.shanhe.framework.enums.AlarmLevelEnum;
 import com.shanhe.framework.enums.DataTypeEnum;
 import com.shanhe.framework.enums.YesNoEnum;
-import com.shanhe.project.device.config.domain.ConfigAttribute;
+import com.shanhe.project.manage.config.domain.ConfigAttribute;
 import com.shanhe.project.sync.domain.AlarmItemLevelVo;
 import com.shanhe.project.sync.domain.AlarmItemVo;
 

@@ -2,8 +2,8 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.shanhe.project.energy.stat.mapper.StatBatteryResMapper">
-    <resultMap type="com.shanhe.project.energy.stat.domain.StatBatteryRes" id="StatBatteryResResult">
+<mapper namespace="com.shanhe.project.manage.stat.mapper.StatBatteryResMapper">
+    <resultMap type="com.shanhe.project.manage.stat.domain.StatBatteryRes" id="StatBatteryResResult">
         <result property="id" column="id"/>
         <result property="createTime" column="create_time"/>
         <result property="configId" column="config_id"/>
@@ -21,8 +21,8 @@
                 resistance as resistance
     </sql>
     <!-- 查询内阻统计列表 -->
-    <select id="selectList" parameterType="com.shanhe.project.energy.stat.domain.StatBatteryRes"
-            resultType="com.shanhe.project.energy.stat.domain.StatBatteryRes">
+    <select id="selectList" parameterType="com.shanhe.project.manage.stat.domain.StatBatteryRes"
+            resultType="com.shanhe.project.manage.stat.domain.StatBatteryRes">
         select
         <include refid="selectStatBatteryResVo"/>
         from stat_battery_res

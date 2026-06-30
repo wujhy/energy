@@ -4,8 +4,8 @@ import com.shanhe.project.collector.battery.realtime.BatteryModuleGroupCompatibi
 import com.shanhe.common.constant.Constants;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
-import com.shanhe.project.energy.capacity.service.PreBatteryGroupService;
-import com.shanhe.project.energy.capacity.vo.PreBatteryGroup;
+import com.shanhe.project.manage.capacity.service.PreBatteryGroupService;
+import com.shanhe.project.manage.capacity.vo.PreBatteryGroup;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

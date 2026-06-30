@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.shanhe.project.device.config.mapper.BatteryReportLogMapper">
+<mapper namespace="com.shanhe.project.manage.config.mapper.BatteryReportLogMapper">
 
-    <resultMap id="BaseResultMap" type="com.shanhe.project.device.config.domain.BatteryReportLog">
+    <resultMap id="BaseResultMap" type="com.shanhe.project.manage.config.domain.BatteryReportLog">
         <id property="id" column="id" />
         <result property="configId" column="config_id" />
         <result property="packNum" column="pack_num" />
@@ -47,7 +47,7 @@
     </select>
 
     <!-- 查询上报日志列表 -->
-    <select id="selectBatteryReportLog" parameterType="com.shanhe.project.device.config.domain.BatteryReportLog" resultMap="BaseResultMap">
+    <select id="selectBatteryReportLog" parameterType="com.shanhe.project.manage.config.domain.BatteryReportLog" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
         from dev_battery_report_log

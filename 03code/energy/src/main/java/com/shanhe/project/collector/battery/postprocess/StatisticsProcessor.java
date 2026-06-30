@@ -1,8 +1,8 @@
 package com.shanhe.project.collector.battery.postprocess;
 
 
-import com.shanhe.project.device.config.domain.BatteryReportLog;
-import com.shanhe.project.energy.stat.service.IStatBatteryPackService;
+import com.shanhe.project.manage.config.domain.BatteryReportLog;
+import com.shanhe.project.manage.stat.service.IStatBatteryPackService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

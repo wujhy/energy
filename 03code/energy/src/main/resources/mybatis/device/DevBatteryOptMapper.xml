@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.shanhe.project.device.config.mapper.DevBatteryOptMapper">
+<mapper namespace="com.shanhe.project.manage.config.mapper.DevBatteryOptMapper">
 
     <sql id="selectDevBatteryOptVo">
         opt_id as optId ,
@@ -23,8 +23,8 @@
     </sql>
 
     <!-- 查询电池测试列表 -->
-    <select id="selectDevBatteryOptList" parameterType="com.shanhe.project.device.config.domain.DevBatteryOpt"
-            resultType="com.shanhe.project.device.config.domain.DevBatteryOpt">
+    <select id="selectDevBatteryOptList" parameterType="com.shanhe.project.manage.config.domain.DevBatteryOpt"
+            resultType="com.shanhe.project.manage.config.domain.DevBatteryOpt">
         select
         <include refid="selectDevBatteryOptVo"/>
         from dev_battery_opt
@@ -70,7 +70,7 @@
 
     <!-- 按ID查询测试配置 -->
     <select id="selectDevBatteryOptByOptId" parameterType="Long"
-        resultType="com.shanhe.project.device.config.domain.DevBatteryOpt">
+        resultType="com.shanhe.project.manage.config.domain.DevBatteryOpt">
         select
         <include refid="selectDevBatteryOptVo"/>
         from dev_battery_opt
@@ -78,7 +78,7 @@
     </select>
 
     <!-- 插入电池测试配置 -->
-    <insert id="insertDevBatteryOpt" parameterType="com.shanhe.project.device.config.domain.DevBatteryOpt">
+    <insert id="insertDevBatteryOpt" parameterType="com.shanhe.project.manage.config.domain.DevBatteryOpt">
         insert into dev_battery_opt
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="optId != null">
@@ -210,7 +210,7 @@
     </insert>
 
     <!-- 更新电池测试配置 -->
-    <update id="updateDevBatteryOpt" parameterType="com.shanhe.project.device.config.domain.DevBatteryOpt">
+    <update id="updateDevBatteryOpt" parameterType="com.shanhe.project.manage.config.domain.DevBatteryOpt">
         update dev_battery_opt
         <trim prefix="SET" suffixOverrides=",">
             <if test="packNum != null">

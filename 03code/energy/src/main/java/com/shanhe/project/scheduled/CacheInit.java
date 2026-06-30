@@ -1,13 +1,13 @@
 package com.shanhe.project.scheduled;
 
-import com.shanhe.project.device.alarm.service.IAlarmLogService;
-import com.shanhe.project.device.config.service.BatteryReportLogService;
-import com.shanhe.project.device.config.service.IBatteryPackService;
-import com.shanhe.project.device.config.service.IConfigAttributeService;
-import com.shanhe.project.device.host.domain.Host;
-import com.shanhe.project.device.host.service.IHostService;
-import com.shanhe.project.device.opt.service.OptLogService;
-import com.shanhe.project.energy.capacity.service.PreBatteryGroupService;
+import com.shanhe.project.manage.alarm.service.IAlarmLogService;
+import com.shanhe.project.manage.config.service.BatteryReportLogService;
+import com.shanhe.project.manage.config.service.IBatteryPackService;
+import com.shanhe.project.manage.config.service.IConfigAttributeService;
+import com.shanhe.project.manage.host.domain.Host;
+import com.shanhe.project.manage.host.service.IHostService;
+import com.shanhe.project.manage.opt.service.OptLogService;
+import com.shanhe.project.manage.capacity.service.PreBatteryGroupService;
 import com.shanhe.project.monitor.server.service.SystemService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;

@@ -3,7 +3,7 @@ package com.shanhe.project.collector.battery.postprocess;
 
 import com.shanhe.project.collector.battery.model.BatteryModuleAlarmContext;
 import com.shanhe.project.collector.battery.service.BatteryModuleAlarmAdaptService;
-import com.shanhe.project.device.alarm.service.IAlarmLogService;
+import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

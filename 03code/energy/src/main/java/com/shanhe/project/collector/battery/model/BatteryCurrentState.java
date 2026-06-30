@@ -1,7 +1,7 @@
 package com.shanhe.project.collector.battery.model;
 
 import lombok.Data;
-import com.shanhe.project.device.opt.domain.OptLog;
+import com.shanhe.project.manage.opt.domain.OptLog;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 
 import java.util.ArrayList;

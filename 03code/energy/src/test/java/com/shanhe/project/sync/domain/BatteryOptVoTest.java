@@ -2,7 +2,7 @@ package com.shanhe.project.sync.domain;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.shanhe.project.device.config.domain.DevBatteryOpt;
+import com.shanhe.project.manage.config.domain.DevBatteryOpt;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

@@ -2,8 +2,8 @@ package com.shanhe.project.iot.CM03N;
 
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.enums.DeviceTypeEnum;
-import com.shanhe.project.device.config.domain.Config;
-import com.shanhe.project.device.config.service.IConfigService;
+import com.shanhe.project.manage.config.domain.Config;
+import com.shanhe.project.manage.config.service.IConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

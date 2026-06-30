@@ -3,7 +3,7 @@ package com.shanhe.project.collector.battery.postprocess;
 import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
-import com.shanhe.project.energy.capacity.service.BatteryPredictorService;
+import com.shanhe.project.manage.capacity.service.BatteryPredictorService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

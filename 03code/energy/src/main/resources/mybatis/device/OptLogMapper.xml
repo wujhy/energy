@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.shanhe.project.device.opt.mapper.OptLogMapper">
+<mapper namespace="com.shanhe.project.manage.opt.mapper.OptLogMapper">
 
-    <resultMap id="BaseResultMap" type="com.shanhe.project.device.opt.domain.OptLog">
+    <resultMap id="BaseResultMap" type="com.shanhe.project.manage.opt.domain.OptLog">
             <id property="id" column="id" />
             <result property="configId" column="config_id" />
             <result property="packNum" column="pack_num" />
@@ -62,7 +62,7 @@
     </update>
 
     <!-- 查询操作日志列表 -->
-    <select id="select" parameterType="com.shanhe.project.device.opt.domain.OptLog" resultMap="BaseResultMap">
+    <select id="select" parameterType="com.shanhe.project.manage.opt.domain.OptLog" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
         from dev_opt_log
@@ -115,7 +115,7 @@
     </delete>
 
     <!-- 查询运行中日志 -->
-    <select id="findRunningList" parameterType="com.shanhe.project.device.opt.domain.OptLog" resultMap="BaseResultMap">
+    <select id="findRunningList" parameterType="com.shanhe.project.manage.opt.domain.OptLog" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
         from dev_opt_log where result is null and type != 99 order by create_time desc
@@ -152,7 +152,7 @@
 
 
     <!-- 获取运行中日志 -->
-    <select id="getRunningOptLog" parameterType="com.shanhe.project.device.opt.domain.OptLog" resultMap="BaseResultMap">
+    <select id="getRunningOptLog" parameterType="com.shanhe.project.manage.opt.domain.OptLog" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
         from dev_opt_log
