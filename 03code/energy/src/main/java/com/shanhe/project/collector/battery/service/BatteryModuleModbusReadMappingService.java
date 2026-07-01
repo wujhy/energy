@@ -13,6 +13,7 @@ import com.shanhe.project.collector.battery.protocol.BatteryModuleStatusRegister
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -276,109 +277,69 @@ public class BatteryModuleModbusReadMappingService {
         switch (address) {
             // 通道在线状态：1=在线, 0=离线
             case 411483:
-                return readChannelOpenStatus(snapshot.getChannelName());
+                return readChannelOpenStatus(snapshot);
             // 通道异常状态：1=异常, 0=正常
             case 411484:
-                return readChannelErrorStatus(snapshot.getChannelName());
+                return readChannelErrorStatus(snapshot);
             // 模块活跃状态：1=有模块活跃, 0=全部无响应
             case 411485:
-                return readModuleActiveStatus(snapshot.getChannelName(), packNum);
+                return readModuleActiveStatus(snapshot);
             // 模块超时状态：1=存在超时, 0=正常
             case 411486:
-                return readModuleTimeoutStatus(snapshot.getChannelName(), packNum);
+                return readModuleTimeoutStatus(snapshot);
             // 246 新鲜度：1=新鲜, 0=过期
             case 411487:
-                return readGroup246Freshness(packNum);
+                return readGroup246Freshness(snapshot);
             // 工作模式：模式码
             case 411488:
-                return readWorkMode(packNum);
+                return readWorkMode(snapshot);
             default:
                 return 0;
         }
     }
 
     /** 读取通道在线状态。 */
-    private int readChannelOpenStatus(String channelName) {
-        if (channelName == null || batteryDeviceStateService == null) {
-            return 0;
-        }
-        BatteryDeviceState state = batteryDeviceStateService.selectByScope(
-                BatteryDeviceStateConstants.ScopeType.CHANNEL, channelName,
-                BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN);
+    private int readChannelOpenStatus(ModbusReadSnapshot snapshot) {
+        BatteryDeviceState state = snapshot.getChannelState(BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN);
         return state != null && "open".equals(state.getStateValue()) ? 1 : 0;
     }
 
     /** 读取通道异常状态。 */
-    private int readChannelErrorStatus(String channelName) {
-        if (channelName == null || batteryDeviceStateService == null) {
-            return 0;
-        }
-        BatteryDeviceState state = batteryDeviceStateService.selectByScope(
-                BatteryDeviceStateConstants.ScopeType.CHANNEL, channelName,
-                BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR);
+    private int readChannelErrorStatus(ModbusReadSnapshot snapshot) {
+        BatteryDeviceState state = snapshot.getChannelState(BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR);
         return state != null && BatteryDeviceStateConstants.StateLevel.ERROR.equals(state.getStateLevel()) ? 1 : 0;
     }
 
     /** 读取模块活跃状态。 */
-    private int readModuleActiveStatus(String channelName, Integer packNum) {
-        if (channelName == null || batteryDeviceStateService == null) {
-            return 0;
-        }
-        List<BatteryDeviceState> states = batteryDeviceStateService.selectByChannelAndCode(
-                channelName, BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE);
-        if (states != null) {
-            for (BatteryDeviceState state : states) {
-                if (belongsToPack(state, packNum) && "active".equals(state.getStateValue())) {
-                    return 1;
-                }
+    private int readModuleActiveStatus(ModbusReadSnapshot snapshot) {
+        for (BatteryDeviceState state : snapshot.getChannelStates(BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE)) {
+            if ("active".equals(state.getStateValue())) {
+                return 1;
             }
         }
         return 0;
     }
 
     /** 读取模块超时状态。 */
-    private int readModuleTimeoutStatus(String channelName, Integer packNum) {
-        if (channelName == null || batteryDeviceStateService == null) {
-            return 0;
-        }
-        List<BatteryDeviceState> states = batteryDeviceStateService.selectByChannelAndCode(
-                channelName, BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT);
-        if (states != null) {
-            for (BatteryDeviceState state : states) {
-                if (belongsToPack(state, packNum)
-                        && !BatteryDeviceStateConstants.StateLevel.NORMAL.equals(state.getStateLevel())
-                        && !"recovered".equals(state.getStateValue())) {
-                    return 1;
-                }
+    private int readModuleTimeoutStatus(ModbusReadSnapshot snapshot) {
+        for (BatteryDeviceState state : snapshot.getChannelStates(BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT)) {
+            if (!BatteryDeviceStateConstants.StateLevel.NORMAL.equals(state.getStateLevel())
+                    && !"recovered".equals(state.getStateValue())) {
+                return 1;
             }
         }
         return 0;
     }
 
-    /** 判断模块状态是否归属当前电池组。 */
-    private boolean belongsToPack(BatteryDeviceState state, Integer packNum) {
-        return state != null && packNum != null && packNum.equals(state.getPackNum());
-    }
-
     /** 读取 246 新鲜度。 */
-    private int readGroup246Freshness(Integer packNum) {
-        if (batteryDeviceStateService == null) {
-            return 0;
-        }
-        BatteryDeviceState state = batteryDeviceStateService.selectByScope(
-                BatteryDeviceStateConstants.ScopeType.PACK, String.valueOf(packNum),
-                BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS);
+    private int readGroup246Freshness(ModbusReadSnapshot snapshot) {
+        BatteryDeviceState state = snapshot.getPackState(BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS);
         return state != null && "fresh".equals(state.getStateValue()) ? 1 : 0;
     }
 
     /** 读取工作模式。 */
-    private int readWorkMode(Integer packNum) {
-        if (batteryDeviceStateService == null) {
-            return 0;
-        }
-        BatteryDeviceState state = batteryDeviceStateService.selectByScope(
-                BatteryDeviceStateConstants.ScopeType.PACK, String.valueOf(packNum),
-                BatteryDeviceStateConstants.StateCode.WORK_MODE);
+    private int readWorkMode(ModbusReadSnapshot snapshot) {
+        BatteryDeviceState state = snapshot.getPackState(BatteryDeviceStateConstants.StateCode.WORK_MODE);
         if (state != null && state.getMode() != null) {
             return unsigned16(state.getMode());
         }
@@ -389,7 +350,7 @@ public class BatteryModuleModbusReadMappingService {
      * 判断是否为已纳入草案的组寄存器地址。
      *
      * @param address 文档参考寄存器号
-     * @return true表示支持
+     * @return true 表示支持
      */
     private boolean isSupportedGroupAddress(int address) {
         return address >= 411729 && address <= 411752
@@ -503,7 +464,7 @@ public class BatteryModuleModbusReadMappingService {
     }
 
     /** 单次Modbus读取使用的实时数据快照。 */
-    private static class ModbusReadSnapshot {
+    private class ModbusReadSnapshot {
 
         /** 按单体编号缓存单体实时数据。 */
         private final Map<Integer, BatteryModuleCellRealtime> cellMap = new HashMap<>();
@@ -519,6 +480,11 @@ public class BatteryModuleModbusReadMappingService {
 
         /** 通道名称。 */
         private final String channelName;
+
+        /** 本次请求级的设备状态缓存。 */
+        private List<BatteryDeviceState> deviceStates;
+
+        private boolean deviceStatesLoaded;
 
         ModbusReadSnapshot(List<BatteryModuleCellRealtime> cells, BatteryModuleGroupRealtime group,
                            Integer packNum, String channelName) {
@@ -569,6 +535,52 @@ public class BatteryModuleModbusReadMappingService {
 
         String getChannelName() {
             return channelName;
+        }
+
+        BatteryDeviceState getPackState(String stateCode) {
+            for (BatteryDeviceState state : getDeviceStates()) {
+                if (state != null
+                        && stateCode.equals(state.getStateCode())
+                        && BatteryDeviceStateConstants.ScopeType.PACK.equals(state.getScopeType())) {
+                    return state;
+                }
+            }
+            return null;
+        }
+
+        BatteryDeviceState getChannelState(String stateCode) {
+            for (BatteryDeviceState state : getChannelStates(stateCode)) {
+                return state;
+            }
+            return null;
+        }
+
+        List<BatteryDeviceState> getChannelStates(String stateCode) {
+            List<BatteryDeviceState> result = new ArrayList<>();
+            if (channelName == null) {
+                return result;
+            }
+            for (BatteryDeviceState state : getDeviceStates()) {
+                if (state != null
+                        && stateCode.equals(state.getStateCode())
+                        && channelName.equals(state.getChannelName())) {
+                    result.add(state);
+                }
+            }
+            return result;
+        }
+
+        private List<BatteryDeviceState> getDeviceStates() {
+            if (!deviceStatesLoaded) {
+                deviceStatesLoaded = true;
+                if (batteryDeviceStateService == null || packNum == null) {
+                    deviceStates = new ArrayList<>();
+                } else {
+                    List<BatteryDeviceState> states = batteryDeviceStateService.selectByPackNum(packNum);
+                    deviceStates = states == null ? new ArrayList<>() : states;
+                }
+            }
+            return deviceStates;
         }
     }
 }

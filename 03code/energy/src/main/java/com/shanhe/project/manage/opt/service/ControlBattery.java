@@ -72,6 +72,9 @@ public class ControlBattery extends ControlBase {
     /** 测试计划采集命令适配器。 */
     @Resource
     private BatteryOptCollectorCommandAdapter batteryOptCollectorCommandAdapter;
+    /** 核容/备电模块命令适配器。 */
+    @Resource
+    private BatteryOptCapacityModuleCommandAdapter batteryOptCapacityModuleCommandAdapter;
     /** 工作模式状态服务。 */
     @Resource
     private BatteryModeStatusService batteryModeStatusService;
@@ -141,7 +144,7 @@ public class ControlBattery extends ControlBase {
 
         // 是否重复请求
         String resultKey = super.setControlStatus(config, opt.getPackNum(), dynCid, cacheKeyEnum);
-        // 走 CommServer.returnCmd 直发链路，待迁移到 600 命令队列。
+        // 旧 M460/980 直发链路。新适配器无法处理时才走这里。
         CommServer.returnCmd(cmdStr);
 
         // 结果监控
@@ -150,11 +153,16 @@ public class ControlBattery extends ControlBase {
 
     /** 统一执行蓄电池测试命令，页面立即执行和计划任务触发共用该入口。 */
     public AjaxResult executeBatteryOpt(DevBatteryOpt opt, BatteryOptExecuteType executeType) {
-        return toSendBatteryCmdToOat(opt);
+        return executeBatteryOptInternal(opt, executeType);
     }
 
     /** 立即执行蓄电池操作。 */
     public AjaxResult toSendBatteryCmdToOat(DevBatteryOpt opt) {
+        return executeBatteryOptInternal(opt, BatteryOptExecuteType.MANUAL);
+    }
+
+    /** 统一执行蓄电池测试命令，所有新测试类型适配都从这里接入。 */
+    private AjaxResult executeBatteryOptInternal(DevBatteryOpt opt, BatteryOptExecuteType executeType) {
         BatteryTestEnum testEnum = BatteryTestEnum.find(opt.getTestType());
         if (isUnsupportedCommandType(testEnum)) {
             return AjaxResult.error("下发蓄电池测试指令类型失败", 0);
@@ -175,12 +183,12 @@ public class ControlBattery extends ControlBase {
             return conditionResult;
         }
 
-        AjaxResult collectorResult = batteryOptCollectorCommandAdapter.tryExecute(opt);
-        if (collectorResult != null) {
-            return collectorResult;
+        AjaxResult adaptedResult = tryExecuteAdaptedCommand(opt, testEnum, executeType);
+        if (adaptedResult != null) {
+            return adaptedResult;
         }
 
-        // 生成命令
+        // 生成旧 M460/980 兼容命令。后续迁移新类型时只保留为 fallback。
         CommandInfo cmdInfo = generateCommand(testEnum, config, opt);
         if (cmdInfo == null) {
             return AjaxResult.error("下发蓄电池测试指令类型失败", 0);
@@ -191,6 +199,24 @@ public class ControlBattery extends ControlBase {
 
         // 执行命令并记录日志
         return executeCommandAndLog(config, opt, testEnum, cmdInfo);
+    }
+
+    /** 尝试走已迁移的新链路；返回 null 时继续旧 M460/980 fallback。 */
+    private AjaxResult tryExecuteAdaptedCommand(DevBatteryOpt opt, BatteryTestEnum testEnum, BatteryOptExecuteType executeType) {
+        if (BatteryTestEnum._4.equals(testEnum)) {
+            return AjaxResult.error("浮充测试当前属于 0x31 浮充参数配置转发，不是 600 采集测试命令，请继续通过计划配置保存链路处理", 0);
+        }
+        AjaxResult capacityResult = batteryOptCapacityModuleCommandAdapter.tryExecute(opt);
+        if (capacityResult != null) {
+            return capacityResult;
+        }
+        AjaxResult collectorResult = batteryOptCollectorCommandAdapter.tryExecute(opt);
+        if (collectorResult != null) {
+            log.info("蓄电池测试已走采集模块命令, packNum={}, testType={}, executeType={}",
+                    opt.getPackNum(), testEnum.getDictValue(), executeType);
+            return collectorResult;
+        }
+        return null;
     }
 
     /** 校验上报数据和告警状态 */
@@ -300,7 +326,7 @@ public class ControlBattery extends ControlBase {
             optLogId = optLogService.insert(opt.getPackNum(), opt.getTestType(), null);
         }
 
-        // 走 CommServer.returnCmd 直发链路
+        // 旧 M460/980 直发链路。新适配器无法处理时才走这里。
         CommServer.returnCmd(cmdInfo.cmdStr);
 
         AjaxResult ajaxResult = AjaxResult.success();
@@ -358,9 +384,9 @@ public class ControlBattery extends ControlBase {
             return AjaxResult.success();
         }
 
-        if (Objects.equals(opt.getTestType(), BatteryTestEnum._2.getDictValue())
-                || Objects.equals(opt.getTestType(), BatteryTestEnum._6.getDictValue())) {
-            return batteryOptCollectorCommandAdapter.tryStop(opt);
+        AjaxResult adaptedStopResult = tryStopAdaptedCommand(opt);
+        if (adaptedStopResult != null) {
+            return adaptedStopResult;
         }
 
         String cmdStr = cmdBatteryControlService.genCmd30(config, opt.getPackNum(), "4", 0, 0D);
@@ -368,7 +394,7 @@ public class ControlBattery extends ControlBase {
             return AjaxResult.error("下发蓄电池停止备电失败，指令生成失败", 0);
         }
 
-        // 走 CommServer.returnCmd 直发链路，待迁移到 600 命令队列。
+        // 旧 M460/980 直发链路。新适配器无法处理时才走这里。
         CommServer.returnCmd(cmdStr);
         if (Objects.equals(opt.getTestType(), BatteryTestEnum._3.getDictValue())
                 || Objects.equals(opt.getTestType(), BatteryTestEnum._5.getDictValue())) {
@@ -376,6 +402,19 @@ public class ControlBattery extends ControlBase {
             optLogService.doStopTest(opt.getPackNum(), opt.getTestType());
         }
         return AjaxResult.success();
+    }
+
+    /** 尝试停止已迁移到新链路的测试；返回 null 时继续旧 M460/980 stop fallback。 */
+    private AjaxResult tryStopAdaptedCommand(DevBatteryOpt opt) {
+        AjaxResult capacityStopResult = batteryOptCapacityModuleCommandAdapter.tryStop(opt);
+        if (capacityStopResult != null) {
+            return capacityStopResult;
+        }
+        if (Objects.equals(opt.getTestType(), BatteryTestEnum._2.getDictValue())
+                || Objects.equals(opt.getTestType(), BatteryTestEnum._6.getDictValue())) {
+            return batteryOptCollectorCommandAdapter.tryStop(opt);
+        }
+        return null;
     }
 
     /** 校验设备信息 */

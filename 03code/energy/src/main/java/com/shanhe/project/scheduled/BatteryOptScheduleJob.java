@@ -90,6 +90,13 @@ public class BatteryOptScheduleJob {
             return;
         }
         try {
+            if (!isExecutableScheduleTest(opt)) {
+                log.info("蓄电池测试计划到点执行跳过，该类型不属于平台定时执行命令 packNum={}, testType={}",
+                        opt.getPackNum(), opt.getTestType());
+                recordScheduleResult(opt, "SKIPPED", "浮充 0x31 属于参数配置，不进入平台定时执行");
+                updateNextSchedule(opt, now);
+                return;
+            }
             if (hasRunningOptLog(opt)) {
                 log.info("蓄电池测试计划到点执行跳过，已有测试运行中, packNum={}, testType={}",
                         opt.getPackNum(), opt.getTestType());
@@ -114,6 +121,10 @@ public class BatteryOptScheduleJob {
         }
     }
 
+    /** 判断计划类型是否属于平台定时执行命令。 */
+    private boolean isExecutableScheduleTest(DevBatteryOpt opt) {
+        return opt == null || !Objects.equals(opt.getTestType(), BatteryTestEnum._4.getDictValue());
+    }
     /** 检查是否已有运行中的测试（opt_log 或采集模块工作模式）。 */
     private boolean hasRunningOptLog(DevBatteryOpt opt) {
         List<OptLog> runningLogs = optLogService.selectRunningList(opt.getPackNum());
@@ -133,6 +144,9 @@ public class BatteryOptScheduleJob {
 
     /** 将测试类型映射为采集模块工作模式。 */
     private Integer resolveCollectorMode(Integer testType) {
+        if (Objects.equals(testType, BatteryTestEnum._1.getDictValue())) {
+            return BatteryModeStatusService.MODE_INTERNAL_RESISTANCE;
+        }
         if (Objects.equals(testType, BatteryTestEnum._2.getDictValue())) {
             return BatteryModeStatusService.MODE_CONNECT_RESISTANCE;
         }

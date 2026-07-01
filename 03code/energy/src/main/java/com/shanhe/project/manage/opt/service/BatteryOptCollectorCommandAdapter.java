@@ -75,7 +75,14 @@ public class BatteryOptCollectorCommandAdapter {
 
         BatteryCollectorCommandResult result;
         try {
-            if (BatteryTestEnum._2.getDictValue().equals(opt.getTestType())) {
+            if (BatteryTestEnum._1.getDictValue().equals(opt.getTestType())) {
+                int batteryCount = resolveBatteryCount(opt.getPackNum());
+                result = batteryCollectorCommandService.groupInternalResistanceTest(
+                        channelName, opt.getPackNum(), batteryCount, null);
+                if (isGroupInternalResistanceNotReady(result)) {
+                    return null;
+                }
+            } else if (BatteryTestEnum._2.getDictValue().equals(opt.getTestType())) {
                 int batteryCount = resolveBatteryCount(opt.getPackNum());
                 result = batteryCollectorCommandService.connectResistanceTest(
                         channelName, opt.getPackNum(), batteryCount, null);
@@ -128,13 +135,22 @@ public class BatteryOptCollectorCommandAdapter {
 
     /** 将测试类型映射为 600 采集侧工作模式。 */
     private Integer resolveMode(Integer testType) {
+        if (BatteryTestEnum._1.getDictValue().equals(testType)
+                || BatteryTestEnum._6.getDictValue().equals(testType)) {
+            return BatteryModeStatusService.MODE_INTERNAL_RESISTANCE;
+        }
         if (BatteryTestEnum._2.getDictValue().equals(testType)) {
             return BatteryModeStatusService.MODE_CONNECT_RESISTANCE;
         }
-        if (BatteryTestEnum._6.getDictValue().equals(testType)) {
-            return BatteryModeStatusService.MODE_INTERNAL_RESISTANCE;
-        }
         return null;
+    }
+
+    /** 整组内阻显式状态机未就绪时回退旧 M460 链路。 */
+    private boolean isGroupInternalResistanceNotReady(BatteryCollectorCommandResult result) {
+        return result != null
+                && !result.isSuccess()
+                && result.getMessage() != null
+                && result.getMessage().contains("整组内阻测试尚未实现");
     }
 
     /** 当前电池组已有600采集测试运行时拒绝重复入队。 */

@@ -235,27 +235,24 @@ class BatteryModuleModbusReadMappingServiceTest {
     void shouldReturnOneForFreshGroup246Freshness() {
         BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        Mockito.when(stateService.selectByScope(
-                BatteryDeviceStateConstants.ScopeType.PACK,
-                "1",
-                BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS))
-                .thenReturn(deviceState("fresh"));
+        Mockito.when(stateService.selectByPackNum(1))
+                .thenReturn(Collections.singletonList(packState(
+                        BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, "fresh", null, null)));
 
         BatteryModuleModbusReadMappingService service =
                 new BatteryModuleModbusReadMappingService(mapper, stateService, null);
 
         Assertions.assertArrayEquals(new int[]{1}, service.readHoldingRegisters(1, 411487, 1));
+        Mockito.verify(stateService, Mockito.times(1)).selectByPackNum(1);
     }
 
     @Test
     void shouldReturnZeroForStaleGroup246Freshness() {
         BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        Mockito.when(stateService.selectByScope(
-                BatteryDeviceStateConstants.ScopeType.PACK,
-                "1",
-                BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS))
-                .thenReturn(deviceState("stale"));
+        Mockito.when(stateService.selectByPackNum(1))
+                .thenReturn(Collections.singletonList(packState(
+                        BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, "stale", null, null)));
 
         BatteryModuleModbusReadMappingService service =
                 new BatteryModuleModbusReadMappingService(mapper, stateService, null);
@@ -267,11 +264,7 @@ class BatteryModuleModbusReadMappingServiceTest {
     void shouldReturnZeroWhenGroup246FreshnessMissing() {
         BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        Mockito.when(stateService.selectByScope(
-                BatteryDeviceStateConstants.ScopeType.PACK,
-                "1",
-                BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS))
-                .thenReturn(null);
+        Mockito.when(stateService.selectByPackNum(1)).thenReturn(Collections.emptyList());
 
         BatteryModuleModbusReadMappingService service =
                 new BatteryModuleModbusReadMappingService(mapper, stateService, null);
@@ -302,58 +295,33 @@ class BatteryModuleModbusReadMappingServiceTest {
     void shouldMapDeviceStateRegistersFrom411483To411488() {
         BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        Mockito.when(stateService.selectByScope(
-                BatteryDeviceStateConstants.ScopeType.CHANNEL,
-                "COM1",
-                BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN))
-                .thenReturn(deviceState("open"));
-        Mockito.when(stateService.selectByScope(
-                BatteryDeviceStateConstants.ScopeType.CHANNEL,
-                "COM1",
-                BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR))
-                .thenReturn(deviceState("error", BatteryDeviceStateConstants.StateLevel.ERROR, null));
-        Mockito.when(stateService.selectByChannelAndCode(
-                "COM1",
-                BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE))
-                .thenReturn(Collections.singletonList(deviceState("active")));
-        Mockito.when(stateService.selectByChannelAndCode(
-                "COM1",
-                BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT))
-                .thenReturn(Collections.singletonList(deviceState("01/81")));
-        Mockito.when(stateService.selectByScope(
-                BatteryDeviceStateConstants.ScopeType.PACK,
-                "1",
-                BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS))
-                .thenReturn(deviceState("fresh"));
-        Mockito.when(stateService.selectByScope(
-                BatteryDeviceStateConstants.ScopeType.PACK,
-                "1",
-                BatteryDeviceStateConstants.StateCode.WORK_MODE))
-                .thenReturn(deviceState("mode", null, 6));
+        Mockito.when(stateService.selectByPackNum(1)).thenReturn(Arrays.asList(
+                channelState("COM1", BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN, "open", null, null),
+                channelState("COM1", BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR,
+                        "error", BatteryDeviceStateConstants.StateLevel.ERROR, null),
+                channelState("COM1", BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE, "active", null, null),
+                channelState("COM1", BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT, "01/81", null, null),
+                packState(BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, "fresh", null, null),
+                packState(BatteryDeviceStateConstants.StateCode.WORK_MODE, "mode", null, 6)));
 
         BatteryModuleModbusReadMappingService service =
                 new BatteryModuleModbusReadMappingService(mapper, stateService, properties("COM1", 1));
 
         Assertions.assertArrayEquals(new int[]{1, 1, 1, 1, 1, 6},
                 service.readHoldingRegisters(1, 411483, 6));
+        Mockito.verify(stateService, Mockito.times(1)).selectByPackNum(1);
+        Mockito.verify(stateService, Mockito.never()).selectByScope(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(stateService, Mockito.never()).selectByChannelAndCode(Mockito.anyString(), Mockito.anyString());
     }
 
     @Test
     void shouldIgnoreOtherPackAndRecoveredModuleStatusRegisters() {
         BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        Mockito.when(stateService.selectByChannelAndCode(
-                "COM1",
-                BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE))
-                .thenReturn(Arrays.asList(
-                        deviceState(2, "active"),
-                        deviceState(1, "inactive")));
-        Mockito.when(stateService.selectByChannelAndCode(
-                "COM1",
-                BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT))
-                .thenReturn(Arrays.asList(
-                        deviceState(2, "01/81", BatteryDeviceStateConstants.StateLevel.WARN, null),
-                        deviceState(1, "recovered", BatteryDeviceStateConstants.StateLevel.NORMAL, null)));
+        Mockito.when(stateService.selectByPackNum(1)).thenReturn(Arrays.asList(
+                channelState("COM1", BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE, "inactive", null, null),
+                channelState("COM1", BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT,
+                        "recovered", BatteryDeviceStateConstants.StateLevel.NORMAL, null)));
 
         BatteryModuleModbusReadMappingService service =
                 new BatteryModuleModbusReadMappingService(mapper, stateService, properties("COM1", 1));
@@ -366,11 +334,9 @@ class BatteryModuleModbusReadMappingServiceTest {
     void shouldReturnZeroForRecoveredTimeoutEvenWhenLevelIsWarn() {
         BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        Mockito.when(stateService.selectByChannelAndCode(
-                "COM1",
-                BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT))
-                .thenReturn(Collections.singletonList(
-                        deviceState(1, "recovered", BatteryDeviceStateConstants.StateLevel.WARN, null)));
+        Mockito.when(stateService.selectByPackNum(1)).thenReturn(Collections.singletonList(
+                channelState("COM1", BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT,
+                        "recovered", BatteryDeviceStateConstants.StateLevel.WARN, null)));
 
         BatteryModuleModbusReadMappingService service =
                 new BatteryModuleModbusReadMappingService(mapper, stateService, properties("COM1", 1));
@@ -382,15 +348,11 @@ class BatteryModuleModbusReadMappingServiceTest {
     void shouldUseOnlyEnabledChannelMatchedByPackNumForChannelScopedStatus() {
         BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        Mockito.when(stateService.selectByScope(
-                BatteryDeviceStateConstants.ScopeType.CHANNEL,
-                "COM1",
-                BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN))
-                .thenReturn(deviceState("open"));
-        Mockito.when(stateService.selectByChannelAndCode(
-                "COM1",
-                BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE))
-                .thenReturn(Collections.singletonList(deviceState(1, "active")));
+        Mockito.when(stateService.selectByPackNum(1)).thenReturn(Arrays.asList(
+                channelState("COM1", BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN, "open", null, null),
+                channelState("COM1", BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE, "active", null, null),
+                channelState("COM_DISABLED", BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN, "open", null, null),
+                channelState("COM_OTHER", BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE, "active", null, null)));
         BatteryCollectorProperties properties = properties("COM1", 1);
         BatteryCollectorChannelConfig disabledSamePack = new BatteryCollectorChannelConfig();
         disabledSamePack.setName("COM_DISABLED");
@@ -406,20 +368,7 @@ class BatteryModuleModbusReadMappingServiceTest {
                 new BatteryModuleModbusReadMappingService(mapper, stateService, properties);
 
         Assertions.assertArrayEquals(new int[]{1, 0, 1}, service.readHoldingRegisters(1, 411483, 3));
-        Mockito.verify(stateService, Mockito.never()).selectByScope(
-                Mockito.eq(BatteryDeviceStateConstants.ScopeType.CHANNEL),
-                Mockito.eq("COM_DISABLED"),
-                Mockito.anyString());
-        Mockito.verify(stateService, Mockito.never()).selectByScope(
-                Mockito.eq(BatteryDeviceStateConstants.ScopeType.CHANNEL),
-                Mockito.eq("COM_OTHER"),
-                Mockito.anyString());
-        Mockito.verify(stateService, Mockito.never()).selectByChannelAndCode(
-                Mockito.eq("COM_DISABLED"),
-                Mockito.anyString());
-        Mockito.verify(stateService, Mockito.never()).selectByChannelAndCode(
-                Mockito.eq("COM_OTHER"),
-                Mockito.anyString());
+        Mockito.verify(stateService, Mockito.times(1)).selectByPackNum(1);
     }
 
     @Test
@@ -443,14 +392,8 @@ class BatteryModuleModbusReadMappingServiceTest {
     void shouldReturnZeroForMissingDeviceStateRegisters() {
         BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        Mockito.when(stateService.selectByChannelAndCode(
-                "COM1",
-                BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE))
-                .thenReturn(Collections.singletonList(deviceState("inactive")));
-        Mockito.when(stateService.selectByChannelAndCode(
-                "COM1",
-                BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT))
-                .thenReturn(Collections.emptyList());
+        Mockito.when(stateService.selectByPackNum(1)).thenReturn(Collections.singletonList(
+                channelState("COM1", BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE, "inactive", null, null)));
 
         BatteryModuleModbusReadMappingService service =
                 new BatteryModuleModbusReadMappingService(mapper, stateService, properties("COM1", 1));
@@ -463,11 +406,8 @@ class BatteryModuleModbusReadMappingServiceTest {
     void shouldReturnZeroForClosedChannelOpenRegister() {
         BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        Mockito.when(stateService.selectByScope(
-                BatteryDeviceStateConstants.ScopeType.CHANNEL,
-                "COM1",
-                BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN))
-                .thenReturn(deviceState("closed"));
+        Mockito.when(stateService.selectByPackNum(1)).thenReturn(Collections.singletonList(
+                channelState("COM1", BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN, "closed", null, null)));
 
         BatteryModuleModbusReadMappingService service =
                 new BatteryModuleModbusReadMappingService(mapper, stateService, properties("COM1", 1));
@@ -479,11 +419,9 @@ class BatteryModuleModbusReadMappingServiceTest {
     void shouldReturnZeroForNonErrorChannelErrorRegister() {
         BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        Mockito.when(stateService.selectByScope(
-                BatteryDeviceStateConstants.ScopeType.CHANNEL,
-                "COM1",
-                BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR))
-                .thenReturn(deviceState("normal", BatteryDeviceStateConstants.StateLevel.NORMAL, null));
+        Mockito.when(stateService.selectByPackNum(1)).thenReturn(Collections.singletonList(
+                channelState("COM1", BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR,
+                        "normal", BatteryDeviceStateConstants.StateLevel.NORMAL, null)));
 
         BatteryModuleModbusReadMappingService service =
                 new BatteryModuleModbusReadMappingService(mapper, stateService, properties("COM1", 1));
@@ -495,12 +433,11 @@ class BatteryModuleModbusReadMappingServiceTest {
     void shouldClampWorkModeRegisterToUnsigned16() {
         BatteryModuleRealtimeMapper mapper = mapperWithReadyGroup(1);
         BatteryDeviceStateService stateService = Mockito.mock(BatteryDeviceStateService.class);
-        Mockito.when(stateService.selectByScope(
-                BatteryDeviceStateConstants.ScopeType.PACK,
-                "1",
-                BatteryDeviceStateConstants.StateCode.WORK_MODE))
-                .thenReturn(deviceState("mode", null, -1))
-                .thenReturn(deviceState("mode", null, 70000));
+        Mockito.when(stateService.selectByPackNum(1))
+                .thenReturn(Collections.singletonList(packState(
+                        BatteryDeviceStateConstants.StateCode.WORK_MODE, "mode", null, -1)))
+                .thenReturn(Collections.singletonList(packState(
+                        BatteryDeviceStateConstants.StateCode.WORK_MODE, "mode", null, 70000)));
 
         BatteryModuleModbusReadMappingService service =
                 new BatteryModuleModbusReadMappingService(mapper, stateService, properties("COM1", 1));
@@ -634,6 +571,23 @@ class BatteryModuleModbusReadMappingServiceTest {
         return state;
     }
 
+    private BatteryDeviceState packState(String stateCode, String stateValue, String stateLevel, Integer mode) {
+        BatteryDeviceState state = deviceState(stateValue, stateLevel, mode);
+        state.setScopeType(BatteryDeviceStateConstants.ScopeType.PACK);
+        state.setScopeKey("1");
+        state.setStateCode(stateCode);
+        return state;
+    }
+
+    private BatteryDeviceState channelState(String channelName, String stateCode,
+                                            String stateValue, String stateLevel, Integer mode) {
+        BatteryDeviceState state = deviceState(1, stateValue, stateLevel, mode);
+        state.setScopeType(BatteryDeviceStateConstants.ScopeType.CHANNEL);
+        state.setScopeKey(channelName);
+        state.setChannelName(channelName);
+        state.setStateCode(stateCode);
+        return state;
+    }
     private BatteryCollectorProperties properties(String channelName, int packNum) {
         BatteryCollectorChannelConfig channel = new BatteryCollectorChannelConfig();
         channel.setName(channelName);

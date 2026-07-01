@@ -122,6 +122,38 @@ public class BatteryCollectorCommandService {
         return execute(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST, channelName, timeoutMs, batteryGroup, batteryNumber);
     }
 
+    /**
+     * 尝试执行整组内阻测试。
+     * <p>旧 M460 0x05/0x79 会进入整组状态机逐节下发 600/submodule 命令；当前 600 显式控制层
+     * 只有单体内阻命令，尚未具备等价整组状态机。这里先暴露稳定入口，避免上层误把 _1 降级成 _6 循环。
+     */
+    public BatteryCollectorCommandResult groupInternalResistanceTest(String channelName, int batteryGroup, int batteryCount, Long timeoutMs) {
+        if (isBlank(channelName)) {
+            return BatteryCollectorCommandResult.builder().success(false).message("通道名称不能为空").build();
+        }
+        if (batteryGroup <= 0) {
+            return BatteryCollectorCommandResult.builder().success(false).message("电池组编号无效").build();
+        }
+        BatteryCollectorCommandResult runningResult = rejectRunningWorkMode(
+                BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST,
+                channelName,
+                batteryGroup,
+                BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+        if (runningResult != null) {
+            return runningResult;
+        }
+        try {
+            validateBatteryCount(batteryCount);
+        } catch (IllegalArgumentException e) {
+            return BatteryCollectorCommandResult.builder().success(false).message(e.getMessage()).build();
+        }
+        return BatteryCollectorCommandResult.builder()
+                .success(false)
+                .mappedToModuleCommand(false)
+                .channelName(channelName)
+                .message("整组内阻测试尚未实现等价 600 显式控制状态机，继续使用旧 M460 链路")
+                .build();
+    }
     private BatteryCollectorCommandResult validateSingleInternalResistanceAddress(String channelName,
                                                                                   int batteryGroup,
                                                                                   int batteryNumber) {

@@ -71,7 +71,10 @@ public class BatteryDeviceStateServiceImpl implements BatteryDeviceStateService 
 
     @Override
     public List<BatteryDeviceState> selectByPackNum(Integer packNum) {
-        return batteryDeviceStateMapper.selectByPackNum(packNum);
+        if (packNum == null) {
+            return Collections.emptyList();
+        }
+        return filterCurrent(batteryDeviceStateMapper.selectByPackNum(packNum));
     }
 
     @Override
