@@ -131,29 +131,13 @@ public class BatteryOptScheduleJob {
         if (runningLogs != null && !runningLogs.isEmpty()) {
             return true;
         }
-        Integer expectedMode = resolveCollectorMode(opt.getTestType());
-        if (expectedMode == null || batteryModeStatusService == null) {
+        if (batteryModeStatusService == null) {
             return false;
         }
         BatteryModeInfo modeInfo = batteryModeStatusService.get(opt.getPackNum());
         return modeInfo != null
                 && Objects.equals(modeInfo.getPackNum(), opt.getPackNum())
-                && Objects.equals(modeInfo.getStatus(), 1)
-                && Objects.equals(modeInfo.getMode(), expectedMode);
-    }
-
-    /** 将测试类型映射为采集模块工作模式。 */
-    private Integer resolveCollectorMode(Integer testType) {
-        if (Objects.equals(testType, BatteryTestEnum._1.getDictValue())) {
-            return BatteryModeStatusService.MODE_INTERNAL_RESISTANCE;
-        }
-        if (Objects.equals(testType, BatteryTestEnum._2.getDictValue())) {
-            return BatteryModeStatusService.MODE_CONNECT_RESISTANCE;
-        }
-        if (Objects.equals(testType, BatteryTestEnum._6.getDictValue())) {
-            return BatteryModeStatusService.MODE_INTERNAL_RESISTANCE;
-        }
-        return null;
+                && Objects.equals(modeInfo.getStatus(), 1);
     }
 
     /** 判断执行结果是否成功。 */

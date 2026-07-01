@@ -201,15 +201,22 @@ class BatteryOptCollectorCommandAdapterTest {
     }
 
     @Test
-    void shouldReturnNullWhenTryStopWithUnsupportedTestType() {
+    void shouldRouteGroupInternalResistanceStopToCollectorMode() {
         BatteryOptCollectorCommandAdapter adapter = adapter(true);
         BatteryCollectorCommandService commandService =
                 (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
+        Mockito.when(commandService.stopRunningTest(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE))
+                .thenReturn(BatteryCollectorCommandResult.builder()
+                        .success(false)
+                        .message("当前电池组没有正在执行的测试")
+                        .build());
 
         AjaxResult result = adapter.tryStop(opt(BatteryTestEnum._1.getDictValue(), null));
 
-        Assertions.assertNull(result);
-        Mockito.verifyNoInteractions(commandService);
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertEquals("当前电池组没有正在执行的测试", result.get(AjaxResult.MSG_TAG));
+        Mockito.verify(commandService).stopRunningTest(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
     }
 
     @Test
@@ -237,15 +244,25 @@ class BatteryOptCollectorCommandAdapterTest {
     }
 
     @Test
-    void shouldReturnNullWhenTryExecuteWithUnsupportedTestType() {
+    void shouldFallbackGroupInternalResistanceWhenModuleStateMachineNotMapped() {
         BatteryOptCollectorCommandAdapter adapter = adapter(true);
         BatteryCollectorCommandService commandService =
                 (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
+        IBatteryPackService batteryPackService =
+                (IBatteryPackService) ReflectionTestUtils.getField(adapter, "batteryPackService");
+        Mockito.when(commandService.resolveChannelName(1)).thenReturn("battery-group-1");
+        Mockito.when(batteryPackService.getBatteryMaxNumber(1)).thenReturn(24);
+        Mockito.when(commandService.groupInternalResistanceTest("battery-group-1", 1, 24, null))
+                .thenReturn(BatteryCollectorCommandResult.builder()
+                        .success(false)
+                        .mappedToModuleCommand(false)
+                        .message("整组内阻测试尚未实现等价 600 显式控制状态机，继续使用旧 M460 链路")
+                        .build());
 
         AjaxResult result = adapter.tryExecute(opt(BatteryTestEnum._1.getDictValue(), null));
 
         Assertions.assertNull(result);
-        Mockito.verifyNoInteractions(commandService);
+        Mockito.verify(commandService).groupInternalResistanceTest("battery-group-1", 1, 24, null);
     }
 
     // ---- TASK-AI-VERIFY-EXEC-001: execution entry gap tests ----

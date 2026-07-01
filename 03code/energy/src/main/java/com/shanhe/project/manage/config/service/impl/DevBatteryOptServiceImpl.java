@@ -5,6 +5,7 @@ import com.shanhe.common.utils.uuid.IdUtils;
 import com.shanhe.project.manage.config.domain.DevBatteryOpt;
 import com.shanhe.project.manage.config.mapper.DevBatteryOptMapper;
 import com.shanhe.project.manage.config.service.IDevBatteryOptService;
+import com.shanhe.project.sync.service.ClientReportService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -22,6 +23,9 @@ public class DevBatteryOptServiceImpl implements IDevBatteryOptService {
     /** 蓄电池测试操作映射。 */
     @Resource
     private DevBatteryOptMapper devBatteryOptMapper;
+    /** 客户端上报服务。 */
+    @Resource
+    private ClientReportService clientReportService;
 
     /**
      * 根据操作ID查询蓄电池测试操作参数
@@ -87,6 +91,11 @@ public class DevBatteryOptServiceImpl implements IDevBatteryOptService {
             }
         } else {
             this.updateDevBatteryOpt(devBatteryOpt);
+        }
+
+        // 是否上报
+        if (!devBatteryOpt.getIsSync()) {
+            clientReportService.uploadBatteryOpt(devBatteryOpt);
         }
     }
 

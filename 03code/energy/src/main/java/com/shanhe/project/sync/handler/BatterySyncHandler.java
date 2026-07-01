@@ -57,10 +57,9 @@ public class BatterySyncHandler {
 
             BatteryOptVo optVo = JSONObject.parseObject(contentStr, BatteryOptVo.class);
             DevBatteryOpt batteryOpt = BeanUtil.copyProperties(optVo, DevBatteryOpt.class);
-            batteryOpt.setConfigId(optVo.getDevId());
             batteryOpt.setIsSync(true);
+            devBatteryOptService.insertDevBatteryOpt(batteryOpt);
 
-            savePlatformScheduleOpt(batteryOpt);
             AjaxResult ajaxResult = AjaxResult.success();
             // YES 表示同步平台计划参数，不下发旧 M460 0x31..0x35；其他值表示立即执行，复用 ControlBattery。
             if (!Objects.equals(optVo.getIsNow(), YesNoEnum.YES.getDictValue())) {
@@ -78,10 +77,6 @@ public class BatterySyncHandler {
         return new ResponseVo(request.getImei(), MethodEnum._43.getDictValue(), request.getBusinessId(), msg);
     }
 
-    /** 保存平台侧测试计划参数；旧 M460 内置计划配置下发不在同步入口自动触发。 */
-    private void savePlatformScheduleOpt(DevBatteryOpt batteryOpt) {
-        devBatteryOptService.insertDevBatteryOpt(batteryOpt);
-    }
     public ResponseVo syncBatteryMonomer(RequestVo request) {
         String msg = null;
         try {

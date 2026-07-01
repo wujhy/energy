@@ -1,18 +1,14 @@
 package com.shanhe.project.manage.opt.controller;
 
-import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.aspectj.lang.annotation.Log;
-import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.framework.enums.BusinessType;
 import com.shanhe.framework.web.controller.BaseController;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.framework.web.page.TableDataInfo;
 import com.shanhe.project.manage.config.domain.DevBatteryOpt;
 import com.shanhe.project.manage.config.service.IDevBatteryOptService;
-import com.shanhe.project.manage.opt.domain.OptLog;
 import com.shanhe.project.manage.opt.service.BatteryOptExecuteType;
 import com.shanhe.project.manage.opt.service.ControlBattery;
-import com.shanhe.project.manage.opt.service.OptLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,11 +31,8 @@ public class OptBatteryController extends BaseController {
     /** 蓄电池设备控制服务。 */
     @Resource
     private ControlBattery controlBattery;
-    /** 操作日志服务。 */
-    @Resource
-    private OptLogService optLogService;
 
-    /** 查询【蓄电池测试操作参数】列表 */
+    /** 查询列表 */
     @GetMapping("/list")
     public TableDataInfo list(DevBatteryOpt devBatteryOpt) {
         startPage();
@@ -47,7 +40,7 @@ public class OptBatteryController extends BaseController {
         return getDataTable(list);
     }
 
-    /** 获取【蓄电池测试操作参数】详细信息 */
+    /** 详细信息 */
     @GetMapping(value = "/info")
     public AjaxResult getInfo(@RequestParam(name = "configId", required = false) Long ignoredConfigId,
                               @RequestParam Integer packNum,
@@ -55,42 +48,25 @@ public class OptBatteryController extends BaseController {
         return success(devBatteryOptService.selectDevBatteryOptByPackNum(packNum, testType));
     }
 
-    /** 保存平台测试计划参数；不下发旧 M460 0x31..0x35 配置命令。 */
+    /** 保存平台测试计划参数 */
     @Log(title = "蓄电池测试操作", businessType = BusinessType.UPDATE)
     @PostMapping("/edit")
     public AjaxResult edit(@RequestBody DevBatteryOpt devBatteryOpt) {
-        savePlatformScheduleOpt(devBatteryOpt);
+        devBatteryOptService.insertDevBatteryOpt(devBatteryOpt);
         return success();
     }
 
     /** 立即执行蓄电池测试操作 */
     @PostMapping("/doCmdOptBatteryTest")
     public AjaxResult doCmdOptBatteryTest(@RequestBody DevBatteryOpt devBatteryOpt) {
-        BatteryTestEnum testEnum = BatteryTestEnum.find(devBatteryOpt.getTestType());
-        if (testEnum == null || BatteryTestEnum._99.equals(testEnum)) {
-            return AjaxResult.error("下发蓄电池测试指令类型失败", 0);
-        }
-        OptLog opt = optLogService.getRunningOptLog(devBatteryOpt.getPackNum(), testEnum.getDictValue());
-        if (opt != null) {
-            return AjaxResult.error("蓄电池正在执行测试工作，请稍后再试！");
-        }
-        savePlatformScheduleOpt(devBatteryOpt);
-        // 发送指令到终端设备
+        // 立即执行只使用本次请求参数，不覆盖平台计划参数。
         return controlBattery.executeBatteryOpt(devBatteryOpt, BatteryOptExecuteType.MANUAL);
-    }
-
-    /** 保存平台侧计划参数；旧 M460 内置计划配置下发只能通过已废弃兼容入口显式调用。 */
-    private void savePlatformScheduleOpt(DevBatteryOpt devBatteryOpt) {
-        devBatteryOpt.setConfigId(Constants.DEFAULT_CONFIG_ID);
-        devBatteryOpt.setIsSync(false);
-        devBatteryOptService.insertDevBatteryOpt(devBatteryOpt);
     }
 
     /** 停止操作 */
     @PostMapping("/doCmdStopBattery")
     public AjaxResult doCmdStopBattery(@RequestBody DevBatteryOpt devBatteryOpt) {
         //发送指令到终端设备
-        devBatteryOpt.setConfigId(Constants.DEFAULT_CONFIG_ID);
         return controlBattery.toSendStopBatteryCmdToOat(devBatteryOpt);
     }
 }
