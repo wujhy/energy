@@ -13,6 +13,7 @@
 3. 代码任务先用 `.codegraph` 了解调用面，再做小步修改；测试验证任务只做本轮功能必要的最小自检，不主动扩展其他 AI 的测试清单。
 4. 修改文本文件优先用 `apply_patch`；如果工具在 Windows sandbox 下不可用，才允许使用 .NET `UTF8Encoding(false)` 精确写入，写后必须检查文件头并执行相关测试或 `git diff --check`。
 5. Windows 下不要用中文正文作为唯一替换锚点；优先使用 ASCII 方法名、类名、import、任务编号等稳定片段，避免控制台乱码导致误改。
+6. 终端显示乱码不等于文件内容乱码；禁止因 `Get-Content`/`Select-String` 显示异常就整文件转码。疑似乱码先看 `01document/文件编码与编辑约束.md` 的“乱码显示与转码禁令”。
 
 ## 当前主文档
 
