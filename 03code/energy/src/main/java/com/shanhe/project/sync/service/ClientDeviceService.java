@@ -139,11 +139,11 @@ public class ClientDeviceService {
                 response = batterySyncHandler.syncBatteryOpt(request);
                 break;
             case _44:
-                // 同步测试计划
+                // 同步初装内阻值
                 response = batterySyncHandler.syncBatteryMonomer(request);
                 break;
             case _46:
-                // 同步测试计划
+                // 同步初装内阻值
                 response = batterySyncHandler.reportSynBatteryMonomer(request);
                 break;
             case _98:

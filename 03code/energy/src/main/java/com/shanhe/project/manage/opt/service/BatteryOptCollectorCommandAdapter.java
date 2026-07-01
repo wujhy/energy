@@ -1,14 +1,14 @@
 package com.shanhe.project.manage.opt.service;
 
 import com.shanhe.framework.enums.BatteryTestEnum;
+import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
+import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
-import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
+import com.shanhe.project.iot.model.BatteryModeInfo;
 import com.shanhe.project.manage.config.domain.DevBatteryOpt;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
-import com.shanhe.framework.web.domain.AjaxResult;
-import com.shanhe.project.iot.model.BatteryModeInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -17,9 +17,8 @@ import java.util.Objects;
 
 /**
  * 蓄电池测试计划采集命令适配服务。
- *
- * <p>为后续 {@code /batteryOpt/doCmdOptBatteryTest} 切换 {@code _2/_6} 做准备。
- * 当独立采集命令开关开启且能找到通道时，优先走采集命令队列。</p>
+ * <p>该适配器只接入已确认等价的 600 采集模块命令。`_1` 整组内阻当前只有稳定插入点，
+ * 在 600 显式整组状态机未就绪前必须回退旧 M460 链路；不得降级为循环调用 `_6`。</p>
  *
  * @author wjh
  * @since 2026-06-22
@@ -51,7 +50,7 @@ public class BatteryOptCollectorCommandAdapter {
      * 尝试将测试计划转为独立采集模块命令执行。
      *
      * @param opt 测试计划参数
-     * @return 命令已入队时返回成功结果；无法处理时返回 null，由旧链路兜底
+     * @return 命令已处理时返回结果；无法处理时返回 null，由旧链路兜底
      */
     public AjaxResult tryExecute(DevBatteryOpt opt) {
         if (opt == null || opt.getTestType() == null || opt.getPackNum() == null) {
@@ -76,10 +75,9 @@ public class BatteryOptCollectorCommandAdapter {
         BatteryCollectorCommandResult result;
         try {
             if (BatteryTestEnum._1.getDictValue().equals(opt.getTestType())) {
-                int batteryCount = resolveBatteryCount(opt.getPackNum());
-                result = batteryCollectorCommandService.groupInternalResistanceTest(
-                        channelName, opt.getPackNum(), batteryCount, null);
-                if (isGroupInternalResistanceNotReady(result)) {
+                result = tryGroupInternalResistance(channelName, opt);
+                if (shouldFallbackLegacyM460(result)) {
+                    log.debug("整组内阻 600 显式控制未就绪，回退旧 M460 链路, packNum={}", opt.getPackNum());
                     return null;
                 }
             } else if (BatteryTestEnum._2.getDictValue().equals(opt.getTestType())) {
@@ -87,18 +85,12 @@ public class BatteryOptCollectorCommandAdapter {
                 result = batteryCollectorCommandService.connectResistanceTest(
                         channelName, opt.getPackNum(), batteryCount, null);
             } else if (BatteryTestEnum._6.getDictValue().equals(opt.getTestType())) {
-                Integer modelNum = opt.getModelNum();
-                int batteryCount = resolveBatteryCount(opt.getPackNum());
-                if (modelNum == null || modelNum < 1 || modelNum > batteryCount) {
-                    return AjaxResult.error("单节内阻测试单体编号无效", 0);
-                }
-                result = batteryCollectorCommandService.singleInternalResistanceTest(
-                        channelName, opt.getPackNum(), modelNum, null);
+                result = trySingleInternalResistance(channelName, opt);
             } else {
                 return null;
             }
         } catch (Exception e) {
-            log.warn("采集命令适配异常, packNum={}, testType={}, 原因={}",
+            log.warn("采集命令适配异常, packNum={}, testType={}, reason={}",
                     opt.getPackNum(), opt.getTestType(), e.getMessage());
             return AjaxResult.error("独立采集模块命令执行失败", 0);
         }
@@ -133,6 +125,30 @@ public class BatteryOptCollectorCommandAdapter {
         return AjaxResult.error(result == null ? "停止测试失败" : result.getMessage(), 0);
     }
 
+    private BatteryCollectorCommandResult tryGroupInternalResistance(String channelName, DevBatteryOpt opt) {
+        int batteryCount = resolveBatteryCount(opt.getPackNum());
+        return batteryCollectorCommandService.groupInternalResistanceTest(
+                channelName, opt.getPackNum(), batteryCount, null);
+    }
+
+    private BatteryCollectorCommandResult trySingleInternalResistance(String channelName, DevBatteryOpt opt) {
+        Integer modelNum = opt.getModelNum();
+        int batteryCount = resolveBatteryCount(opt.getPackNum());
+        if (modelNum == null || modelNum < 1 || modelNum > batteryCount) {
+            return BatteryCollectorCommandResult.builder()
+                    .success(false)
+                    .message("单节内阻测试单体编号无效")
+                    .build();
+        }
+        return batteryCollectorCommandService.singleInternalResistanceTest(
+                channelName, opt.getPackNum(), modelNum, null);
+    }
+
+    /** `_1` 整组内阻未映射为 600 模块命令时，必须继续旧 M460 状态机。 */
+    private boolean shouldFallbackLegacyM460(BatteryCollectorCommandResult result) {
+        return result != null && !result.isMappedToModuleCommand();
+    }
+
     /** 将测试类型映射为 600 采集侧工作模式。 */
     private Integer resolveMode(Integer testType) {
         if (BatteryTestEnum._1.getDictValue().equals(testType)
@@ -145,15 +161,7 @@ public class BatteryOptCollectorCommandAdapter {
         return null;
     }
 
-    /** 整组内阻显式状态机未就绪时回退旧 M460 链路。 */
-    private boolean isGroupInternalResistanceNotReady(BatteryCollectorCommandResult result) {
-        return result != null
-                && !result.isSuccess()
-                && result.getMessage() != null
-                && result.getMessage().contains("整组内阻测试尚未实现");
-    }
-
-    /** 当前电池组已有600采集测试运行时拒绝重复入队。 */
+    /** 当前电池组已有 600 采集测试运行时拒绝重复入队。 */
     private AjaxResult rejectWhenCollectorModeRunning(Integer packNum, Integer expectedMode) {
         if (batteryModeStatusService == null || packNum == null || expectedMode == null) {
             return null;
@@ -178,7 +186,7 @@ public class BatteryOptCollectorCommandAdapter {
                 return Math.min(count, MAX_BATTERY_COUNT);
             }
         } catch (Exception e) {
-            log.debug("获取电池组单体数失败, packNum={}, 原因={}", packNum, e.getMessage());
+            log.debug("获取电池组单体数失败, packNum={}, reason={}", packNum, e.getMessage());
         }
         return MAX_BATTERY_COUNT;
     }

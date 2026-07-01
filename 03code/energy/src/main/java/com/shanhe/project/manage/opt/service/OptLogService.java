@@ -26,6 +26,17 @@ public interface OptLogService {
     Long insert(Integer packNum, Integer type, Integer result);
 
     /**
+     * 插入操作日志。
+     *
+     * @param packNum 组序号
+     * @param type 操作类型
+     * @param result 结果
+     * @param source 执行来源
+     * @return 记录ID
+     */
+    Long insert(Integer packNum, Integer type, Integer result, String source);
+
+    /**
      * 插入操作日志
      *
      * @param params 操作参数

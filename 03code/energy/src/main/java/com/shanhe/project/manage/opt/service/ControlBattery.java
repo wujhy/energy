@@ -9,6 +9,7 @@ import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.enums.*;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
+import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.manage.alarm.domain.AlarmLog;
@@ -198,7 +199,7 @@ public class ControlBattery extends ControlBase {
         }
 
         // 执行命令并记录日志
-        return executeCommandAndLog(config, opt, testEnum, cmdInfo);
+        return executeCommandAndLog(config, opt, testEnum, cmdInfo, executeType);
     }
 
     /** 尝试走已迁移的新链路；返回 null 时继续旧 M460/980 fallback。 */
@@ -316,14 +317,16 @@ public class ControlBattery extends ControlBase {
     }
 
     /** 执行命令并记录日志 */
-    private AjaxResult executeCommandAndLog(Config config, DevBatteryOpt opt, BatteryTestEnum testEnum, CommandInfo cmdInfo) {
+    private AjaxResult executeCommandAndLog(Config config, DevBatteryOpt opt, BatteryTestEnum testEnum, CommandInfo cmdInfo,
+                                            BatteryOptExecuteType executeType) {
         // 是否重复请求
         String resultKey = super.setControlStatus(config, opt.getPackNum(), cmdInfo.dynCid, cacheKeyEnum);
 
         // 记录操作日志
+        String source = resolveOptLogSource(executeType);
         Long optLogId = null;
         if (cmdInfo.needCommandLog) {
-            optLogId = optLogService.insert(opt.getPackNum(), opt.getTestType(), null);
+            optLogId = optLogService.insert(opt.getPackNum(), opt.getTestType(), null, source);
         }
 
         // 旧 M460/980 直发链路。新适配器无法处理时才走这里。
@@ -341,7 +344,7 @@ public class ControlBattery extends ControlBase {
             optLogService.update(optLogId, success ? 0 : 1, null);
         }
         if (cmdInfo.needRunningLog && success) {
-            optLogService.insert(opt.getPackNum(), opt.getTestType(), null);
+            optLogService.insert(opt.getPackNum(), opt.getTestType(), null, source);
         }
         if (success && testEnum == BatteryTestEnum._1) {
             batteryModeStatusService.markRunning(
@@ -352,6 +355,22 @@ public class ControlBattery extends ControlBase {
         return ajaxResult;
     }
 
+    /** 把统一执行入口来源写入旧 dev_opt_log.source，便于区分页面、计划和同步触发。 */
+    private String resolveOptLogSource(BatteryOptExecuteType executeType) {
+        if (executeType == null) {
+            return null;
+        }
+        switch (executeType) {
+            case MANUAL:
+                return BatteryDeviceStateConstants.Source.WEB;
+            case SCHEDULED:
+                return BatteryDeviceStateConstants.Source.AUTO;
+            case SYNC:
+                return BatteryDeviceStateConstants.Source.JSON_TCP;
+            default:
+                return executeType.name().toLowerCase();
+        }
+    }
     /** 立即执行停止备电操作 */
     public AjaxResult toSendStopBatteryCmdToOat(DevBatteryOpt opt) {
         // 校验设备
@@ -364,21 +383,21 @@ public class ControlBattery extends ControlBase {
 
             // 无数据上报结束
             if (null == batteryReportLog || null == batteryReportLog.getPackParam()) {
-                optLogService.doStopTest(opt.getPackNum(), BatteryTestEnum._1.getDictValue());
+                closeLegacyInternalResistanceState(opt.getPackNum());
                 return AjaxResult.success();
             }
 
             // 当前不在内阻测试状态
             String resistanceTestStatus = Objects.toString(batteryReportLog.getPackParam().get("resistanceTestStatus"), null);
             if (!ResistanceTestStatusEnum.isCode(resistanceTestStatus, ResistanceTestStatusEnum.TESTING)) {
-                optLogService.doStopTest(opt.getPackNum(), BatteryTestEnum._1.getDictValue());
+                closeLegacyInternalResistanceState(opt.getPackNum());
                 return AjaxResult.success();
             }
 
             // 上报时间超过 3 分钟
             int diff = DateUtils.differentMillsByMillisecond(batteryReportLog.getCreateTime(), new Date());
             if (diff > 3) {
-                optLogService.doStopTest(opt.getPackNum(), BatteryTestEnum._1.getDictValue());
+                closeLegacyInternalResistanceState(opt.getPackNum());
                 return AjaxResult.success();
             }
             return AjaxResult.success();
@@ -404,6 +423,17 @@ public class ControlBattery extends ControlBase {
         return AjaxResult.success();
     }
 
+    /** 旧 _1 不需要下发停止命令时，同步关闭日志和工作模式，避免后续计划误判运行中。 */
+    private void closeLegacyInternalResistanceState(Integer packNum) {
+        optLogService.doStopTest(packNum, BatteryTestEnum._1.getDictValue());
+        if (batteryModeStatusService != null) {
+            batteryModeStatusService.markStopped(
+                    packNum,
+                    BatteryModeStatusService.MODE_INTERNAL_RESISTANCE,
+                    1,
+                    true);
+        }
+    }
     /** 尝试停止已迁移到新链路的测试；返回 null 时继续旧 M460/980 stop fallback。 */
     private AjaxResult tryStopAdaptedCommand(DevBatteryOpt opt) {
         AjaxResult capacityStopResult = batteryOptCapacityModuleCommandAdapter.tryStop(opt);

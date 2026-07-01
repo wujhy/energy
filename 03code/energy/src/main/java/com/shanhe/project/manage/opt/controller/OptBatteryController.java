@@ -55,19 +55,17 @@ public class OptBatteryController extends BaseController {
         return success(devBatteryOptService.selectDevBatteryOptByPackNum(packNum, testType));
     }
 
-    /** 计划执行任务 */
+    /** 保存平台测试计划参数；不下发旧 M460 0x31..0x35 配置命令。 */
     @Log(title = "蓄电池测试操作", businessType = BusinessType.UPDATE)
     @PostMapping("/edit")
     public AjaxResult edit(@RequestBody DevBatteryOpt devBatteryOpt) {
-        normalizeLocalOpt(devBatteryOpt);
-        devBatteryOptService.insertDevBatteryOpt(devBatteryOpt);
+        savePlatformScheduleOpt(devBatteryOpt);
         return success();
     }
 
     /** 立即执行蓄电池测试操作 */
     @PostMapping("/doCmdOptBatteryTest")
     public AjaxResult doCmdOptBatteryTest(@RequestBody DevBatteryOpt devBatteryOpt) {
-        normalizeLocalOpt(devBatteryOpt);
         BatteryTestEnum testEnum = BatteryTestEnum.find(devBatteryOpt.getTestType());
         if (testEnum == null || BatteryTestEnum._99.equals(testEnum)) {
             return AjaxResult.error("下发蓄电池测试指令类型失败", 0);
@@ -76,15 +74,16 @@ public class OptBatteryController extends BaseController {
         if (opt != null) {
             return AjaxResult.error("蓄电池正在执行测试工作，请稍后再试！");
         }
-        devBatteryOptService.insertDevBatteryOpt(devBatteryOpt);
+        savePlatformScheduleOpt(devBatteryOpt);
         // 发送指令到终端设备
         return controlBattery.executeBatteryOpt(devBatteryOpt, BatteryOptExecuteType.MANUAL);
     }
 
-    /** 统一页面入口写库字段，避免计划保存和立即执行使用不同默认值。 */
-    private void normalizeLocalOpt(DevBatteryOpt devBatteryOpt) {
+    /** 保存平台侧计划参数；旧 M460 内置计划配置下发只能通过已废弃兼容入口显式调用。 */
+    private void savePlatformScheduleOpt(DevBatteryOpt devBatteryOpt) {
         devBatteryOpt.setConfigId(Constants.DEFAULT_CONFIG_ID);
         devBatteryOpt.setIsSync(false);
+        devBatteryOptService.insertDevBatteryOpt(devBatteryOpt);
     }
 
     /** 停止操作 */
