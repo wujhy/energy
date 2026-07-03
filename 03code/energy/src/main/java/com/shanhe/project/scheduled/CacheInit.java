@@ -6,6 +6,7 @@ import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.config.service.IConfigAttributeService;
 import com.shanhe.project.manage.host.domain.Host;
 import com.shanhe.project.manage.host.service.IHostService;
+import com.shanhe.project.manage.opt.service.BatteryOptRuntimeRecoveryService;
 import com.shanhe.project.manage.opt.service.OptLogService;
 import com.shanhe.project.manage.capacity.service.PreBatteryGroupService;
 import com.shanhe.project.monitor.server.service.SystemService;
@@ -41,6 +42,8 @@ public class CacheInit implements ApplicationRunner {
     IBatteryPackService batteryPackService;
     @Resource
     PreBatteryGroupService preBatteryGroupService;
+    @Resource
+    BatteryOptRuntimeRecoveryService batteryOptRuntimeRecoveryService;
 
     /**
      * 应用启动时初始化所有缓存
@@ -55,6 +58,7 @@ public class CacheInit implements ApplicationRunner {
         initConfig();
         initAlarm();
         initBattery();
+        recoverBatteryOptRuntime();
         log.info("-----------------初始化缓存结束------------");
     }
 
@@ -109,4 +113,17 @@ public class CacheInit implements ApplicationRunner {
         }
     }
 
+    /** 启动后保守补偿异常残留的蓄电池测试运行态。 */
+    public void recoverBatteryOptRuntime() {
+        try {
+            if (batteryOptRuntimeRecoveryService != null) {
+                int recovered = batteryOptRuntimeRecoveryService.recoverAll();
+                if (recovered > 0) {
+                    log.info("启动初始化已补偿蓄电池测试残留运行态，数量={}", recovered);
+                }
+            }
+        } catch (Exception e) {
+            log.error("补偿蓄电池测试残留运行态异常：{}", e.getMessage());
+        }
+    }
 }

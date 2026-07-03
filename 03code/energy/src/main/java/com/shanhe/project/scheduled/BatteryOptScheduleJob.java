@@ -8,6 +8,7 @@ import com.shanhe.project.manage.config.domain.DevBatteryOpt;
 import com.shanhe.project.manage.config.service.IDevBatteryOptService;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import com.shanhe.project.manage.opt.service.BatteryOptExecuteType;
+import com.shanhe.project.manage.opt.service.BatteryOptRuntimeRecoveryService;
 import com.shanhe.project.manage.opt.service.ControlBattery;
 import com.shanhe.project.manage.opt.service.OptLogService;
 import com.shanhe.project.iot.model.BatteryModeInfo;
@@ -52,6 +53,8 @@ public class BatteryOptScheduleJob {
     private OptLogService optLogService;
     @Resource
     private BatteryModeStatusService batteryModeStatusService;
+    @Resource
+    private BatteryOptRuntimeRecoveryService batteryOptRuntimeRecoveryService;
 
     private final Set<String> runningKeys = ConcurrentHashMap.newKeySet();
 
@@ -118,6 +121,17 @@ public class BatteryOptScheduleJob {
             recordScheduleResult(opt, "ERROR", e.getMessage());
         } finally {
             runningKeys.remove(key);
+        }
+    }
+
+    /** 调度前保守补偿异常残留的运行态，避免旧 running 日志长期阻塞计划。 */
+    private void recoverRuntimeBeforeSchedule(DevBatteryOpt opt) {
+        if (batteryOptRuntimeRecoveryService == null || opt == null || opt.getPackNum() == null) {
+            return;
+        }
+        int recovered = batteryOptRuntimeRecoveryService.recoverPack(opt.getPackNum());
+        if (recovered > 0) {
+            log.info("蓄电池测试计划执行前已补偿残留运行态, packNum={}, recovered={}", opt.getPackNum(), recovered);
         }
     }
 
