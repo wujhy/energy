@@ -155,13 +155,21 @@ public class BatteryCollectorCommandService {
                     channelName,
                     "整组内阻首节地址无效");
         }
+        Long businessOptLogId = optLogService == null
+                ? null
+                : optLogService.insert(batteryGroup, BatteryTestEnum._1.getDictValue(), null,
+                com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants.Source.COLLECTOR);
         moduleCommand.setDescription("整组内阻测试第1节");
         moduleCommand.setOptLogType(BatteryTestEnum._99.getDictValue());
+        moduleCommand.setBusinessOptLogId(businessOptLogId);
         moduleCommand.setGroupInternalResistanceNextAddress(2);
         moduleCommand.setGroupInternalResistanceMaxAddress(batteryCount);
         moduleCommand.setGroupInternalResistanceFailed(false);
         applyContext(moduleCommand, batteryGroup, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
         boolean queued = queueModuleCommand(channelName, moduleCommand);
+        if (!queued && businessOptLogId != null && optLogService != null) {
+            optLogService.update(businessOptLogId, 1, null);
+        }
         return BatteryCollectorCommandResult.builder()
                 .success(queued)
                 .timeout(false)

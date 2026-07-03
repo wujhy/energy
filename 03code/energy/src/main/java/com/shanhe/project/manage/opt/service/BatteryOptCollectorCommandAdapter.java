@@ -45,10 +45,6 @@ public class BatteryOptCollectorCommandAdapter {
         if (resolveMode(context.opt.getTestType()) == null) {
             return null;
         }
-        if (context.channelName == null || context.channelName.isEmpty()) {
-            return AjaxResult.error("未找到电池组采集通道", 0);
-        }
-
         BatteryCollectorCommandResult result;
         try {
             result = executeCollectorCommand(context);
@@ -66,17 +62,18 @@ public class BatteryOptCollectorCommandAdapter {
 
     private BatteryCollectorCommandResult executeCollectorCommand(BatteryCommandContext context) {
         Integer packNum = context.opt.getPackNum();
+        String channelName = batteryCollectorCommandService.resolveChannelName(packNum);
         if (BatteryTestEnum._1.equals(context.testEnum)) {
             return batteryCollectorCommandService.groupInternalResistanceTest(
-                    context.channelName, packNum, context.batteryCount, null);
+                    channelName, packNum, context.batteryCount, null);
         }
         if (BatteryTestEnum._2.equals(context.testEnum)) {
             return batteryCollectorCommandService.connectResistanceTest(
-                    context.channelName, packNum, context.batteryCount, null);
+                    channelName, packNum, context.batteryCount, null);
         }
         if (BatteryTestEnum._6.equals(context.testEnum)) {
             return batteryCollectorCommandService.singleInternalResistanceTest(
-                    context.channelName, packNum, context.opt.getModelNum(), null);
+                    channelName, packNum, context.opt.getModelNum(), null);
         }
         return null;
     }

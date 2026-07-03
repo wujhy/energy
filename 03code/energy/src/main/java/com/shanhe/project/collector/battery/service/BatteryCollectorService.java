@@ -236,7 +236,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 command.getBatteryGroup(),
                 command.getMode(),
                 command.getAddress(),
-                command.getOptLogId());
+                command.getBusinessOptLogId() == null ? command.getOptLogId() : command.getBusinessOptLogId());
     }
 
     /** 校验通道配置的名称、串口、地址和电池组编号是否有效。 */
@@ -487,6 +487,7 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 return;
             }
             success = commandQueueService.resolveGroupInternalResistanceFinalSuccess(pendingRequest, success);
+            commandQueueService.closeGroupInternalResistanceBusinessLog(pendingRequest, success);
         }
         commandQueueService.markModeStopped(pendingRequest, success);
         if (success && shouldResetModuleAddressCacheAfterCommand(pendingRequest)) {

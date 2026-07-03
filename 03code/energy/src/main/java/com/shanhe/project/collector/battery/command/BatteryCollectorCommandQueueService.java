@@ -11,6 +11,7 @@ import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandLogService;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
+import com.shanhe.project.manage.opt.service.OptLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -45,6 +46,8 @@ public class BatteryCollectorCommandQueueService {
     private BatteryModeStatusService batteryModeStatusService;
     @Resource
     private BatteryCollectorCommandLogService commandLogService;
+    @Resource
+    private OptLogService optLogService;
     @Resource
     private BatteryCollectorFrameCodec frameCodec;
 
@@ -95,6 +98,7 @@ public class BatteryCollectorCommandQueueService {
         pendingRequest.setAutoAddressBatteryCount(command.getAutoAddressBatteryCount());
         pendingRequest.setAutoAddressBatterySpecification(command.getAutoAddressBatterySpecification());
         pendingRequest.setOptLogId(command.getOptLogId());
+        pendingRequest.setBusinessOptLogId(command.getBusinessOptLogId());
         pendingRequest.setConnectResistanceNextAddress(command.getConnectResistanceNextAddress());
         pendingRequest.setConnectResistanceMaxAddress(command.getConnectResistanceMaxAddress());
         pendingRequest.setConnectResistanceFailed(command.isConnectResistanceFailed());
@@ -321,15 +325,20 @@ public class BatteryCollectorCommandQueueService {
         markCompletedCommand(state, pendingRequest.getName(), pendingRequest.getResponseCode(), false);
         boolean groupInternalResistance = isGroupInternalResistanceRequest(pendingRequest);
         if (!groupInternalResistance || isFinalGroupInternalResistanceRequest(pendingRequest)) {
-            markModeStopped(pendingRequest, resolveGroupInternalResistanceFinalSuccess(pendingRequest, false));
+            boolean finalSuccess = resolveGroupInternalResistanceFinalSuccess(pendingRequest, false);
+            markModeStopped(pendingRequest, finalSuccess);
+            closeGroupInternalResistanceBusinessLog(pendingRequest, finalSuccess);
         }
         commandLogService.updateCommandOptLog(
                 pendingRequest.getOptLogId(),
                 BatteryDeviceStateConstants.CommandStatus.TIMEOUT,
                 null,
                 null);
-        if (groupInternalResistance) {
-            queueNextGroupInternalResistanceStep(state, pendingRequest, false);
+        if (groupInternalResistance && !isFinalGroupInternalResistanceRequest(pendingRequest)) {
+            if (!queueNextGroupInternalResistanceStep(state, pendingRequest, false)) {
+                markModeStopped(pendingRequest, false);
+                closeGroupInternalResistanceBusinessLog(pendingRequest, false);
+            }
         }
     }
     /**
@@ -352,6 +361,7 @@ public class BatteryCollectorCommandQueueService {
                 : status;
         markCompletedCommand(state, pendingRequest.getName(), pendingRequest.getResponseCode(), false);
         markModeStopped(pendingRequest, false);
+        closeGroupInternalResistanceBusinessLog(pendingRequest, false);
         commandLogService.updateCommandOptLog(
                 pendingRequest.getOptLogId(),
                 actualStatus,
@@ -596,6 +606,7 @@ public class BatteryCollectorCommandQueueService {
                 .groupInternalResistanceNextAddress(nextAddress + 1)
                 .groupInternalResistanceMaxAddress(maxAddress)
                 .groupInternalResistanceFailed(pendingRequest.isGroupInternalResistanceFailed() || !currentSuccess)
+                .businessOptLogId(pendingRequest.getBusinessOptLogId())
                 .build();
         Long optLogId = commandLogService.createCommandOptLog(state.getConfig(), command);
         command.setOptLogId(optLogId);
@@ -612,7 +623,7 @@ public class BatteryCollectorCommandQueueService {
                     command.getBatteryGroup(),
                     command.getMode(),
                     command.getAddress(),
-                    command.getOptLogId());
+                    command.getBusinessOptLogId() == null ? command.getOptLogId() : command.getBusinessOptLogId());
         }
         return true;
     }
@@ -626,6 +637,21 @@ public class BatteryCollectorCommandQueueService {
         return currentSuccess && !pendingRequest.isGroupInternalResistanceFailed();
     }
 
+    public void closeGroupInternalResistanceBusinessLog(BatteryPendingRequest pendingRequest, boolean success) {
+        if (optLogService == null || !isGroupInternalResistanceRequest(pendingRequest) || pendingRequest.getBusinessOptLogId() == null) {
+            return;
+        }
+        optLogService.update(pendingRequest.getBusinessOptLogId(), success ? 0 : 1, null);
+    }
+    private void closeGroupInternalResistanceBusinessLog(BatteryModuleControlCommand command, boolean success) {
+        if (optLogService == null
+                || command == null
+                || command.getGroupInternalResistanceMaxAddress() == null
+                || command.getBusinessOptLogId() == null) {
+            return;
+        }
+        optLogService.update(command.getBusinessOptLogId(), success ? 0 : 1, null);
+    }
     /** 将控制命令关联的工作模式标记为已停止。 */
     public void markModeStopped(BatteryModuleControlCommand command, boolean success) {
         if (command == null || command.getMode() == null) {
@@ -636,7 +662,8 @@ public class BatteryCollectorCommandQueueService {
                 command.getMode(),
                 modeAddress(command),
                 success,
-                command.getOptLogId());
+                command.getBusinessOptLogId() == null ? command.getOptLogId() : command.getBusinessOptLogId());
+        closeGroupInternalResistanceBusinessLog(command, success);
     }
 
     /**
@@ -654,7 +681,7 @@ public class BatteryCollectorCommandQueueService {
                 pendingRequest.getMode(),
                 pendingRequest.getRequestAddress(),
                 success,
-                pendingRequest.getOptLogId());
+                pendingRequest.getBusinessOptLogId() == null ? pendingRequest.getOptLogId() : pendingRequest.getBusinessOptLogId());
     }
 
     /** 获取模式关联地址，自动编号组命令使用实际电池数量作为旧接口展示地址。 */

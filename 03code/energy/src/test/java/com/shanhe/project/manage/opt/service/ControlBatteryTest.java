@@ -23,7 +23,6 @@ import com.shanhe.project.manage.opt.cmd.CmdBatteryControlService;
 import com.shanhe.project.manage.opt.domain.BatteryCommandContext;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import com.shanhe.project.manage.opt.service.OptLogService;
-import com.shanhe.project.iot.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -158,6 +157,27 @@ class ControlBatteryTest {
     }
 
     @Test
+    void shouldRejectStopFallbackForCollectorManagedTypeWhenAdapterNotHandled() {
+        assertRejectStopFallbackForCollectorManagedType(BatteryTestEnum._2);
+        assertRejectStopFallbackForCollectorManagedType(BatteryTestEnum._6);
+    }
+
+    private void assertRejectStopFallbackForCollectorManagedType(BatteryTestEnum testEnum) {
+        ControlBattery service = service(true);
+        CmdBatteryControlService cmdService = (CmdBatteryControlService) ReflectionTestUtils.getField(service, "cmdBatteryControlService");
+        BatteryOptCollectorCommandAdapter commandAdapter =
+                (BatteryOptCollectorCommandAdapter) ReflectionTestUtils.getField(service, "batteryOptCollectorCommandAdapter");
+        Mockito.when(commandAdapter.tryStop(Mockito.any(DevBatteryOpt.class))).thenReturn(null);
+
+        AjaxResult result = service.toSendStopBatteryCmdToOat(request(testEnum.getDictValue()));
+
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertEquals("当前停止类型未完成新链路执行，禁止回退旧M460指令", result.get(AjaxResult.MSG_TAG));
+        Mockito.verify(commandAdapter).tryStop(Mockito.any(DevBatteryOpt.class));
+        Mockito.verify(cmdService, Mockito.never()).genCmd30(Mockito.any(), Mockito.anyInt(), Mockito.anyString(), Mockito.anyInt(), Mockito.anyDouble());
+    }
+
+    @Test
     void shouldDelegateStopToAdapterForSingleInternalResistance() {
         ControlBattery service = service(true);
         CmdBatteryControlService cmdService = (CmdBatteryControlService) ReflectionTestUtils.getField(service, "cmdBatteryControlService");
@@ -252,12 +272,12 @@ class ControlBatteryTest {
         CmdBatteryControlService cmdService =
                 (CmdBatteryControlService) ReflectionTestUtils.getField(service, "cmdBatteryControlService");
         Mockito.when(adapterService.buildReportLog(1)).thenReturn(reportLog(BatteryPackStatusEnum.IDLE.getCode()));
-        Mockito.when(cmdService.genCmd05(Mockito.any(), Mockito.anyString(), Mockito.anyString())).thenReturn("");
 
         AjaxResult result = service.toSendBatteryCmdToOat(request(BatteryTestEnum._1.getDictValue()));
 
         Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
-        Assertions.assertEquals("下发蓄电池测试指令失败，指令生成失败", result.get(AjaxResult.MSG_TAG));
+        Assertions.assertEquals("当前测试类型未完成新链路执行，禁止回退旧M460指令", result.get(AjaxResult.MSG_TAG));
+        Mockito.verify(cmdService, Mockito.never()).genCmd05(Mockito.any(), Mockito.anyString(), Mockito.anyString());
     }
 
     @Test
@@ -308,64 +328,10 @@ class ControlBatteryTest {
         Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
     }
 
-    // ---- generateCommand tests ----
+    // ---- legacy fallback boundary tests ----
 
     @Test
-    void shouldRejectInternalResistanceWhenModeNotIdle() {
-        ControlBattery service = service(true);
-        ControlBatterySet cbs =
-                (ControlBatterySet) ReflectionTestUtils.getField(service, "controlBatterySet");
-        BatteryModuleReportLogAdapterService adapterService =
-                (BatteryModuleReportLogAdapterService) ReflectionTestUtils.getField(service, "batteryModuleReportLogAdapterService");
-        Mockito.when(adapterService.buildReportLog(1)).thenReturn(reportLog(BatteryPackStatusEnum.IDLE.getCode()));
-        BatteryModeInfo nonIdle = new BatteryModeInfo();
-        nonIdle.setMode(6);
-        nonIdle.setStatus(1);
-        Mockito.when(cbs.getModelResult(1)).thenReturn(nonIdle);
-
-        RuntimeException exception = Assertions.assertThrows(RuntimeException.class,
-                () -> service.toSendBatteryCmdToOat(request(BatteryTestEnum._1.getDictValue())));
-
-        Assertions.assertTrue(exception.getMessage().contains("内阻测试"));
-    }
-
-    @Test
-    void shouldRejectInternalResistanceWhenOptLogWithin5Minutes() {
-        ControlBattery service = service(true);
-        BatteryModuleReportLogAdapterService adapterService =
-                (BatteryModuleReportLogAdapterService) ReflectionTestUtils.getField(service, "batteryModuleReportLogAdapterService");
-        OptLogService optLogService =
-                (OptLogService) ReflectionTestUtils.getField(service, "optLogService");
-        Mockito.when(adapterService.buildReportLog(1)).thenReturn(reportLog(BatteryPackStatusEnum.IDLE.getCode()));
-        OptLog recentLog = new OptLog();
-        recentLog.setUpdateTime(new Date(System.currentTimeMillis() - 60_000));
-        Mockito.when(optLogService.lastType(1, BatteryTestEnum._1.getDictValue())).thenReturn(recentLog);
-
-        RuntimeException exception = Assertions.assertThrows(RuntimeException.class,
-                () -> service.toSendBatteryCmdToOat(request(BatteryTestEnum._1.getDictValue())));
-
-        Assertions.assertTrue(exception.getMessage().contains("5分钟"));
-    }
-
-    @Test
-    void shouldRejectInternalResistanceWhenOptLogHasNullUpdateTime() {
-        ControlBattery service = service(true);
-        BatteryModuleReportLogAdapterService adapterService =
-                (BatteryModuleReportLogAdapterService) ReflectionTestUtils.getField(service, "batteryModuleReportLogAdapterService");
-        OptLogService optLogService =
-                (OptLogService) ReflectionTestUtils.getField(service, "optLogService");
-        Mockito.when(adapterService.buildReportLog(1)).thenReturn(reportLog(BatteryPackStatusEnum.IDLE.getCode()));
-        OptLog logWithNullTime = new OptLog();
-        Mockito.when(optLogService.lastType(1, BatteryTestEnum._1.getDictValue())).thenReturn(logWithNullTime);
-
-        RuntimeException exception = Assertions.assertThrows(RuntimeException.class,
-                () -> service.toSendBatteryCmdToOat(request(BatteryTestEnum._1.getDictValue())));
-
-        Assertions.assertTrue(exception.getMessage().contains("正在内阻测试"));
-    }
-
-    @Test
-    void shouldGenerateConnectResistanceCommandViaLegacyFallback() {
+    void shouldReturnErrorForMigratedCollectorTypeWhenAdapterNotHandled() {
         ControlBattery service = service(false);
         BatteryReportLogService reportLogService =
                 (BatteryReportLogService) ReflectionTestUtils.getField(service, "batteryReportLogService");
@@ -374,13 +340,12 @@ class ControlBatteryTest {
         BatteryReportLog log = reportLog(BatteryPackStatusEnum.IDLE.getCode());
         log.getPackParam().put("packCurrent", 10D);
         Mockito.when(reportLogService.lastCache(1)).thenReturn(log);
-        Mockito.when(cmdService.genCmd0F(Mockito.any(), Mockito.any())).thenReturn("");
 
         AjaxResult result = service.toSendBatteryCmdToOat(request(BatteryTestEnum._2.getDictValue()));
 
         Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
-        Assertions.assertEquals("下发蓄电池测试指令失败，指令生成失败", result.get(AjaxResult.MSG_TAG));
-        Mockito.verify(cmdService).genCmd0F(Mockito.any(), Mockito.any());
+        Assertions.assertEquals("当前测试类型未完成新链路执行，禁止回退旧M460指令", result.get(AjaxResult.MSG_TAG));
+        Mockito.verify(cmdService, Mockito.never()).genCmd0F(Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -632,16 +597,13 @@ class ControlBatteryTest {
                 (BatteryModuleReportLogAdapterService) ReflectionTestUtils.getField(service, "batteryModuleReportLogAdapterService");
         IAlarmLogService alarmLogService =
                 (IAlarmLogService) ReflectionTestUtils.getField(service, "alarmLogService");
-        CmdBatteryControlService cmdService =
-                (CmdBatteryControlService) ReflectionTestUtils.getField(service, "cmdBatteryControlService");
         Mockito.when(adapterService.buildReportLog(1)).thenReturn(reportLog(BatteryPackStatusEnum.IDLE.getCode()));
         Mockito.when(alarmLogService.getByCache(Mockito.eq(1), Mockito.isNull(), Mockito.anyString()))
                 .thenReturn(null);
-        Mockito.when(cmdService.genCmd05(Mockito.any(), Mockito.anyString(), Mockito.anyString())).thenReturn("");
 
         AjaxResult result = service.toSendBatteryCmdToOat(request(BatteryTestEnum._1.getDictValue()));
 
-        Assertions.assertEquals("下发蓄电池测试指令失败，指令生成失败", result.get(AjaxResult.MSG_TAG));
+        Assertions.assertEquals("当前测试类型未完成新链路执行，禁止回退旧M460指令", result.get(AjaxResult.MSG_TAG));
     }
 
     private ControlBattery service(boolean realtimeEnabled) {
@@ -665,8 +627,7 @@ class ControlBatteryTest {
                 Mockito.mock(BatteryReportLogService.class));
         ReflectionTestUtils.setField(service, "alarmLogService",
                 Mockito.mock(IAlarmLogService.class));
-        ReflectionTestUtils.setField(service, "controlBatterySet",
-                controlBatterySet());
+
         ReflectionTestUtils.setField(service, "optLogService",
                 Mockito.mock(OptLogService.class));
         ReflectionTestUtils.setField(service, "batteryOptCollectorCommandAdapter",
@@ -676,18 +637,8 @@ class ControlBatteryTest {
         ReflectionTestUtils.setField(service, "batteryModeStatusService",
                 Mockito.mock(BatteryModeStatusService.class));
         CmdBatteryControlService cmdService = Mockito.mock(CmdBatteryControlService.class);
-        Mockito.when(cmdService.genCmd05(Mockito.any(), Mockito.anyString(), Mockito.anyString())).thenReturn("");
         ReflectionTestUtils.setField(service, "cmdBatteryControlService", cmdService);
         return service;
-    }
-
-    private ControlBatterySet controlBatterySet() {
-        ControlBatterySet controlBatterySet = Mockito.mock(ControlBatterySet.class);
-        BatteryModeInfo idle = new BatteryModeInfo();
-        idle.setMode(0);
-        idle.setStatus(0);
-        Mockito.when(controlBatterySet.getModelResult(1)).thenReturn(idle);
-        return controlBatterySet;
     }
 
     private Config config() {

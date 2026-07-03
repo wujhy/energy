@@ -50,6 +50,8 @@ public class BatteryPendingRequest {
     /** 关联的操作日志ID。 */
     private Long optLogId;
 
+    private Long businessOptLogId;
+
     /** 连接条测试下一个待测单体地址。 */
     private Integer connectResistanceNextAddress;
 

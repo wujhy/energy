@@ -22,7 +22,7 @@ class BatteryOptCollectorCommandAdapterTest {
         Mockito.when(commandService.connectResistanceTest("battery-group-1", 1, 24, null))
                 .thenReturn(successResult());
 
-        AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._2, null, "battery-group-1", 24));
+        AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._2, null, 24));
 
         Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
         Mockito.verify(commandService).connectResistanceTest("battery-group-1", 1, 24, null);
@@ -35,7 +35,7 @@ class BatteryOptCollectorCommandAdapterTest {
         Mockito.when(commandService.singleInternalResistanceTest("battery-group-1", 1, 8, null))
                 .thenReturn(successResult());
 
-        AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._6, 8, "battery-group-1", 24));
+        AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._6, 8, 24));
 
         Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
         Mockito.verify(commandService).singleInternalResistanceTest("battery-group-1", 1, 8, null);
@@ -52,7 +52,7 @@ class BatteryOptCollectorCommandAdapterTest {
                         .message("整组内阻测试尚未映射600模块命令")
                         .build());
 
-        AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._1, null, "battery-group-1", 24));
+        AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._1, null, 24));
 
         Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
         Assertions.assertEquals("整组内阻测试尚未映射600模块命令", result.get(AjaxResult.MSG_TAG));
@@ -63,7 +63,7 @@ class BatteryOptCollectorCommandAdapterTest {
         BatteryOptCollectorCommandAdapter adapter = adapter(true);
         BatteryCollectorCommandService commandService = commandService(adapter);
 
-        AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._2, null, null, 24));
+        AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._2, null, 24));
 
         Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
         Assertions.assertEquals("未找到电池组采集通道", result.get(AjaxResult.MSG_TAG));
@@ -75,7 +75,7 @@ class BatteryOptCollectorCommandAdapterTest {
     void shouldReturnNullWhenModuleCommandDisabled() {
         BatteryOptCollectorCommandAdapter adapter = adapter(false);
 
-        AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._2, null, "battery-group-1", 24));
+        AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._2, null, 24));
 
         Assertions.assertNull(result);
     }
@@ -90,7 +90,7 @@ class BatteryOptCollectorCommandAdapterTest {
                         .message("队列加入失败")
                         .build());
 
-        AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._2, null, "battery-group-1", 24));
+        AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._2, null, 24));
 
         Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
         Assertions.assertEquals("队列加入失败", result.get(AjaxResult.MSG_TAG));
@@ -103,7 +103,7 @@ class BatteryOptCollectorCommandAdapterTest {
         Mockito.when(commandService.connectResistanceTest("battery-group-1", 1, 24, null))
                 .thenThrow(new RuntimeException("队列不可用"));
 
-        AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._2, null, "battery-group-1", 24));
+        AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._2, null, 24));
 
         Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
         Assertions.assertEquals("独立采集模块命令执行失败", result.get(AjaxResult.MSG_TAG));
@@ -159,7 +159,6 @@ class BatteryOptCollectorCommandAdapterTest {
 
     private BatteryCommandContext context(BatteryTestEnum testEnum,
                                           Integer modelNum,
-                                          String channelName,
                                           int batteryCount) {
         DevBatteryOpt opt = opt(testEnum, modelNum);
         return new BatteryCommandContext(
@@ -168,7 +167,6 @@ class BatteryOptCollectorCommandAdapterTest {
                 BatteryOptExecuteType.MANUAL,
                 null,
                 null,
-                channelName,
                 batteryCount,
                 null);
     }

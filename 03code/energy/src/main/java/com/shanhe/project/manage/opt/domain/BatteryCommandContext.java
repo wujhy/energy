@@ -16,7 +16,6 @@ public class BatteryCommandContext {
     public final BatteryOptExecuteType executeType;
     public final Config config;
     public final BatteryPack batteryPack;
-    public final String channelName;
     public final int batteryCount;
     public final String optLogSource;
     public BatteryReportLog reportLog;
@@ -26,7 +25,6 @@ public class BatteryCommandContext {
                                  BatteryOptExecuteType executeType,
                                  Config config,
                                  BatteryPack batteryPack,
-                                 String channelName,
                                  int batteryCount,
                                  String optLogSource) {
         this.opt = opt;
@@ -34,7 +32,6 @@ public class BatteryCommandContext {
         this.executeType = executeType;
         this.config = config;
         this.batteryPack = batteryPack;
-        this.channelName = channelName;
         this.batteryCount = batteryCount;
         this.optLogSource = optLogSource;
     }
