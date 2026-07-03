@@ -53,45 +53,29 @@ public class BatteryOptCollectorCommandAdapter {
      * @return 命令已处理时返回结果；无法处理时返回 null，由旧链路兜底
      */
     public AjaxResult tryExecute(DevBatteryOpt opt) {
-        if (opt == null || opt.getTestType() == null || opt.getPackNum() == null) {
+        CollectorCommandContext context = resolveContext(opt);
+        if (context == null) {
             return null;
         }
-        if (!Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpModuleCommandEnabled())) {
-            return null;
-        }
-        Integer mode = resolveMode(opt.getTestType());
-        if (mode == null) {
-            return null;
-        }
-        AjaxResult runningResult = rejectWhenCollectorModeRunning(opt.getPackNum(), mode);
+        AjaxResult runningResult = rejectWhenCollectorModeRunning(context.packNum, context.mode);
         if (runningResult != null) {
             return runningResult;
         }
-        String channelName = batteryCollectorCommandService.resolveChannelName(opt.getPackNum());
-        if (channelName == null || channelName.isEmpty()) {
+        if (context.channelName == null || context.channelName.isEmpty()) {
             return AjaxResult.error("未找到电池组采集通道", 0);
         }
 
         BatteryCollectorCommandResult result;
         try {
-            if (BatteryTestEnum._1.getDictValue().equals(opt.getTestType())) {
-                result = tryGroupInternalResistance(channelName, opt);
-                if (shouldFallbackLegacyM460(result)) {
-                    log.debug("整组内阻 600 显式控制未就绪，回退旧 M460 链路, packNum={}", opt.getPackNum());
-                    return null;
-                }
-            } else if (BatteryTestEnum._2.getDictValue().equals(opt.getTestType())) {
-                int batteryCount = resolveBatteryCount(opt.getPackNum());
-                result = batteryCollectorCommandService.connectResistanceTest(
-                        channelName, opt.getPackNum(), batteryCount, null);
-            } else if (BatteryTestEnum._6.getDictValue().equals(opt.getTestType())) {
-                result = trySingleInternalResistance(channelName, opt);
-            } else {
+            result = executeCollectorCommand(context);
+            if (isGroupInternalResistance(context) && shouldFallbackLegacyM460(result)) {
+                log.debug("group internal-resistance is not mapped to 600 command, fallback legacy M460, packNum={}",
+                        context.packNum);
                 return null;
             }
         } catch (Exception e) {
-            log.warn("采集命令适配异常, packNum={}, testType={}, reason={}",
-                    opt.getPackNum(), opt.getTestType(), e.getMessage());
+            log.warn("collector command adapter failed, packNum={}, testType={}, reason={}",
+                    context.packNum, context.testType, e.getMessage());
             return AjaxResult.error("独立采集模块命令执行失败", 0);
         }
 
@@ -125,23 +109,49 @@ public class BatteryOptCollectorCommandAdapter {
         return AjaxResult.error(result == null ? "停止测试失败" : result.getMessage(), 0);
     }
 
-    private BatteryCollectorCommandResult tryGroupInternalResistance(String channelName, DevBatteryOpt opt) {
-        int batteryCount = resolveBatteryCount(opt.getPackNum());
-        return batteryCollectorCommandService.groupInternalResistanceTest(
-                channelName, opt.getPackNum(), batteryCount, null);
+    private BatteryCollectorCommandResult executeCollectorCommand(CollectorCommandContext context) {
+        if (BatteryTestEnum._1.getDictValue().equals(context.testType)) {
+            int batteryCount = resolveBatteryCount(context.packNum);
+            return batteryCollectorCommandService.groupInternalResistanceTest(
+                    context.channelName, context.packNum, batteryCount, null);
+        }
+        if (BatteryTestEnum._2.getDictValue().equals(context.testType)) {
+            int batteryCount = resolveBatteryCount(context.packNum);
+            return batteryCollectorCommandService.connectResistanceTest(
+                    context.channelName, context.packNum, batteryCount, null);
+        }
+        if (BatteryTestEnum._6.getDictValue().equals(context.testType)) {
+            Integer modelNum = context.opt.getModelNum();
+            int batteryCount = resolveBatteryCount(context.packNum);
+            if (modelNum == null || modelNum < 1 || modelNum > batteryCount) {
+                return BatteryCollectorCommandResult.builder()
+                        .success(false)
+                        .message("单节内阻测试单体编号无效")
+                        .build();
+            }
+            return batteryCollectorCommandService.singleInternalResistanceTest(
+                    context.channelName, context.packNum, modelNum, null);
+        }
+        return null;
     }
 
-    private BatteryCollectorCommandResult trySingleInternalResistance(String channelName, DevBatteryOpt opt) {
-        Integer modelNum = opt.getModelNum();
-        int batteryCount = resolveBatteryCount(opt.getPackNum());
-        if (modelNum == null || modelNum < 1 || modelNum > batteryCount) {
-            return BatteryCollectorCommandResult.builder()
-                    .success(false)
-                    .message("单节内阻测试单体编号无效")
-                    .build();
+    private CollectorCommandContext resolveContext(DevBatteryOpt opt) {
+        if (opt == null || opt.getTestType() == null || opt.getPackNum() == null) {
+            return null;
         }
-        return batteryCollectorCommandService.singleInternalResistanceTest(
-                channelName, opt.getPackNum(), modelNum, null);
+        if (!Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpModuleCommandEnabled())) {
+            return null;
+        }
+        Integer mode = resolveMode(opt.getTestType());
+        if (mode == null) {
+            return null;
+        }
+        String channelName = batteryCollectorCommandService.resolveChannelName(opt.getPackNum());
+        return new CollectorCommandContext(opt, opt.getTestType(), opt.getPackNum(), mode, channelName);
+    }
+
+    private boolean isGroupInternalResistance(CollectorCommandContext context) {
+        return BatteryTestEnum._1.getDictValue().equals(context.testType);
     }
 
     /** `_1` 整组内阻未映射为 600 模块命令时，必须继续旧 M460 状态机。 */
@@ -189,5 +199,25 @@ public class BatteryOptCollectorCommandAdapter {
             log.debug("获取电池组单体数失败, packNum={}, reason={}", packNum, e.getMessage());
         }
         return MAX_BATTERY_COUNT;
+    }
+
+    private static class CollectorCommandContext {
+        private final DevBatteryOpt opt;
+        private final Integer testType;
+        private final Integer packNum;
+        private final Integer mode;
+        private final String channelName;
+
+        private CollectorCommandContext(DevBatteryOpt opt,
+                                        Integer testType,
+                                        Integer packNum,
+                                        Integer mode,
+                                        String channelName) {
+            this.opt = opt;
+            this.testType = testType;
+            this.packNum = packNum;
+            this.mode = mode;
+            this.channelName = channelName;
+        }
     }
 }
