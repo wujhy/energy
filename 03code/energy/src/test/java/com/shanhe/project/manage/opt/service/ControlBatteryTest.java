@@ -20,6 +20,7 @@ import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.config.service.IConfigService;
 import com.shanhe.project.manage.opt.cmd.CmdBatteryControlService;
+import com.shanhe.project.manage.opt.domain.BatteryCommandContext;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import com.shanhe.project.manage.opt.service.OptLogService;
 import com.shanhe.project.iot.model.BatteryModeInfo;
@@ -195,7 +196,7 @@ class ControlBatteryTest {
         BatteryModuleReportLogAdapterService adapterService =
                 (BatteryModuleReportLogAdapterService) ReflectionTestUtils.getField(service, "batteryModuleReportLogAdapterService");
         Mockito.when(adapterService.buildReportLog(1)).thenReturn(reportLog(BatteryPackStatusEnum.IDLE.getCode()));
-        Mockito.when(commandAdapter.tryExecute(Mockito.any(DevBatteryOpt.class)))
+        Mockito.when(commandAdapter.tryExecutePrepared(Mockito.any(BatteryCommandContext.class)))
                 .thenReturn(AjaxResult.success("adapted"));
 
         AjaxResult result = service.toSendBatteryCmdToOat(request(BatteryTestEnum._2.getDictValue()));
@@ -282,7 +283,7 @@ class ControlBatteryTest {
         BatteryReportLog log = reportLog(BatteryPackStatusEnum.IDLE.getCode());
         log.getPackParam().put("packCurrent", 10D);
         Mockito.when(adapterService.buildReportLog(1)).thenReturn(log);
-        Mockito.when(commandAdapter.tryExecute(Mockito.any(DevBatteryOpt.class)))
+        Mockito.when(commandAdapter.tryExecutePrepared(Mockito.any(BatteryCommandContext.class)))
                 .thenReturn(AjaxResult.success("ok"));
 
         AjaxResult result = service.toSendBatteryCmdToOat(request(BatteryTestEnum._2.getDictValue()));
@@ -299,7 +300,7 @@ class ControlBatteryTest {
                 (BatteryOptCollectorCommandAdapter) ReflectionTestUtils.getField(service, "batteryOptCollectorCommandAdapter");
         BatteryReportLog log = reportLog(BatteryPackStatusEnum.IDLE.getCode());
         Mockito.when(adapterService.buildReportLog(1)).thenReturn(log);
-        Mockito.when(commandAdapter.tryExecute(Mockito.any(DevBatteryOpt.class)))
+        Mockito.when(commandAdapter.tryExecutePrepared(Mockito.any(BatteryCommandContext.class)))
                 .thenReturn(AjaxResult.success("ok"));
 
         AjaxResult result = service.toSendBatteryCmdToOat(request(BatteryTestEnum._2.getDictValue()));
@@ -412,7 +413,7 @@ class ControlBatteryTest {
         BatteryOptCapacityModuleCommandAdapter capacityAdapter =
                 (BatteryOptCapacityModuleCommandAdapter) ReflectionTestUtils.getField(service, "batteryOptCapacityModuleCommandAdapter");
         Mockito.when(reportLogService.lastCache(1)).thenReturn(reportLog(BatteryPackStatusEnum.IDLE.getCode()));
-        Mockito.when(commandAdapter.tryExecute(Mockito.any())).thenReturn(null);
+        Mockito.when(commandAdapter.tryExecutePrepared(Mockito.any(BatteryCommandContext.class))).thenReturn(null);
         Mockito.when(capacityAdapter.tryExecute(Mockito.any())).thenReturn(null);
 
         AjaxResult result = service.toSendBatteryCmdToOat(request(BatteryTestEnum._4.getDictValue()));

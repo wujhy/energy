@@ -97,7 +97,7 @@ public class BatteryCollectorCommandService {
     /**
      * 执行单体内阻测试命令。
      */
-    public BatteryCollectorCommandResult singleInternalResistanceTest(String channelName, int batteryGroup, int batteryNumber, Long timeoutMs) {
+    public BatteryCollectorCommandResult singleInternalResistanceTest(String channelName, int batteryGroup, Integer batteryNumber, Long timeoutMs) {
         BatteryCollectorCommandResult runningResult = rejectRunningWorkMode(
                 BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST,
                 channelName,
@@ -123,7 +123,7 @@ public class BatteryCollectorCommandService {
         if (isBlank(channelName)) {
             return BatteryCollectorCommandResult.builder()
                     .success(false)
-                    .message("channelName must not be blank")
+                    .message("通道名称不能为空")
                     .build();
         }
         if (batteryGroup <= 0) {
@@ -149,13 +149,13 @@ public class BatteryCollectorCommandService {
         try {
             moduleCommand = moduleControlCommandService.singleBatteryInternalResistanceTest(1);
         } catch (IllegalArgumentException e) {
-            log.warn("group internal-resistance command rejected, channel={}, batteryGroup={}, address={}, reason={}",
+            log.warn("整组内阻测试命令被拒绝, 通道={}, 电池组={}, 地址={}, 原因={}",
                     channelName, batteryGroup, 1, e.getMessage());
             return blocked(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST,
                     channelName,
-                    "group internal-resistance first cell address is invalid");
+                    "整组内阻首节地址无效");
         }
-        moduleCommand.setDescription("group internal-resistance cell 1");
+        moduleCommand.setDescription("整组内阻测试第1节");
         moduleCommand.setOptLogType(BatteryTestEnum._99.getDictValue());
         moduleCommand.setGroupInternalResistanceNextAddress(2);
         moduleCommand.setGroupInternalResistanceMaxAddress(batteryCount);
@@ -171,18 +171,18 @@ public class BatteryCollectorCommandService {
                 .moduleControlCommand(moduleCommand)
                 .requestCode(moduleCommand.getRequestCode())
                 .responseCode(moduleCommand.getResponseCode())
-                .message(queued ? "group internal-resistance first cell queued" : "group internal-resistance first cell queue failed")
+                .message(queued ? "整组内阻首节命令已加入下发队列" : "整组内阻首节命令加入下发队列失败")
                 .build();
     }
     private BatteryCollectorCommandResult validateSingleInternalResistanceAddress(String channelName,
                                                                                   int batteryGroup,
-                                                                                  int batteryNumber) {
+                                                                                  Integer batteryNumber) {
         if (batteryGroup <= 0) {
             return blocked(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST,
                     channelName,
                     "电池组编号无效");
         }
-        if (batteryNumber < 1 || batteryNumber > MAX_CELL_ADDRESS) {
+        if (batteryNumber == null || batteryNumber < 1 || batteryNumber > MAX_CELL_ADDRESS) {
             return blocked(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST,
                     channelName,
                     "单体编号必须在1到245之间");
