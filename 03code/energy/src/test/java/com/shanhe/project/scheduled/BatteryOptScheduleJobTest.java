@@ -6,6 +6,7 @@ import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.manage.config.domain.DevBatteryOpt;
 import com.shanhe.project.manage.config.service.IDevBatteryOptService;
 import com.shanhe.project.manage.opt.service.ControlBattery;
+import com.shanhe.project.manage.opt.service.BatteryOptExecuteType;
 import com.shanhe.project.manage.opt.service.OptLogService;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import com.shanhe.framework.web.domain.AjaxResult;
@@ -380,5 +381,38 @@ class BatteryOptScheduleJobTest {
         // 第二轮成功后 testTime 被推进
         Assertions.assertNotNull(opt.getTestTime());
         Assertions.assertTrue(opt.getTestTime().after(originalTestTime));
+    }
+
+    @Test
+    void shouldExecuteScheduledGroupInternalResistanceThroughUnifiedEntry() {
+        BatteryOptScheduleJob job = new BatteryOptScheduleJob();
+        IDevBatteryOptService optService = Mockito.mock(IDevBatteryOptService.class);
+        ControlBattery controlBattery = Mockito.mock(ControlBattery.class);
+        OptLogService optLogService = Mockito.mock(OptLogService.class);
+        BatteryModeStatusService modeStatusService = Mockito.mock(BatteryModeStatusService.class);
+        DevBatteryOpt opt = new DevBatteryOpt();
+        opt.setPackNum(1);
+        opt.setTestType(BatteryTestEnum._1.getDictValue());
+        opt.setIsEnabled(YesNoEnum.YES.getDictValue());
+        opt.setTestTime(new Date(System.currentTimeMillis() - 1000L));
+        opt.setIntervalDays(null);
+
+        Mockito.when(optService.selectDevBatteryOptList(Mockito.any(DevBatteryOpt.class)))
+                .thenReturn(Collections.singletonList(opt));
+        Mockito.when(optLogService.selectRunningList(1))
+                .thenReturn(Collections.emptyList());
+        Mockito.when(controlBattery.executeBatteryOpt(Mockito.any(DevBatteryOpt.class), Mockito.eq(BatteryOptExecuteType.SCHEDULED)))
+                .thenReturn(AjaxResult.success());
+        ReflectionTestUtils.setField(job, "devBatteryOptService", optService);
+        ReflectionTestUtils.setField(job, "controlBattery", controlBattery);
+        ReflectionTestUtils.setField(job, "optLogService", optLogService);
+        ReflectionTestUtils.setField(job, "batteryModeStatusService", modeStatusService);
+
+        job.executeDueBatteryOpt();
+
+        ArgumentCaptor<DevBatteryOpt> captor = ArgumentCaptor.forClass(DevBatteryOpt.class);
+        Mockito.verify(controlBattery).executeBatteryOpt(captor.capture(), Mockito.eq(BatteryOptExecuteType.SCHEDULED));
+        Assertions.assertEquals(BatteryTestEnum._1.getDictValue(), captor.getValue().getTestType());
+        Assertions.assertEquals(YesNoEnum.NO.getDictValue(), opt.getIsEnabled());
     }
 }
