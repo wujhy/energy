@@ -42,7 +42,7 @@ class BatteryOptCollectorCommandAdapterTest {
     }
 
     @Test
-    void shouldFallbackLegacyWhenGroupInternalResistanceNotMapped() {
+    void shouldReturnErrorWhenGroupInternalResistanceNotMapped() {
         BatteryOptCollectorCommandAdapter adapter = adapter(true);
         BatteryCollectorCommandService commandService = commandService(adapter);
         Mockito.when(commandService.groupInternalResistanceTest("battery-group-1", 1, 24, null))
@@ -54,7 +54,8 @@ class BatteryOptCollectorCommandAdapterTest {
 
         AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._1, null, "battery-group-1", 24));
 
-        Assertions.assertNull(result);
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertEquals("整组内阻测试尚未映射600模块命令", result.get(AjaxResult.MSG_TAG));
     }
 
     @Test

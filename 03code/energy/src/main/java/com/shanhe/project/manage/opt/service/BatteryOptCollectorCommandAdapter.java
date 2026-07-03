@@ -39,9 +39,6 @@ public class BatteryOptCollectorCommandAdapter {
      * @return 命令已处理时返回结果；无法处理时返回 null，由旧链路兜底
      */
     public AjaxResult tryExecutePrepared(BatteryCommandContext context) {
-        if (context == null || context.opt == null || context.testEnum == null || context.opt.getPackNum() == null) {
-            return null;
-        }
         if (!Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpModuleCommandEnabled())) {
             return null;
         }
@@ -55,10 +52,6 @@ public class BatteryOptCollectorCommandAdapter {
         BatteryCollectorCommandResult result;
         try {
             result = executeCollectorCommand(context);
-            if (BatteryTestEnum._1.equals(context.testEnum) && shouldFallbackLegacyM460(result)) {
-                log.debug("整组内阻未映射到600模块命令，回退旧M460链路, packNum={}", context.opt.getPackNum());
-                return null;
-            }
         } catch (Exception e) {
             log.warn("采集模块命令适配失败, packNum={}, testType={}, 原因={}",
                     context.opt.getPackNum(), context.opt.getTestType(), e.getMessage());
@@ -111,11 +104,6 @@ public class BatteryOptCollectorCommandAdapter {
             return AjaxResult.success(result.getMessage(), result);
         }
         return AjaxResult.error(result == null ? "停止测试失败" : result.getMessage(), 0);
-    }
-
-    /** `_1` 整组内阻未映射为 600 模块命令时，必须继续旧 M460 状态机。 */
-    private boolean shouldFallbackLegacyM460(BatteryCollectorCommandResult result) {
-        return result != null && !result.isMappedToModuleCommand();
     }
 
     /** 将测试类型映射为 600 采集侧工作模式。 */
