@@ -134,7 +134,7 @@ class BatteryOptCollectorCommandAdapterTest {
         BatteryOptCollectorCommandAdapter adapter = adapter(true);
         BatteryCollectorCommandService commandService =
                 (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
-        Mockito.when(commandService.stopRunningTest(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE))
+        Mockito.when(commandService.stopRunningTest(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, BatteryTestEnum._2.getDictValue()))
                 .thenReturn(BatteryCollectorCommandResult.builder()
                         .success(true)
                         .message("stopped")
@@ -144,7 +144,7 @@ class BatteryOptCollectorCommandAdapterTest {
 
         Assertions.assertNotNull(result);
         Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
-        Mockito.verify(commandService).stopRunningTest(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE);
+        Mockito.verify(commandService).stopRunningTest(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, BatteryTestEnum._2.getDictValue());
     }
 
     @Test
@@ -152,7 +152,7 @@ class BatteryOptCollectorCommandAdapterTest {
         BatteryOptCollectorCommandAdapter adapter = adapter(true);
         BatteryCollectorCommandService commandService =
                 (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
-        Mockito.when(commandService.stopRunningTest(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE))
+        Mockito.when(commandService.stopRunningTest(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, BatteryTestEnum._6.getDictValue()))
                 .thenReturn(BatteryCollectorCommandResult.builder()
                         .success(false)
                         .message("当前运行测试类型与停止类型不一致")
@@ -163,7 +163,7 @@ class BatteryOptCollectorCommandAdapterTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
         Assertions.assertEquals("当前运行测试类型与停止类型不一致", result.get(AjaxResult.MSG_TAG));
-        Mockito.verify(commandService).stopRunningTest(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+        Mockito.verify(commandService).stopRunningTest(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, BatteryTestEnum._6.getDictValue());
     }
 
     @Test
@@ -205,7 +205,7 @@ class BatteryOptCollectorCommandAdapterTest {
         BatteryOptCollectorCommandAdapter adapter = adapter(true);
         BatteryCollectorCommandService commandService =
                 (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
-        Mockito.when(commandService.stopRunningTest(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE))
+        Mockito.when(commandService.stopRunningTest(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, BatteryTestEnum._1.getDictValue()))
                 .thenReturn(BatteryCollectorCommandResult.builder()
                         .success(false)
                         .message("当前电池组没有正在执行的测试")
@@ -216,7 +216,7 @@ class BatteryOptCollectorCommandAdapterTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
         Assertions.assertEquals("当前电池组没有正在执行的测试", result.get(AjaxResult.MSG_TAG));
-        Mockito.verify(commandService).stopRunningTest(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+        Mockito.verify(commandService).stopRunningTest(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, BatteryTestEnum._1.getDictValue());
     }
 
     @Test
@@ -224,7 +224,7 @@ class BatteryOptCollectorCommandAdapterTest {
         BatteryOptCollectorCommandAdapter adapter = adapter(true);
         BatteryCollectorCommandService commandService =
                 (BatteryCollectorCommandService) ReflectionTestUtils.getField(adapter, "batteryCollectorCommandService");
-        Mockito.when(commandService.stopRunningTest(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE))
+        Mockito.when(commandService.stopRunningTest(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, BatteryTestEnum._2.getDictValue()))
                 .thenReturn(null);
 
         AjaxResult result = adapter.tryStop(opt(BatteryTestEnum._2.getDictValue(), null));
@@ -427,7 +427,7 @@ class BatteryOptCollectorCommandAdapterTest {
         Assertions.assertEquals(AjaxResult.Type.ERROR.value(), invalidModel.get(AjaxResult.CODE_TAG));
 
         // 失败路径 5: 停止时 stopRunningTest 返回 null
-        Mockito.when(commandService.stopRunningTest(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE))
+        Mockito.when(commandService.stopRunningTest(1, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, BatteryTestEnum._2.getDictValue()))
                 .thenReturn(null);
         AjaxResult stopFail = onAdapter.tryStop(opt(BatteryTestEnum._2.getDictValue(), null));
         Assertions.assertNotNull(stopFail, "停止失败不应返回 null");

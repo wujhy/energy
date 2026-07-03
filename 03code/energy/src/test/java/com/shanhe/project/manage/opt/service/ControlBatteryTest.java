@@ -424,6 +424,25 @@ class ControlBatteryTest {
     // ---- Stop command edge cases ----
 
     @Test
+    void shouldStopMappedGroupInternalResistanceBeforeLegacyType1LocalClose() {
+        ControlBattery service = service(true);
+        BatteryOptCollectorCommandAdapter commandAdapter =
+                (BatteryOptCollectorCommandAdapter) ReflectionTestUtils.getField(service, "batteryOptCollectorCommandAdapter");
+        BatteryModuleReportLogAdapterService adapterService =
+                (BatteryModuleReportLogAdapterService) ReflectionTestUtils.getField(service, "batteryModuleReportLogAdapterService");
+        OptLogService optLogService =
+                (OptLogService) ReflectionTestUtils.getField(service, "optLogService");
+        Mockito.when(commandAdapter.tryStop(Mockito.any()))
+                .thenReturn(AjaxResult.success("stopped"));
+
+        AjaxResult result = service.toSendStopBatteryCmdToOat(request(BatteryTestEnum._1.getDictValue()));
+
+        Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
+        Mockito.verify(commandAdapter).tryStop(Mockito.any());
+        Mockito.verifyNoInteractions(adapterService);
+        Mockito.verify(optLogService, Mockito.never()).doStopTest(Mockito.anyInt(), Mockito.any());
+    }
+    @Test
     void shouldReturnSuccessForStopType1WhenTestingAndReportFresh() {
         ControlBattery service = service(true);
         BatteryModuleReportLogAdapterService adapterService =
@@ -708,12 +727,13 @@ class ControlBatteryTest {
         OptLogService optLogService = (OptLogService) ReflectionTestUtils.getField(service, "optLogService");
         BatteryModuleReportLogAdapterService adapterService =
                 (BatteryModuleReportLogAdapterService) ReflectionTestUtils.getField(service, "batteryModuleReportLogAdapterService");
+        Mockito.when(commandAdapter.tryStop(Mockito.any())).thenReturn(null);
         Mockito.when(adapterService.buildReportLog(1)).thenReturn(null);
 
         AjaxResult result = service.toSendStopBatteryCmdToOat(request(BatteryTestEnum._1.getDictValue()));
 
         Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
-        Mockito.verify(commandAdapter, Mockito.never()).tryStop(Mockito.any());
+        Mockito.verify(commandAdapter).tryStop(Mockito.any());
         Mockito.verify(optLogService).doStopTest(1, BatteryTestEnum._1.getDictValue());
     }
 

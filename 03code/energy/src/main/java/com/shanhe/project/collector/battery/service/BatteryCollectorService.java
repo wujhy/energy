@@ -482,6 +482,12 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             connectResistanceCommandProcessor.handleVoltageResponse(state, frame, pendingRequest, success);
             return;
         }
+        if (commandQueueService.isGroupInternalResistanceRequest(pendingRequest)) {
+            if (commandQueueService.queueNextGroupInternalResistanceStep(state, pendingRequest, success)) {
+                return;
+            }
+            success = commandQueueService.resolveGroupInternalResistanceFinalSuccess(pendingRequest, success);
+        }
         commandQueueService.markModeStopped(pendingRequest, success);
         if (success && shouldResetModuleAddressCacheAfterCommand(pendingRequest)) {
             batteryCollectorCacheService.resetModuleAddressCache(state, realtimeSnapshotService);

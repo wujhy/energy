@@ -1,5 +1,6 @@
 package com.shanhe.project.collector.battery.command;
 
+import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelState;
 import com.shanhe.project.collector.battery.model.BatteryCollectorFrame;
 import com.shanhe.project.collector.battery.model.BatteryCollectorRunState;
@@ -97,6 +98,9 @@ public class BatteryCollectorCommandQueueService {
         pendingRequest.setConnectResistanceNextAddress(command.getConnectResistanceNextAddress());
         pendingRequest.setConnectResistanceMaxAddress(command.getConnectResistanceMaxAddress());
         pendingRequest.setConnectResistanceFailed(command.isConnectResistanceFailed());
+        pendingRequest.setGroupInternalResistanceNextAddress(command.getGroupInternalResistanceNextAddress());
+        pendingRequest.setGroupInternalResistanceMaxAddress(command.getGroupInternalResistanceMaxAddress());
+        pendingRequest.setGroupInternalResistanceFailed(command.isGroupInternalResistanceFailed());
         return pendingRequest;
     }
 
@@ -227,8 +231,7 @@ public class BatteryCollectorCommandQueueService {
         if (command == null || command.getMode() == null) {
             return false;
         }
-        // 连接条测试模式不在无响应命令后停止
-        // MODE_CONNECT_RESISTANCE
+        // 连接条测试模式（MODE_CONNECT_RESISTANCE）不在无响应命令后停止
         if (command.getMode() == 10) {
             return false;
         }
@@ -316,14 +319,19 @@ public class BatteryCollectorCommandQueueService {
             return;
         }
         markCompletedCommand(state, pendingRequest.getName(), pendingRequest.getResponseCode(), false);
-        markModeStopped(pendingRequest, false);
+        boolean groupInternalResistance = isGroupInternalResistanceRequest(pendingRequest);
+        if (!groupInternalResistance || isFinalGroupInternalResistanceRequest(pendingRequest)) {
+            markModeStopped(pendingRequest, resolveGroupInternalResistanceFinalSuccess(pendingRequest, false));
+        }
         commandLogService.updateCommandOptLog(
                 pendingRequest.getOptLogId(),
                 BatteryDeviceStateConstants.CommandStatus.TIMEOUT,
                 null,
                 null);
+        if (groupInternalResistance) {
+            queueNextGroupInternalResistanceStep(state, pendingRequest, false);
+        }
     }
-
     /**
      * 中止已下发但尚未响应的显式命令，用于串口关闭、服务停止或通道异常重连收口。
      *
@@ -548,12 +556,77 @@ public class BatteryCollectorCommandQueueService {
         throw new IllegalArgumentException("自动编号仅支持2V或12V电池规格");
     }
 
-    /**
-     * 标记控制命令关联的工作模式已停止。
-     *
-     * @param command 控制命令
-     * @param success 命令是否成功完成
-     */
+    /** 判断待响应请求是否属于组内阻测试。 */
+    public boolean isGroupInternalResistanceRequest(BatteryPendingRequest pendingRequest) {
+        return pendingRequest != null
+                && BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST.name().equals(pendingRequest.getName())
+                && pendingRequest.getGroupInternalResistanceMaxAddress() != null;
+    }
+
+    /** 判断当前组内阻测试单体是否为最后一个。 */
+    public boolean isFinalGroupInternalResistanceRequest(BatteryPendingRequest pendingRequest) {
+        return isGroupInternalResistanceRequest(pendingRequest)
+                && pendingRequest.getGroupInternalResistanceMaxAddress() != null
+                && pendingRequest.getRequestAddress() >= pendingRequest.getGroupInternalResistanceMaxAddress();
+    }
+
+    /** 当前 02/82 请求完成后，将下一个组内阻测试单体入队。 */
+    public boolean queueNextGroupInternalResistanceStep(BatteryCollectorChannelState state,
+                                                       BatteryPendingRequest pendingRequest,
+                                                       boolean currentSuccess) {
+        if (!isGroupInternalResistanceRequest(pendingRequest) || state == null) {
+            return false;
+        }
+        Integer maxAddress = pendingRequest.getGroupInternalResistanceMaxAddress();
+        if (maxAddress == null || pendingRequest.getRequestAddress() >= maxAddress) {
+            return false;
+        }
+        int nextAddress = pendingRequest.getRequestAddress() + 1;
+        BatteryModuleControlCommand command = BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST)
+                .address(nextAddress)
+                .requestCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST.getRequestCode())
+                .responseCode(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST.getResponseCode())
+                .payload(new byte[0])
+                .description(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST.getDescription())
+                .configId(state.getConfig() == null ? null : state.getConfig().getConfigId())
+                .batteryGroup(pendingRequest.getBatteryGroup())
+                .mode(pendingRequest.getMode())
+                .optLogType(BatteryTestEnum._99.getDictValue())
+                .groupInternalResistanceNextAddress(nextAddress + 1)
+                .groupInternalResistanceMaxAddress(maxAddress)
+                .groupInternalResistanceFailed(pendingRequest.isGroupInternalResistanceFailed() || !currentSuccess)
+                .build();
+        Long optLogId = commandLogService.createCommandOptLog(state.getConfig(), command);
+        command.setOptLogId(optLogId);
+        if (!state.getQueuedModuleCommands().offer(command)) {
+            commandLogService.updateCommandOptLog(
+                    optLogId,
+                    BatteryDeviceStateConstants.CommandStatus.REJECTED,
+                    null,
+                    null);
+            return false;
+        }
+        if (command.getMode() != null) {
+            batteryModeStatusService.markRunning(
+                    command.getBatteryGroup(),
+                    command.getMode(),
+                    command.getAddress(),
+                    command.getOptLogId());
+        }
+        return true;
+    }
+
+    /** 组内阻测试最终成功需综合所有已测单体状态。 */
+    public boolean resolveGroupInternalResistanceFinalSuccess(BatteryPendingRequest pendingRequest,
+                                                             boolean currentSuccess) {
+        if (!isGroupInternalResistanceRequest(pendingRequest)) {
+            return currentSuccess;
+        }
+        return currentSuccess && !pendingRequest.isGroupInternalResistanceFailed();
+    }
+
+    /** 将控制命令关联的工作模式标记为已停止。 */
     public void markModeStopped(BatteryModuleControlCommand command, boolean success) {
         if (command == null || command.getMode() == null) {
             return;

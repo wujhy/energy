@@ -319,6 +319,11 @@ public class ControlBattery extends ControlBase {
 
         // 停止内阻测试
         if (Objects.equals(opt.getTestType(), BatteryTestEnum._1.getDictValue())) {
+            AjaxResult adaptedStopResult = batteryOptCollectorCommandAdapter.tryStop(opt);
+            if (adaptedStopResult != null
+                    && Objects.equals(adaptedStopResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value())) {
+                return adaptedStopResult;
+            }
 
             BatteryReportLog batteryReportLog = getCurrentReportLog(opt.getPackNum());
 

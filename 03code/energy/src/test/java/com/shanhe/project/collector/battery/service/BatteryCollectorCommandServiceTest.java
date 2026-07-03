@@ -18,9 +18,11 @@ import com.shanhe.project.manage.opt.service.OptLogService;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,6 +96,39 @@ class BatteryCollectorCommandServiceTest {
         Assertions.assertEquals(8, result.getModuleControlCommand().getAddress());
     }
 
+    @Test
+    void shouldQueueGroupInternalResistanceAsSequentialSingleCellCommands() {
+        BatteryCollectorService collectorService = Mockito.mock(BatteryCollectorService.class);
+        ReflectionTestUtils.setField(service, "collectorService", collectorService);
+        Mockito.when(collectorService.submitModuleCommand(
+                Mockito.eq("battery-rs485-1"),
+                Mockito.any(BatteryModuleControlCommand.class)))
+                .thenReturn(true);
+
+        BatteryCollectorCommandResult result = service.groupInternalResistanceTest(
+                "battery-rs485-1",
+                1,
+                3,
+                1000L);
+
+        Assertions.assertTrue(result.isSuccess());
+        Assertions.assertTrue(result.isMappedToModuleCommand());
+        Assertions.assertEquals(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST,
+                result.getCommandDefinition());
+        Assertions.assertEquals(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
+                result.getModuleControlCommand().getProtocolCode());
+        ArgumentCaptor<BatteryModuleControlCommand> commandCaptor =
+                ArgumentCaptor.forClass(BatteryModuleControlCommand.class);
+        Mockito.verify(collectorService)
+                .submitModuleCommand(Mockito.eq("battery-rs485-1"), commandCaptor.capture());
+        BatteryModuleControlCommand command = commandCaptor.getValue();
+        Assertions.assertEquals(1, command.getAddress());
+        Assertions.assertEquals(1, command.getBatteryGroup());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, command.getMode());
+        Assertions.assertEquals(BatteryTestEnum._99.getDictValue(), command.getOptLogType());
+        Assertions.assertEquals(2, command.getGroupInternalResistanceNextAddress());
+        Assertions.assertEquals(3, command.getGroupInternalResistanceMaxAddress());
+    }
     @Test
     void shouldMapConnectResistanceTestToBroadcastModuleCommand() {
         BatteryCollectorCommandResult result = service.connectResistanceTest("battery-rs485-1", 1, 24, 1000L);
@@ -499,6 +534,7 @@ class BatteryCollectorCommandServiceTest {
         Assertions.assertEquals(2, modeInfo.getPackNum());
         Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, modeInfo.getMode());
     }
+
     @Test
     void shouldRejectStopRunningTestWhenModeDifferent() {
         BatteryModeStatusService modeStatusService = newModeStatusService();
@@ -514,6 +550,7 @@ class BatteryCollectorCommandServiceTest {
         Assertions.assertEquals(1, modeInfo.getStatus());
         Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, modeInfo.getMode());
     }
+
     @Test
     void shouldKeepAmbiguousSubmoduleIdUnsupported() {
         BatteryCollectorCommandResult result = service.execute(
@@ -666,6 +703,7 @@ class BatteryCollectorCommandServiceTest {
         Assertions.assertFalse(aboveProtocolMax.isMappedToModuleCommand());
         Assertions.assertNull(aboveProtocolMax.getModuleControlCommand());
     }
+
     @Test
     void shouldStopInternalResistanceTestWithCorrectOptLogType() {
         BatteryModeStatusService modeStatusService = newModeStatusService();

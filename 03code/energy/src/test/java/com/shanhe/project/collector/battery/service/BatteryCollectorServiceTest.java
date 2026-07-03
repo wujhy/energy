@@ -1645,6 +1645,81 @@ class BatteryCollectorServiceTest {
     }
 
     @Test
+    void shouldQueueNextGroupInternalResistanceCellAfterStatusResponse() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        injectCommandLogMapper(optLogMapper);
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        injectModeStatusService(modeStatusService);
+        modeStatusService.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 1);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
+        BatteryPendingRequest pendingRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
+                1, new byte[0], false);
+        pendingRequest.setOptLogId(100L);
+        pendingRequest.setBatteryGroup(1);
+        pendingRequest.setMode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+        pendingRequest.setGroupInternalResistanceNextAddress(2);
+        pendingRequest.setGroupInternalResistanceMaxAddress(3);
+        BatteryCollectorFrame frame = new BatteryCollectorFrameCodec().buildRequest(1, 0x82,
+                new byte[]{0x00});
+
+        service.handleCompletedPendingResponse(state, frame, pendingRequest);
+
+        Assertions.assertEquals(1, state.getQueuedModuleCommands().size());
+        BatteryModuleControlCommand next = state.getQueuedModuleCommands().peek();
+        Assertions.assertEquals(BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST, next.getProtocolCode());
+        Assertions.assertEquals(2, next.getAddress());
+        Assertions.assertEquals(3, next.getGroupInternalResistanceNextAddress());
+        Assertions.assertEquals(3, next.getGroupInternalResistanceMaxAddress());
+        Assertions.assertFalse(next.isGroupInternalResistanceFailed());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, modeStatusService.get(1).getMode());
+    }
+
+    @Test
+    void shouldContinueGroupInternalResistanceAfterFailedCellAndFailFinalSummary() {
+        OptLogMapper optLogMapper = Mockito.mock(OptLogMapper.class);
+        injectCommandLogMapper(optLogMapper);
+        BatteryModeStatusService modeStatusService = newModeStatusService();
+        injectModeStatusService(modeStatusService);
+        modeStatusService.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 1);
+        BatteryCollectorChannelState state = new BatteryCollectorChannelState(new BatteryCollectorChannelConfig());
+        BatteryPendingRequest failedFirst = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
+                1, new byte[0], false);
+        failedFirst.setOptLogId(110L);
+        failedFirst.setBatteryGroup(1);
+        failedFirst.setMode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+        failedFirst.setGroupInternalResistanceNextAddress(2);
+        failedFirst.setGroupInternalResistanceMaxAddress(2);
+        BatteryCollectorFrame failedFrame = new BatteryCollectorFrameCodec().buildRequest(1, 0x82,
+                new byte[]{0x01});
+
+        service.handleCompletedPendingResponse(state, failedFrame, failedFirst);
+
+        BatteryModuleControlCommand next = state.getQueuedModuleCommands().poll();
+        Assertions.assertNotNull(next);
+        Assertions.assertEquals(2, next.getAddress());
+        Assertions.assertTrue(next.isGroupInternalResistanceFailed());
+        BatteryPendingRequest finalRequest = BatteryPendingRequest.fromProtocolCode(
+                BatteryDeviceProtocolCode.SINGLE_BATTERY_IR_TEST,
+                2, new byte[0], false);
+        finalRequest.setOptLogId(120L);
+        finalRequest.setBatteryGroup(1);
+        finalRequest.setMode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+        finalRequest.setGroupInternalResistanceNextAddress(3);
+        finalRequest.setGroupInternalResistanceMaxAddress(2);
+        finalRequest.setGroupInternalResistanceFailed(true);
+        BatteryCollectorFrame successFrame = new BatteryCollectorFrameCodec().buildRequest(2, 0x82,
+                new byte[]{0x00});
+
+        service.handleCompletedPendingResponse(state, successFrame, finalRequest);
+
+        BatteryModeInfo modeInfo = modeStatusService.get(1);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
+        Assertions.assertEquals(0, modeInfo.getStatus());
+        Assertions.assertEquals(1, modeInfo.getResult());
+    }
+    @Test
     void shouldHandleSingleIRStatusResponsePayloadsWithoutFakeRealtimeValues() {
         // SINGLEIR-002: _6 02/82 状态响应成功/失败/超时只更新命令日志和运行态，不写入伪造实时内阻值
         // 02/82 是状态应答命令，handleCompletedPendingResponse 只走 completeExplicitCommandResponse + markModeStopped，

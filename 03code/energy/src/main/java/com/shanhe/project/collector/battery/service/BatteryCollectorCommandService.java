@@ -96,12 +96,6 @@ public class BatteryCollectorCommandService {
 
     /**
      * 执行单体内阻测试命令。
-     *
-     * @param channelName 通道名称
-     * @param batteryGroup 电池组编号
-     * @param batteryNumber 单体编号
-     * @param timeoutMs 超时时间
-     * @return 命令结果
      */
     public BatteryCollectorCommandResult singleInternalResistanceTest(String channelName, int batteryGroup, int batteryNumber, Long timeoutMs) {
         BatteryCollectorCommandResult runningResult = rejectRunningWorkMode(
@@ -123,16 +117,20 @@ public class BatteryCollectorCommandService {
     }
 
     /**
-     * 尝试执行整组内阻测试。
-     * <p>旧 M460 0x05/0x79 会进入整组状态机逐节下发 600/submodule 命令；当前 600 显式控制层
-     * 只有单体内阻命令，尚未具备等价整组状态机。这里先暴露稳定入口，避免上层误把 _1 降级成 _6 循环。
+     * 执行整组内阻测试：按 1..batteryCount 顺序下发 02/82 单体内阻命令。
      */
     public BatteryCollectorCommandResult groupInternalResistanceTest(String channelName, int batteryGroup, int batteryCount, Long timeoutMs) {
         if (isBlank(channelName)) {
-            return BatteryCollectorCommandResult.builder().success(false).message("通道名称不能为空").build();
+            return BatteryCollectorCommandResult.builder()
+                    .success(false)
+                    .message("channelName must not be blank")
+                    .build();
         }
         if (batteryGroup <= 0) {
-            return BatteryCollectorCommandResult.builder().success(false).message("电池组编号无效").build();
+            return BatteryCollectorCommandResult.builder()
+                    .success(false)
+                    .message("电池组编号无效")
+                    .build();
         }
         BatteryCollectorCommandResult runningResult = rejectRunningWorkMode(
                 BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST,
@@ -147,11 +145,33 @@ public class BatteryCollectorCommandService {
         } catch (IllegalArgumentException e) {
             return BatteryCollectorCommandResult.builder().success(false).message(e.getMessage()).build();
         }
+        BatteryModuleControlCommand moduleCommand;
+        try {
+            moduleCommand = moduleControlCommandService.singleBatteryInternalResistanceTest(1);
+        } catch (IllegalArgumentException e) {
+            log.warn("group internal-resistance command rejected, channel={}, batteryGroup={}, address={}, reason={}",
+                    channelName, batteryGroup, 1, e.getMessage());
+            return blocked(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST,
+                    channelName,
+                    "group internal-resistance first cell address is invalid");
+        }
+        moduleCommand.setDescription("group internal-resistance cell 1");
+        moduleCommand.setOptLogType(BatteryTestEnum._99.getDictValue());
+        moduleCommand.setGroupInternalResistanceNextAddress(2);
+        moduleCommand.setGroupInternalResistanceMaxAddress(batteryCount);
+        moduleCommand.setGroupInternalResistanceFailed(false);
+        applyContext(moduleCommand, batteryGroup, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
+        boolean queued = queueModuleCommand(channelName, moduleCommand);
         return BatteryCollectorCommandResult.builder()
-                .success(false)
-                .mappedToModuleCommand(false)
+                .success(queued)
+                .timeout(false)
+                .mappedToModuleCommand(true)
                 .channelName(channelName)
-                .message("整组内阻测试尚未实现等价 600 显式控制状态机，继续使用旧 M460 链路")
+                .commandDefinition(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST)
+                .moduleControlCommand(moduleCommand)
+                .requestCode(moduleCommand.getRequestCode())
+                .responseCode(moduleCommand.getResponseCode())
+                .message(queued ? "group internal-resistance first cell queued" : "group internal-resistance first cell queue failed")
                 .build();
     }
     private BatteryCollectorCommandResult validateSingleInternalResistanceAddress(String channelName,
@@ -184,7 +204,8 @@ public class BatteryCollectorCommandService {
             Integer maxNumber = batteryPackService.getBatteryMaxNumber(batteryGroup);
             return maxNumber != null && maxNumber > 0 ? Math.min(maxNumber, MAX_CELL_ADDRESS) : null;
         } catch (RuntimeException e) {
-            log.warn("查询电池组实际单体数失败, 电池组={}, 原因={}", batteryGroup, e.getMessage());
+            log.warn("查询电池组实际单体数失败, 电池组={}, 原因={}",
+                    batteryGroup, e.getMessage());
             return null;
         }
     }
@@ -196,6 +217,10 @@ public class BatteryCollectorCommandService {
      * @return 停止处理结果
      */
     public BatteryCollectorCommandResult stopRunningTest(Integer batteryGroup, Integer mode) {
+        return stopRunningTest(batteryGroup, mode, resolveCollectorOptLogType(mode));
+    }
+
+    public BatteryCollectorCommandResult stopRunningTest(Integer batteryGroup, Integer mode, Integer optLogType) {
         if (batteryGroup == null || batteryGroup <= 0) {
             return stopRejected("电池组编号无效");
         }
@@ -211,7 +236,7 @@ public class BatteryCollectorCommandService {
             return stopRejected("当前运行测试类型与停止类型不一致");
         }
         int cancelled = collectorService == null ? 0 : collectorService.cancelQueuedModuleCommands(batteryGroup, mode);
-        closeRunningOptLog(batteryGroup, mode);
+        closeRunningOptLog(batteryGroup, optLogType);
         batteryModeStatusService.markStopped(batteryGroup, mode, modeInfo.getAddress(), true);
         return BatteryCollectorCommandResult.builder()
                 .success(true)
@@ -615,17 +640,12 @@ public class BatteryCollectorCommandService {
     }
 
     /** 关闭600采集测试对应的运行日志。 */
-    private void closeRunningOptLog(Integer batteryGroup, Integer mode) {
-        if (optLogService == null) {
+    private void closeRunningOptLog(Integer batteryGroup, Integer optLogType) {
+        if (optLogService == null || batteryGroup == null || optLogType == null) {
             return;
         }
-        Integer optLogType = resolveCollectorOptLogType(mode);
-        if (optLogType != null) {
-            optLogService.doStopTest(batteryGroup, optLogType);
-        }
+        optLogService.doStopTest(batteryGroup, optLogType);
     }
-
-    /** 根据600采集模式解析操作日志类型。 */
     private Integer resolveCollectorOptLogType(Integer mode) {
         if (Objects.equals(mode, BatteryModeStatusService.MODE_CONNECT_RESISTANCE)) {
             return BatteryTestEnum._2.getDictValue();

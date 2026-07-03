@@ -118,7 +118,7 @@ public class BatteryOptCollectorCommandAdapter {
         if (mode == null) {
             return null;
         }
-        BatteryCollectorCommandResult result = batteryCollectorCommandService.stopRunningTest(opt.getPackNum(), mode);
+        BatteryCollectorCommandResult result = batteryCollectorCommandService.stopRunningTest(opt.getPackNum(), mode, opt.getTestType());
         if (result != null && result.isSuccess()) {
             return AjaxResult.success(result.getMessage(), result);
         }

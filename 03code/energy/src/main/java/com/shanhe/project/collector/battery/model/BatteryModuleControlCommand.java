@@ -60,4 +60,13 @@ public class BatteryModuleControlCommand {
 
     /** 连接条测试过程中是否已出现失败。 */
     private boolean connectResistanceFailed;
+
+    /** 组内阻测试下一个待测单体地址。 */
+    private Integer groupInternalResistanceNextAddress;
+
+    /** 组内阻测试最大单体地址。 */
+    private Integer groupInternalResistanceMaxAddress;
+
+    /** 组内阻测试过程中是否已出现失败。 */
+    private boolean groupInternalResistanceFailed;
 }
