@@ -35,7 +35,7 @@ class BatteryModeStatusServiceTest {
     void shouldUseConfigIndependentCacheKey() {
         service.markRunning(2, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
 
-        Object result = cacheAccessor.get("device-result", service.key());
+        Object result = cacheAccessor.get(service.cacheKeyEnum.getCache(), service.cacheKeyEnum.getKey());
 
         Assertions.assertTrue(result instanceof BatteryModeInfo);
         BatteryModeInfo modeInfo = (BatteryModeInfo) result;
@@ -218,16 +218,11 @@ class BatteryModeStatusServiceTest {
 
     @Test
     void shouldReturnIdleWhenCacheContainsNonModeInfo() {
-        cacheAccessor.put("device-result", service.key(), "not-a-mode-info");
+        cacheAccessor.put(service.cacheKeyEnum.getCache(), service.cacheKeyEnum.getKey(), "not-a-mode-info");
 
         BatteryModeInfo modeInfo = service.get(5);
         Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
         Assertions.assertEquals(5, modeInfo.getPackNum());
-    }
-
-    @Test
-    void shouldReturnExactKey() {
-        Assertions.assertEquals("battery:mode:status:EB", service.key());
     }
 
     @Test

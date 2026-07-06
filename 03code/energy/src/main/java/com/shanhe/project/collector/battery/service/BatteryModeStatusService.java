@@ -46,11 +46,9 @@ public class BatteryModeStatusService {
     private static final int STATUS_STOP = 0;
     /** 工作模式状态值：运行中。 */
     private static final int STATUS_RUNNING = 1;
-    /** 工作模式状态在缓存中的键。 */
-    private static final String MODE_STATUS_KEY = "battery:mode:status:EB";
 
     /** 缓存键枚举。 */
-    private final CacheKeyEnum cacheKeyEnum = CacheKeyEnum.RESULT;
+    public final CacheKeyEnum cacheKeyEnum = CacheKeyEnum.MODE_STATUS;
 
     private CacheAccessor cacheAccessor = new CacheUtilsAccessor();
 
@@ -61,7 +59,7 @@ public class BatteryModeStatusService {
      * @return 工作模式信息，缓存未命中时返回空闲状态
      */
     public BatteryModeInfo get(Integer packNum) {
-        Object result = cacheAccessor.get(cacheKeyEnum.getCache(), key());
+        Object result = cacheAccessor.get(cacheKeyEnum.getCache(), cacheKeyEnum.getKey());
         if (result instanceof BatteryModeInfo) {
             return (BatteryModeInfo) result;
         }
@@ -74,16 +72,15 @@ public class BatteryModeStatusService {
      * @param packNum 电池组编号，为 null 时无条件清除
      */
     public void clear(Integer packNum) {
-        String key = key();
         if (packNum == null) {
-            cacheAccessor.remove(cacheKeyEnum.getCache(), key);
+            cacheAccessor.remove(cacheKeyEnum.getCache(), cacheKeyEnum.getKey());
             return;
         }
-        Object result = cacheAccessor.get(cacheKeyEnum.getCache(), key);
+        Object result = cacheAccessor.get(cacheKeyEnum.getCache(), cacheKeyEnum.getKey());
         if (result instanceof BatteryModeInfo) {
             BatteryModeInfo batteryModeInfo = (BatteryModeInfo) result;
             if (ObjUtil.equals(packNum, batteryModeInfo.getPackNum())) {
-                cacheAccessor.remove(cacheKeyEnum.getCache(), key);
+                cacheAccessor.remove(cacheKeyEnum.getCache(), cacheKeyEnum.getKey());
             }
         }
     }
@@ -114,7 +111,7 @@ public class BatteryModeStatusService {
         batteryModeInfo.setMode(mode);
         batteryModeInfo.setStatus(STATUS_RUNNING);
         batteryModeInfo.setAddress(address);
-        cacheAccessor.put(cacheKeyEnum.getCache(), key(), batteryModeInfo);
+        cacheAccessor.put(cacheKeyEnum.getCache(), cacheKeyEnum.getKey(), batteryModeInfo);
         persistModeState(packNum, mode, address, String.valueOf(mode), BatteryDeviceStateConstants.StateLevel.RUNNING, optLogId);
     }
 
@@ -158,7 +155,7 @@ public class BatteryModeStatusService {
         if (batteryModeInfo.getLastMode() == null) {
             batteryModeInfo.setLastMode(mode);
         }
-        cacheAccessor.put(cacheKeyEnum.getCache(), key(), batteryModeInfo);
+        cacheAccessor.put(cacheKeyEnum.getCache(), cacheKeyEnum.getKey(), batteryModeInfo);
         persistModeState(packNum, MODE_IDLE, address, String.valueOf(MODE_IDLE),
                 success ? BatteryDeviceStateConstants.StateLevel.NORMAL : BatteryDeviceStateConstants.StateLevel.WARN, optLogId);
     }
@@ -172,7 +169,7 @@ public class BatteryModeStatusService {
         if (batteryModeInfo == null) {
             return;
         }
-        String key = key();
+
         if (Objects.equals(batteryModeInfo.getStatus(), STATUS_STOP)) {
             BatteryModeInfo oldBatteryModeInfo = getStored();
             if (oldBatteryModeInfo != null) {
@@ -188,16 +185,7 @@ public class BatteryModeStatusService {
                 }
             }
         }
-        cacheAccessor.put(cacheKeyEnum.getCache(), key, batteryModeInfo);
-    }
-
-    /**
-     * 获取工作模式缓存 key。
-     *
-     * @return 缓存 key
-     */
-    public String key() {
-        return MODE_STATUS_KEY;
+        cacheAccessor.put(cacheKeyEnum.getCache(), cacheKeyEnum.getKey(), batteryModeInfo);
     }
 
     /** 将工作模式状态持久化到 battery_device_state。 */
@@ -227,7 +215,7 @@ public class BatteryModeStatusService {
 
     /** 从缓存获取已存储的工作模式信息。 */
     private BatteryModeInfo getStored() {
-        Object result = cacheAccessor.get(cacheKeyEnum.getCache(), key());
+        Object result = cacheAccessor.get(cacheKeyEnum.getCache(), cacheKeyEnum.getKey());
         return result instanceof BatteryModeInfo ? (BatteryModeInfo) result : null;
     }
 
