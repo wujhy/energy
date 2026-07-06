@@ -93,6 +93,7 @@ public class BatteryOptScheduleJob {
             return;
         }
         try {
+            recoverRuntimeBeforeSchedule(opt);
             if (!isExecutableScheduleTest(opt)) {
                 log.info("蓄电池测试计划到点执行跳过，该类型不属于平台定时执行命令 packNum={}, testType={}",
                         opt.getPackNum(), opt.getTestType());
