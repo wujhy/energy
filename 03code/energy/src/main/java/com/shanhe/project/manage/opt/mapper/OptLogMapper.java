@@ -46,6 +46,9 @@ public interface OptLogMapper {
      */
     int deleteByIds(String[] ids);
 
+    /** 删除指定的 600 模块命令成功明细日志，仅限 type=99。 */
+    int deleteSuccessfulModuleCommandDetail(@Param("id") Long id);
+
     /** 删除默认设备历史记录 */
     void deleteDefaultDeviceLogs();
 

@@ -146,6 +146,8 @@ battery-collector:
     # 适配失败直接返回业务错误，不回退旧 980/CommServer 链路；
     # 关闭时保留旧兼容链路，适配器返回 null 允许旧路径兜底。
     jsonTcpModuleCommandEnabled: false
+    # 是否保留 600 模块命令成功明细日志；失败/超时/拒绝始终保留
+    moduleCommandSuccessLogEnabled: false
     groupCalculationStaleThresholdMs: 180000
     moduleAddressCacheEnabled: true
     moduleAddressMissThreshold: 3

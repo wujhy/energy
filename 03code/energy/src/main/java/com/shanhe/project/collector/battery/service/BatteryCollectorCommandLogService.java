@@ -1,6 +1,7 @@
 package com.shanhe.project.collector.battery.service;
 
 import com.shanhe.common.utils.uuid.IdUtils;
+import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
@@ -27,6 +28,8 @@ public class BatteryCollectorCommandLogService {
     /** 操作日志 Mapper。 */
     @Resource
     private OptLogMapper optLogMapper;
+    @Resource
+    private BatteryCollectorProperties properties;
 
     /**
      * 创建600模块命令操作日志。
@@ -97,11 +100,20 @@ public class BatteryCollectorCommandLogService {
             String now = now();
             String resolvedMessage = errorMessage != null ? errorMessage : errorMessageOf(status, responseCode, responsePayload);
             optLogMapper.updateCommandStatus(optLogId, status, resultOf(status), responseCode, now, resolvedMessage, responsePayload);
+            deleteSuccessfulDetailIfDisabled(optLogId, status);
         } catch (Exception e) {
             log.warn("更新600模块命令日志失败, 日志ID={}, 原因={}", optLogId, e.getMessage());
         }
     }
 
+    private void deleteSuccessfulDetailIfDisabled(Long optLogId, String status) {
+        if (!BatteryDeviceStateConstants.CommandStatus.SUCCESS.equals(status)
+                || properties == null
+                || Boolean.TRUE.equals(properties.getModuleCommandSuccessLogEnabled())) {
+            return;
+        }
+        optLogMapper.deleteSuccessfulModuleCommandDetail(optLogId);
+    }
     private String errorMessageOf(String status, Integer responseCode, String responsePayload) {
         if (BatteryDeviceStateConstants.CommandStatus.SUCCESS.equals(status)
                 || BatteryDeviceStateConstants.CommandStatus.PENDING.equals(status)) {
