@@ -33,6 +33,12 @@ import java.util.List;
 @Component
 public class BatteryConnectResistanceCommandProcessor {
 
+    public enum QueueNextVoltageReadResult {
+        QUEUED,
+        COMPLETED,
+        REJECTED
+    }
+
     @Resource
     private BatteryModuleCellCompatibilityFillService compatibilityFillService;
     @Resource
@@ -51,16 +57,15 @@ public class BatteryConnectResistanceCommandProcessor {
      *
      * @param state 通道状态
      * @param pendingRequest 当前待响应请求
-     * @return true 表示已排队，false 表示所有地址已完成
+     * @return QUEUED 表示已排队，COMPLETED 表示所有地址已完成，REJECTED 表示队列拒绝
      */
-    public boolean queueNextVoltageRead(BatteryCollectorChannelState state, BatteryPendingRequest pendingRequest) {
+    public QueueNextVoltageReadResult queueNextVoltageRead(BatteryCollectorChannelState state, BatteryPendingRequest pendingRequest) {
         Integer nextAddress = pendingRequest.getConnectResistanceNextAddress();
         Integer maxAddress = pendingRequest.getConnectResistanceMaxAddress();
         if (nextAddress == null || maxAddress == null || nextAddress > maxAddress) {
-            return false;
+            return QueueNextVoltageReadResult.COMPLETED;
         }
         int address = nextAddress;
-        pendingRequest.setConnectResistanceNextAddress(address + 1);
         BatteryModuleControlCommand command = BatteryModuleControlCommand.builder()
                 .protocolCode(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE)
                 .address(address)
@@ -75,7 +80,23 @@ public class BatteryConnectResistanceCommandProcessor {
                 .connectResistanceMaxAddress(maxAddress)
                 .connectResistanceFailed(pendingRequest.isConnectResistanceFailed())
                 .build();
-        return state.getQueuedModuleCommands().offer(command);
+        if (!state.getQueuedModuleCommands().offer(command)) {
+            return QueueNextVoltageReadResult.REJECTED;
+        }
+        pendingRequest.setConnectResistanceNextAddress(address + 1);
+        return QueueNextVoltageReadResult.QUEUED;
+    }
+
+    public void closeConnectResistanceAsRejected(BatteryPendingRequest pendingRequest) {
+        if (pendingRequest == null) {
+            return;
+        }
+        commandLogService.updateCommandOptLog(
+                pendingRequest.getOptLogId(),
+                BatteryDeviceStateConstants.CommandStatus.REJECTED,
+                null,
+                null);
+        commandQueueService.markModeStopped(pendingRequest, false);
     }
 
     /**
@@ -96,7 +117,12 @@ public class BatteryConnectResistanceCommandProcessor {
         if (success) {
             storeConnectResistanceResult(pendingRequest, frame);
         }
-        if (!queueNextVoltageRead(state, pendingRequest)) {
+        QueueNextVoltageReadResult queueResult = queueNextVoltageRead(state, pendingRequest);
+        if (queueResult == QueueNextVoltageReadResult.REJECTED) {
+            closeConnectResistanceAsRejected(pendingRequest);
+            return;
+        }
+        if (queueResult == QueueNextVoltageReadResult.COMPLETED) {
             boolean finalSuccess = success && !pendingRequest.isConnectResistanceFailed();
             String finalStatus = finalSuccess
                     ? BatteryDeviceStateConstants.CommandStatus.SUCCESS

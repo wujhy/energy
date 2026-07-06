@@ -323,6 +323,20 @@ public class BatteryCollectorCommandQueueService {
             return;
         }
         markCompletedCommand(state, pendingRequest.getName(), pendingRequest.getResponseCode(), false);
+        if (isConnectResistanceVoltageRequest(pendingRequest)) {
+            pendingRequest.setConnectResistanceFailed(true);
+            if (!isFinalConnectResistanceVoltageRequest(pendingRequest)) {
+                if (!queueNextConnectResistanceVoltageRead(state, pendingRequest)) {
+                    commandLogService.updateCommandOptLog(
+                            pendingRequest.getOptLogId(),
+                            BatteryDeviceStateConstants.CommandStatus.REJECTED,
+                            null,
+                            null);
+                    markModeStopped(pendingRequest, false);
+                }
+                return;
+            }
+        }
         boolean groupInternalResistance = isGroupInternalResistanceRequest(pendingRequest);
         if (!groupInternalResistance || isFinalGroupInternalResistanceRequest(pendingRequest)) {
             boolean finalSuccess = resolveGroupInternalResistanceFinalSuccess(pendingRequest, false);
@@ -341,6 +355,48 @@ public class BatteryCollectorCommandQueueService {
             }
         }
     }
+
+    private boolean isConnectResistanceVoltageRequest(BatteryPendingRequest pendingRequest) {
+        return pendingRequest != null
+                && pendingRequest.getRequestCode() == BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.getRequestCode()
+                && pendingRequest.getResponseCode() == BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.getResponseCode();
+    }
+
+    private boolean isFinalConnectResistanceVoltageRequest(BatteryPendingRequest pendingRequest) {
+        Integer nextAddress = pendingRequest == null ? null : pendingRequest.getConnectResistanceNextAddress();
+        Integer maxAddress = pendingRequest == null ? null : pendingRequest.getConnectResistanceMaxAddress();
+        return nextAddress == null || maxAddress == null || nextAddress > maxAddress;
+    }
+
+    private boolean queueNextConnectResistanceVoltageRead(BatteryCollectorChannelState state,
+                                                          BatteryPendingRequest pendingRequest) {
+        Integer nextAddress = pendingRequest.getConnectResistanceNextAddress();
+        Integer maxAddress = pendingRequest.getConnectResistanceMaxAddress();
+        if (nextAddress == null || maxAddress == null || nextAddress > maxAddress) {
+            return false;
+        }
+        int address = nextAddress;
+        BatteryModuleControlCommand command = BatteryModuleControlCommand.builder()
+                .protocolCode(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE)
+                .address(address)
+                .requestCode(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.getRequestCode())
+                .responseCode(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.getResponseCode())
+                .payload(new byte[0])
+                .description(BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.getDescription())
+                .batteryGroup(pendingRequest.getBatteryGroup())
+                .mode(pendingRequest.getMode())
+                .optLogId(pendingRequest.getOptLogId())
+                .connectResistanceNextAddress(address + 1)
+                .connectResistanceMaxAddress(maxAddress)
+                .connectResistanceFailed(true)
+                .build();
+        if (!state.getQueuedModuleCommands().offer(command)) {
+            return false;
+        }
+        pendingRequest.setConnectResistanceNextAddress(address + 1);
+        return true;
+    }
+
     /**
      * 中止已下发但尚未响应的显式命令，用于串口关闭、服务停止或通道异常重连收口。
      *

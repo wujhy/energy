@@ -17,6 +17,7 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorRunState;
 import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.command.BatteryConnectResistanceCommandProcessor;
+import com.shanhe.project.collector.battery.command.BatteryConnectResistanceCommandProcessor.QueueNextVoltageReadResult;
 import com.shanhe.project.collector.battery.runtime.BatteryCollectorFrameIoService;
 import com.shanhe.project.collector.battery.runtime.BatteryCollectorFrameReceiveService;
 import com.shanhe.project.collector.battery.runtime.BatteryCollectorTimeoutService;
@@ -414,7 +415,10 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
             pendingFrom0F.setOptLogId(command.getOptLogId());
             pendingFrom0F.setConnectResistanceNextAddress(command.getConnectResistanceNextAddress());
             pendingFrom0F.setConnectResistanceMaxAddress(command.getConnectResistanceMaxAddress());
-            connectResistanceCommandProcessor.queueNextVoltageRead(state, pendingFrom0F);
+            QueueNextVoltageReadResult queueResult = connectResistanceCommandProcessor.queueNextVoltageRead(state, pendingFrom0F);
+            if (queueResult == QueueNextVoltageReadResult.REJECTED) {
+                connectResistanceCommandProcessor.closeConnectResistanceAsRejected(pendingFrom0F);
+            }
         }
         protocolLogService.logProtocol(properties, state, "tx", "cmd=" + String.format("%02X", command.getRequestCode())
                 + ", expect=-"
