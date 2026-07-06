@@ -210,13 +210,6 @@
         delete from dev_opt_log where config_id = 1 and pack_num = #{packNum}
     </delete>
 
-    <!-- 删除 600 模块命令成功明细日志，仅限 _99，业务测试日志不受影响 -->
-    <delete id="deleteSuccessfulModuleCommandDetail">
-        delete from dev_opt_log
-        where id = #{id}
-          and type = 99
-          and status = 'success'
-    </delete>
 
     <!-- 更新600模块命令执行状态 -->
     <update id="updateCommandStatus">

@@ -40,6 +40,9 @@ public class BatteryCollectorCommandLogService {
      */
     public Long createCommandOptLog(BatteryCollectorChannelConfig config, BatteryModuleControlCommand command) {
         try {
+            if (!shouldCreateCommandOptLog(command)) {
+                return null;
+            }
             String now = now();
             OptLog optLog = new OptLog();
             optLog.setId(IdUtils.getSnowflakeId());
@@ -100,20 +103,22 @@ public class BatteryCollectorCommandLogService {
             String now = now();
             String resolvedMessage = errorMessage != null ? errorMessage : errorMessageOf(status, responseCode, responsePayload);
             optLogMapper.updateCommandStatus(optLogId, status, resultOf(status), responseCode, now, resolvedMessage, responsePayload);
-            deleteSuccessfulDetailIfDisabled(optLogId, status);
         } catch (Exception e) {
             log.warn("更新600模块命令日志失败, 日志ID={}, 原因={}", optLogId, e.getMessage());
         }
     }
 
-    private void deleteSuccessfulDetailIfDisabled(Long optLogId, String status) {
-        if (!BatteryDeviceStateConstants.CommandStatus.SUCCESS.equals(status)
-                || properties == null
-                || Boolean.TRUE.equals(properties.getModuleCommandSuccessLogEnabled())) {
-            return;
+    private boolean shouldCreateCommandOptLog(BatteryModuleControlCommand command) {
+        if (command == null) {
+            return false;
         }
-        optLogMapper.deleteSuccessfulModuleCommandDetail(optLogId);
+        Integer type = command.getOptLogType() == null ? BatteryTestEnum._99.getDictValue() : command.getOptLogType();
+        if (!BatteryTestEnum._99.getDictValue().equals(type)) {
+            return true;
+        }
+        return properties == null || Boolean.TRUE.equals(properties.getModuleCommandSuccessLogEnabled());
     }
+
     private String errorMessageOf(String status, Integer responseCode, String responsePayload) {
         if (BatteryDeviceStateConstants.CommandStatus.SUCCESS.equals(status)
                 || BatteryDeviceStateConstants.CommandStatus.PENDING.equals(status)) {

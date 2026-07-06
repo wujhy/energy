@@ -52,7 +52,7 @@ public class BatteryCollectorProperties {
      */
     private Boolean jsonTcpModuleCommandEnabled = Boolean.FALSE;
 
-    /** 是否保留 600 模块命令成功明细日志；失败、超时、拒绝等异常明细始终保留。 */
+    /** 是否从源头保留 600 模块命令 _99 明细日志；业务日志不受影响。 */
     private Boolean moduleCommandSuccessLogEnabled = Boolean.FALSE;
 
     /** 组计算时单体实时数据的新鲜度阈值。 */
