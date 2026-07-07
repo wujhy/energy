@@ -62,16 +62,6 @@ public class BatteryOptCapacityModuleCommandAdapter extends ControlBase {
 
     /** 兼容旧调用方；没有完整上下文时不在适配器内直接执行。 */
     public AjaxResult tryStop(DevBatteryOpt opt) {
-        if (isBackupTest(opt) || isCapacityTest(opt)) {
-            log.debug("核容/备电停止命令缺少执行上下文，保留调用方边界处理, packNum={}, testType={}",
-                    opt.getPackNum(), opt.getTestType());
-        }
-        return null;
-    }
-
-    /** `_3/_5` 停止入口。 */
-    public AjaxResult tryStop(BatteryCommandContext context) {
-        DevBatteryOpt opt = context == null ? null : context.opt;
         if (isCapacityTest(opt)) {
             log.debug("核容测试 `_3` 已收进容量模块适配器占位；M460 对应底层能力为 0x30 mode=4，当前不做兼容下发, packNum={}",
                     opt.getPackNum());
