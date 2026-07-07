@@ -132,6 +132,9 @@ public class OptLogServiceImpl implements OptLogService {
         } else {
 
             if (object == null) {
+                if (this.adoptRunningLog(packNum, type, cacheKey)) {
+                    return;
+                }
                 // 创建新纪录
                 this.create(packNum, type, cacheKey);
             } else {
@@ -187,6 +190,18 @@ public class OptLogServiceImpl implements OptLogService {
         optLog.setSave(false);
         // 缓存数据
         CacheUtils.put(logCache.getCache(), cacheKey, optLog);
+    }
+
+    /** 采集状态后处理发现运行态时，优先接管入口已创建的业务 running log，避免重复落库。 */
+    private boolean adoptRunningLog(Integer packNum, Integer type, String cacheKey) {
+        OptLog runningLog = optLogMapper.getRunningOptLog(packNum, type);
+        if (runningLog == null) {
+            return false;
+        }
+        runningLog.setSave(true);
+        runningLog.setCount(100);
+        CacheUtils.put(logCache.getCache(), cacheKey, runningLog);
+        return true;
     }
 
     /** 判断是否需要插入操作日志。 */

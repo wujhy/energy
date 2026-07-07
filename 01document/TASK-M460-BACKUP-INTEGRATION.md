@@ -162,6 +162,24 @@ M460 到 energy 的映射：
   - 旧 M460/980 fallback 当前只保留给暂缓的 `_3` 核容，避免行为回归
 
 这表示 `_5` 已从 M460 代理链路切到 energy 直控外部模块的第一阶段。最终闭环仍需现场确认串口、站号、寄存器、响应样例、超时和重试策略；结果计算继续交给实时采集、`CapacityPredictionProcessor` 和 `BatteryPredictorServiceImpl`。`0x35` 不再作为默认待补控制链路；只有现场明确仍需要兼容 M460 内置计划时，才作为过渡候选项单独评估，并且必须避免双触发。
+## `_5` 停止触发条件复核
+
+`_5` 停止需要拆成“控制停止”和“业务结束闭环”两层，不能只复用 `_1/_2/_6` 的命令执行完成语义。
+
+已闭合部分：
+
+- 手动停止：`BatteryOptCapacityModuleCommandAdapter.tryStop(context)` 调用 `BackupExternalModuleControlService.stopBackup(packNum)`，收到外部模块有效成功响应后关闭 `_5` running log；停止下发失败时保留 running log，交给后续补偿处理。
+- 状态结束：采集后处理 `OperationLogProcessor -> OptLogServiceImpl.insertBattery` 根据 `batteryPackStatus` 维护操作日志；当状态从 BACKUP 离开时，自动关闭状态后处理接管的 `_5` 日志。
+- 预测触发：`CapacityPredictionProcessor` 在 `lastStatus == BACKUP && currentStatus != BACKUP` 时调用 `BatteryPredictorServiceImpl.doTotalBatteryStep`，容量、放电容量和备电时长等结果继续由采集数据和后处理闭合。
+- 日志去重：入口已创建 `_5` running log 时，状态后处理只接管该日志用于后续状态结束闭环，不再额外创建重复 `_5` 操作日志。
+
+未迁移部分：
+
+- M460 固件在备电运行期间并非只等待人工停止。`capacity.c` 会结合测试时长、截止电压、单体/组电压检查、平均电压和电流恢复等条件切回 `E_Idle_Status`，并触发下层停止控制和统计收口。
+- energy 当前尚未实现“按 `DevBatteryOpt.dischargeTime/endVoltage`、实时电压、电流状态主动调用 `stopBackup`”的自动停止策略。
+- 该策略属于主动控制外部硬件停止，落地前必须确认现场阈值单位、采样字段、允许自动断开/合上策略、异常恢复和人工停止优先级；未确认前只作为后续任务，不在 adapter 内临时硬算。
+
+后续方向：新增独立 `_5` 自动停止评估任务，输入使用平台计划参数和标准实时采集模型，命中条件后调用现有 `BackupExternalModuleControlService.stopBackup`；结果计算仍交给 `CapacityPredictionProcessor` / `BatteryPredictorServiceImpl`，避免控制层重复实现容量算法。
 ## 状态投影说明
 
 状态字段必须按来源和用途拆开，不能把旧 `pack_data` 或 M460 寄存器里暴露的所有字段都当成 600 单体协议原始事实。
