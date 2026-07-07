@@ -39,11 +39,11 @@ public class BatteryOptCollectorCommandAdapter {
      * @return 命令已处理时返回结果；无法处理时返回 null，由旧链路兜底
      */
     public AjaxResult tryExecutePrepared(BatteryCommandContext context) {
-        if (!Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpModuleCommandEnabled())) {
-            return null;
-        }
         if (resolveMode(context.opt.getTestType()) == null) {
             return null;
+        }
+        if (!Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpModuleCommandEnabled())) {
+            return AjaxResult.error("独立采集模块命令未启用，已迁移测试类型禁止回退旧 M460 指令", 0);
         }
         BatteryCollectorCommandResult result;
         try {
@@ -88,12 +88,12 @@ public class BatteryOptCollectorCommandAdapter {
         if (opt == null || opt.getTestType() == null || opt.getPackNum() == null) {
             return null;
         }
-        if (!Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpModuleCommandEnabled())) {
-            return null;
-        }
         Integer mode = resolveMode(opt.getTestType());
         if (mode == null) {
             return null;
+        }
+        if (!Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpModuleCommandEnabled())) {
+            return AjaxResult.error("独立采集模块命令未启用，已迁移测试类型禁止回退旧 M460 指令", 0);
         }
         BatteryCollectorCommandResult result = batteryCollectorCommandService.stopRunningTest(
                 opt.getPackNum(), mode, opt.getTestType());
