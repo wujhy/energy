@@ -1,7 +1,6 @@
 package com.shanhe.project.manage.opt.service;
 
 import com.shanhe.framework.enums.BatteryTestEnum;
-import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.manage.config.domain.DevBatteryOpt;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -40,9 +39,7 @@ class BatteryOptCapacityModuleCommandAdapterTest {
     void shouldReturnNullForEmptyInput() {
         BatteryOptCapacityModuleCommandAdapter adapter = new BatteryOptCapacityModuleCommandAdapter();
 
-        Assertions.assertNull(adapter.tryExecute(null));
         Assertions.assertNull(adapter.tryExecute(new DevBatteryOpt()));
-        Assertions.assertNull(adapter.tryStop(null));
         Assertions.assertNull(adapter.tryStop(new DevBatteryOpt()));
     }
 
