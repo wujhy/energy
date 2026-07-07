@@ -179,7 +179,17 @@ public class BackupExternalModuleControlService {
         if (response == null || response.length == 0) {
             return "外部备电模块无响应";
         }
-        if (response.length >= 5 && (response[1] & 0x80) != 0) {
+        if (isExceptionResponse(response)) {
+            if (response.length != 5) {
+                return "外部备电模块异常响应长度无效";
+            }
+            if (!ModbusRtuFrameParser.isValidCrc(response)) {
+                return "外部备电模块异常响应 CRC 校验失败";
+            }
+            if ((response[0] & 0xFF) != stationAddress
+                    || (response[1] & 0xFF) != (FUNC_WRITE_SINGLE_REGISTER | 0x80)) {
+                return "外部备电模块异常响应站号或功能码不匹配";
+            }
             return "外部备电模块返回异常码：" + (response[2] & 0xFF);
         }
         if (response.length != WRITE_RESPONSE_LENGTH) {
@@ -197,6 +207,10 @@ public class BackupExternalModuleControlService {
             return "外部备电模块响应寄存器或写入值不匹配";
         }
         return null;
+    }
+
+    private boolean isExceptionResponse(byte[] response) {
+        return response.length >= 2 && (response[1] & 0x80) != 0;
     }
 
     private byte[] writeSingleRegisterFrame(int stationAddress, int registerAddress, int value) {
