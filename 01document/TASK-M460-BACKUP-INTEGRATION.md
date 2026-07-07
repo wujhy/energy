@@ -216,9 +216,15 @@ M460 到 energy 的映射：
 
 未闭合字段：
 
-- `disChargeDuration`：当前标准实时路径只透传 `BatteryModuleGroupRealtime.disChargeDuration`，尚未看到由后处理生成的来源。
-- `residualDischargeDuration`：当前标准实时路径只透传 `BatteryModuleGroupRealtime.residualDischargeDuration`，尚未看到由后处理生成的来源。
-- `batteryPackSoc`：当前标准实时路径只透传 `BatteryModuleGroupRealtime.batteryPackSoc`，尚未看到由容量预测生成的来源。
+- `disChargeDuration`：当前标准实时路径只透传 `BatteryModuleGroupRealtime.disChargeDuration`，尚未看到由后处理生成的来源；后续需明确单位和取值口径后再实现，不能直接用运行日志时长冒充。
+- `residualDischargeDuration`：当前标准实时路径只透传 `BatteryModuleGroupRealtime.residualDischargeDuration`，尚未看到由后处理生成的来源；后续需确认是由预测容量折算、外部模块返回还是旧兼容字段沿用。
+- `batteryPackSoc`：当前标准实时路径只透传 `BatteryModuleGroupRealtime.batteryPackSoc`，尚未看到由容量预测生成的来源；后续需确认 SOC 算法输入和现有阈值配置后再接入。
+
+后续子任务：
+
+- `TASK-BACKUP-001A`：确认 `disChargeDuration` 的单位、起止时间和对外口径，若采用运行日志时长必须与 M460 `Discharge_Time` 口径一致。
+- `TASK-BACKUP-001B`：确认 `residualDischargeDuration` 来源，优先复用容量预测结果；若现场要求外部模块直读，需进入独立兼容开关。
+- `TASK-BACKUP-001C`：确认 `batteryPackSoc` 来源，避免在缺少可靠 SOC 算法输入时写固定值或假默认值。
 
 规则：
 - 不写假默认 `0`；`BatteryPredictorServiceImpl` 现有 `backUpDuration=0` 属于历史预测对象默认值，后续如要对外表达“未知”需单独评估迁移策略，不能在 `_5` adapter 中补默认。
