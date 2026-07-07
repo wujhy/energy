@@ -210,7 +210,7 @@ public class BackupExternalModuleControlService {
     }
 
     private boolean isExceptionResponse(byte[] response) {
-        return response.length >= 2 && (response[1] & 0x80) != 0;
+        return response.length >= 2 && (response[1] & 0xFF) == (FUNC_WRITE_SINGLE_REGISTER | 0x80);
     }
 
     private byte[] writeSingleRegisterFrame(int stationAddress, int registerAddress, int value) {

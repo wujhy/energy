@@ -154,7 +154,7 @@ M460 到 energy 的映射：
   - energy 作为 Modbus RTU 主站构造 `0x06` 写单寄存器帧
   - 默认配置关闭，未启用或未配置串口时返回中文错误，不会误发外部模块
   - 默认参考 M460 下层配置：站号 `0x6E + packNum - 1`、备电运行寄存器 `0x1142`、停止/空闲寄存器 `0x1141`、写值 `0x00FF`
-  - 响应以外部模块 Modbus 回显帧、异常码、CRC、站号、功能码、寄存器和值为准；短读会在超时窗口内继续累积；异常响应也必须先通过长度、CRC、站号和功能码校验，避免线路噪声被误判为设备拒绝
+  - 响应以外部模块 Modbus 回显帧、异常码、CRC、站号、功能码、寄存器和值为准；短读会在超时窗口内继续累积；异常响应只接受写单寄存器异常功能码 `0x86`，并必须先通过长度、CRC 和站号校验，避免线路噪声被误判为设备拒绝
 
 - `ControlBattery`
   - `_5` 执行和停止均先进入 `BatteryOptCapacityModuleCommandAdapter`
@@ -248,7 +248,7 @@ M460 到 energy 的映射：
 已落地：
 
 - 新增 `BackupExternalModuleProperties`，配置前缀为 `battery-opt.backup-external-module`，默认关闭
-- 新增 `BackupExternalModuleControlService`，由 energy 主动构造 Modbus RTU `0x06` 写单寄存器帧并等待外部模块响应；正常回显和异常响应均校验 CRC、站号和功能码
+- 新增 `BackupExternalModuleControlService`，由 energy 主动构造 Modbus RTU `0x06` 写单寄存器帧并等待外部模块响应；正常回显校验 CRC、站号、功能码、寄存器和值；异常响应只接受 `0x86` 并校验 CRC 和站号
 - `BatteryOptCapacityModuleCommandAdapter` 已调用直控服务；start 成功响应后创建 `_5` running log，失败不创建；stop 成功响应后关闭 running log，失败保留运行态
 - `_5` 已移除对 `ControlBattery.generateCommand(_5)` 旧 fallback 的依赖，adapter 不再调用 `genCmd30/_E0`
 
