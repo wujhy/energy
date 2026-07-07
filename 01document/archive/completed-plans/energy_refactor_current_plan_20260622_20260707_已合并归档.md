@@ -1501,3 +1501,16 @@ git diff --check
 ```powershell
 git diff --check
 ```
+
+## 当前结论覆盖记录
+
+更新时间：2026-07-06
+
+- `_5` 备电时长不再仅视为“等待后处理”的暂缓项：控制链路应按存在外部核容/备电模块设计，补齐 `0x35` 配置边界、`0x30 mode=1/4` 启停、回执、失败、超时和停止闭环。
+- `_5` 不进入 600 单体采集队列，不和空开独立业务混合；备电时长、放电容量、SOC/SOH 等结果计算继续由采集后处理、`CapacityPredictionProcessor`、`BatteryPredictorServiceImpl` 和 `pre_battery_group` 体系闭合。
+- `_3` 核容仍暂缓为独立后续任务，不随 `_5` 控制链路一起扩展；现有 `_3` 兼容 fallback 只用于避免行为回归。
+更新时间：2026-07-07
+
+- `_5` 备电时长 `0x30 mode=1/4` 启停已从 `ControlBattery` 旧直发 fallback 收敛进 `BatteryOptCapacityModuleCommandAdapter`：start 等待 `_E0` 回执，成功后创建 running log；stop 下发后关闭 running log。
+- `_5` 仍不进入 600 单体采集队列；容量、备电时长、SOC/SOH 等结果计算继续由采集后处理、`CapacityPredictionProcessor` 和 `BatteryPredictorServiceImpl` 闭合。
+- `_5` 后续只保留 `0x35` 配置边界、可选 `0x36` 读取能力和状态投影清理；`_3` 核容继续作为独立暂缓任务。
