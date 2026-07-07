@@ -4,7 +4,7 @@
 
 本文只处理 `_5` 备电时长测试。
 
-- `_3` 核容测试本阶段暂缓，不随 `_5` 一起扩展。
+- `_3` 核容测试已收进 `BatteryOptCapacityModuleCommandAdapter`，但仅作为 M460 底层 `0x30 mode=2/4` 兼容实现备注，不和 `_5` 外部备电直控混为同一套下层设备能力。
 - 通用空开业务不是 `_5` 备电时长主流程，不合并进 `_5`；但 `_5` 备电运行所必需的外部开关/备电模块控制能力，需要作为 `_5` 直控链路的一部分建模。
 - `_5` 不进入 600 单体采集命令队列。
 - `_5` 控制生命周期按外部核容/备电模块链路设计；结果计算继续留在实时采集和后处理链路。
@@ -143,7 +143,7 @@ M460 到 energy 的映射：
 
 - `BatteryOptCapacityModuleCommandAdapter`
   - 只承接 `_5` 备电时长外部模块控制
-  - 不处理 `_3` 核容
+  - `_3` 核容只承载 M460 底层 `0x30 mode=2/4` 兼容启停
   - 不处理通用空开业务
   - start 调用 `BackupExternalModuleControlService.startBackup(packNum)`，按 M460 下层语义写备电运行寄存器
   - start 仅在收到有效 Modbus 成功响应后创建 `_5` running log；未启用、通道缺失、响应异常、超时或拒绝时不创建 running log
@@ -159,7 +159,7 @@ M460 到 energy 的映射：
 - `ControlBattery`
   - `_5` 执行和停止均先进入 `BatteryOptCapacityModuleCommandAdapter`
   - `_5` 不再回退 `generateCommand` / `executeCommandAndLog` 旧直发链路
-  - 旧 M460/980 fallback 当前只保留给暂缓的 `_3` 核容，避免行为回归
+  - `ControlBattery` 旧 `generateCommand/executeCommandAndLog` fallback 已清理，`_3` 兼容实现收进 adapter 边界
 
 这表示 `_5` 已从 M460 代理链路切到 energy 直控外部模块的第一阶段。最终闭环仍需现场确认串口、站号、寄存器、响应样例、超时和重试策略；结果计算继续交给实时采集、`CapacityPredictionProcessor` 和 `BatteryPredictorServiceImpl`。`0x35` 不再作为默认待补控制链路；只有现场明确仍需要兼容 M460 内置计划时，才作为过渡候选项单独评估，并且必须避免双触发。
 ## `_5` 停止触发条件复核

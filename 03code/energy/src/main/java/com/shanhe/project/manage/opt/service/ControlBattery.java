@@ -2,10 +2,8 @@ package com.shanhe.project.manage.opt.service;
 
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjUtil;
-import cn.hutool.core.util.StrUtil;
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.common.utils.DateUtils;
-import com.shanhe.framework.comm.CommServer;
 import com.shanhe.framework.enums.*;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
@@ -17,7 +15,6 @@ import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.*;
 import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
-import com.shanhe.project.manage.opt.cmd.CmdBatteryControlService;
 import com.shanhe.project.manage.opt.domain.BatteryCommandContext;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import lombok.extern.slf4j.Slf4j;
@@ -39,9 +36,6 @@ import java.util.Objects;
 @Service
 public class ControlBattery extends ControlBase {
 
-    /** 旧 M460/980 指令生成器，新测试控制不应继续扩展该链路。 */
-    @Resource
-    private CmdBatteryControlService cmdBatteryControlService;
     /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
@@ -70,9 +64,6 @@ public class ControlBattery extends ControlBase {
     @Resource
     private BatteryModeStatusService batteryModeStatusService;
 
-    /** 缓存结果 **/
-    CacheKeyEnum cacheKeyEnum = CacheKeyEnum.RESULT;
-
     /** 统一执行蓄电池测试命令，页面立即执行和计划任务触发共用该入口。 */
     public AjaxResult executeBatteryOpt(DevBatteryOpt opt, BatteryOptExecuteType executeType) {
         return executeBatteryOptInternal(opt, executeType);
@@ -99,24 +90,10 @@ public class ControlBattery extends ControlBase {
         if (adaptedResult != null) {
             return adaptedResult;
         }
-        if (!isLegacyFallbackAllowed(context.testEnum)) {
-            return AjaxResult.error("当前测试类型未完成新链路执行，禁止回退旧M460指令", 0);
-        }
-
-        // 旧 M460/980 临时兼容命令，仅保留给尚未迁移的核容。
-        CommandInfo cmdInfo = generateCommand(context.testEnum, context.config, context.opt);
-        if (cmdInfo == null) {
-            return AjaxResult.error("下发蓄电池测试指令类型失败", 0);
-        }
-        if (StrUtil.isBlank(cmdInfo.cmdStr)) {
-            return AjaxResult.error("下发蓄电池测试指令失败，指令生成失败", 0);
-        }
-
-        // 执行命令并记录日志
-        return executeCommandAndLog(context, cmdInfo);
+        return AjaxResult.error("当前测试类型未完成新链路执行，禁止回退旧M460指令", 0);
     }
 
-    /** 尝试走已迁移的新链路；只有未迁移的核容允许返回 null 进入旧 fallback。 */
+    /** 尝试走已迁移的新链路；已迁移类型必须返回明确结果。 */
     private AjaxResult tryExecuteAdaptedCommand(BatteryCommandContext context) {
         try {
             switch (context.testEnum) {
@@ -125,7 +102,7 @@ public class ControlBattery extends ControlBase {
                 case _5:
                     return batteryOptCapacityModuleCommandAdapter.tryExecute(context);
                 case _3:
-                    return null;
+                    return batteryOptCapacityModuleCommandAdapter.tryExecute(context);
                 case _1:
                 case _2:
                 case _6:
@@ -205,55 +182,6 @@ public class ControlBattery extends ControlBase {
         return null;
     }
 
-    /** 命令信息内部类 */
-    private static class CommandInfo {
-        String cmdStr;
-        String dynCid;
-        boolean needWait;
-        boolean needRunningLog;
-
-        CommandInfo(String cmdStr, String dynCid, boolean needWait, boolean needRunningLog) {
-            this.cmdStr = cmdStr;
-            this.dynCid = dynCid;
-            this.needWait = needWait;
-            this.needRunningLog = needRunningLog;
-        }
-    }
-
-    /** 生成旧核容测试命令。 */
-    private CommandInfo generateCommand(BatteryTestEnum testEnum, Config config, DevBatteryOpt opt) {
-        switch (testEnum) {
-            // 立即执行核容测试
-            case _3:
-                return new CommandInfo(
-                        cmdBatteryControlService.genCmd30(config, opt.getPackNum(), "2", opt.getDischargeTime(), opt.getEndVoltage()),
-                        BatteryCidEnum._E0.getDictValue(), true, true);
-            default:
-                return null;
-        }
-    }
-
-    /** 执行命令并记录日志 */
-    private AjaxResult executeCommandAndLog(BatteryCommandContext context, CommandInfo cmdInfo) {
-        // 是否重复请求
-        String resultKey = super.setControlStatus(context.config, context.opt.getPackNum(), cmdInfo.dynCid, cacheKeyEnum);
-
-        // 旧 M460/980 直发链路。新适配器无法处理时才走这里。
-        CommServer.returnCmd(cmdInfo.cmdStr);
-
-        AjaxResult ajaxResult = AjaxResult.success();
-        if (cmdInfo.needWait) {
-            ajaxResult = super.getControlResult(resultKey, cacheKeyEnum);
-        }
-
-        boolean success = Objects.equals(ajaxResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value());
-        if (cmdInfo.needRunningLog && success) {
-            optLogService.insert(context.opt.getPackNum(), context.opt.getTestType(), null, context.optLogSource);
-        }
-
-        return ajaxResult;
-    }
-
     /** 把统一执行入口来源写入旧 dev_opt_log.source，便于区分页面、计划和同步触发。 */
     private String resolveOptLogSource(BatteryOptExecuteType executeType) {
         if (executeType == null) {
@@ -274,8 +202,6 @@ public class ControlBattery extends ControlBase {
     public AjaxResult toSendStopBatteryCmdToOat(DevBatteryOpt opt) {
         // 校验设备和电池组配置
         BatteryCommandContext context = this.getCommandContext(opt, BatteryOptExecuteType.MANUAL);
-        Config config = context.config;
-
         // 停止内阻测试
         if (Objects.equals(opt.getTestType(), BatteryTestEnum._1.getDictValue())) {
             AjaxResult adaptedStopResult = batteryOptCollectorCommandAdapter.tryStop(opt);
@@ -312,22 +238,7 @@ public class ControlBattery extends ControlBase {
         if (adaptedStopResult != null) {
             return adaptedStopResult;
         }
-        if (!isLegacyFallbackAllowed(context.testEnum)) {
-            return AjaxResult.error("当前停止类型未完成新链路执行，禁止回退旧M460指令", 0);
-        }
-
-        String cmdStr = cmdBatteryControlService.genCmd30(config, opt.getPackNum(), "4", 0, 0D);
-        if (StrUtil.isBlank(cmdStr)) {
-            return AjaxResult.error("下发蓄电池停止备电失败，指令生成失败", 0);
-        }
-
-        // 旧 M460/980 直发链路。新适配器无法处理时才走这里。
-        CommServer.returnCmd(cmdStr);
-        if (Objects.equals(opt.getTestType(), BatteryTestEnum._3.getDictValue())) {
-            // 核容停止命令下发后先关闭运行日志，避免手动停止后继续阻塞后续测试。
-            optLogService.doStopTest(opt.getPackNum(), opt.getTestType());
-        }
-        return AjaxResult.success();
+        return AjaxResult.error("当前停止类型未完成新链路执行，禁止回退旧M460指令", 0);
     }
 
     /** 旧 _1 不需要下发停止命令时，同步关闭日志和工作模式，避免后续计划误判运行中。 */
@@ -341,7 +252,7 @@ public class ControlBattery extends ControlBase {
                     true);
         }
     }
-    /** 尝试停止已迁移到新链路的测试；返回 null 时继续旧 M460/980 stop fallback。 */
+    /** 尝试停止已迁移到新链路的测试；已迁移类型必须返回明确结果。 */
     private AjaxResult tryStopAdaptedCommand(BatteryCommandContext context) {
         DevBatteryOpt opt = context.opt;
         AjaxResult capacityStopResult = batteryOptCapacityModuleCommandAdapter.tryStop(context);
@@ -386,11 +297,6 @@ public class ControlBattery extends ControlBase {
                 batteryPack,
                 batteryCount == null ? 0 : Math.min(batteryCount, 245),
                 resolveOptLogSource(executeType));
-    }
-
-    /** 当前唯一允许临时走旧协议直发的测试类型。 */
-    private boolean isLegacyFallbackAllowed(BatteryTestEnum testEnum) {
-        return BatteryTestEnum._3.equals(testEnum);
     }
 
     /** 判断是否为当前控制链路不支持的测试类型。 */
