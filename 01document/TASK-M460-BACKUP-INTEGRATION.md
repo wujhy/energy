@@ -205,23 +205,25 @@ M460 到 energy 的映射：
 ## 后续任务
 
 ### TASK-BACKUP-001：结果字段闭环
+状态：部分完成；当前已有容量预测缓存与实时兼容输出链路，但仍有字段缺少明确生成来源。
 
-目标：确认实时/后处理能正确写入或保留以下字段：
+已闭合字段：
 
-- 备电时长
-- 放电容量
-- 放电时长
-- 剩余放电时长
-- SOC
-- SOH
-- 电池组状态
+- `batteryPackStatus`：由 `BatteryModuleGroupCompatibilityFillService` 基于组充放电电流投影，实时组模型、report-log adapter 和 Modbus 读取均可沿用。
+- `backupDuration`：由 `BatteryPredictorServiceImpl` 计算 `PreBatteryGroup.backUpDuration`，再由 `BatteryModuleGroupCompatibilityFillService` 回填到实时组模型并对外输出。
+- `disChargeCapacity`：由 `BatteryPredictorServiceImpl` 计算 `PreBatteryGroup.dischargeCapacity`，再由兼容填充回写实时组模型并对外输出。
+- `batteryPackSoh`/`bcapacity`：由容量预测缓存回填到实时组模型；缺失时保持空值。
+
+未闭合字段：
+
+- `disChargeDuration`：当前标准实时路径只透传 `BatteryModuleGroupRealtime.disChargeDuration`，尚未看到由后处理生成的来源。
+- `residualDischargeDuration`：当前标准实时路径只透传 `BatteryModuleGroupRealtime.residualDischargeDuration`，尚未看到由后处理生成的来源。
+- `batteryPackSoc`：当前标准实时路径只透传 `BatteryModuleGroupRealtime.batteryPackSoc`，尚未看到由容量预测生成的来源。
 
 规则：
-
-- 不写假默认 `0`
-- 缺失值保持 null/unsupported
-- Modbus 读取缺失值时保持现有未就绪行为
-
+- 不写假默认 `0`；`BatteryPredictorServiceImpl` 现有 `backUpDuration=0` 属于历史预测对象默认值，后续如要对外表达“未知”需单独评估迁移策略，不能在 `_5` adapter 中补默认。
+- 缺失值保持 null/unsupported。
+- Modbus 读取缺失值时保持现有未就绪或缺失字段行为。
 ### TASK-BACKUP-002：运行态补偿
 
 状态：第一阶段已实现。
