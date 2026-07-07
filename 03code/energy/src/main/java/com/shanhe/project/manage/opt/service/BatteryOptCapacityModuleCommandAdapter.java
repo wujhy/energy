@@ -1,13 +1,8 @@
 package com.shanhe.project.manage.opt.service;
 
-import cn.hutool.core.util.StrUtil;
-import com.shanhe.framework.comm.CommServer;
-import com.shanhe.framework.enums.BatteryCidEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
-import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.manage.config.domain.DevBatteryOpt;
-import com.shanhe.project.manage.opt.cmd.CmdBatteryControlService;
 import com.shanhe.project.manage.opt.domain.BatteryCommandContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,12 +24,9 @@ import java.util.Objects;
 @Service
 public class BatteryOptCapacityModuleCommandAdapter extends ControlBase {
 
-    private static final String BACKUP_START_MODE = "1";
-    private static final String BACKUP_STOP_MODE = "4";
-
-    /** 旧 M460/980 核容模块 0x30 指令生成器，当前仅用于备电外部模块启停。 */
+    /** 外部备电模块 energy 直控服务。 */
     @Resource
-    private CmdBatteryControlService cmdBatteryControlService;
+    private BackupExternalModuleControlService backupExternalModuleControlService;
     /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
@@ -48,31 +40,14 @@ public class BatteryOptCapacityModuleCommandAdapter extends ControlBase {
         return null;
     }
 
-    /** `_5` 备电时长开始入口：下发外部模块 0x30 mode=1，并等待 E0 回执。 */
+    /** `_5` 备电时长开始入口：energy 直控外部备电模块启动。 */
     public AjaxResult tryExecute(BatteryCommandContext context) {
         DevBatteryOpt opt = context == null ? null : context.opt;
         if (!isBackupTest(opt)) {
             return null;
         }
 
-        String cmdStr = cmdBatteryControlService.genCmd30(
-                context.config,
-                opt.getPackNum(),
-                BACKUP_START_MODE,
-                opt.getDischargeTime(),
-                opt.getEndVoltage());
-        if (StrUtil.isBlank(cmdStr)) {
-            return AjaxResult.error("下发蓄电池备电开始失败，指令生成失败", 0);
-        }
-
-        String resultKey = super.setControlStatus(
-                context.config,
-                opt.getPackNum(),
-                BatteryCidEnum._E0.getDictValue(),
-                CacheKeyEnum.RESULT);
-        CommServer.returnCmd(cmdStr);
-
-        AjaxResult result = super.getControlResult(resultKey, CacheKeyEnum.RESULT);
+        AjaxResult result = backupExternalModuleControlService.startBackup(opt.getPackNum());
         boolean success = Objects.equals(result.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value());
         if (success) {
             optLogService.insert(opt.getPackNum(), opt.getTestType(), null, context.optLogSource);
@@ -89,26 +64,19 @@ public class BatteryOptCapacityModuleCommandAdapter extends ControlBase {
         return null;
     }
 
-    /** `_5` 备电时长停止入口：下发外部模块 0x30 mode=4，并关闭运行日志。 */
+    /** `_5` 备电时长停止入口：energy 直控外部备电模块停止。 */
     public AjaxResult tryStop(BatteryCommandContext context) {
         DevBatteryOpt opt = context == null ? null : context.opt;
         if (!isBackupTest(opt)) {
             return null;
         }
 
-        String cmdStr = cmdBatteryControlService.genCmd30(
-                context.config,
-                opt.getPackNum(),
-                BACKUP_STOP_MODE,
-                0,
-                0D);
-        if (StrUtil.isBlank(cmdStr)) {
-            return AjaxResult.error("下发蓄电池备电停止失败，指令生成失败", 0);
+        AjaxResult result = backupExternalModuleControlService.stopBackup(opt.getPackNum());
+        boolean success = Objects.equals(result.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value());
+        if (success) {
+            optLogService.doStopTest(opt.getPackNum(), opt.getTestType());
         }
-
-        CommServer.returnCmd(cmdStr);
-        optLogService.doStopTest(opt.getPackNum(), opt.getTestType());
-        return AjaxResult.success();
+        return result;
     }
 
     private boolean isBackupTest(DevBatteryOpt opt) {
