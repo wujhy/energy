@@ -379,7 +379,7 @@ class ControlBatteryTest {
                 (BatteryOptCapacityModuleCommandAdapter) ReflectionTestUtils.getField(service, "batteryOptCapacityModuleCommandAdapter");
         Mockito.when(reportLogService.lastCache(1)).thenReturn(reportLog(BatteryPackStatusEnum.IDLE.getCode()));
         Mockito.when(commandAdapter.tryExecutePrepared(Mockito.any(BatteryCommandContext.class))).thenReturn(null);
-        Mockito.when(capacityAdapter.tryExecute(Mockito.any())).thenReturn(null);
+        Mockito.when(capacityAdapter.tryExecute(Mockito.any(BatteryCommandContext.class))).thenReturn(null);
 
         AjaxResult result = service.toSendBatteryCmdToOat(request(BatteryTestEnum._4.getDictValue()));
 
