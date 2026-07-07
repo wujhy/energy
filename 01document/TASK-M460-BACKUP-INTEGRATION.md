@@ -139,25 +139,29 @@ M460 到 energy 的映射：
 
 ## 当前实现
 
-当前代码只完成 `_5` 过渡阶段：启停下发已从 `ControlBattery` 旧 fallback 收敛进 `BatteryOptCapacityModuleCommandAdapter`，但该 adapter 仍调用 `genCmd30/_E0` 走 M460 代理链路，不是最终直控实现：
+当前 `_5` 已完成 energy 直控第一阶段：启停下发已从 `ControlBattery` 旧 fallback 收敛进 `BatteryOptCapacityModuleCommandAdapter`，并由 adapter 默认调用 `BackupExternalModuleControlService` 直接向外部备电模块发送 Modbus RTU 写单寄存器控制，不再调用 `genCmd30/_E0` 走 M460 代理链路。
 
 - `BatteryOptCapacityModuleCommandAdapter`
   - 只承接 `_5` 备电时长外部模块控制
   - 不处理 `_3` 核容
-  - 不处理空开
-  - 过渡 start 仍通过上位协议向 M460 下发 `0x30 mode=1`；最终应改为 energy 直接下发下层外部模块 Modbus 控制
-  - 过渡 start 仍等待 M460 `_E0` 回执；最终应等待 energy 直控 Modbus 响应或明确超时结果
-  - start 被拒绝、指令生成失败或等待超时时不创建 running log
-  - 过渡 stop 仍通过上位协议向 M460 下发 `0x30 mode=4`；最终应改为 energy 直接下发下层外部模块 Modbus 控制
-  - stop 下发后关闭 `_5` running log，沿用旧手动停止语义
+  - 不处理通用空开业务
+  - start 调用 `BackupExternalModuleControlService.startBackup(packNum)`，按 M460 下层语义写备电运行寄存器
+  - start 仅在收到有效 Modbus 成功响应后创建 `_5` running log；未启用、通道缺失、响应异常、超时或拒绝时不创建 running log
+  - stop 调用 `BackupExternalModuleControlService.stopBackup(packNum)`，按 M460 下层语义写停止/空闲寄存器
+  - stop 仅在直控成功后关闭 `_5` running log；停止失败时返回失败并保留运行态，交给补偿机制后续处理
+
+- `BackupExternalModuleControlService`
+  - energy 作为 Modbus RTU 主站构造 `0x06` 写单寄存器帧
+  - 默认配置关闭，未启用或未配置串口时返回中文错误，不会误发外部模块
+  - 默认参考 M460 下层配置：站号 `0x6E + packNum - 1`、备电运行寄存器 `0x1142`、停止/空闲寄存器 `0x1141`、写值 `0x00FF`
+  - 响应以外部模块 Modbus 回显帧、异常码、CRC、站号、功能码、寄存器和值为准；短读会在超时窗口内继续累积，避免串口分片导致误判失败
 
 - `ControlBattery`
   - `_5` 执行和停止均先进入 `BatteryOptCapacityModuleCommandAdapter`
   - `_5` 不再回退 `generateCommand` / `executeCommandAndLog` 旧直发链路
   - 旧 M460/980 fallback 当前只保留给暂缓的 `_3` 核容，避免行为回归
 
-这表示 `_5` 当前只完成了 M460 代理链路的收口，不是最终整合闭环。最终闭环应由 energy 直接向外部核容/备电/空开模块下发 Modbus 写控制，自己维护响应、超时、失败和 running log；结果计算继续交给实时采集、`CapacityPredictionProcessor` 和 `BatteryPredictorServiceImpl`。`0x35` 不再作为默认待补控制链路；只有现场明确仍需要兼容 M460 内置计划时，才作为过渡候选项单独评估，并且必须避免双触发。
-
+这表示 `_5` 已从 M460 代理链路切到 energy 直控外部模块的第一阶段。最终闭环仍需现场确认串口、站号、寄存器、响应样例、超时和重试策略；结果计算继续交给实时采集、`CapacityPredictionProcessor` 和 `BatteryPredictorServiceImpl`。`0x35` 不再作为默认待补控制链路；只有现场明确仍需要兼容 M460 内置计划时，才作为过渡候选项单独评估，并且必须避免双触发。
 ## 状态投影说明
 
 状态字段必须按来源和用途拆开，不能把旧 `pack_data` 或 M460 寄存器里暴露的所有字段都当成 600 单体协议原始事实。
@@ -192,7 +196,7 @@ M460 到 energy 的映射：
 ### 后续优化方向
 
 - `_5` 聚焦控制生命周期和结果字段。
-- `CapacityPredictionProcessor` 和 `BatteryPredictorServiceImpl` 是 energy 侧容量/备电结果主路径：它们已监听采集数据中的 `batteryPackStatus` 转换，并在备电结束时估算放电容量。不要在 `_5` 命令 adapter 中重复计算。
+- `CapacityPredictionProcessor` 和 `BatteryPredictorServiceImpl` 是 energy 侧容量/备电结果主路径：它们已监听采集数据中的 `batteryPackStatus` 转换，并在备电结束时估算放电容量。不要在 `_5` 命令 adapter 或外部模块直控服务中重复计算。
 - 复核 `_5` 手动执行与现有自动操作日志/后处理的关系。若现有后处理已能可靠基于 BACKUP 转换创建/关闭 `_5` 日志，手动 `_5` 只需要补充用户意图/来源，不应重复计算逻辑。
 - 后续新增状态投影清理任务：`_1/_6` 的 `resistanceTestStatus` 应从内部内阻测试运行态推导，并通过 report-log 和 Modbus adapter 对外暴露。
 - 修改状态语义前，必须审计 `batteryPackStatus`、`resistanceTestStatus`、`deviceWorkStatus`、`deviceWorkIOStatus`、running optLog 和 `BatteryModeStatusService` 的所有消费方。

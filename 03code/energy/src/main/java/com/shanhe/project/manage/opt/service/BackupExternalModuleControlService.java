@@ -158,11 +158,21 @@ public class BackupExternalModuleControlService {
 
     private byte[] readResponse(SerialPort serialPort) {
         byte[] buffer = new byte[WRITE_RESPONSE_LENGTH];
-        int read = serialPort.readBytes(buffer, buffer.length);
-        if (read <= 0) {
+        int offset = 0;
+        long deadline = System.currentTimeMillis() + safe(properties.getTimeoutMs(), 1000);
+        while (offset < buffer.length && System.currentTimeMillis() <= deadline) {
+            int read = serialPort.readBytes(buffer, buffer.length - offset, offset);
+            if (read > 0) {
+                offset += read;
+                if (offset >= 5 && (buffer[1] & 0x80) != 0) {
+                    break;
+                }
+            }
+        }
+        if (offset <= 0) {
             return null;
         }
-        return read == buffer.length ? buffer : Arrays.copyOf(buffer, read);
+        return offset == buffer.length ? buffer : Arrays.copyOf(buffer, offset);
     }
 
     private String validateWriteResponse(byte[] response, int stationAddress, int registerAddress, int writeValue) {
