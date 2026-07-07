@@ -118,6 +118,25 @@ public class ControlBattery extends ControlBase {
         }
     }
 
+    /** 立即执行停止测试操作。 */
+    public AjaxResult toSendStopBatteryCmdToOat(DevBatteryOpt opt) {
+        BatteryTestEnum testEnum = BatteryTestEnum.find(opt.getTestType());
+        if (testEnum == null || BatteryTestEnum._99.equals(testEnum)) {
+            return AjaxResult.error("停止蓄电池测试指令类型错误");
+        }
+        switch (testEnum) {
+            case _1:
+            case _2:
+            case _6:
+                return batteryOptCollectorCommandAdapter.tryStop(opt);
+            case _3:
+            case _5:
+                return batteryOptCapacityModuleCommandAdapter.tryStop(opt);
+            default:
+                return AjaxResult.error("停止蓄电池测试指令类型错误");
+        }
+    }
+
     /** 统一入口业务校验。 */
     private AjaxResult validateCommandContext(BatteryCommandContext context) {
         if (context.opt == null || context.opt.getPackNum() == null) {
@@ -186,33 +205,6 @@ public class ControlBattery extends ControlBase {
         }
     }
 
-    /** 立即执行停止测试操作。 */
-    public AjaxResult toSendStopBatteryCmdToOat(DevBatteryOpt opt) {
-        BatteryCommandContext context = this.getCommandContext(opt, BatteryOptExecuteType.MANUAL);
-        if (isUnsupportedCommandType(context.testEnum)) {
-            return AjaxResult.error("停止蓄电池测试指令类型失败");
-        }
-        AjaxResult adaptedStopResult = tryStopAdaptedCommand(context);
-        if (adaptedStopResult != null) {
-            return adaptedStopResult;
-        }
-        return AjaxResult.error("当前停止类型未完成新链路执行，禁止回退旧M460指令", 0);
-    }
-
-    /** 尝试停止已迁移到新链路的测试；已迁移类型必须返回明确结果。 */
-    private AjaxResult tryStopAdaptedCommand(BatteryCommandContext context) {
-        switch (context.testEnum) {
-            case _1:
-            case _2:
-            case _6:
-                return batteryOptCollectorCommandAdapter.tryStop(context.opt);
-            case _3:
-            case _5:
-                return batteryOptCapacityModuleCommandAdapter.tryStop(context);
-            default:
-                return null;
-        }
-    }
     /** 校验设备和电池组信息，入口后续会用到的配置聚合起来。 */
     private BatteryCommandContext getCommandContext(DevBatteryOpt devBatteryOpt, BatteryOptExecuteType executeType) {
         // 设备
