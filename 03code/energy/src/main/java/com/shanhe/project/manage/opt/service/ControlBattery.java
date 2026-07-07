@@ -3,13 +3,11 @@ package com.shanhe.project.manage.opt.service;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjUtil;
 import com.shanhe.common.exception.ServiceException;
-import com.shanhe.common.utils.DateUtils;
 import com.shanhe.framework.enums.*;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
-import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.manage.alarm.domain.AlarmLog;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.*;
@@ -21,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -60,10 +57,6 @@ public class ControlBattery extends ControlBase {
     /** 核容/备电模块命令适配器。 */
     @Resource
     private BatteryOptCapacityModuleCommandAdapter batteryOptCapacityModuleCommandAdapter;
-    /** 工作模式状态服务。 */
-    @Resource
-    private BatteryModeStatusService batteryModeStatusService;
-
     /** 统一执行蓄电池测试命令，页面立即执行和计划任务触发共用该入口。 */
     public AjaxResult executeBatteryOpt(DevBatteryOpt opt, BatteryOptExecuteType executeType) {
         return executeBatteryOptInternal(opt, executeType);
@@ -78,7 +71,7 @@ public class ControlBattery extends ControlBase {
     private AjaxResult executeBatteryOptInternal(DevBatteryOpt opt, BatteryOptExecuteType executeType) {
         BatteryCommandContext context = getCommandContext(opt, executeType);
         if (isUnsupportedCommandType(context.testEnum)) {
-            return AjaxResult.error("下发蓄电池测试指令类型失败", 0);
+            return AjaxResult.error("下发蓄电池测试指令类型失败");
         }
 
         AjaxResult validateResult = validateCommandContext(context);
@@ -90,7 +83,7 @@ public class ControlBattery extends ControlBase {
         if (adaptedResult != null) {
             return adaptedResult;
         }
-        return AjaxResult.error("当前测试类型未完成新链路执行，禁止回退旧M460指令", 0);
+        return AjaxResult.error("下发蓄电池测试指令类型失败");
     }
 
     /** 尝试走已迁移的新链路；已迁移类型必须返回明确结果。 */
@@ -99,9 +92,8 @@ public class ControlBattery extends ControlBase {
             switch (context.testEnum) {
                 case _4:
                     return AjaxResult.error("浮充测试当前属于 0x31 浮充参数配置转发，不是 600 采集测试命令，请继续通过计划配置保存链路处理", 0);
-                case _5:
-                    return batteryOptCapacityModuleCommandAdapter.tryExecute(context);
                 case _3:
+                case _5:
                     return batteryOptCapacityModuleCommandAdapter.tryExecute(context);
                 case _1:
                 case _2:
@@ -117,10 +109,6 @@ public class ControlBattery extends ControlBase {
             }
         } catch (ServiceException e) {
             log.warn("蓄电池测试适配命令业务异常 packNum={}, testType={}, executeType={}, message={}",
-                    context.opt.getPackNum(), context.testEnum.getDictValue(), context.executeType, e.getMessage());
-            return AjaxResult.error(e.getMessage(), 0);
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            log.warn("蓄电池测试适配命令状态异常 packNum={}, testType={}, executeType={}, message={}",
                     context.opt.getPackNum(), context.testEnum.getDictValue(), context.executeType, e.getMessage());
             return AjaxResult.error(e.getMessage(), 0);
         } catch (Exception e) {
@@ -147,7 +135,6 @@ public class ControlBattery extends ControlBase {
         if (null == batteryReportLog || null == batteryReportLog.getPackParam()) {
             return AjaxResult.error("暂无上报数据", 0);
         }
-        context.reportLog = batteryReportLog;
 
         // 是否连接
         AlarmLog alarmLog = alarmLogService.getByCache(context.opt.getPackNum(), null, ItemCode.TXZT.getCode());
@@ -198,42 +185,13 @@ public class ControlBattery extends ControlBase {
                 return executeType.name().toLowerCase();
         }
     }
-    /** 立即执行停止备电操作 */
+
+    /** 立即执行停止测试操作。 */
     public AjaxResult toSendStopBatteryCmdToOat(DevBatteryOpt opt) {
-        // 校验设备和电池组配置
         BatteryCommandContext context = this.getCommandContext(opt, BatteryOptExecuteType.MANUAL);
-        // 停止内阻测试
-        if (Objects.equals(opt.getTestType(), BatteryTestEnum._1.getDictValue())) {
-            AjaxResult adaptedStopResult = batteryOptCollectorCommandAdapter.tryStop(opt);
-            if (adaptedStopResult != null
-                    && Objects.equals(adaptedStopResult.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value())) {
-                return adaptedStopResult;
-            }
-
-            BatteryReportLog batteryReportLog = getCurrentReportLog(opt.getPackNum());
-
-            // 无数据上报结束
-            if (null == batteryReportLog || null == batteryReportLog.getPackParam()) {
-                closeLegacyInternalResistanceState(opt.getPackNum());
-                return AjaxResult.success();
-            }
-
-            // 当前不在内阻测试状态
-            String resistanceTestStatus = Objects.toString(batteryReportLog.getPackParam().get("resistanceTestStatus"), null);
-            if (!ResistanceTestStatusEnum.isCode(resistanceTestStatus, ResistanceTestStatusEnum.TESTING)) {
-                closeLegacyInternalResistanceState(opt.getPackNum());
-                return AjaxResult.success();
-            }
-
-            // 上报时间超过 3 分钟
-            int diff = DateUtils.differentMillsByMillisecond(batteryReportLog.getCreateTime(), new Date());
-            if (diff > 3) {
-                closeLegacyInternalResistanceState(opt.getPackNum());
-                return AjaxResult.success();
-            }
-            return AjaxResult.success();
+        if (isUnsupportedCommandType(context.testEnum)) {
+            return AjaxResult.error("停止蓄电池测试指令类型失败");
         }
-
         AjaxResult adaptedStopResult = tryStopAdaptedCommand(context);
         if (adaptedStopResult != null) {
             return adaptedStopResult;
@@ -241,32 +199,21 @@ public class ControlBattery extends ControlBase {
         return AjaxResult.error("当前停止类型未完成新链路执行，禁止回退旧M460指令", 0);
     }
 
-    /** 旧 _1 不需要下发停止命令时，同步关闭日志和工作模式，避免后续计划误判运行中。 */
-    private void closeLegacyInternalResistanceState(Integer packNum) {
-        optLogService.doStopTest(packNum, BatteryTestEnum._1.getDictValue());
-        if (batteryModeStatusService != null) {
-            batteryModeStatusService.markStopped(
-                    packNum,
-                    BatteryModeStatusService.MODE_INTERNAL_RESISTANCE,
-                    1,
-                    true);
-        }
-    }
     /** 尝试停止已迁移到新链路的测试；已迁移类型必须返回明确结果。 */
     private AjaxResult tryStopAdaptedCommand(BatteryCommandContext context) {
-        DevBatteryOpt opt = context.opt;
-        AjaxResult capacityStopResult = batteryOptCapacityModuleCommandAdapter.tryStop(context);
-        if (capacityStopResult != null) {
-            return capacityStopResult;
+        switch (context.testEnum) {
+            case _1:
+            case _2:
+            case _6:
+                return batteryOptCollectorCommandAdapter.tryStop(context.opt);
+            case _3:
+            case _5:
+                return batteryOptCapacityModuleCommandAdapter.tryStop(context);
+            default:
+                return null;
         }
-        if (Objects.equals(opt.getTestType(), BatteryTestEnum._2.getDictValue())
-                || Objects.equals(opt.getTestType(), BatteryTestEnum._6.getDictValue())) {
-            return batteryOptCollectorCommandAdapter.tryStop(opt);
-        }
-        return null;
     }
-
-    /** 校验设备和电池组信息，并把入口后续会用到的配置聚合起来。 */
+    /** 校验设备和电池组信息，入口后续会用到的配置聚合起来。 */
     private BatteryCommandContext getCommandContext(DevBatteryOpt devBatteryOpt, BatteryOptExecuteType executeType) {
         // 设备
         Config config = configService.selectDefaultConfig();

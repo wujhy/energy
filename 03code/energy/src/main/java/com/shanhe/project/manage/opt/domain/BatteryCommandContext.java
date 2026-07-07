@@ -18,7 +18,6 @@ public class BatteryCommandContext {
     public final BatteryPack batteryPack;
     public final int batteryCount;
     public final String optLogSource;
-    public BatteryReportLog reportLog;
 
     public BatteryCommandContext(DevBatteryOpt opt,
                                  BatteryTestEnum testEnum,
