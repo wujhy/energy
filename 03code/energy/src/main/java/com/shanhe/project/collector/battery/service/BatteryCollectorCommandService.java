@@ -235,6 +235,9 @@ public class BatteryCollectorCommandService {
         if (mode == null) {
             return stopRejected("测试类型不支持停止");
         }
+
+        closeRunningOptLog(batteryGroup, optLogType);
+
         BatteryModeInfo modeInfo = batteryModeStatusService == null ? null : batteryModeStatusService.get(batteryGroup);
         if (modeInfo == null || !Objects.equals(modeInfo.getPackNum(), batteryGroup)
                 || !Objects.equals(modeInfo.getStatus(), 1)) {
@@ -243,8 +246,8 @@ public class BatteryCollectorCommandService {
         if (!Objects.equals(modeInfo.getMode(), mode)) {
             return stopRejected("当前运行测试类型与停止类型不一致");
         }
+
         int cancelled = collectorService == null ? 0 : collectorService.cancelQueuedModuleCommands(batteryGroup, mode);
-        closeRunningOptLog(batteryGroup, optLogType);
         batteryModeStatusService.markStopped(batteryGroup, mode, modeInfo.getAddress(), true);
         return BatteryCollectorCommandResult.builder()
                 .success(true)
