@@ -171,7 +171,7 @@ M460 到 energy 的映射：
 这些是 energy 自维护控制状态，应优先驱动业务判断：
 
 - `_5` 备电时长生命周期：running `_5` `dev_opt_log` 是当前生命周期标记。
-- `_5` 当前由 `BatteryOptCapacityModuleCommandAdapter` 发送外部核容/备电模块控制命令：start 对应 `0x30 mode=1`，stop 对应 `0x30 mode=4`，start 回执成功后创建 running log。
+- `_5` 当前由 `BatteryOptCapacityModuleCommandAdapter` 调用 `BackupExternalModuleControlService` 发送外部核容/备电模块 Modbus 写控制：start 写备电运行寄存器，stop 写停止/空闲寄存器，start 直控成功后创建 running log。M460 `0x30 mode=1/4` 只作为下层控制语义参考，不是运行链路。
 - `_5` 已从 `ControlBattery` 旧 fallback 收敛到 adapter 边界；后续不应再新增 `_5` 对旧 `generateCommand` / `executeCommandAndLog` 的依赖。
 - `_1/_6` 内阻生命周期：`BatteryModeStatusService`、running optLog、pending command、命令响应、超时、停止和补偿结果。
 - `_2` 连接条电阻生命周期：沿用采集命令链路的内部 mode/queue/log 模型。
@@ -304,14 +304,16 @@ M460 到 energy 的映射：
 
 ### TASK-BACKUP-006：废弃 M460 代理链路
 
+状态：默认废弃已完成；`_5` start/stop 当前不会调用 `genCmd30/_E0`，也不会回退旧 `generateCommand/executeCommandAndLog`。
+
 目标：在 `_5` 直控链路稳定后，删除或显式开关化 M460 代理路径，避免后续误以为 `0x30/_E0` 是完成态。
 
 删除条件：
 
-- `_5` start/stop 已默认走 energy 直控外部模块服务。
-- 计划调度、页面立即执行、同步立即执行均通过同一入口触发直控服务。
-- 运行日志、补偿、结果后处理均不依赖 M460 `_E0`。
-- 如仍需现场兼容，必须有明确配置开关、中文日志和文档说明。
+- 已完成：`_5` start/stop 已默认走 energy 直控外部模块服务。
+- 已完成：计划调度、页面立即执行、同步立即执行均通过同一入口触发直控服务。
+- 已完成：运行日志、补偿、结果后处理均不依赖 M460 `_E0`。
+- 剩余条件：如仍需现场兼容，必须有明确配置开关、中文日志和文档说明。
 ## 暂缓
 
 ### `_3` 核容测试
