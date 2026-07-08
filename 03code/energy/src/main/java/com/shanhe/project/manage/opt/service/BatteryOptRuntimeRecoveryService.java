@@ -7,7 +7,6 @@ import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.iot.model.BatteryModeInfo;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,10 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * 保守收口崩溃或异常停止后残留的蓄电池测试运行态。
+ * 保守收口崩溃或异常停止后残留的蓄电池测试运行态
+ *
+ * @author wjh
+ * @since 2026/7/8
  */
 @Slf4j
 @Service
@@ -36,8 +38,6 @@ public class BatteryOptRuntimeRecoveryService {
     private BatteryCollectorProperties batteryCollectorProperties;
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
-    @Resource
-    private BatteryReportLogService batteryReportLogService;
 
     /** 调度前补偿指定电池组的残留运行态。 */
     public int recoverPack(Integer packNum) {
@@ -107,7 +107,7 @@ public class BatteryOptRuntimeRecoveryService {
     }
 
     private Boolean isRealtimeBackup(Integer packNum) {
-        BatteryReportLog reportLog = getCurrentReportLog(packNum);
+        BatteryReportLog reportLog = batteryModuleReportLogAdapterService.currentOrLastCache(packNum);
         if (reportLog == null || reportLog.getPackParam() == null) {
             return null;
         }
@@ -117,25 +117,6 @@ public class BatteryOptRuntimeRecoveryService {
             return null;
         }
         return BatteryPackStatusEnum.isCode(status, BatteryPackStatusEnum.BACKUP);
-    }
-
-    private BatteryReportLog getCurrentReportLog(Integer packNum) {
-        if (packNum == null) {
-            return null;
-        }
-        if (batteryCollectorProperties != null
-                && Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())
-                && batteryModuleReportLogAdapterService != null) {
-            try {
-                BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
-                if (realtimeLog != null && realtimeLog.getPackParam() != null && !realtimeLog.getPackParam().isEmpty()) {
-                    return realtimeLog;
-                }
-            } catch (Exception e) {
-                log.warn("运行态补偿读取备电实时状态失败, packNum={}", packNum, e);
-            }
-        }
-        return batteryReportLogService == null ? null : batteryReportLogService.lastCache(packNum);
     }
 
     private Integer resolveMode(Integer testType) {
@@ -150,6 +131,10 @@ public class BatteryOptRuntimeRecoveryService {
     }
 
     private long timeoutMillis(Integer testType) {
+        if (BatteryTestEnum._5.getDictValue().equals(testType)) {
+            return batteryCollectorProperties.getBackupRuntimeRecoveryConfirmMs() == null ?
+                    12L * HOUR : batteryCollectorProperties.getBackupRuntimeRecoveryConfirmMs();
+        }
         if (BatteryTestEnum._6.getDictValue().equals(testType)) {
             return 30L * MINUTE;
         }

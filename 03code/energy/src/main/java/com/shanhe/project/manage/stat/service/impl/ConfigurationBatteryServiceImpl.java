@@ -6,7 +6,6 @@ import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.enums.YesNoEnum;
-import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.manage.alarm.domain.AlarmLog;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
@@ -14,7 +13,6 @@ import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.domain.ConfigAttribute;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.config.service.IConfigAttributeService;
 import com.shanhe.project.manage.opt.service.OptLogService;
@@ -46,9 +44,6 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
-    /** 电池上报日志服务。 */
-    @Resource
-    private BatteryReportLogService batteryReportLogService;
     /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
@@ -64,9 +59,6 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     /** 预估电池组服务。 */
     @Resource
     private PreBatteryGroupService preBatteryGroupService;
-    /** 电池采集器配置。 */
-    @Resource
-    private BatteryCollectorProperties batteryCollectorProperties;
     /** 电池模组上报日志适配服务。 */
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
@@ -103,28 +95,8 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     }
 
     BatteryReportLog resolveBatteryReportLog(Integer packNum) {
-        if (batteryCollectorProperties != null
-                && Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
-            try {
-                BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
-                if (isUsableBatteryReportLog(realtimeLog)) {
-                    return realtimeLog;
-                }
-            } catch (Exception e) {
-                log.warn("标准实时数据构建健康报告上下文失败, packNum={}, fallback=oldCache", packNum, e);
-            }
-        }
-        return batteryReportLogService.lastCache(packNum);
+        return batteryModuleReportLogAdapterService.currentOrLastCache(packNum, true);
     }
-
-    private boolean isUsableBatteryReportLog(BatteryReportLog log) {
-        return log != null
-                && log.getPackParam() != null
-                && !log.getPackParam().isEmpty()
-                && log.getBatteryList() != null
-                && !log.getBatteryList().isEmpty();
-    }
-
     @Override
     public Map<String, Object> getTempWarnLine(Integer packNum) {
         Map<String, Object> packMap = new HashMap<>(4);

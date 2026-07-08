@@ -5,7 +5,6 @@ import com.shanhe.common.utils.DateUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.enums.YesNoEnum;
-import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
@@ -14,7 +13,6 @@ import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.domain.Config;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.config.service.IConfigService;
 import lombok.extern.slf4j.Slf4j;
@@ -51,10 +49,6 @@ public class DeviceOnlineJob {
     private IBatteryPackService batteryPackService;
     @Resource
     private IAlarmLogService alarmLogService;
-    @Resource
-    private BatteryReportLogService batteryReportLogService;
-    @Resource
-    private BatteryCollectorProperties batteryCollectorProperties;
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
     @Resource
@@ -156,28 +150,8 @@ public class DeviceOnlineJob {
     }
 
     BatteryReportLog resolveBatteryReportLog(Integer packNum) {
-        if (batteryCollectorProperties != null
-                && Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
-            try {
-                BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
-                if (isUsableBatteryReportLog(realtimeLog)) {
-                    return realtimeLog;
-                }
-            } catch (Exception e) {
-                log.warn("标准实时数据构建设备在线告警上下文失败, packNum={}, fallback=oldCache", packNum, e);
-            }
-        }
-        return batteryReportLogService.lastCache(packNum);
+        return batteryModuleReportLogAdapterService.currentOrLastCache(packNum, true);
     }
-
-    private boolean isUsableBatteryReportLog(BatteryReportLog log) {
-        return log != null
-                && log.getPackParam() != null
-                && !log.getPackParam().isEmpty()
-                && log.getBatteryList() != null
-                && !log.getBatteryList().isEmpty();
-    }
-
     /** 持久化电池组在线/离线状态到 battery_device_state。 */
     private void persistOnlineState(Integer packNum, boolean offline) {
         try {

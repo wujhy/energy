@@ -3,7 +3,6 @@ package com.shanhe.project.manage.opt.service;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.consts.SysConst;
 import com.shanhe.framework.web.domain.AjaxResult;
-import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
 import com.shanhe.project.collector.battery.service.BatteryCollectorService;
@@ -15,7 +14,6 @@ import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.domain.ConfigAttribute;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.config.service.IConfigAttributeService;
 import com.shanhe.project.manage.host.domain.Host;
@@ -44,15 +42,9 @@ import java.util.Map;
 @Service
 public class ControlBatterySet extends ControlBase {
 
-    /** 上报日志服务。 */
-    @Resource
-    private BatteryReportLogService batteryReportLogService;
     /** 模块上报日志适配服务。 */
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
-    /** 采集配置属性。 */
-    @Resource
-    private BatteryCollectorProperties batteryCollectorProperties;
     /** 配置属性服务。 */
     @Resource
     private IConfigAttributeService configAttributeService;
@@ -431,30 +423,24 @@ public class ControlBatterySet extends ControlBase {
         return batteryModeStatusService.get(packNum);
     }
 
-    /** 清除编号数据 */
     /**
      * 读取内阻基准页使用的当前平均内阻。
      * <p>
      * 标准实时切源开启时优先按 600 实时快照单体内阻计算，缺少单体数据时回退旧上报缓存。
      */
     private Long getCurrentResistanceValue(Integer packNum) {
-        if (Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
-            try {
-                Long realtimeValue = averageResistance(batteryModuleReportLogAdapterService.buildReportLog(packNum));
-                if (realtimeValue != null) {
-                    return realtimeValue;
-                }
-            } catch (Exception e) {
-                log.warn("读取标准实时内阻基准数据失败, packNum={}", packNum, e);
-            }
+        try {
+            return averageResistance(batteryModuleReportLogAdapterService.currentOrLastCache(packNum));
+        } catch (Exception e) {
+            log.warn("读取标准实时内阻基准数据失败, packNum={}", packNum, e);
         }
-        return batteryReportLogService.resistanceValue(packNum);
+        return 0L;
     }
 
     /** 按旧上报缓存语义计算单体平均内阻，空内阻按 0 参与平均。 */
     private Long averageResistance(BatteryReportLog reportLog) {
         if (reportLog == null || reportLog.getBatteryList() == null || reportLog.getBatteryList().isEmpty()) {
-            return null;
+            return 0L;
         }
         double resistanceValue = 0;
         for (BatteryMonitor battery : reportLog.getBatteryList()) {

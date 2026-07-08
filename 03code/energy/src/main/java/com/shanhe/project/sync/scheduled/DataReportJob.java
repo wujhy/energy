@@ -2,13 +2,11 @@ package com.shanhe.project.sync.scheduled;
 
 import cn.hutool.core.util.StrUtil;
 import com.shanhe.common.constant.Constants;
-import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.manage.alarm.domain.AlarmLog;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.host.domain.Host;
 import com.shanhe.project.manage.host.service.IHostService;
@@ -42,10 +40,6 @@ public class DataReportJob {
     private IAlarmLogService alarmLogService;
     @Resource
     private ClientReportService clientReportService;
-    @Resource
-    private BatteryReportLogService batteryReportLogService;
-    @Resource
-    private BatteryCollectorProperties batteryCollectorProperties;
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
 
@@ -146,27 +140,10 @@ public class DataReportJob {
         }
     }
 
-    /**
-     * 解析蓄电池 JSON/TCP 上报数据源。
-     *
-     * @param packNum 电池组编号
-     * @return 蓄电池上报数据
-     */
+    /** 解析蓄电池 JSON/TCP 上报数据源。 */
     BatteryReportLog resolveBatteryReportLog(Integer packNum) {
-        if (batteryCollectorProperties != null
-                && Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
-            try {
-                BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
-                if (isUsableBatteryReportLog(realtimeLog)) {
-                    return realtimeLog;
-                }
-            } catch (Exception e) {
-                log.warn("标准实时数据构建JSON/TCP上报失败, packNum={}, fallback=oldCache", packNum, e);
-            }
-        }
-        return batteryReportLogService.lastCache(packNum);
+        return batteryModuleReportLogAdapterService.currentOrLastCache(packNum, true);
     }
-
     /**
      * 判断蓄电池上报数据是否可用于 JSON/TCP 上报。
      *

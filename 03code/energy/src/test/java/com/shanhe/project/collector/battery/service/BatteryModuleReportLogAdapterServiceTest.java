@@ -4,6 +4,7 @@ import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
+import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -128,6 +129,41 @@ class BatteryModuleReportLogAdapterServiceTest {
         Mockito.verify(snapshotService).getCachedSnapshot(1);
         Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
         Mockito.verifyNoInteractions(mapper);
+    }
+
+    @Test
+    void shouldReturnRealtimeWhenCurrentReportLogIsUsable() {
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackVoltage(220.0d);
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
+        Mockito.when(mapper.selectGroup(1)).thenReturn(group);
+        Mockito.when(mapper.selectCells(1)).thenReturn(Arrays.asList(cell(1, 2.10d, 100, 25.0d)));
+        ReflectionTestUtils.setField(service, "realtimeMapper", mapper);
+        ReflectionTestUtils.setField(service, "snapshotService", null);
+        ReflectionTestUtils.setField(service, "batteryReportLogService", reportLogService);
+
+        BatteryReportLog reportLog = service.currentOrLastCache(1, true);
+
+        Assertions.assertEquals("220.0", reportLog.getPackParam().get("packVoltage"));
+        Mockito.verifyNoInteractions(reportLogService);
+    }
+
+    @Test
+    void shouldFallbackToLastCacheWhenCurrentReportLogIsEmpty() {
+        BatteryModuleRealtimeMapper mapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
+        BatteryReportLog historyLog = new BatteryReportLog();
+        historyLog.setPackNum(1);
+        Mockito.when(reportLogService.lastCache(1)).thenReturn(historyLog);
+        ReflectionTestUtils.setField(service, "realtimeMapper", mapper);
+        ReflectionTestUtils.setField(service, "snapshotService", null);
+        ReflectionTestUtils.setField(service, "batteryReportLogService", reportLogService);
+
+        BatteryReportLog reportLog = service.currentOrLastCache(1, true);
+
+        Assertions.assertSame(historyLog, reportLog);
+        Mockito.verify(reportLogService).lastCache(1);
     }
 
     @Test

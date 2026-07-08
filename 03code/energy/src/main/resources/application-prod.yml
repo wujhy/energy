@@ -118,6 +118,8 @@ battery-collector:
         jsonTcpModuleCommandEnabled: false
         # 是否从源头保留 600 模块命令 _99 明细日志；业务日志不受影响
         moduleCommandSuccessLogEnabled: false
+        # _5 备电运行日志补偿确认窗口；超过该窗口且实时状态明确非 BACKUP 才关闭残留 running 日志
+        backupRuntimeRecoveryConfirmMs: 43200000
         groupCalculationStaleThresholdMs: 180000
         moduleAddressCacheEnabled: true
         moduleAddressMissThreshold: 3

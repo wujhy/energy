@@ -55,6 +55,9 @@ public class BatteryCollectorProperties {
     /** 是否从源头保留 600 模块命令 _99 明细日志；业务日志不受影响。 */
     private Boolean moduleCommandSuccessLogEnabled = Boolean.FALSE;
 
+    /** _5 备电运行日志补偿前等待实时状态离开 BACKUP 的确认窗口。 */
+    private Long backupRuntimeRecoveryConfirmMs = 12L * 60L * 60L * 1000L;
+
     /** 组计算时单体实时数据的新鲜度阈值。 */
     private Long groupCalculationStaleThresholdMs = 180_000L;
 

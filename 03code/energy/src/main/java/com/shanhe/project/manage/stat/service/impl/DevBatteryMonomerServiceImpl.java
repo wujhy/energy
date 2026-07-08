@@ -3,9 +3,7 @@ package com.shanhe.project.manage.stat.service.impl;
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
-import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.stat.domain.DevBatteryMonomer;
 import com.shanhe.project.manage.stat.mapper.DevBatteryMonomerMapper;
@@ -35,12 +33,6 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
     /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
-    /** 电池上报日志服务。 */
-    @Resource
-    private BatteryReportLogService batteryReportLogService;
-    /** 电池采集器配置。 */
-    @Resource
-    private BatteryCollectorProperties batteryCollectorProperties;
     /** 电池模组上报日志适配服务。 */
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
@@ -166,26 +158,8 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
     }
 
     BatteryReportLog resolveBatteryReportLog(Integer packNum) {
-        if (batteryCollectorProperties != null
-                && Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
-            try {
-                BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
-                if (isUsableBatteryReportLog(realtimeLog)) {
-                    return realtimeLog;
-                }
-            } catch (Exception ignored) {
-                // Fall back to legacy cache below.
-            }
-        }
-        return batteryReportLogService.lastCache(packNum);
+        return batteryModuleReportLogAdapterService.currentOrLastCache(packNum, true);
     }
-
-    private boolean isUsableBatteryReportLog(BatteryReportLog log) {
-        return log != null
-                && log.getBatteryList() != null
-                && !log.getBatteryList().isEmpty();
-    }
-
     /**
      * 根据电池组ID删除单体数据
      *

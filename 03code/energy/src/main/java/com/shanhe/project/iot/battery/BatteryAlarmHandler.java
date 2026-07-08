@@ -11,7 +11,6 @@ import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapte
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.domain.Config;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.iot.model.BatteryWarnInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,9 +35,6 @@ public class BatteryAlarmHandler {
     /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
-    /** 蓄电池上报日志服务。 */
-    @Resource
-    private BatteryReportLogService batteryReportLogService;
     /** 蓄电池模块上报日志适配服务。 */
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
@@ -484,20 +480,6 @@ public class BatteryAlarmHandler {
 
     /** 优先读取标准实时快照适配的告警上下文，失败时回退旧上报缓存。 */
     private BatteryReportLog loadAlarmContextReportLog(Integer packNum) {
-        if (packNum == null) {
-            return null;
-        }
-        try {
-            if (batteryModuleReportLogAdapterService != null) {
-                BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
-                if (realtimeLog != null && realtimeLog.getPackParam() != null
-                        && !realtimeLog.getPackParam().isEmpty()) {
-                    return realtimeLog;
-                }
-            }
-        } catch (Exception e) {
-            log.warn("读取标准实时告警上下文失败, packNum={}", packNum, e);
-        }
-        return batteryReportLogService == null ? null : batteryReportLogService.lastCache(packNum);
+        return batteryModuleReportLogAdapterService == null ? null : batteryModuleReportLogAdapterService.currentOrLastCache(packNum);
     }
 }

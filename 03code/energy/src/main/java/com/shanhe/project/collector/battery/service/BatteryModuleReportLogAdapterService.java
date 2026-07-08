@@ -7,6 +7,8 @@ import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
+import com.shanhe.project.manage.config.service.BatteryReportLogService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -21,6 +23,7 @@ import java.util.Map;
  * @author wjh
  * @since 2026-04-30
  */
+@Slf4j
 @Service
 public class BatteryModuleReportLogAdapterService {
 
@@ -31,6 +34,10 @@ public class BatteryModuleReportLogAdapterService {
     /** 实时快照服务。 */
     @Resource
     private BatteryModuleRealtimeSnapshotService snapshotService;
+
+    /** 旧上报日志缓存服务。 */
+    @Resource
+    private BatteryReportLogService batteryReportLogService;
 
     /**
      * 构建兼容旧 BatteryReportLog 的实时数据对象。
@@ -47,6 +54,42 @@ public class BatteryModuleReportLogAdapterService {
         BatteryModuleGroupRealtime group = snapshot == null ? realtimeMapper.selectGroup(packNum) : snapshot.getGroup();
         List<BatteryModuleCellRealtime> cells = snapshot == null ? realtimeMapper.selectCells(packNum) : snapshot.getCells();
         return buildReportLog(packNum, group, cells);
+    }
+
+    /**
+     * 获取当前上报模型：优先使用标准实时模型，实时数据不可用时回退旧上报缓存。
+     *
+     * @param packNum 电池组编号
+     * @return 当前可用上报模型
+     */
+    public BatteryReportLog currentOrLastCache(Integer packNum) {
+        return currentOrLastCache(packNum, false);
+    }
+
+    /**
+     * 获取当前上报模型：优先使用标准实时模型，实时数据不可用时回退旧上报缓存。
+     *
+     * @param packNum 电池组编号
+     * @param requireBatteryList 是否要求单体列表可用
+     * @return 当前可用上报模型
+     */
+    public BatteryReportLog currentOrLastCache(Integer packNum, boolean requireBatteryList) {
+        try {
+            BatteryReportLog realtimeLog = buildReportLog(packNum);
+            if (isUsable(realtimeLog, requireBatteryList)) {
+                return realtimeLog;
+            }
+        } catch (Exception e) {
+            log.warn("标准实时数据构建当前上报模型失败, packNum={}, fallback=oldCache", packNum, e);
+        }
+        return batteryReportLogService == null ? null : batteryReportLogService.lastCache(packNum);
+    }
+
+    private boolean isUsable(BatteryReportLog log, boolean requireBatteryList) {
+        if (log == null || log.getPackParam() == null || log.getPackParam().isEmpty()) {
+            return false;
+        }
+        return !requireBatteryList || (log.getBatteryList() != null && !log.getBatteryList().isEmpty());
     }
 
     /**

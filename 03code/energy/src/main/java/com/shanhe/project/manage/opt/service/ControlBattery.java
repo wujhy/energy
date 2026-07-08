@@ -5,13 +5,11 @@ import cn.hutool.core.util.ObjUtil;
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.framework.enums.*;
 import com.shanhe.framework.web.domain.AjaxResult;
-import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.manage.alarm.domain.AlarmLog;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.*;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.opt.domain.BatteryCommandContext;
 import com.shanhe.project.manage.opt.domain.OptLog;
@@ -36,15 +34,9 @@ public class ControlBattery extends ControlBase {
     /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
-    /** 上报日志服务。 */
-    @Resource
-    private BatteryReportLogService batteryReportLogService;
     /** 模块上报日志适配服务。 */
     @Resource
     private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
-    /** 采集配置属性。 */
-    @Resource
-    private BatteryCollectorProperties batteryCollectorProperties;
     /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
@@ -150,7 +142,7 @@ public class ControlBattery extends ControlBase {
         }
 
         // 是否采集
-        BatteryReportLog batteryReportLog = getCurrentReportLog(context.opt.getPackNum());
+        BatteryReportLog batteryReportLog = batteryModuleReportLogAdapterService.currentOrLastCache(context.opt.getPackNum());
         if (null == batteryReportLog || null == batteryReportLog.getPackParam()) {
             return AjaxResult.error("暂无上报数据", 0);
         }
@@ -242,24 +234,4 @@ public class ControlBattery extends ControlBase {
     private boolean isUnsupportedCommandType(BatteryTestEnum testEnum) {
         return testEnum == null || BatteryTestEnum._99.equals(testEnum);
     }
-
-    /**
-     * 读取测试控制前置判断使用的当前上报数据。
-     * <p>
-     * 标准实时切源开启时优先读取 600 实时快照适配结果，缺少组参数时回退旧上报缓存。
-     */
-    private BatteryReportLog getCurrentReportLog(Integer packNum) {
-        if (Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
-            try {
-                BatteryReportLog realtimeLog = batteryModuleReportLogAdapterService.buildReportLog(packNum);
-                if (realtimeLog != null && realtimeLog.getPackParam() != null && !realtimeLog.getPackParam().isEmpty()) {
-                    return realtimeLog;
-                }
-            } catch (Exception e) {
-                log.warn("读取标准实时控制判断数据失败, packNum={}", packNum, e);
-            }
-        }
-        return batteryReportLogService.lastCache(packNum);
-    }
-
 }
