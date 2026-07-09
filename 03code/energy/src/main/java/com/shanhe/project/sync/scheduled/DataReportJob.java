@@ -2,11 +2,12 @@ package com.shanhe.project.sync.scheduled;
 
 import cn.hutool.core.util.StrUtil;
 import com.shanhe.common.constant.Constants;
-import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
+import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
+import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.manage.alarm.domain.AlarmLog;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.BatteryPack;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.host.domain.Host;
 import com.shanhe.project.manage.host.service.IHostService;
@@ -41,7 +42,7 @@ public class DataReportJob {
     @Resource
     private ClientReportService clientReportService;
     @Resource
-    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
+    private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
 
     /** 是否上报 **/
     private boolean isReport = false;
@@ -111,51 +112,71 @@ public class DataReportJob {
             return;
         }
         for (BatteryPack pack : packList) {
-            // 取蓄电池上报数据
-            BatteryReportLog log = resolveBatteryReportLog(pack.getPackNum());
-            if (!isUsableBatteryReportLog(log)) {
+            BatteryModuleRealtimeSnapshot snapshot = resolveRealtimeSnapshot(pack.getPackNum());
+            if (!isUsableRealtimeSnapshot(snapshot)) {
                 continue;
             }
 
-            // 上报VO
             ConfigHistoryVo history = new ConfigHistoryVo();
             history.setDevId(Constants.DEFAULT_CONFIG_ID);
             history.setPackNum(pack.getPackNum());
+            history.setListData(buildGroupItems(snapshot.getGroup()));
+            history.setListData2(snapshot.getCells());
 
-            // 蓄电池组参数
-            List<ConfigHistoryItemVo> items = new ArrayList<>();
-            Map<String, Object> packParam = log.getPackParam();
-            if (packParam != null) {
-                for (String key : packParam.keySet()) {
-                    items.add(new ConfigHistoryItemVo(key, String.valueOf(packParam.get(key))));
-                }
-            }
-            history.setListData(items);
-
-            // 单体参数
-            history.setListData2(log.getBatteryList());
-
-            // 上报
             clientReportService.uploadData(history, imei);
         }
     }
 
-    /** 解析蓄电池 JSON/TCP 上报数据源。 */
-    BatteryReportLog resolveBatteryReportLog(Integer packNum) {
-        return batteryModuleReportLogAdapterService.currentOrLastCache(packNum, true);
+    BatteryModuleRealtimeSnapshot resolveRealtimeSnapshot(Integer packNum) {
+        return realtimeSnapshotService == null ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
     }
-    /**
-     * 判断蓄电池上报数据是否可用于 JSON/TCP 上报。
-     *
-     * @param log 蓄电池上报数据
-     * @return true 表示可上报
-     */
-    boolean isUsableBatteryReportLog(BatteryReportLog log) {
-        return log != null
-                && log.getPackParam() != null
-                && !log.getPackParam().isEmpty()
-                && log.getBatteryList() != null
-                && !log.getBatteryList().isEmpty();
+
+    boolean isUsableRealtimeSnapshot(BatteryModuleRealtimeSnapshot snapshot) {
+        return snapshot != null
+                && snapshot.getGroup() != null
+                && snapshot.getCells() != null
+                && !snapshot.getCells().isEmpty();
+    }
+
+    List<ConfigHistoryItemVo> buildGroupItems(BatteryModuleGroupRealtime group) {
+        List<ConfigHistoryItemVo> items = new ArrayList<>();
+        addItem(items, "packVoltage", group.getPackVoltage());
+        addItem(items, "packCurrent", group.getPackCurrent() == null ? group.getChargeDischargeCurrent() : group.getPackCurrent());
+        addItem(items, "batteryPackFloatCurrent", group.getBatteryPackFloatCurrent() == null ? group.getFloatCurrent() : group.getBatteryPackFloatCurrent());
+        addItem(items, "batteryPackOuterVoltage", group.getBatteryPackOuterVoltage() == null ? group.getExternalVoltage() : group.getBatteryPackOuterVoltage());
+        addItem(items, "environmentTemperature1", group.getEnvironmentTemperature1());
+        addItem(items, "environmentTemperature2", group.getEnvironmentTemperature2());
+        addItem(items, "maxVoltageBatteryNumber", group.getMaxVoltageBatNum());
+        addItem(items, "batteryMaxVoltage", group.getMaxCellVoltage());
+        addItem(items, "minVoltageBatteryNumber", group.getMinVoltageBatNum());
+        addItem(items, "batteryMinVoltage", group.getMinCellVoltage());
+        addItem(items, "batteryAvgVoltage", group.getAvgCellVoltage());
+        addItem(items, "batteryVoltageDeviation", group.getBatteryVoltageDeviation());
+        addItem(items, "batteryVoltageRange", group.getBatteryVoltageRange() == null ? group.getVoltageRange() : group.getBatteryVoltageRange());
+        addItem(items, "maxResistanceBatteryNumber", group.getMaxResistanceBatNum());
+        addItem(items, "batteryMaxResistance", group.getMaxInternalResistance());
+        addItem(items, "minResistanceBatteryNumber", group.getMinResistanceBatNum());
+        addItem(items, "batteryMinEsistance", group.getMinInternalResistance());
+        addItem(items, "batteryAvgResistance", group.getAvgInternalResistance());
+        addItem(items, "maxTemperatureBatteryNumber", group.getMaxTemperatureBatNum());
+        addItem(items, "batteryMaxTemperature", group.getMaxCellTemperature());
+        addItem(items, "minTemperatureBatteryNumber", group.getMinTemperatureBatNum());
+        addItem(items, "batteryMinTemperature", group.getMinCellTemperature());
+        addItem(items, "batteryAvgTemperature", group.getBatteryAvgTemperature() == null ? group.getAvgCellTemperature() : group.getBatteryAvgTemperature());
+        addItem(items, "batteryPackSoc", group.getBatteryPackSoc());
+        addItem(items, "batteryPackSoh", group.getBatteryPackSoh());
+        addItem(items, "residualDischargeDuration", group.getResidualDischargeDuration());
+        addItem(items, "batteryPackStatus", group.getBatteryPackStatus());
+        addItem(items, "resistanceTestStatus", group.getResistanceTestStatus());
+        addItem(items, "deviceWorkStatus", group.getDeviceWorkStatus());
+        addItem(items, "deviceWorkIOStatus", group.getDeviceWorkIoStatus());
+        return items;
+    }
+
+    private void addItem(List<ConfigHistoryItemVo> items, String itemCode, Object value) {
+        if (value != null) {
+            items.add(new ConfigHistoryItemVo(itemCode, String.valueOf(value)));
+        }
     }
 
 }

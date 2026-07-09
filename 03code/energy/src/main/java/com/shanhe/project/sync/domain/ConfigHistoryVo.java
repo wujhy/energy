@@ -1,6 +1,6 @@
 package com.shanhe.project.sync.domain;
 
-import com.shanhe.project.manage.config.domain.BatteryMonitor;
+import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -22,5 +22,5 @@ public class ConfigHistoryVo implements Serializable {
     /** 测点历史数据 */
     private List<ConfigHistoryItemVo> listData;
     /** 单体蓄电池 */
-    private List<BatteryMonitor> listData2;
+    private List<BatteryModuleCellRealtime> listData2;
 }
