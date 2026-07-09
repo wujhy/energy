@@ -95,13 +95,12 @@ public interface IAlarmLogService
     /**
      * 告警（蓄电池）
      *
-     * @param config 设备配置
      * @param packNum 组编码
      * @param modelNum 模块编号
      * @param warnParam 告警参数
      * @param batteryReportLog 电池上报记录
      */
-    void alarmBattery(Config config, Integer packNum, Integer modelNum, Map<String, String> warnParam, BatteryReportLog batteryReportLog);
+    void alarmBattery(Integer packNum, Integer modelNum, Map<String, String> warnParam, BatteryReportLog batteryReportLog);
 
     /**
      * 蓄电池故障告警（值）

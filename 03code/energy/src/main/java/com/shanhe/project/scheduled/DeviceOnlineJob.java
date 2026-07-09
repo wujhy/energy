@@ -8,13 +8,13 @@ import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
-import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
+import com.shanhe.project.collector.battery.postprocess.RealtimeToReportLogAdapter;
+import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
-import com.shanhe.project.manage.config.domain.Config;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
-import com.shanhe.project.manage.config.service.IConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -25,6 +25,7 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.Date;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -44,13 +45,11 @@ public class DeviceOnlineJob {
     @Value("${job.offlineNum:10}")
     private int maxOffline;
     @Resource
-    private IConfigService configService;
-    @Resource
     private IBatteryPackService batteryPackService;
     @Resource
     private IAlarmLogService alarmLogService;
     @Resource
-    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
+    private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
 
@@ -70,14 +69,13 @@ public class DeviceOnlineJob {
         try {
             log.debug("同步电池组在线状态开始");
             if (isStart) {
-                Long currentTime = System.currentTimeMillis();
+                long currentTime = System.currentTimeMillis();
                 if (Math.abs(currentTime - SERVER_START_TIME) <= STARTUP_CHECK_DELAY) {
                     return;
                 }
                 isStart = false;
             }
 
-            Config config = configService.selectDefaultConfig();
             List<BatteryPack> packList = batteryPackService.selectBatteryPackListCache(null);
             if (packList == null || packList.isEmpty()) {
                 log.debug("同步电池组在线状态跳过，无电池组配置");
@@ -101,14 +99,14 @@ public class DeviceOnlineJob {
                         packNum, key, object);
 
                 if (object == null) {
-                    handleMissingOnlineCache(config, packNum);
+                    handleMissingOnlineCache(packNum);
                     continue;
                 }
 
                 Date lastDate = (Date) object;
                 int num = DateUtils.differentMillsByMillisecond(lastDate, nowDate);
                 if (num > maxOffline) {
-                    syncBatteryOfflineAlarm(config, packNum, true);
+                    syncBatteryOfflineAlarm(packNum, true);
                     log.info("同步电池组在线状态, 电池组={} 离线, 最后上报分钟数={}, 最大离线分钟数={}",
                             packNum, num, maxOffline);
                     CacheUtils.remove(CacheKeyEnum.BATTERY_ONLINE.getCache(), key);
@@ -116,7 +114,7 @@ public class DeviceOnlineJob {
                 }
 
                 offlineBatteryPackNumMap.put(packNum, 0);
-                syncBatteryOfflineAlarm(config, packNum, false);
+                syncBatteryOfflineAlarm(packNum, false);
             }
         } catch (Exception e) {
             log.error("同步电池组在线状态失败: {}", e.getMessage(), e);
@@ -125,11 +123,11 @@ public class DeviceOnlineJob {
         }
     }
 
-    private void handleMissingOnlineCache(Config config, Integer packNum) {
+    private void handleMissingOnlineCache(Integer packNum) {
         int offlineNum = offlineBatteryPackNumMap.getOrDefault(packNum, 0);
         if (offlineNum > maxOffline) {
             log.info("同步电池组在线状态, 电池组={} 离线, 缺失次数={}", packNum, offlineNum);
-            syncBatteryOfflineAlarm(config, packNum, true);
+            syncBatteryOfflineAlarm(packNum, true);
             offlineBatteryPackNumMap.put(packNum, 0);
             return;
         }
@@ -141,16 +139,25 @@ public class DeviceOnlineJob {
         alarmLogService.alarmFix(packNum, false, null, Collections.singletonList(ItemCode.TXZT.getCode()));
     }
 
-    private void syncBatteryOfflineAlarm(Config config, Integer packNum, boolean offline) {
+    private void syncBatteryOfflineAlarm(Integer packNum, boolean offline) {
         Map<String, String> warnParam = new HashMap<>(1);
         warnParam.put(ItemCode.TXZT.getCode(), offline ? "1" : "0");
         BatteryReportLog batteryReportLog = resolveBatteryReportLog(packNum);
-        alarmLogService.alarmBattery(config, packNum, null, warnParam, batteryReportLog);
+        alarmLogService.alarmBattery(packNum, null, warnParam, batteryReportLog);
         persistOnlineState(packNum, offline);
     }
 
     BatteryReportLog resolveBatteryReportLog(Integer packNum) {
-        return batteryModuleReportLogAdapterService.currentOrLastCache(packNum, true);
+        BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
+                ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
+        if (snapshot == null || !snapshot.isDataReady()) {
+            BatteryReportLog reportLog = new BatteryReportLog();
+            reportLog.setPackNum(packNum);
+            reportLog.setPackParam(new LinkedHashMap<>());
+            reportLog.setBatteryList(Collections.emptyList());
+            return reportLog;
+        }
+        return RealtimeToReportLogAdapter.adapt(packNum, snapshot.getGroup(), snapshot.getCells());
     }
     /** 持久化电池组在线/离线状态到 battery_device_state。 */
     private void persistOnlineState(Integer packNum, boolean offline) {

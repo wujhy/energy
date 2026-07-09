@@ -244,17 +244,8 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         }
     }
 
-    /**
-     * 蓄电池告警处理
-     *
-     * @param config 设备配置
-     * @param packNum 电池组编号
-     * @param modelNum 模块编号
-     * @param warnParam 告警参数
-     * @param batteryReportLog 上报日志
-     */
     @Override
-    public void alarmBattery(Config config, Integer packNum, Integer modelNum, Map<String, String> warnParam, BatteryReportLog batteryReportLog) {
+    public void alarmBattery(Integer packNum, Integer modelNum, Map<String, String> warnParam, BatteryReportLog batteryReportLog) {
         if (batteryReportLog == null) {
             return;
         }
@@ -265,12 +256,12 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         }
         // 循环告警项
         for (String itemCode : warnParam.keySet()) {
-            processAlarmItem(config, packNum, modelNum, warnParam.get(itemCode), itemCode, batteryMonitor, batteryReportLog);
+            processAlarmItem(packNum, modelNum, warnParam.get(itemCode), itemCode, batteryMonitor, batteryReportLog);
         }
     }
 
     /** 处理单个告警项 */
-    private void processAlarmItem(Config config, Integer packNum, Integer modelNum,
+    private void processAlarmItem(Integer packNum, Integer modelNum,
                                   String alarmValue, String itemCode,
                                   BatteryMonitor batteryMonitor, BatteryReportLog batteryReportLog) {
         // 取缓存告警记录

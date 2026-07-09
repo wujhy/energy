@@ -105,7 +105,7 @@ public class BatteryAlarmHandler {
         this.dealPackWarnParam(abnormalStatus, AlarmLevelEnum._1.getDictValue(), warnParam);
         this.dealPackWarnParam(commonlyStatus, AlarmLevelEnum._1.getDictValue(), warnParam);
         if (!warnParam.isEmpty()) {
-            alarmLogService.alarmBattery(config, warnInfo.getBatteryPackNumber(), null, warnParam, batteryReportLog);
+            alarmLogService.alarmBattery(warnInfo.getBatteryPackNumber(), null, warnParam, batteryReportLog);
         }
 
         //处理单体电池信息 获取单体电池报警个数
@@ -143,7 +143,7 @@ public class BatteryAlarmHandler {
             this.dealSingleWarnParam(abnormalStatus1, AlarmLevelEnum._1.getDictValue(), warnParam1);
             this.dealSingleWarnParam(commonlyStatus1, AlarmLevelEnum._1.getDictValue(), warnParam1);
             if (!warnParam1.isEmpty()) {
-                alarmLogService.alarmBattery(config, warnInfo.getBatteryPackNumber(), batteryNumber, warnParam1, batteryReportLog);
+                alarmLogService.alarmBattery(warnInfo.getBatteryPackNumber(), batteryNumber, warnParam1, batteryReportLog);
             }
             excludeModelNum.add(batteryNumber);
         }
@@ -389,7 +389,7 @@ public class BatteryAlarmHandler {
             // 组压模块通信异常
             warnParam.put(ItemCode.TXZT.getCode(), String.valueOf(dfs.charAt(5)));
             // 保存告警记录
-            alarmLogService.alarmBattery(config, batteryWarnInfo.getBatteryPackNumber(), null, warnParam, batteryReportLog);
+            alarmLogService.alarmBattery(batteryWarnInfo.getBatteryPackNumber(), null, warnParam, batteryReportLog);
         }
 
         // 排除单体电池序号
@@ -428,7 +428,7 @@ public class BatteryAlarmHandler {
                 // 单体电池监测模块通信异常
                 warnParam.put(ItemCode.DTTXZT.getCode(), String.valueOf(status.charAt(4)));
                 // 保存告警记录
-                alarmLogService.alarmBattery(config, batteryWarnInfo.getBatteryPackNumber(), batteryNumber, warnParam, batteryReportLog);
+                alarmLogService.alarmBattery(batteryWarnInfo.getBatteryPackNumber(), batteryNumber, warnParam, batteryReportLog);
                 // 不存在的故障
                 excludeModelNum.add(batteryNumber);
             }
