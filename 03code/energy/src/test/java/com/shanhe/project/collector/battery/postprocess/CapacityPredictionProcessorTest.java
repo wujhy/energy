@@ -81,7 +81,7 @@ class CapacityPredictionProcessorTest {
     }
 
     @Test
-    void shouldRejectContextWhenCellBatchDoesNotMatch() {
+    void shouldAcceptContextWhenSnapshotCellBatchDoesNotMatch() {
         CapacityPredictionProcessor processor = new CapacityPredictionProcessor();
         BatteryModuleCellRealtime staleCell = cell(2);
         staleCell.setPollBatchNo("other-batch");
@@ -91,7 +91,7 @@ class CapacityPredictionProcessorTest {
                 .group(group())
                 .cells(Arrays.asList(cell(1), staleCell))
                 .build();
-        Assertions.assertFalse(processor.shouldProcess(context));
+        Assertions.assertTrue(processor.shouldProcess(context));
     }
 
     @Test
@@ -187,8 +187,7 @@ class CapacityPredictionProcessorTest {
         BatteryModuleGroupRealtime group2 = group();
         group2.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.IDLE.getCode()));
         processor.process(contextWith(group2));
-        Mockito.verify(predictorService).doTotalBatteryStep(
-                Mockito.eq(1), Mockito.anyString(), Mockito.any(), Mockito.any());
+        Mockito.verify(predictorService).doTotalBatteryStep(Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -235,8 +234,7 @@ class CapacityPredictionProcessorTest {
         BatteryPredictorService predictorService =
                 (BatteryPredictorService) ReflectionTestUtils.getField(processor, "batteryPredictorService");
         Mockito.doThrow(new RuntimeException("prediction failed"))
-                .when(predictorService).doTotalBatteryStep(
-                        Mockito.anyInt(), Mockito.anyString(), Mockito.any(), Mockito.any());
+                .when(predictorService).doTotalBatteryStep(Mockito.any(), Mockito.any());
 
         // First call: BACKUP
         BatteryModuleGroupRealtime group1 = group();
@@ -266,11 +264,7 @@ class CapacityPredictionProcessorTest {
         group2.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.CHARGE.getCode()));
         processor.process(contextWith(group2));
 
-        Mockito.verify(predictorService).doTotalBatteryStep(
-                Mockito.eq(1),
-                Mockito.eq(BatteryPackStatusEnum.CHARGE.getCode()),
-                Mockito.any(),
-                Mockito.any());
+        Mockito.verify(predictorService).doTotalBatteryStep(Mockito.argThat(group -> Integer.valueOf(BatteryPackStatusEnum.CHARGE.getCode()).equals(group.getBatteryPackStatus())), Mockito.any());
     }
 
     // ===== helpers =====

@@ -2,15 +2,15 @@ package com.shanhe.project.collector.battery.postprocess;
 
 
 import com.shanhe.framework.enums.BatteryPackStatusEnum;
+import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.capacity.service.BatteryPredictorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -30,9 +30,8 @@ public class CapacityPredictionProcessor implements BatteryRealtimePostProcessor
     private BatteryPredictorService batteryPredictorService;
 
     /** 上次电池组状态缓存：packNum → batteryPackStatus */
-    private final Map<Integer, String> lastStatusCache = new ConcurrentHashMap<>();
+    private final Map<Integer, Integer> lastStatusCache = new ConcurrentHashMap<>();
 
-    private final Map<Integer, BatteryReportLog> lastReportLogCache = new ConcurrentHashMap<>();
 
     @Override
     public String getName() {
@@ -46,9 +45,13 @@ public class CapacityPredictionProcessor implements BatteryRealtimePostProcessor
 
     @Override
     public boolean shouldProcess(BatteryRealtimePostProcessContext context) {
-        return context != null
-                && context.getPackNum() != null
-                && PostProcessBatchGuard.sameRealtimeBatch(context);
+        if (context == null || context.getPackNum() == null
+                || context.getGroup() == null || context.getCells() == null || context.getCells().isEmpty()) {
+            return false;
+        }
+        String pollBatchNo = context.getPollBatchNo();
+        return PostProcessBatchGuard.hasText(pollBatchNo)
+                && pollBatchNo.equals(context.getGroup().getPollBatchNo());
     }
 
     @Override
@@ -59,42 +62,38 @@ public class CapacityPredictionProcessor implements BatteryRealtimePostProcessor
             return;
         }
 
-        // 从标准实时模型获取当前电池组状态
-        Integer statusInt = group.getBatteryPackStatus();
-        String currentStatus = statusInt != null ? String.valueOf(statusInt) : null;
-        if (currentStatus == null || !isKnownBatteryPackStatus(currentStatus)) {
+        Integer currentStatus = group.getBatteryPackStatus();
+        if (!isKnownBatteryPackStatus(currentStatus)) {
             return;
         }
 
-        // 检查状态是否发生变化
-        BatteryReportLog currentInfo = RealtimeToReportLogAdapter.adapt(packNum, group, context.getCells());
-        String lastStatus = lastStatusCache.get(packNum);
-        BatteryReportLog oldInfo = lastReportLogCache.get(packNum);
-        if (Objects.equals(currentStatus, lastStatus)) {
-            lastReportLogCache.put(packNum, currentInfo);
+        Integer lastStatus = lastStatusCache.put(packNum, currentStatus);
+        if (currentStatus.equals(lastStatus)) {
             return;
         }
-        lastStatusCache.put(packNum, currentStatus);
-        lastReportLogCache.put(packNum, currentInfo);
 
-        // 状态从备电切换到其他状态时，触发容量预测
-        if (BatteryPackStatusEnum.isCode(lastStatus, BatteryPackStatusEnum.BACKUP)
-                && !BatteryPackStatusEnum.isCode(currentStatus, BatteryPackStatusEnum.BACKUP)) {
-            triggerCapacityPrediction(packNum, currentStatus, oldInfo, currentInfo);
+        if (isStatus(lastStatus) && !isStatus(currentStatus)) {
+            triggerCapacityPrediction(packNum, currentStatus, group, context.getCells());
         }
     }
 
-    private void triggerCapacityPrediction(Integer packNum, String newStatus, BatteryReportLog oldInfo, BatteryReportLog currentInfo) {
+    private void triggerCapacityPrediction(Integer packNum, Integer newStatus,
+                                           BatteryModuleGroupRealtime group,
+                                           List<BatteryModuleCellRealtime> cells) {
         try {
-            batteryPredictorService.doTotalBatteryStep(packNum, newStatus, oldInfo, currentInfo);
+            batteryPredictorService.doTotalBatteryStep(group, cells);
             log.info("容量预测已触发, packNum={}, newStatus={}", packNum, newStatus);
         } catch (Exception e) {
             log.warn("容量预测触发失败, packNum={}", packNum, e);
         }
     }
 
-    private boolean isKnownBatteryPackStatus(String status) {
-        return BatteryPackStatusEnum.find(status) != null;
+    private boolean isKnownBatteryPackStatus(Integer status) {
+        return status != null && BatteryPackStatusEnum.find(String.valueOf(status)) != null;
+    }
+
+    private boolean isStatus(Integer status) {
+        return status != null && BatteryPackStatusEnum.isCode(String.valueOf(status), BatteryPackStatusEnum.BACKUP);
     }
 
 }

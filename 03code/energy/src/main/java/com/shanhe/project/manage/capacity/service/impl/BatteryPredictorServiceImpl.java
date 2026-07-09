@@ -1,17 +1,13 @@
 package com.shanhe.project.manage.capacity.service.impl;
 
-import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.DateUtils;
 import com.shanhe.common.utils.StringUtils;
-import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
-import com.shanhe.project.manage.config.domain.BatteryMonitor;
+import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.manage.config.domain.BatteryPack;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import com.shanhe.project.manage.opt.service.OptLogService;
@@ -33,11 +29,11 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * 蓄电池预测服务实现类
@@ -55,9 +51,6 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
     /** 电池组信息服务。 */
     @Resource
     private IBatteryPackService devBatteryInfoService;
-    /** 电池上报日志服务。 */
-    @Resource
-    private BatteryReportLogService batteryReportLogService;
     /** 预估电池组服务。 */
     @Resource
     private PreBatteryGroupService preBatteryGroupService;
@@ -70,46 +63,19 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
 
     @Async
     @Override
-    public void doTotalBatteryStep(Integer packNum, String batteryStatus, BatteryReportLog oldInfo) {
-        BatteryReportLog currentInfo = batteryReportLogService.lastCache(packNum);
-        doTotalBatteryStep(packNum, batteryStatus, oldInfo, currentInfo);
-    }
-
-    @Async
-    @Override
-    public void doTotalBatteryStep(Integer packNum, String batteryStatus, BatteryReportLog oldInfo, BatteryReportLog currentInfo) {
-        if (oldInfo == null) {
-            return;
-        }
-        Map<String, Object> oldPackParam = oldInfo.getPackParam();
-        if (oldPackParam == null) {
+    public void doTotalBatteryStep(BatteryModuleGroupRealtime group, List<BatteryModuleCellRealtime> cells) {
+        if (group == null || group.getPackNum() == null) {
             return;
         }
 
-        // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
-        String batteryPackStatus = Objects.toString(oldPackParam.get("batteryPackStatus"), null);
-        if (!BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.BACKUP)) {
-            return;
-        }
-
-        // 如果状态未发生变化，则不需要处理
-        if (StrUtil.equals(batteryPackStatus, batteryStatus)) {
-            return;
-        }
-
+        Integer packNum = group.getPackNum();
         OptLog optLog = optLogService.lastType(packNum, BatteryTestEnum._5.getDictValue());
         if (optLog == null) {
             return;
         }
 
-        // 放电结束，计算电池容量
-        Date endTime = optLog.getUpdateTime();
-        if (endTime == null) {
-            endTime = new Date();
-        }
-
         log.error("放电结束，开始预估电池容量==========================");
-        PreBatteryGroup preBatteryGroup = calcPredictorBatCapacity(packNum, optLog.getCreateTime(), endTime, currentInfo);
+        PreBatteryGroup preBatteryGroup = calcPredictorBatCapacity(packNum, optLog.getCreateTime(), group, cells);
         if (preBatteryGroup == null) {
             return;
         }
@@ -119,7 +85,10 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
     }
 
     /** 计算电池组预估容量。 */
-    private PreBatteryGroup calcPredictorBatCapacity(Integer packNum, Date startTime, Date endTime, BatteryReportLog packInfo) {
+    private PreBatteryGroup calcPredictorBatCapacity(Integer packNum, Date startTime,
+                                                     BatteryModuleGroupRealtime group,
+                                                     List<BatteryModuleCellRealtime> cells) {
+        Date endTime = new Date();
         int diffMills = DateUtils.differentMillsByMillisecond(startTime, endTime);
         // 30分钟
         if (diffMills < 30) {
@@ -132,23 +101,6 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
             log.error("未找到电池基本信息");
             return null;
         }
-        // 查询所有单体数据
-        if (packInfo == null) {
-            log.error("Redis找不到电池组实时数据!");
-            return null;
-        }
-        // 电池组充放电电流
-        Map<String, Object> packParam = packInfo.getPackParam();
-        if (packParam == null) {
-            return null;
-        }
-
-
-        List<BatteryMonitor> list = packInfo.getBatteryList();
-        if (list == null || list.isEmpty()) {
-            log.error("Redis找不到电池组实时数据!");
-            return null;
-        }
 
         // 获取规格
         double spec = getSpec(batteryInfo);
@@ -159,24 +111,29 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
             specSize = 6;
         }
 
-        // 获取当前电池组的基础数据
         // 额定容量
         Double aCapacity = batteryInfo.getBatCapacity();
+        if (aCapacity == null || aCapacity == 0) {
+            log.error("电池额定容量为空，无法预估电池容量");
+            return null;
+        }
         // 电池组充放电电流,获取阶段内的平均电流
         Double current = dataPointService.getAvgCurrent(packNum, startTime, endTime);
         if (current == null) {
-            current = MapUtil.getDouble(packParam, "packCurrent");
+            current = group.getPackCurrent();
         }
-        log.error("放电预估容量统计，电流：" + current);
+        if (current == null) {
+            current = group.getChargeDischargeCurrent();
+        }
+        log.info("放电预估容量统计，电流：{}", current);
         if (current == null || current == 0) {
             return null;
         }
         current = Math.round(current * 100.0) / 100.0;
-        packParam.put("packCurrent", current);
 
         // 获取所有单体预估容量
-        Map<String, PreBatteryVo> batteryVoMap = getPreBatteryVoMap(packInfo, current, startTime, endTime, aCapacity, specSize);
-//
+        Map<String, PreBatteryVo> batteryVoMap = getPreBatteryVoMap(packNum, cells, current, startTime, endTime, aCapacity, specSize);
+
         // 获取电池组预估容量
         PreBatteryGroup groupVo = initPreBatteryGroupVo(batteryInfo, current, startTime, endTime, spec, batteryVoMap);
         preBatteryGroupService.insert(groupVo);
@@ -185,7 +142,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
 
 
     /** 获取所有单体预估容量 */
-    private Map<String, PreBatteryVo> getPreBatteryVoMap(BatteryReportLog packInfo, Double current,
+    private Map<String, PreBatteryVo> getPreBatteryVoMap(Integer packNum, List<BatteryModuleCellRealtime> cells, Double current,
                                                          Date startTime, Date endTime,
                                                          Double aCapacity, int specSize) {
         // 单体预估容量
@@ -200,17 +157,19 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         } else {
             diffSlope = RateCapacityConverter.calculateSlopeRelationship(crate, 0.1);
         }
-        log.debug("=====相差斜率========" + String.format("%.6f", Math.abs(diffSlope)));
-        Date staticTime = new Date();
+        log.debug("=====相差斜率========{}", String.format("%.6f", Math.abs(diffSlope)));
 
-        for (BatteryMonitor bat : packInfo.getBatteryList()) {
-            PreBatteryVo vo = processSingleBattery(bat, packInfo.getPackNum(), startTime, endTime,
+        for (BatteryModuleCellRealtime bat : cells) {
+            if (bat == null || bat.getBatNum() == null) {
+                continue;
+            }
+            PreBatteryVo vo = processSingleBattery(bat, packNum, startTime, endTime,
                     aCapacity, crate, current, specSize, diffSlope, intervalTime);
             if (vo != null) {
                 result.put(Constants.CAP_BAT + bat.getBatNum(), vo);
                 // 记录间隔时间（只计算一次）
                 if (intervalTime == null) {
-                    List<DataPoint> dataPoints = dataPointService.findCurrentDataPoint(packInfo.getPackNum(), bat.getBatNum(), startTime, endTime);
+                    List<DataPoint> dataPoints = dataPointService.findCurrentDataPoint(packNum, bat.getBatNum(), startTime, endTime);
                     if (dataPoints != null && dataPoints.size() >= 2) {
                         intervalTime = DateUtils.differentSecondByMillisecond(startTime, endTime) / dataPoints.size();
                     }
@@ -221,7 +180,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
     }
 
     /** 处理单个电池的预估容量计算 */
-    private PreBatteryVo processSingleBattery(BatteryMonitor bat, Integer packNum,
+    private PreBatteryVo processSingleBattery(BatteryModuleCellRealtime bat, Integer packNum,
                                                Date startTime, Date endTime,
                                                Double aCapacity, double crate, Double current,
                                                int specSize, double diffSlope, Integer intervalTime) {
@@ -246,12 +205,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         }
 
         // 获取斜率
-        double slope;
-        if (lastPoint.getVoltage() >= (2 * specSize)) {
-            slope = this.calculateDischargeSlope(dataPoints.subList(5, totalSize - 1));
-        } else {
-            slope = this.calculateDischargeSlope(dataPoints.subList(totalSize - 10, totalSize - 1));
-        }
+        double slope = this.calculateDischargeSlope(selectSlopePoints(dataPoints, lastPoint.getVoltage(), specSize));
         log.debug(lastPoint.getVoltage() + "=====斜率0=========" + String.format("%.5f", slope));
 
         // 计算预估点数
@@ -269,6 +223,20 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         return initPreBatteryVo(bat, aCapacity, firstPoint.getVoltage(), lastPoint.getVoltage(), bCapacity, new Date());
     }
 
+    private List<DataPoint> selectSlopePoints(List<DataPoint> dataPoints, double lastVoltage, int specSize) {
+        int totalSize = dataPoints.size();
+        if (totalSize <= 2) {
+            return dataPoints;
+        }
+        int fromIndex;
+        if (lastVoltage >= (2 * specSize)) {
+            fromIndex = Math.min(5, totalSize - 2);
+        } else {
+            fromIndex = Math.max(0, totalSize - 10);
+        }
+        return dataPoints.subList(fromIndex, totalSize);
+    }
+
     /** 计算预估点数 */
     private int calculatePreTotalSize(double voltage, double slope, int specSize, double diffSlope) {
         int preTotalSize = 0;
@@ -276,26 +244,26 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         if (voltage >= (2 * specSize)) {
             int p1 = this.calcPrePointTime(voltage, 2 * specSize, slope);
             slope = adjustSlope(slope, specSize, diffSlope, 0.00036, 0.0036);
-            log.debug(voltage + "=====斜率1========" + String.format("%.6f", slope));
+            log.debug("{}=====斜率1========{}", voltage, String.format("%.6f", slope));
             int p2 = this.calcPrePointTime(2.0 * specSize, 1.88 * specSize, slope);
             int p3 = this.calcPrePointTime(1.88 * specSize, 1.8 * specSize, slope * 3);
             preTotalSize = p1 + p2 + p3;
-            log.debug("阶段1==" + p1 + " 阶段2==" + p2 + " 阶段3==" + p3);
+            log.debug("阶段1=={} 阶段2=={} 阶段3=={}", p1, p2, p3);
         // 1.88V一个拐点
         } else if (voltage >= (1.88 * specSize)) {
             slope = adjustSlope(slope, specSize, diffSlope, 0.00036, 0.0036);
-            log.debug(voltage + "=====斜率2========" + String.format("%.6f", slope));
+            log.debug("{}=====斜率2========{}", voltage, String.format("%.6f", slope));
             int p2 = this.calcPrePointTime(voltage, 1.88 * specSize, slope);
             int p3 = this.calcPrePointTime(1.88 * specSize, 1.8 * specSize, slope * 3);
             preTotalSize = p2 + p3;
-            log.debug("阶段2==" + p2 + " 阶段3==" + p3);
+            log.debug("阶段2=={} 阶段3=={}", p2, p3);
         // 1.79结束
         } else if (voltage >= (1.79 * specSize)) {
             slope = adjustSlope(slope, specSize, diffSlope, 0.00108, 0.0108);
-            log.debug(voltage + "=====斜率3========" + String.format("%.6f", slope));
+            log.debug("{}=====斜率3========{}", voltage, String.format("%.6f", slope));
             int p3 = this.calcPrePointTime(voltage, 1.8 * specSize, slope);
             preTotalSize = p3;
-            log.debug("阶段3==" + p3);
+            log.debug("阶段3=={}", p3);
         }
         return preTotalSize;
     }
@@ -314,21 +282,6 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
             }
         }
         return slope;
-    }
-
-
-    /** 查找截止电压所在位置 */
-    public int getCuffVoltagePoint(List<DataPoint> dataPoints, double cuffVoltage) {
-        int i = 0;
-        for (DataPoint point : dataPoints) {
-            if (point.getVoltage() <= cuffVoltage) {
-                i++;
-                break;
-            } else {
-                i++;
-            }
-        }
-        return i;
     }
 
     /** 初始化 预测电池组对象 */
@@ -355,7 +308,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         groupVo.setMapBatteryData(JSON.toJSONString(batteryVoMap));
 
         //循环检查单体并设置单体的容量，有可能本轮测试时，电压未达到指定电压，没有预测值，需要拿上一次的预测值
-        Map<String, PreBatteryVo> map2 = groupVo.getMapBattery();
+        Map<String, PreBatteryVo> map2 = groupVo.getMapBattery() == null ? Collections.emptyMap() : groupVo.getMapBattery();
         //寻找最低容量，作为电池组的参考值
         Integer minBat = null;
         Double groupCapacity = null;
@@ -457,7 +410,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         long months = ChronoUnit.MONTHS.between(pastLocalDate, currentDate);
         // 四舍五入
         int roundedYears = (int) Math.round(months / 12.0);
-        log.debug("差距年份: " + roundedYears);
+        log.debug("差距年份: {}", roundedYears);
         roundedYears = Math.min(roundedYears, 5);
         return (1 - (double) roundedYears / 5) * 100;
     }
@@ -475,7 +428,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
     }
 
     /** 初始化 预测电池对象 */
-    private static PreBatteryVo initPreBatteryVo(BatteryMonitor bat, Double aCapacity,
+    private static PreBatteryVo initPreBatteryVo(BatteryModuleCellRealtime bat, Double aCapacity,
                                                  Double startVoltage, Double endVoltage,
                                                  double bCapacity, Date staticTime) {
         PreBatteryVo vo = PreBatteryVo.getNewPreBatteryInfo();
@@ -492,7 +445,6 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         vo.setStaticTime(staticTime);
         return vo;
     }
-
 
     /** 获取规格 */
     private static double getSpec(BatteryPack batteryInfo) {

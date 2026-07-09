@@ -179,17 +179,16 @@ class BatteryRealtimePostProcessorsTest {
         processor.process(backupContext);
         processor.process(idleContext);
 
-        ArgumentCaptor<BatteryReportLog> oldInfoCaptor = ArgumentCaptor.forClass(BatteryReportLog.class);
-        ArgumentCaptor<BatteryReportLog> currentInfoCaptor = ArgumentCaptor.forClass(BatteryReportLog.class);
-        Mockito.verify(predictorService).doTotalBatteryStep(Mockito.eq(1), Mockito.eq("6"),
-                oldInfoCaptor.capture(), currentInfoCaptor.capture());
-        assertEquals(5, oldInfoCaptor.getValue().getPackParam().get("batteryPackStatus"));
-        assertEquals(6, currentInfoCaptor.getValue().getPackParam().get("batteryPackStatus"));
-        assertEquals(2, currentInfoCaptor.getValue().getBatteryList().size());
+        ArgumentCaptor<BatteryModuleGroupRealtime> groupCaptor = ArgumentCaptor.forClass(BatteryModuleGroupRealtime.class);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<BatteryModuleCellRealtime>> cellsCaptor = ArgumentCaptor.forClass(List.class);
+        Mockito.verify(predictorService).doTotalBatteryStep(groupCaptor.capture(), cellsCaptor.capture());
+        assertEquals(Integer.valueOf(6), groupCaptor.getValue().getBatteryPackStatus());
+        assertEquals(2, cellsCaptor.getValue().size());
     }
 
     @Test
-    void capacityPredictionProcessorShouldRejectMissingOrMismatchedBatch() {
+    void capacityPredictionProcessorShouldRejectMissingOrMismatchedGroupBatch() {
         CapacityPredictionProcessor processor = new CapacityPredictionProcessor();
 
         BatteryRealtimePostProcessContext missingBatch = BatteryRealtimePostProcessContext.builder()
@@ -212,7 +211,7 @@ class BatteryRealtimePostProcessorsTest {
         List<BatteryModuleCellRealtime> mismatchedCells = cells();
         mismatchedCells.get(0).setPollBatchNo("other-batch");
         BatteryRealtimePostProcessContext mismatchedCellBatch = context(group(5, null), mismatchedCells);
-        assertFalse(processor.shouldProcess(mismatchedCellBatch));
+        assertTrue(processor.shouldProcess(mismatchedCellBatch));
     }
 
     @Test

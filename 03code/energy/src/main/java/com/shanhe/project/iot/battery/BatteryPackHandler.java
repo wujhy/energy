@@ -17,7 +17,6 @@ import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.config.service.IConfigService;
 import com.shanhe.project.manage.opt.service.OptLogService;
-import com.shanhe.project.manage.capacity.service.BatteryPredictorService;
 import com.shanhe.project.manage.capacity.service.PreBatteryGroupService;
 import com.shanhe.project.manage.capacity.vo.PreBatteryGroup;
 import com.shanhe.project.manage.capacity.vo.PreBatteryVo;
@@ -62,9 +61,6 @@ public class BatteryPackHandler {
     /** 电池内阻统计服务。 */
     @Resource
     private IStatBatteryResService statBatteryResService;
-    /** 蓄电池预测服务。 */
-    @Resource
-    private BatteryPredictorService batteryPredictorService;
     /** 预估电池组服务。 */
     @Resource
     private PreBatteryGroupService preBatteryGroupService;
@@ -235,13 +231,6 @@ public class BatteryPackHandler {
                                           Map<String, Object> packMap,
                                           List<BatteryMonitor> batteryList,
                                           BatteryReportLog oldInfo) {
-        String batteryPackStatus = Objects.toString(packMap.get("batteryPackStatus"), null);
-        try {
-            batteryPredictorService.doTotalBatteryStep(packNum, batteryPackStatus, oldInfo);
-        } catch (Exception e) {
-            log.error("统计电池过程异常 imei {} 电池组编号 {} ", config.getConfigId(), packNum, e);
-        }
-
         try {
             optLogService.insertBattery(packNum, packMap, oldInfo);
         } catch (Exception e) {

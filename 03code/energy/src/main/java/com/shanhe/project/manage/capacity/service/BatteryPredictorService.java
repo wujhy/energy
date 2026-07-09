@@ -1,7 +1,9 @@
 package com.shanhe.project.manage.capacity.service;
 
+import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
+import java.util.List;
 
 /**
  * 蓄电池预测服务类
@@ -12,22 +14,11 @@ import com.shanhe.project.manage.config.domain.BatteryReportLog;
 public interface BatteryPredictorService {
 
     /**
-     * 统计蓄电池状态变化过程
+     * 基于当前标准实时数据统计蓄电池放电结束后的容量
      *
-     * @param packNum 电池组编号
-     * @param batteryStatus 电池状态
-     * @param oldInfo 旧报告数据
+     * @param group 组信息
+     * @param cells 单体信息
      */
-    void doTotalBatteryStep(Integer packNum, String batteryStatus, BatteryReportLog oldInfo);
-
-    /**
-     * Run capacity prediction with caller-provided current realtime data.
-     *
-     * @param packNum battery pack number
-     * @param batteryStatus current battery pack status
-     * @param oldInfo previous report data
-     * @param currentInfo current realtime data
-     */
-    void doTotalBatteryStep(Integer packNum, String batteryStatus, BatteryReportLog oldInfo, BatteryReportLog currentInfo);
+    void doTotalBatteryStep(BatteryModuleGroupRealtime group, List<BatteryModuleCellRealtime> cells);
 
 }
