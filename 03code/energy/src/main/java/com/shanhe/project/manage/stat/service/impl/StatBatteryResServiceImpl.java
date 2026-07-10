@@ -7,6 +7,7 @@ import com.alibaba.excel.EasyExcel;
 import com.google.common.collect.Lists;
 import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.file.FileUtils;
+import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
@@ -220,6 +221,34 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         }
     }
 
+    @Async
+    @Override
+    public void initRealtime(Integer packNum,
+                             Integer previousResistanceTestStatus,
+                             Integer currentResistanceTestStatus,
+                             List<BatteryModuleCellRealtime> cells) {
+        String previousStatus = Objects.toString(previousResistanceTestStatus, null);
+        if (!ResistanceTestStatusEnum.isCode(previousStatus, ResistanceTestStatusEnum.TESTING)) {
+            return;
+        }
+        String currentStatus = Objects.toString(currentResistanceTestStatus, null);
+        if (StrUtil.equals(previousStatus, currentStatus)) {
+            return;
+        }
+        if (cells == null || cells.isEmpty()) {
+            return;
+        }
+        List<StatBatteryRes> statBatteryResList = generateRealtimeStatBatteryRes(packNum, cells);
+        if (statBatteryResList.isEmpty()) {
+            return;
+        }
+        try {
+            statBatteryResMapper.insertList(statBatteryResList);
+        } catch (Exception e) {
+            log.error("插入数据异常", e);
+        }
+    }
+
     @Override
     public Map<Integer, Integer> last(Integer packNum) {
         // 每次测试内阻值
@@ -326,6 +355,22 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         return statBatteryResList;
     }
 
+    /** 生成标准实时模型内阻值。 */
+    private static List<StatBatteryRes> generateRealtimeStatBatteryRes(Integer packNum, List<BatteryModuleCellRealtime> cells) {
+        List<StatBatteryRes> statBatteryResList = new ArrayList<>();
+        for (BatteryModuleCellRealtime cell : cells) {
+            if (cell == null || cell.getBatNum() == null || cell.getResistance() == null) {
+                continue;
+            }
+            StatBatteryRes statBatteryRes = new StatBatteryRes();
+            statBatteryRes.setConfigId(Constants.DEFAULT_CONFIG_ID);
+            statBatteryRes.setPackNum(packNum);
+            statBatteryRes.setBatNum(cell.getBatNum());
+            statBatteryRes.setResistance(cell.getResistance());
+            statBatteryResList.add(statBatteryRes);
+        }
+        return statBatteryResList;
+    }
     /** 计算内阻变化率。 */
     private String getResistanceRatio(Integer latestResistance, Integer baseResistance) {
         if (latestResistance == null || baseResistance == null || baseResistance == 0) {

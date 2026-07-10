@@ -1,7 +1,6 @@
 package com.shanhe.project.collector.battery.postprocess;
 
 
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.stat.service.IStatBatteryResService;
@@ -26,10 +25,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class ResistanceStatisticsProcessor implements BatteryRealtimePostProcessor {
 
-    /** 组级参数中内阻测试状态的字段名。 */
-    private static final String RESISTANCE_TEST_STATUS = "resistanceTestStatus";
-
     private final Set<String> processedBatches = ConcurrentHashMap.newKeySet();
+
+    private final Map<Integer, Integer> lastResistanceTestStatusCache = new ConcurrentHashMap<>();
 
     @Resource
     private IStatBatteryResService statBatteryResService;
@@ -60,10 +58,8 @@ public class ResistanceStatisticsProcessor implements BatteryRealtimePostProcess
     @Override
     public void process(BatteryRealtimePostProcessContext context) {
         Integer packNum = context.getPackNum();
-        BatteryReportLog report = RealtimeToReportLogAdapter.adapt(
-                packNum, context.getGroup(), context.getCells());
-        Map<String, Object> packParam = report.getPackParam();
-        if (!packParam.containsKey(RESISTANCE_TEST_STATUS)) {
+        Integer currentResistanceTestStatus = context.getGroup().getResistanceTestStatus();
+        if (currentResistanceTestStatus == null) {
             log.debug("内阻统计后处理跳过：缺少内阻测试状态, packNum={}", packNum);
             return;
         }
@@ -76,7 +72,11 @@ public class ResistanceStatisticsProcessor implements BatteryRealtimePostProcess
         }
 
         try {
-            statBatteryResService.init(packNum, packParam, report.getBatteryList(), null);
+            statBatteryResService.initRealtime(packNum,
+                    lastResistanceTestStatusCache.get(packNum),
+                    currentResistanceTestStatus,
+                    context.getCells());
+            lastResistanceTestStatusCache.put(packNum, currentResistanceTestStatus);
         } catch (Exception e) {
             processedBatches.remove(batchKey);
             log.warn("内阻统计后处理失败, packNum={}", packNum, e);
