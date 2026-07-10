@@ -55,12 +55,9 @@ public class RealtimeToReportLogAdapter {
             return packParam;
         }
         putIfNotNull(packParam, "packVoltage", group.getPackVoltage());
-        putIfNotNull(packParam, "batteryPackOuterVoltage",
-                first(group.getBatteryPackOuterVoltage(), group.getExternalVoltage()));
-        putIfNotNull(packParam, "packCurrent",
-                first(group.getPackCurrent(), group.getChargeDischargeCurrent()));
-        putIfNotNull(packParam, "batteryPackFloatCurrent",
-                first(group.getBatteryPackFloatCurrent(), group.getFloatCurrent()));
+        putIfNotNull(packParam, "batteryPackOuterVoltage", group.getExternalVoltage());
+        putIfNotNull(packParam, "packCurrent", group.getChargeDischargeCurrent());
+        putIfNotNull(packParam, "batteryPackFloatCurrent", group.getFloatCurrent());
         putIfNotNull(packParam, "environmentTemperature1", group.getEnvironmentTemperature1());
         putIfNotNull(packParam, "environmentTemperature2", group.getEnvironmentTemperature2());
         putIfNotNull(packParam, "maxVoltageBatteryNumber", group.getMaxVoltageBatNum());
@@ -69,8 +66,7 @@ public class RealtimeToReportLogAdapter {
         putIfNotNull(packParam, "batteryMinVoltage", group.getMinCellVoltage());
         putIfNotNull(packParam, "batteryAvgVoltage", group.getAvgCellVoltage());
         putIfNotNull(packParam, "batteryVoltageDeviation", group.getBatteryVoltageDeviation());
-        putIfNotNull(packParam, "batteryVoltageRange",
-                first(group.getBatteryVoltageRange(), group.getVoltageRange()));
+        putIfNotNull(packParam, "batteryVoltageRange", group.getVoltageRange());
         putIfNotNull(packParam, "maxResistanceBatteryNumber", group.getMaxResistanceBatNum());
         putIfNotNull(packParam, "batteryMaxResistance", group.getMaxInternalResistance());
         putIfNotNull(packParam, "minResistanceBatteryNumber", group.getMinResistanceBatNum());
@@ -80,8 +76,7 @@ public class RealtimeToReportLogAdapter {
         putIfNotNull(packParam, "batteryMaxTemperature", group.getMaxCellTemperature());
         putIfNotNull(packParam, "minTemperatureBatteryNumber", group.getMinTemperatureBatNum());
         putIfNotNull(packParam, "batteryMinTemperature", group.getMinCellTemperature());
-        putIfNotNull(packParam, "batteryAvgTemperature",
-                first(group.getBatteryAvgTemperature(), group.getAvgCellTemperature()));
+        putIfNotNull(packParam, "batteryAvgTemperature", group.getAvgCellTemperature());
         putIfNotNull(packParam, "batteryPackSoc", group.getBatteryPackSoc());
         putIfNotNull(packParam, "batteryPackSoh", group.getBatteryPackSoh());
         putIfNotNull(packParam, "residualDischargeDuration", group.getResidualDischargeDuration());
@@ -136,9 +131,5 @@ public class RealtimeToReportLogAdapter {
         if (value != null) {
             map.put(key, value);
         }
-    }
-
-    private static <T> T first(T a, T b) {
-        return a != null ? a : b;
     }
 }

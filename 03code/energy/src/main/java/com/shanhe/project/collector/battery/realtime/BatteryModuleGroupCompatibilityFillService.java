@@ -43,12 +43,13 @@ public class BatteryModuleGroupCompatibilityFillService {
 
     /** 根据充放电电流和缺省规则设置电池组及内阻测试状态。 */
     private void fillStatus(BatteryModuleGroupRealtime group) {
-        if (group.getPackCurrent() == null) {
+        Double current = group.getChargeDischargeCurrent();
+        if (current == null) {
             group.setBatteryPackStatus(null);
-        } else if (group.getPackCurrent() < -0.1) {
+        } else if (current < -0.1) {
             // BACKUP 备电
             group.setBatteryPackStatus(5);
-        } else if (group.getPackCurrent() > 0.1) {
+        } else if (current > 0.1) {
             // CHARGE 充电
             group.setBatteryPackStatus(1);
         } else {

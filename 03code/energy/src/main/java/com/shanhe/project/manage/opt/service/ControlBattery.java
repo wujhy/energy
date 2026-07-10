@@ -160,7 +160,7 @@ public class ControlBattery extends ControlBase {
     /** 校验测试条件 */
     private AjaxResult validateTestCondition(BatteryCommandContext context, BatteryModuleGroupRealtime realtimeGroup) {
         if (BatteryTestEnum._2.equals(context.testEnum)) {
-            Double current = realtimeGroup.getPackCurrent();
+            Double current = realtimeGroup.getChargeDischargeCurrent();
             if (current != null && Math.abs(current) < 5) {
                 throw new RuntimeException("电池组未到达测试条件，需组电流超过 5A 才可以进行连接条测试");
             }

@@ -317,7 +317,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         statBatteryPack.setId(IdUtils.getSnowflakeId());
         statBatteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID);
         statBatteryPack.setPackNum(packNum);
-        statBatteryPack.setPackVoltage(group.getExternalVoltage());
+        statBatteryPack.setPackVoltage(group.getPackVoltage());
         statBatteryPack.setPackCurrent(group.getChargeDischargeCurrent());
         statBatteryPack.setBatteryPackFloatCurrent(group.getFloatCurrent());
         statBatteryPack.setEnvironmentTemperature1(group.getEnvironmentTemperature1());

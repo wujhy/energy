@@ -120,9 +120,6 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         // 电池组充放电电流,获取阶段内的平均电流
         Double current = dataPointService.getAvgCurrent(packNum, startTime, endTime);
         if (current == null) {
-            current = group.getPackCurrent();
-        }
-        if (current == null) {
             current = group.getChargeDischargeCurrent();
         }
         log.info("放电预估容量统计，电流：{}", current);

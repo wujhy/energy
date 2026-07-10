@@ -200,9 +200,9 @@ public class ScreenServiceImpl implements ScreenService {
             return packParam;
         }
         putIfNotNull(packParam, "packVoltage", group.getPackVoltage());
-        putIfNotNull(packParam, "batteryPackOuterVoltage", group.getBatteryPackOuterVoltage());
-        putIfNotNull(packParam, "packCurrent", group.getPackCurrent());
-        putIfNotNull(packParam, "batteryPackFloatCurrent", group.getBatteryPackFloatCurrent());
+        putIfNotNull(packParam, "batteryPackOuterVoltage", group.getExternalVoltage());
+        putIfNotNull(packParam, "packCurrent", group.getChargeDischargeCurrent());
+        putIfNotNull(packParam, "batteryPackFloatCurrent", group.getFloatCurrent());
         putIfNotNull(packParam, "environmentTemperature1", group.getEnvironmentTemperature1());
         putIfNotNull(packParam, "environmentTemperature2", group.getEnvironmentTemperature2());
         putIfNotNull(packParam, "batteryPackSoc", group.getBatteryPackSoc());

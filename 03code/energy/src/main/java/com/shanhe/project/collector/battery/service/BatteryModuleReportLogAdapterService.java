@@ -120,9 +120,9 @@ public class BatteryModuleReportLogAdapterService {
             return packMap;
         }
         put(packMap, "packVoltage", group.getPackVoltage());
-        put(packMap, "batteryPackOuterVoltage", group.getBatteryPackOuterVoltage());
-        put(packMap, "packCurrent", group.getPackCurrent());
-        put(packMap, "batteryPackFloatCurrent", group.getBatteryPackFloatCurrent());
+        put(packMap, "batteryPackOuterVoltage", group.getExternalVoltage());
+        put(packMap, "packCurrent", group.getChargeDischargeCurrent());
+        put(packMap, "batteryPackFloatCurrent", group.getFloatCurrent());
         put(packMap, "environmentTemperature1", group.getEnvironmentTemperature1());
         put(packMap, "environmentTemperature2", group.getEnvironmentTemperature2());
 
@@ -132,7 +132,7 @@ public class BatteryModuleReportLogAdapterService {
         put(packMap, "batteryMinVoltage", group.getMinCellVoltage());
         put(packMap, "batteryAvgVoltage", group.getAvgCellVoltage());
         put(packMap, "batteryVoltageDeviation", group.getBatteryVoltageDeviation());
-        put(packMap, "batteryVoltageRange", group.getBatteryVoltageRange());
+        put(packMap, "batteryVoltageRange", group.getVoltageRange());
 
         put(packMap, "maxResistanceBatteryNumber", group.getMaxResistanceBatNum());
         put(packMap, "batteryMaxResistance", group.getMaxInternalResistance());
@@ -144,7 +144,7 @@ public class BatteryModuleReportLogAdapterService {
         put(packMap, "batteryMaxTemperature", group.getMaxCellTemperature());
         put(packMap, "minTemperatureBatteryNumber", group.getMinTemperatureBatNum());
         put(packMap, "batteryMinTemperature", group.getMinCellTemperature());
-        put(packMap, "batteryAvgTemperature", group.getBatteryAvgTemperature());
+        put(packMap, "batteryAvgTemperature", group.getAvgCellTemperature());
 
         put(packMap, "batteryPackSoc", group.getBatteryPackSoc());
         put(packMap, "batteryPackSoh", group.getBatteryPackSoh());

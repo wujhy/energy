@@ -273,9 +273,6 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
         BatteryModuleGroupRealtime realtime = new BatteryModuleGroupRealtime();
         realtime.setPackNum(channelConfig == null ? null : channelConfig.getBatteryGroup());
         if (data.isSuccess()) {
-            realtime.setPackCurrent(data.getChargeDischargeCurrent());
-            realtime.setBatteryPackFloatCurrent(data.getFloatCurrent());
-            realtime.setBatteryPackOuterVoltage(data.getExternalVoltage());
             realtime.setChargeDischargeCurrent(data.getChargeDischargeCurrent());
             realtime.setFloatCurrent(data.getFloatCurrent());
             realtime.setExternalVoltage(data.getExternalVoltage());

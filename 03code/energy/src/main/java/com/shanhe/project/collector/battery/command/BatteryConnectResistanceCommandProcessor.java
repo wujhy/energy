@@ -185,9 +185,7 @@ public class BatteryConnectResistanceCommandProcessor {
         if (group == null) {
             return null;
         }
-        return group.getChargeDischargeCurrent() != null
-                ? group.getChargeDischargeCurrent()
-                : group.getPackCurrent();
+        return group.getChargeDischargeCurrent();
     }
 
     /** 写入单体实时表中的连接条电阻值。 */

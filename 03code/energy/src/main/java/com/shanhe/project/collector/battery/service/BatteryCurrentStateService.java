@@ -147,7 +147,7 @@ public class BatteryCurrentStateService {
         BatteryCurrentGroupState target = new BatteryCurrentGroupState();
         target.setPackNum(source.getPackNum());
         target.setPackVoltage(source.getPackVoltage());
-        target.setPackCurrent(source.getPackCurrent());
+        target.setPackCurrent(source.getChargeDischargeCurrent());
         target.setChargeDischargeCurrent(source.getChargeDischargeCurrent());
         target.setFloatCurrent(source.getFloatCurrent());
         target.setExternalVoltage(source.getExternalVoltage());

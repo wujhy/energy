@@ -141,9 +141,9 @@ public class DataReportJob {
     List<ConfigHistoryItemVo> buildGroupItems(BatteryModuleGroupRealtime group) {
         List<ConfigHistoryItemVo> items = new ArrayList<>();
         addItem(items, "packVoltage", group.getPackVoltage());
-        addItem(items, "packCurrent", group.getPackCurrent() == null ? group.getChargeDischargeCurrent() : group.getPackCurrent());
-        addItem(items, "batteryPackFloatCurrent", group.getBatteryPackFloatCurrent() == null ? group.getFloatCurrent() : group.getBatteryPackFloatCurrent());
-        addItem(items, "batteryPackOuterVoltage", group.getBatteryPackOuterVoltage() == null ? group.getExternalVoltage() : group.getBatteryPackOuterVoltage());
+        addItem(items, "packCurrent", group.getChargeDischargeCurrent());
+        addItem(items, "batteryPackFloatCurrent", group.getFloatCurrent());
+        addItem(items, "batteryPackOuterVoltage", group.getExternalVoltage());
         addItem(items, "environmentTemperature1", group.getEnvironmentTemperature1());
         addItem(items, "environmentTemperature2", group.getEnvironmentTemperature2());
         addItem(items, "maxVoltageBatteryNumber", group.getMaxVoltageBatNum());
@@ -152,7 +152,7 @@ public class DataReportJob {
         addItem(items, "batteryMinVoltage", group.getMinCellVoltage());
         addItem(items, "batteryAvgVoltage", group.getAvgCellVoltage());
         addItem(items, "batteryVoltageDeviation", group.getBatteryVoltageDeviation());
-        addItem(items, "batteryVoltageRange", group.getBatteryVoltageRange() == null ? group.getVoltageRange() : group.getBatteryVoltageRange());
+        addItem(items, "batteryVoltageRange", group.getVoltageRange());
         addItem(items, "maxResistanceBatteryNumber", group.getMaxResistanceBatNum());
         addItem(items, "batteryMaxResistance", group.getMaxInternalResistance());
         addItem(items, "minResistanceBatteryNumber", group.getMinResistanceBatNum());
@@ -162,7 +162,7 @@ public class DataReportJob {
         addItem(items, "batteryMaxTemperature", group.getMaxCellTemperature());
         addItem(items, "minTemperatureBatteryNumber", group.getMinTemperatureBatNum());
         addItem(items, "batteryMinTemperature", group.getMinCellTemperature());
-        addItem(items, "batteryAvgTemperature", group.getBatteryAvgTemperature() == null ? group.getAvgCellTemperature() : group.getBatteryAvgTemperature());
+        addItem(items, "batteryAvgTemperature", group.getAvgCellTemperature());
         addItem(items, "batteryPackSoc", group.getBatteryPackSoc());
         addItem(items, "batteryPackSoh", group.getBatteryPackSoh());
         addItem(items, "residualDischargeDuration", group.getResidualDischargeDuration());

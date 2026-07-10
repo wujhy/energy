@@ -163,9 +163,6 @@ public class BatteryModuleGroupCalculationService {
                 return calculation;
             }
             calculation.setPackVoltage(group.getPackVoltage());
-            calculation.setPackCurrent(group.getPackCurrent());
-            calculation.setBatteryPackFloatCurrent(group.getBatteryPackFloatCurrent());
-            calculation.setBatteryPackOuterVoltage(group.getBatteryPackOuterVoltage());
             calculation.setExternalVoltage(group.getExternalVoltage());
             calculation.setChargeDischargeCurrent(group.getChargeDischargeCurrent());
             calculation.setFloatCurrent(group.getFloatCurrent());

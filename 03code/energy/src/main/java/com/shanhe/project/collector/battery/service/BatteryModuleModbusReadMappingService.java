@@ -195,11 +195,11 @@ public class BatteryModuleModbusReadMappingService {
         }
         switch (address) {
             case 411729:
-                return scale(first(group.getBatteryPackOuterVoltage(), group.getExternalVoltage()), 10d);
+                return scale(group.getExternalVoltage(), 10d);
             case 411730:
-                return scaleWithOffset(first(group.getPackCurrent(), group.getChargeDischargeCurrent()), 3000d, 10d);
+                return scaleWithOffset(group.getChargeDischargeCurrent(), 3000d, 10d);
             case 411731:
-                return scaleWithOffset(first(group.getBatteryPackFloatCurrent(), group.getFloatCurrent()), 10d, 1000d);
+                return scaleWithOffset(group.getFloatCurrent(), 10d, 1000d);
             case 411732:
                 return scaleWithOffset(group.getEnvironmentTemperature1(), 50d, 10d);
             case 411733:
@@ -217,7 +217,7 @@ public class BatteryModuleModbusReadMappingService {
             case 411739:
                 return scale(group.getBatteryVoltageDeviation(), 1000d);
             case 411740:
-                return scale(first(group.getBatteryVoltageRange(), group.getVoltageRange()), 1000d);
+                return scale(group.getVoltageRange(), 1000d);
             case 411741:
                 return unsigned16(group.getMaxResistanceBatNum());
             case 411742:
@@ -237,7 +237,7 @@ public class BatteryModuleModbusReadMappingService {
             case 411749:
                 return scaleWithOffset(group.getMinCellTemperature(), 50d, 10d);
             case 411750:
-                return scaleWithOffset(first(group.getBatteryAvgTemperature(), group.getAvgCellTemperature()), 50d, 10d);
+                return scaleWithOffset(group.getAvgCellTemperature(), 50d, 10d);
             case 411751:
                 return scaleRequired(group.getBatteryPackSoc(), 10d, "SOC");
             case 411752:
