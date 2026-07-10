@@ -5,7 +5,6 @@ import com.shanhe.project.collector.battery.model.BatteryModuleAlarmContext;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import lombok.Builder;
 import lombok.Data;
 
@@ -45,10 +44,6 @@ public class BatteryRealtimePostProcessContext {
 
     /** 告警候选上下文。 */
     private BatteryModuleAlarmContext alarmContext;
-
-    /** 旧报告日志（兼容模式下由 BatteryReportLog 提供）。 */
-    private BatteryReportLog oldReportLog;
-
     /** 组参数映射（兼容模式下由 980 解析提供）。 */
     private Map<String, Object> packMap;
 
