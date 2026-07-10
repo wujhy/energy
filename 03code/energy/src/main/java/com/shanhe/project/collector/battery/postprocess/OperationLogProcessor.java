@@ -2,12 +2,13 @@ package com.shanhe.project.collector.battery.postprocess;
 
 
 import com.shanhe.framework.enums.BatteryPackStatusEnum;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
+import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.manage.opt.service.OptLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 操作日志后处理器。
  * <p>
- * 将标准实时模型适配为旧操作日志服务入参，仅在电池组状态已明确时触发。
+ * 直接使用标准实时模型状态驱动操作日志，仅在电池组状态已明确时触发。
  *
  * @author wjh
  * @since 2026-06-05
@@ -26,8 +27,8 @@ public class OperationLogProcessor implements BatteryRealtimePostProcessor {
 
     @Resource
     private OptLogService optLogService;
-    /** 上次标准实时快照缓存，用于关闭兼容历史写入后仍能判断测试结束时间。 */
-    private final Map<Integer, BatteryReportLog> lastReportLogCache = new ConcurrentHashMap<>();
+    /** 上次标准实时快照时间缓存，用于判断测试结束时间。 */
+    private final Map<Integer, Date> lastRealtimeTimeCache = new ConcurrentHashMap<>();
 
     @Override
     public String getName() {
@@ -49,27 +50,25 @@ public class OperationLogProcessor implements BatteryRealtimePostProcessor {
     @Override
     public void process(BatteryRealtimePostProcessContext context) {
         Integer packNum = context.getPackNum();
-        BatteryReportLog report = RealtimeToReportLogAdapter.adapt(
-                packNum, context.getGroup(), context.getCells());
-        Map<String, Object> packParam = report.getPackParam();
-        String batteryPackStatus = Objects.toString(packParam.get("batteryPackStatus"), null);
+        BatteryModuleGroupRealtime group = context.getGroup();
+        Integer batteryPackStatusValue = group == null ? null : group.getBatteryPackStatus();
+        String batteryPackStatus = Objects.toString(batteryPackStatusValue, null);
         if (!isKnownBatteryPackStatus(batteryPackStatus)) {
             log.debug("操作日志后处理跳过：电池组状态未确认, packNum={}, status={}", packNum, batteryPackStatus);
             return;
         }
 
         try {
-            BatteryReportLog oldInfo = resolveOldInfo(packNum);
-            optLogService.insertBattery(packNum, packParam, oldInfo);
-            lastReportLogCache.put(packNum, report);
+            optLogService.insertBatteryRealtime(packNum,
+                    batteryPackStatusValue,
+                    group.getResistanceTestStatus(),
+                    lastRealtimeTimeCache.get(packNum));
+            if (group.getCreateTime() != null) {
+                lastRealtimeTimeCache.put(packNum, group.getCreateTime());
+            }
         } catch (Exception e) {
             log.warn("操作日志后处理失败, packNum={}", packNum, e);
         }
-    }
-
-    /** 仅使用上一标准实时快照，不再回退旧兼容缓存。 */
-    private BatteryReportLog resolveOldInfo(Integer packNum) {
-        return lastReportLogCache.get(packNum);
     }
 
     /** 判断电池组状态是否为已知枚举值，未知状态跳过操作日志写入。 */

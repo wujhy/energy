@@ -117,6 +117,16 @@ public class OptLogServiceImpl implements OptLogService {
         this.resistanceTest(packNum, packMap, oldInfo);
     }
 
+    @Async
+    @Override
+    public void insertBatteryRealtime(Integer packNum,
+                                      Integer batteryPackStatus,
+                                      Integer resistanceTestStatus,
+                                      Date previousRealtimeTime) {
+        this.batteryTest(packNum, Objects.toString(batteryPackStatus, null), previousRealtimeTime);
+        this.resistanceTest(packNum, Objects.toString(resistanceTestStatus, null), previousRealtimeTime);
+    }
+
     /** 处理核容测试操作日志。 */
     private void batteryTest(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
         String batteryPackStatus = Objects.toString(packMap.get("batteryPackStatus"), null);
@@ -150,6 +160,29 @@ public class OptLogServiceImpl implements OptLogService {
             }
         }
 
+    }
+
+    /** 处理标准实时状态下的核容测试操作日志。 */
+    private void batteryTest(Integer packNum, String batteryPackStatus, Date previousRealtimeTime) {
+        Integer type = getTestType(batteryPackStatus);
+        String cacheKey = String.format(logCache.getKey(), packNum, 1);
+        Object object = CacheUtils.get(logCache.getCache(), cacheKey);
+        if (type == null) {
+            this.sotOptLog(object, cacheKey, previousRealtimeTime);
+        } else if (object == null) {
+            if (this.adoptRunningLog(packNum, type, cacheKey)) {
+                return;
+            }
+            this.create(packNum, type, cacheKey);
+        } else {
+            OptLog oldOptLog = (OptLog) object;
+            if (!type.equals(oldOptLog.getType())) {
+                this.sotOptLog(object, cacheKey, previousRealtimeTime);
+                this.create(packNum, type, cacheKey);
+            } else {
+                insert(oldOptLog, cacheKey);
+            }
+        }
     }
 
     /** 插入操作日志并更新缓存。 */
@@ -206,6 +239,11 @@ public class OptLogServiceImpl implements OptLogService {
 
     /** 判断是否需要插入操作日志。 */
     private void sotOptLog(Object object, String cacheKey, BatteryReportLog oldInfo) {
+        sotOptLog(object, cacheKey, oldInfo == null ? null : oldInfo.getCreateTime());
+    }
+
+    /** 判断是否需要插入操作日志。 */
+    private void sotOptLog(Object object, String cacheKey, Date endTimeSource) {
         if (object == null) {
             return;
         }
@@ -221,10 +259,10 @@ public class OptLogServiceImpl implements OptLogService {
 
         // 当前时间减 5 秒
         Date endTime = null;
-        if (oldInfo == null || oldInfo.getCreateTime() == null) {
+        if (endTimeSource == null) {
             endTime = new Date(System.currentTimeMillis() - 5000);
         } else {
-            endTime = oldInfo.getCreateTime();
+            endTime = endTimeSource;
         }
         update(optLog.getId(), YesNoEnum.YES.getDictValue(), endTime);
     }
@@ -274,6 +312,22 @@ public class OptLogServiceImpl implements OptLogService {
             }
         } else {
             this.sotOptLog(object, cacheKey, oldInfo);
+        }
+    }
+
+    /** 处理标准实时状态下的内阻测试操作日志。 */
+    private void resistanceTest(Integer packNum, String resistanceTestStatus, Date previousRealtimeTime) {
+        String cacheKey = String.format(logCache.getKey(), packNum, 0);
+        Object object = CacheUtils.get(logCache.getCache(), cacheKey);
+        if (ResistanceTestStatusEnum.isCode(resistanceTestStatus, ResistanceTestStatusEnum.TESTING)) {
+            if (object == null) {
+                this.create(packNum, BatteryTestEnum._1.getDictValue(), cacheKey);
+            } else {
+                OptLog oldOptLog = (OptLog) object;
+                insert(oldOptLog, cacheKey);
+            }
+        } else {
+            this.sotOptLog(object, cacheKey, previousRealtimeTime);
         }
     }
 
@@ -528,6 +582,6 @@ public class OptLogServiceImpl implements OptLogService {
         if (!log.getType().equals(type)) {
             return;
         }
-        sotOptLog(log, cacheKey, null);
+        sotOptLog(log, cacheKey, (Date) null);
     }
 }

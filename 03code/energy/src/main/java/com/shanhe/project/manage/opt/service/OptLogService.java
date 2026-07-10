@@ -55,6 +55,16 @@ public interface OptLogService {
     void insertBattery(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo);
 
     /**
+     * 按标准实时状态插入蓄电池操作日志。
+     *
+     * @param packNum 组序号
+     * @param batteryPackStatus 电池组状态
+     * @param resistanceTestStatus 内阻测试状态
+     * @param previousRealtimeTime 上一标准实时快照时间
+     */
+    void insertBatteryRealtime(Integer packNum, Integer batteryPackStatus, Integer resistanceTestStatus, Date previousRealtimeTime);
+
+    /**
      * 更新操作日志
      *
      * @param id 记录id
