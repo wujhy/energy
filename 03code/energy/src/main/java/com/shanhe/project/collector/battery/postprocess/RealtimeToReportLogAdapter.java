@@ -1,5 +1,6 @@
 package com.shanhe.project.collector.battery.postprocess;
 
+import com.shanhe.common.constant.Constants;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
@@ -37,9 +38,13 @@ public class RealtimeToReportLogAdapter {
                                           BatteryModuleGroupRealtime group,
                                           List<BatteryModuleCellRealtime> cells) {
         BatteryReportLog report = new BatteryReportLog();
+        report.setConfigId(Constants.DEFAULT_CONFIG_ID);
         report.setPackNum(packNum);
+        if (group != null) {
+            report.setCreateTime(group.getCreateTime());
+        }
         report.setPackParam(buildPackParam(group));
-        report.setBatteryList(buildBatteryList(cells));
+        report.setBatteryList(buildBatteryList(packNum, cells));
         return report;
     }
 
@@ -80,15 +85,28 @@ public class RealtimeToReportLogAdapter {
         putIfNotNull(packParam, "batteryPackSoc", group.getBatteryPackSoc());
         putIfNotNull(packParam, "batteryPackSoh", group.getBatteryPackSoh());
         putIfNotNull(packParam, "residualDischargeDuration", group.getResidualDischargeDuration());
+        putIfNotNull(packParam, "backupDuration", group.getBackupDuration());
+        putIfNotNull(packParam, "rippleVoltage", group.getRippleVoltage());
+        putIfNotNull(packParam, "hydrogenConcentration", group.getHydrogenConcentration());
+        putIfNotNull(packParam, "positiveinsulationResistance", group.getPositiveInsulationResistance());
+        putIfNotNull(packParam, "negativeinsulationResistance", group.getNegativeInsulationResistance());
+        putIfNotNull(packParam, "groundingBatteryUpperLimit", group.getGroundingBatteryUpperLimit());
+        putIfNotNull(packParam, "groundingBatteryLowerLimit", group.getGroundingBatteryLowerLimit());
+        putIfNotNull(packParam, "maxResistanceRateChangeBatteryNumber", group.getMaxResistanceRateChangeBatNum());
+        putIfNotNull(packParam, "maxResistanceRateChange", group.getMaxResistanceRateChange());
         putIfNotNull(packParam, "batteryPackStatus", group.getBatteryPackStatus());
         putIfNotNull(packParam, "resistanceTestStatus", group.getResistanceTestStatus());
         putIfNotNull(packParam, "deviceWorkStatus", group.getDeviceWorkStatus());
         putIfNotNull(packParam, "deviceWorkIOStatus", group.getDeviceWorkIoStatus());
+        putIfNotNull(packParam, "bcapacity", group.getBcapacity());
+        putIfNotNull(packParam, "capacity", group.getCapacity());
+        putIfNotNull(packParam, "disChargeCapacity", group.getDisChargeCapacity());
+        putIfNotNull(packParam, "disChargeDuration", group.getDisChargeDuration());
         return packParam;
     }
 
     /** 将单体实时数据列表转换为 BatteryMonitor 列表。 */
-    private static List<BatteryMonitor> buildBatteryList(List<BatteryModuleCellRealtime> cells) {
+    private static List<BatteryMonitor> buildBatteryList(Integer packNum, List<BatteryModuleCellRealtime> cells) {
         List<BatteryMonitor> list = new ArrayList<>();
         if (cells == null) {
             return list;
@@ -98,12 +116,17 @@ public class RealtimeToReportLogAdapter {
                 continue;
             }
             BatteryMonitor monitor = new BatteryMonitor();
+            monitor.setConfigId(Constants.DEFAULT_CONFIG_ID);
+            monitor.setPackNum(packNum);
             monitor.setBatNum(cell.getBatNum());
             monitor.setVoltage(cell.getVoltage());
             monitor.setResistance(cell.getResistance());
             monitor.setTemperature(cell.getTemperature());
-            monitor.setGbvoltage(cell.getSwollenVoltage());
+            monitor.setBcapacity(cell.getCapacity());
+            monitor.setResistancerageslip(cell.getResistanceRageSlip());
             monitor.setResistanceRateChange(cell.getResistanceRateChange());
+            monitor.setGbvoltage(cell.getSwollenVoltage());
+            monitor.setCreateTime(cell.getCreateTime());
             list.add(monitor);
         }
         return list;

@@ -8,7 +8,6 @@ import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.*;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.config.service.IConfigAttributeService;
 import com.shanhe.project.manage.config.service.IConfigService;
@@ -25,8 +24,6 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * 首页Service接口
@@ -49,9 +46,6 @@ public class ScreenServiceImpl implements ScreenService {
     /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
-    /** 电池上报日志服务。 */
-    @Resource
-    private BatteryReportLogService batteryReportLogService;
     /** 电池模组实时快照服务。 */
     @Resource
     private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
@@ -164,15 +158,9 @@ public class ScreenServiceImpl implements ScreenService {
     }
 
     private List<BatteryReportLogIndex> realtimeBatteryList() {
-        List<BatteryReportLogIndex> legacyList = batteryReportLogService.batteryList();
-        Map<Integer, BatteryReportLogIndex> legacyMap = legacyList == null ? java.util.Collections.emptyMap()
-                : legacyList.stream()
-                .filter(item -> item != null && item.getPackNum() != null)
-                .collect(Collectors.toMap(BatteryReportLogIndex::getPackNum, Function.identity(), (v1, v2) -> v2));
-
         List<BatteryPack> packs = batteryPackService.selectBatteryPackListCache(YesNoEnum.YES.getDictValue());
         if (packs == null || packs.isEmpty()) {
-            return legacyList == null ? new ArrayList<>() : legacyList;
+            return new ArrayList<>();
         }
 
         List<BatteryReportLogIndex> result = new ArrayList<>();
@@ -180,7 +168,7 @@ public class ScreenServiceImpl implements ScreenService {
             if (pack == null || pack.getPackNum() == null) {
                 continue;
             }
-            BatteryReportLogIndex index = buildRealtimeIndex(pack, legacyMap.get(pack.getPackNum()));
+            BatteryReportLogIndex index = buildRealtimeIndex(pack);
             if (index != null) {
                 result.add(index);
             }
@@ -189,25 +177,21 @@ public class ScreenServiceImpl implements ScreenService {
         return result;
     }
 
-    private BatteryReportLogIndex buildRealtimeIndex(BatteryPack pack, BatteryReportLogIndex fallback) {
-        try {
-            BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
-                    ? null : realtimeSnapshotService.getCachedSnapshot(pack.getPackNum());
-            BatteryModuleGroupRealtime group = snapshot == null ? null : snapshot.getGroup();
-            Map<String, Object> packParam = buildPackParam(group);
-            if (packParam.isEmpty()) {
-                return fallback;
-            }
-            BatteryReportLogIndex index = new BatteryReportLogIndex();
-            index.setPackNum(pack.getPackNum());
-            index.setConfigId(pack.getConfigId() == null ? Constants.DEFAULT_CONFIG_ID : pack.getConfigId());
-            index.setAlarm(alarmLogService.isAlarmByCache(pack.getPackNum()));
-            index.setCreateTime(group.getCreateTime());
-            index.setPackParam(packParam);
-            return index;
-        } catch (Exception ignored) {
-            return fallback;
+    private BatteryReportLogIndex buildRealtimeIndex(BatteryPack pack) {
+        BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
+                ? null : realtimeSnapshotService.getCachedSnapshot(pack.getPackNum());
+        BatteryModuleGroupRealtime group = snapshot == null ? null : snapshot.getGroup();
+        Map<String, Object> packParam = buildPackParam(group);
+        if (group == null || packParam.isEmpty()) {
+            return null;
         }
+        BatteryReportLogIndex index = new BatteryReportLogIndex();
+        index.setPackNum(pack.getPackNum());
+        index.setConfigId(pack.getConfigId() == null ? Constants.DEFAULT_CONFIG_ID : pack.getConfigId());
+        index.setAlarm(alarmLogService.isAlarmByCache(pack.getPackNum()));
+        index.setCreateTime(group.getCreateTime());
+        index.setPackParam(packParam);
+        return index;
     }
 
     private Map<String, Object> buildPackParam(BatteryModuleGroupRealtime group) {

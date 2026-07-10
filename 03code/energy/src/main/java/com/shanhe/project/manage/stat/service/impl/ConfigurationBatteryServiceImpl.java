@@ -12,9 +12,7 @@ import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.manage.alarm.domain.AlarmLog;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
-import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryPack;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.domain.ConfigAttribute;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.config.service.IConfigAttributeService;
@@ -81,11 +79,11 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
 
         Map<String, List<AlarmLog>> logMap = populateAlarmInfo(batteryHealthReport, packNum);
 
-        BatteryReportLog batteryReportLog = resolveBatteryReportLog(packNum);
-        populateBackupDuration(batteryHealthReport, batteryReportLog);
+        CurrentBatteryRealtime currentRealtime = resolveCurrentRealtime(packNum);
+        populateBackupDuration(batteryHealthReport, currentRealtime.group);
 
         List<EvaluationFactors> evaluationFactorsList = buildEvaluationFactors(
-                batteryPack, batteryReportLog, batteryHealthReport, logMap, preBatteryGroup);
+                batteryPack, currentRealtime, batteryHealthReport, logMap, preBatteryGroup);
 
         batteryHealthReport.setEvaluationFactors(evaluationFactorsList);
 
@@ -97,68 +95,29 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         return batteryHealthReport;
     }
 
-    BatteryReportLog resolveBatteryReportLog(Integer packNum) {
+    CurrentBatteryRealtime resolveCurrentRealtime(Integer packNum) {
         BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
                 ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
         if (snapshot == null || snapshot.getGroup() == null) {
-            return null;
+            return CurrentBatteryRealtime.empty();
         }
-        BatteryReportLog reportLog = new BatteryReportLog();
-        reportLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
-        reportLog.setPackNum(packNum);
-        reportLog.setCreateTime(snapshot.getGroup().getCreateTime());
-        reportLog.setPackParam(toPackParam(snapshot.getGroup()));
-        reportLog.setBatteryList(toBatteryList(packNum, snapshot.getCells()));
-        return reportLog;
+        return new CurrentBatteryRealtime(snapshot.getGroup(), snapshot.getCells());
     }
 
-    private Map<String, Object> toPackParam(BatteryModuleGroupRealtime group) {
-        Map<String, Object> packMap = new LinkedHashMap<>();
-        if (group == null) {
-            return packMap;
+    static class CurrentBatteryRealtime {
+        private final BatteryModuleGroupRealtime group;
+        private final List<BatteryModuleCellRealtime> cells;
+
+        CurrentBatteryRealtime(BatteryModuleGroupRealtime group, List<BatteryModuleCellRealtime> cells) {
+            this.group = group;
+            this.cells = cells == null ? Collections.emptyList() : cells;
         }
-        put(packMap, "packVoltage", group.getPackVoltage());
-        put(packMap, "batteryPackOuterVoltage", group.getBatteryPackOuterVoltage());
-        put(packMap, "packCurrent", group.getPackCurrent());
-        put(packMap, "batteryPackFloatCurrent", group.getBatteryPackFloatCurrent());
-        put(packMap, "environmentTemperature1", group.getEnvironmentTemperature1());
-        put(packMap, "environmentTemperature2", group.getEnvironmentTemperature2());
-        put(packMap, "batteryPackStatus", group.getBatteryPackStatus());
-        put(packMap, "backupDuration", group.getBackupDuration());
-        return packMap;
+
+        static CurrentBatteryRealtime empty() {
+            return new CurrentBatteryRealtime(null, Collections.emptyList());
+        }
     }
 
-    private List<BatteryMonitor> toBatteryList(Integer packNum, List<BatteryModuleCellRealtime> cells) {
-        List<BatteryMonitor> result = new ArrayList<>();
-        if (cells == null || cells.isEmpty()) {
-            return result;
-        }
-        for (BatteryModuleCellRealtime cell : cells) {
-            if (cell == null) {
-                continue;
-            }
-            BatteryMonitor monitor = new BatteryMonitor();
-            monitor.setConfigId(Constants.DEFAULT_CONFIG_ID);
-            monitor.setPackNum(packNum);
-            monitor.setBatNum(cell.getBatNum());
-            monitor.setVoltage(cell.getVoltage());
-            monitor.setResistance(cell.getResistance());
-            monitor.setTemperature(cell.getTemperature());
-            monitor.setBcapacity(cell.getCapacity());
-            monitor.setResistancerageslip(cell.getResistanceRageSlip());
-            monitor.setResistanceRateChange(cell.getResistanceRateChange());
-            monitor.setGbvoltage(cell.getSwollenVoltage());
-            monitor.setCreateTime(cell.getCreateTime());
-            result.add(monitor);
-        }
-        return result;
-    }
-
-    private void put(Map<String, Object> packMap, String key, Object value) {
-        if (value != null) {
-            packMap.put(key, value);
-        }
-    }
     @Override
     public Map<String, Object> getTempWarnLine(Integer packNum) {
         Map<String, Object> packMap = new HashMap<>(4);
@@ -219,7 +178,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
 
     /** 构建评估因素列表。 */
     private List<EvaluationFactors> buildEvaluationFactors(BatteryPack batteryPack,
-                                                           BatteryReportLog batteryReportLog,
+                                                           CurrentBatteryRealtime currentRealtime,
                                                            BatteryHealthReport batteryHealthReport,
                                                            Map<String, List<AlarmLog>> logMap,
                                                            PreBatteryGroup preBatteryGroup) {
@@ -233,10 +192,10 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
         List<EvaluationFactors> evaluationFactorsList = Lists.newArrayList();
         evaluationFactorsList.add(new EvaluationFactors("充放电次数", count + "次", 1));
         evaluationFactorsList.add(new EvaluationFactors("电池容量", getCapacity(batteryPack, preBatteryGroup), 1));
-        evaluationFactorsList.add(getVoltageRangeStr(batteryPack, batteryReportLog, batteryHealthReport));
+        evaluationFactorsList.add(getVoltageRangeStr(batteryPack, currentRealtime, batteryHealthReport));
         evaluationFactorsList.add(getResistanceStr(batteryPack, batteryHealthReport, logMap));
-        evaluationFactorsList.add(getWdStr(logMap, ItemCode.ZWDG.getCode(), batteryReportLog, batteryHealthReport));
-        evaluationFactorsList.add(getWdStr(logMap, ItemCode.DTDCWDG.getCode(), batteryReportLog, batteryHealthReport));
+        evaluationFactorsList.add(getWdStr(logMap, ItemCode.ZWDG.getCode(), currentRealtime, batteryHealthReport));
+        evaluationFactorsList.add(getWdStr(logMap, ItemCode.DTDCWDG.getCode(), currentRealtime, batteryHealthReport));
         evaluationFactorsList.add(getGblyStr(logMap, batteryHealthReport));
 
         evaluationFactorsList.add(new EvaluationFactors("使用年限", getLx(batteryPack), 1));
@@ -282,21 +241,11 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
 
     /** 从上报数据中解析备电时长。 */
     private void populateBackupDuration(BatteryHealthReport batteryHealthReport,
-                                        BatteryReportLog batteryReportLog) {
-        try {
-            if (batteryReportLog != null && batteryReportLog.getPackParam() != null) {
-                String backupDurationStr = Objects.toString(batteryReportLog.getPackParam().get("backupDuration"), null);
-                if (backupDurationStr != null) {
-                    batteryHealthReport.setBackupDuration(Integer.parseInt(backupDurationStr));
-                }
-            }
-        } catch (NumberFormatException e) {
-            // 记录日志，但不中断流程
-            log.warn("解析备电时长失败", e);
+                                        BatteryModuleGroupRealtime group) {
+        if (group != null && group.getBackupDuration() != null) {
+            batteryHealthReport.setBackupDuration(group.getBackupDuration());
         }
     }
-
-    /** 根据告警状态生成评估建议。 */
     private String getAssessAdvice(BatteryHealthReport batteryHealthReport) {
         // SOH 不告警
         if (!Objects.equals(0, batteryHealthReport.getSohAlarm())) {
@@ -407,7 +356,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     }
 
     /** 构建温度告警评估因素。 */
-    private EvaluationFactors getWdStr(Map<String, List<AlarmLog>> logMap, String itemCode, BatteryReportLog batteryReportLog, BatteryHealthReport batteryHealthReport) {
+    private EvaluationFactors getWdStr(Map<String, List<AlarmLog>> logMap, String itemCode, CurrentBatteryRealtime currentRealtime, BatteryHealthReport batteryHealthReport) {
         String str;
         if (ItemCode.ZWDG.getCode().equals(itemCode)) {
             str = "组环境高温告警";
@@ -429,31 +378,26 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
             } else {
                 batteryHealthReport.setIsBatWdgAlarm(0);
             }
-            return new EvaluationFactors(str, "告警（" + getWd(itemCode, batteryReportLog) + "）", 0);
+            return new EvaluationFactors(str, "告警（" + getWd(itemCode, currentRealtime) + "）", 0);
         }
         return new EvaluationFactors(str, "无", 1);
     }
 
     /** 获取温度告警当前值。 */
-    private String getWd(String itemCode, BatteryReportLog batteryReportLog) {
+    private String getWd(String itemCode, CurrentBatteryRealtime currentRealtime) {
         if (ItemCode.ZWDG.getCode().equals(itemCode)) {
-            Map<String, Object> packParam = batteryReportLog.getPackParam();
-            if (packParam != null) {
-                return packParam.get("environmentTemperature1") + "℃";
-            }
-            return "40℃";
-        } else {
-            List<BatteryMonitor> batteryList = batteryReportLog.getBatteryList();
-            if (batteryList == null || batteryList.isEmpty()) {
-                return "50℃";
-            }
-            // 获取最高温度
-            Double maxTemperature = batteryList.stream().mapToDouble(BatteryMonitor::getTemperature).max().orElse(0);
-            return maxTemperature + "℃";
+            BatteryModuleGroupRealtime group = currentRealtime.group;
+            return group == null || group.getEnvironmentTemperature1() == null
+                    ? "--" : group.getEnvironmentTemperature1() + "℃";
         }
+        OptionalDouble maxTemperature = currentRealtime.cells.stream()
+                .filter(Objects::nonNull)
+                .map(BatteryModuleCellRealtime::getTemperature)
+                .filter(Objects::nonNull)
+                .mapToDouble(Double::doubleValue)
+                .max();
+        return maxTemperature.isPresent() ? maxTemperature.getAsDouble() + "℃" : "--";
     }
-
-    /** 获取内阻变化率 */
     private EvaluationFactors getResistanceStr(BatteryPack batteryPack, BatteryHealthReport batteryHealthReport, Map<String, List<AlarmLog>> logMap) {
 
         long dtnzggCount = logMap.getOrDefault(ItemCode.DTNZGD.getCode(), Collections.emptyList()).size();
@@ -492,8 +436,8 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     }
 
     /** 构建电压均衡度评估因素。 */
-    private EvaluationFactors getVoltageRangeStr(BatteryPack batteryPack, BatteryReportLog batteryReportLog, BatteryHealthReport batteryHealthReport) {
-        Integer voltageRange = getRange(batteryPack, batteryReportLog);
+    private EvaluationFactors getVoltageRangeStr(BatteryPack batteryPack, CurrentBatteryRealtime currentRealtime, BatteryHealthReport batteryHealthReport) {
+        Integer voltageRange = getRange(batteryPack, currentRealtime);
         if (voltageRange == null) {
             return new EvaluationFactors("电压均衡度", "--", 1);
         }
@@ -508,33 +452,29 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     }
 
     /** 计算单体电压极差。 */
-    private Integer getRange(BatteryPack batteryPack, BatteryReportLog oldInfo) {
-        // 当前是浮充状态，取当前数据计算极差
-        if (null == oldInfo || null == oldInfo.getPackParam() || null == oldInfo.getBatteryList() || oldInfo.getBatteryList().isEmpty()) {
+    private Integer getRange(BatteryPack batteryPack, CurrentBatteryRealtime currentRealtime) {
+        BatteryModuleGroupRealtime group = currentRealtime.group;
+        if (group == null || currentRealtime.cells.isEmpty()) {
             return batteryPack.getVoltageRange();
         }
 
-        // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
-        String batteryPackStatus = Objects.toString(oldInfo.getPackParam().get("batteryPackStatus"), null);
+        String batteryPackStatus = Objects.toString(group.getBatteryPackStatus(), null);
         if (!BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
             return batteryPack.getVoltageRange();
         }
 
-        // 电压极差（mV） = 单体最高电压(V) - 单体最低电压(V)
-        // 使用 summaryStatistics 避免两次流操作，同时处理可能的空流情况
-        DoubleSummaryStatistics voltageStats = oldInfo.getBatteryList().stream()
-                .mapToDouble(BatteryMonitor::getVoltage)
+        DoubleSummaryStatistics voltageStats = currentRealtime.cells.stream()
+                .filter(Objects::nonNull)
+                .map(BatteryModuleCellRealtime::getVoltage)
+                .filter(Objects::nonNull)
+                .mapToDouble(Double::doubleValue)
                 .summaryStatistics();
 
         if (voltageStats.getCount() == 0) {
             return batteryPack.getVoltageRange();
         }
 
-        double maxVoltage = voltageStats.getMax();
-        double minVoltage = voltageStats.getMin();
-
-        // 单位转换 V 转换 mV，不保留小数点
-        return (int) Math.round((maxVoltage - minVoltage) * 1000);
+        return (int) Math.round((voltageStats.getMax() - voltageStats.getMin()) * 1000);
     }
 
 }

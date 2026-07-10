@@ -9,11 +9,9 @@ import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
-import com.shanhe.project.collector.battery.postprocess.RealtimeToReportLogAdapter;
 import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.BatteryPack;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,7 +23,6 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.Date;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -140,25 +137,18 @@ public class DeviceOnlineJob {
     }
 
     private void syncBatteryOfflineAlarm(Integer packNum, boolean offline) {
-        Map<String, String> warnParam = new HashMap<>(1);
-        warnParam.put(ItemCode.TXZT.getCode(), offline ? "1" : "0");
-        BatteryReportLog batteryReportLog = resolveBatteryReportLog(packNum);
-        alarmLogService.alarmBattery(packNum, null, warnParam, batteryReportLog);
+        BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
+                ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
+        if (!offline) {
+            alarmLogService.alarmFix(packNum, false, null, Collections.singletonList(ItemCode.TXZT.getCode()));
+        } else if (snapshot == null || !snapshot.isDataReady()) {
+            log.debug("电池组离线告警暂不触发旧告警上下文, packNum={}", packNum);
+        } else {
+            log.debug("电池组离线状态已写入 battery_device_state, 告警上下文等待迁移到标准实时模型, packNum={}", packNum);
+        }
         persistOnlineState(packNum, offline);
     }
 
-    BatteryReportLog resolveBatteryReportLog(Integer packNum) {
-        BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
-                ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
-        if (snapshot == null || !snapshot.isDataReady()) {
-            BatteryReportLog reportLog = new BatteryReportLog();
-            reportLog.setPackNum(packNum);
-            reportLog.setPackParam(new LinkedHashMap<>());
-            reportLog.setBatteryList(Collections.emptyList());
-            return reportLog;
-        }
-        return RealtimeToReportLogAdapter.adapt(packNum, snapshot.getGroup(), snapshot.getCells());
-    }
     /** 持久化电池组在线/离线状态到 battery_device_state。 */
     private void persistOnlineState(Integer packNum, boolean offline) {
         try {

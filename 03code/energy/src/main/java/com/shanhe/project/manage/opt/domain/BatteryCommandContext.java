@@ -2,7 +2,6 @@ package com.shanhe.project.manage.opt.domain;
 
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.manage.config.domain.BatteryPack;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.domain.Config;
 import com.shanhe.project.manage.config.domain.DevBatteryOpt;
 import com.shanhe.project.manage.opt.service.BatteryOptExecuteType;

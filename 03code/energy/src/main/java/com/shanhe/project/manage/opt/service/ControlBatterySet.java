@@ -426,7 +426,7 @@ public class ControlBatterySet extends ControlBase {
     /**
      * 读取内阻基准页使用的当前平均内阻。
      * <p>
-     * 标准实时切源开启时优先按 600 实时快照单体内阻计算，缺少单体数据时回退旧上报缓存。
+     * 直接按标准实时快照单体内阻计算；缺少快照或单体数据时返回 null。
      */
     private Long getCurrentResistanceValue(Integer packNum) {
         try {
@@ -436,13 +436,13 @@ public class ControlBatterySet extends ControlBase {
         } catch (Exception e) {
             log.warn("读取标准实时内阻基准数据失败, packNum={}", packNum, e);
         }
-        return 0L;
+        return null;
     }
 
     /** 按实时快照单体计算平均内阻，空内阻按 0 参与平均。 */
     private Long averageResistance(List<BatteryModuleCellRealtime> cells) {
         if (cells == null || cells.isEmpty()) {
-            return 0L;
+            return null;
         }
         double resistanceValue = 0;
         for (BatteryModuleCellRealtime battery : cells) {

@@ -5,7 +5,6 @@ import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
-import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.service.BatteryReportLogService;
@@ -30,9 +29,6 @@ public class CompatReportLogSyncProcessor implements BatteryRealtimePostProcesso
 
     @Resource
     private BatteryCollectorProperties properties;
-
-    @Resource
-    private BatteryModuleReportLogAdapterService adapterService;
 
     @Resource
     private BatteryReportLogService batteryReportLogService;
@@ -81,7 +77,7 @@ public class CompatReportLogSyncProcessor implements BatteryRealtimePostProcesso
         if (channelConfig == null || channelConfig.getBatteryGroup() == null) {
             return;
         }
-        BatteryReportLog reportLog = adapterService.buildReportLog(
+        BatteryReportLog reportLog = RealtimeToReportLogAdapter.adapt(
                 channelConfig.getBatteryGroup(), group, cells);
         if (reportLog == null) {
             return;

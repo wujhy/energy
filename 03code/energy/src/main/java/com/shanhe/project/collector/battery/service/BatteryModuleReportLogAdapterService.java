@@ -2,12 +2,11 @@ package com.shanhe.project.collector.battery.service;
 
 import com.alibaba.fastjson.JSON;
 import com.shanhe.common.constant.Constants;
-import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -27,17 +26,9 @@ import java.util.Map;
 @Service
 public class BatteryModuleReportLogAdapterService {
 
-    /** 600节模块端标准实时数据 Mapper。 */
-    @Resource
-    private BatteryModuleRealtimeMapper realtimeMapper;
-
     /** 实时快照服务。 */
     @Resource
     private BatteryModuleRealtimeSnapshotService snapshotService;
-
-    /** 旧上报日志缓存服务。 */
-    @Resource
-    private BatteryReportLogService batteryReportLogService;
 
     /**
      * 构建兼容旧 BatteryReportLog 的实时数据对象。
@@ -46,18 +37,16 @@ public class BatteryModuleReportLogAdapterService {
      * @return 兼容旧实时上报结构的数据对象
      */
     public BatteryReportLog buildReportLog(Integer packNum) {
-        com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot snapshot =
+        BatteryModuleRealtimeSnapshot snapshot =
                 snapshotService == null ? null : snapshotService.getCachedSnapshot(packNum);
-        if (snapshotService != null && snapshot == null) {
-            return buildReportLog(packNum, null, null);
+        if (snapshot == null) {
+            return null;
         }
-        BatteryModuleGroupRealtime group = snapshot == null ? realtimeMapper.selectGroup(packNum) : snapshot.getGroup();
-        List<BatteryModuleCellRealtime> cells = snapshot == null ? realtimeMapper.selectCells(packNum) : snapshot.getCells();
-        return buildReportLog(packNum, group, cells);
+        return buildReportLog(packNum, snapshot.getGroup(), snapshot.getCells());
     }
 
     /**
-     * 获取当前上报模型：优先使用标准实时模型，实时数据不可用时回退旧上报缓存。
+     * 获取当前上报模型：仅使用标准实时模型，不再回退旧上报缓存。
      *
      * @param packNum 电池组编号
      * @return 当前可用上报模型
@@ -67,7 +56,7 @@ public class BatteryModuleReportLogAdapterService {
     }
 
     /**
-     * 获取当前上报模型：优先使用标准实时模型，实时数据不可用时回退旧上报缓存。
+     * 获取当前上报模型：仅使用标准实时模型，不再回退旧上报缓存。
      *
      * @param packNum 电池组编号
      * @param requireBatteryList 是否要求单体列表可用
@@ -80,9 +69,9 @@ public class BatteryModuleReportLogAdapterService {
                 return realtimeLog;
             }
         } catch (Exception e) {
-            log.warn("标准实时数据构建当前上报模型失败, packNum={}, fallback=oldCache", packNum, e);
+            log.warn("标准实时数据构建当前上报模型失败, packNum={}", packNum, e);
         }
-        return batteryReportLogService == null ? null : batteryReportLogService.lastCache(packNum);
+        return null;
     }
 
     private boolean isUsable(BatteryReportLog log, boolean requireBatteryList) {

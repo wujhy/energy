@@ -3,7 +3,6 @@ package com.shanhe.project.collector.battery.postprocess;
 
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.domain.BatteryPack;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.stat.service.IStatBatteryResService;
 import lombok.extern.slf4j.Slf4j;
@@ -34,10 +33,6 @@ public class ResistanceStatisticsProcessor implements BatteryRealtimePostProcess
 
     @Resource
     private IStatBatteryResService statBatteryResService;
-
-    @Resource
-    private BatteryReportLogService batteryReportLogService;
-
     @Resource
     private IBatteryPackService batteryPackService;
 
@@ -81,8 +76,7 @@ public class ResistanceStatisticsProcessor implements BatteryRealtimePostProcess
         }
 
         try {
-            BatteryReportLog oldInfo = batteryReportLogService.lastCache(packNum);
-            statBatteryResService.init(packNum, packParam, report.getBatteryList(), oldInfo);
+            statBatteryResService.init(packNum, packParam, report.getBatteryList(), null);
         } catch (Exception e) {
             processedBatches.remove(batchKey);
             log.warn("内阻统计后处理失败, packNum={}", packNum, e);

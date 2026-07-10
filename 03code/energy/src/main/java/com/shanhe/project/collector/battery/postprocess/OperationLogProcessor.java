@@ -3,7 +3,6 @@ package com.shanhe.project.collector.battery.postprocess;
 
 import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.opt.service.OptLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -27,10 +26,6 @@ public class OperationLogProcessor implements BatteryRealtimePostProcessor {
 
     @Resource
     private OptLogService optLogService;
-
-    @Resource
-    private BatteryReportLogService batteryReportLogService;
-
     /** 上次标准实时快照缓存，用于关闭兼容历史写入后仍能判断测试结束时间。 */
     private final Map<Integer, BatteryReportLog> lastReportLogCache = new ConcurrentHashMap<>();
 
@@ -72,13 +67,9 @@ public class OperationLogProcessor implements BatteryRealtimePostProcessor {
         }
     }
 
-    /** 优先使用上一标准实时快照；服务刚启动无缓存时回退旧兼容缓存。 */
+    /** 仅使用上一标准实时快照，不再回退旧兼容缓存。 */
     private BatteryReportLog resolveOldInfo(Integer packNum) {
-        BatteryReportLog oldInfo = lastReportLogCache.get(packNum);
-        if (oldInfo != null || batteryReportLogService == null) {
-            return oldInfo;
-        }
-        return batteryReportLogService.lastCache(packNum);
+        return lastReportLogCache.get(packNum);
     }
 
     /** 判断电池组状态是否为已知枚举值，未知状态跳过操作日志写入。 */
