@@ -23,7 +23,6 @@ import com.shanhe.project.manage.config.mapper.BatteryPackMapper;
 import com.shanhe.project.manage.config.mapper.BatteryReportLogMapper;
 import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
-import com.shanhe.project.iot.data.MessageFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -79,14 +78,13 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         batteryReportLog.setBatteryList(batteryList);
         batteryReportLog.setCreateTime(new Date());
 
+        batteryReportLog.setPackData(JSON.toJSONString(packParam));
+        batteryReportLog.setMonitorData(JSON.toJSONString(batteryList));
         if (isInsert) {
-            MessageFactory.pushData(batteryReportLog);
+            batteryReportLogMapper.insert(batteryReportLog);
         } else {
             log.info("数据未达到存储间隔:{}", packNum);
         }
-
-        batteryReportLog.setPackData(JSON.toJSONString(packParam));
-        batteryReportLog.setMonitorData(JSON.toJSONString(batteryList));
         // 缓存
         String key = String.format(reportCache.getKey(), batteryReportLog.getPackNum());
         CacheUtils.put(reportCache.getCache(), key, batteryReportLog);

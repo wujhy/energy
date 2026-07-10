@@ -5,13 +5,12 @@ import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
-import com.shanhe.project.iot.model.BatteryModeInfo;
+import com.shanhe.project.collector.battery.model.BatteryModeInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.Date;
-import java.util.Objects;
 
 /**
  * 蓄电池测试/维护工作模式缓存服务。
@@ -38,7 +37,6 @@ public class BatteryModeStatusService {
     public static final int MODE_INTERNAL_RESISTANCE = 6;
     /** 连接条电阻测试。 */
     public static final int MODE_CONNECT_RESISTANCE = 10;
-
     /** 单体均衡。 */
     public static final int MODE_BALANCE = 11;
 
@@ -52,12 +50,7 @@ public class BatteryModeStatusService {
 
     private CacheAccessor cacheAccessor = new CacheUtilsAccessor();
 
-    /**
-     * 获取当前蓄电池测试/维护工作模式状态。
-     *
-     * @param packNum 电池组编号
-     * @return 工作模式信息，缓存未命中时返回空闲状态
-     */
+    /** 获取当前蓄电池测试/维护工作模式状态。 */
     public BatteryModeInfo get(Integer packNum) {
         Object result = cacheAccessor.get(cacheKeyEnum.getCache(), cacheKeyEnum.getKey());
         if (result instanceof BatteryModeInfo) {
@@ -66,11 +59,7 @@ public class BatteryModeStatusService {
         return idle(packNum);
     }
 
-    /**
-     * 清除指定电池组的工作模式缓存。
-     *
-     * @param packNum 电池组编号，为 null 时无条件清除
-     */
+    /** 清除指定电池组的工作模式缓存。 */
     public void clear(Integer packNum) {
         if (packNum == null) {
             cacheAccessor.remove(cacheKeyEnum.getCache(), cacheKeyEnum.getKey());
@@ -85,25 +74,12 @@ public class BatteryModeStatusService {
         }
     }
 
-    /**
-     * 标记指定电池组进入测试/维护运行状态。
-     *
-     * @param packNum 电池组编号
-     * @param mode 工作模式类型
-     * @param address 目标模块地址
-     */
+    /** 标记指定电池组进入测试/维护运行状态。 */
     public void markRunning(Integer packNum, int mode, Integer address) {
         markRunning(packNum, mode, address, null);
     }
 
-    /**
-     * 标记指定电池组进入测试/维护运行状态，并关联操作日志。
-     *
-     * @param packNum 电池组编号
-     * @param mode 工作模式类型
-     * @param address 目标模块地址
-     * @param optLogId 操作日志ID
-     */
+    /** 标记指定电池组进入测试/维护运行状态，并关联操作日志。 */
     public void markRunning(Integer packNum, int mode, Integer address, Long optLogId) {
         BatteryModeInfo batteryModeInfo = new BatteryModeInfo();
         batteryModeInfo.setPackNum(packNum);
@@ -112,30 +88,16 @@ public class BatteryModeStatusService {
         batteryModeInfo.setStatus(STATUS_RUNNING);
         batteryModeInfo.setAddress(address);
         cacheAccessor.put(cacheKeyEnum.getCache(), cacheKeyEnum.getKey(), batteryModeInfo);
-        persistModeState(packNum, mode, address, String.valueOf(mode), BatteryDeviceStateConstants.StateLevel.RUNNING, optLogId);
+        persistModeState(packNum, mode, address, String.valueOf(mode),
+                BatteryDeviceStateConstants.StateLevel.RUNNING, optLogId);
     }
 
-    /**
-     * 标记指定电池组测试/维护已停止。
-     *
-     * @param packNum 电池组编号
-     * @param mode 工作模式类型
-     * @param address 目标模块地址
-     * @param success 是否成功
-     */
+    /** 标记指定电池组测试/维护已停止。 */
     public void markStopped(Integer packNum, int mode, Integer address, boolean success) {
         markStopped(packNum, mode, address, success, null);
     }
 
-    /**
-     * 标记指定电池组测试/维护已停止，并关联操作日志。
-     *
-     * @param packNum 电池组编号
-     * @param mode 工作模式类型
-     * @param address 目标模块地址
-     * @param success 是否成功
-     * @param optLogId 操作日志ID
-     */
+    /** 标记指定电池组测试/维护已停止，并关联操作日志。 */
     public void markStopped(Integer packNum, int mode, Integer address, boolean success, Long optLogId) {
         BatteryModeInfo previous = getStored();
         BatteryModeInfo batteryModeInfo = new BatteryModeInfo();
@@ -157,39 +119,14 @@ public class BatteryModeStatusService {
         }
         cacheAccessor.put(cacheKeyEnum.getCache(), cacheKeyEnum.getKey(), batteryModeInfo);
         persistModeState(packNum, MODE_IDLE, address, String.valueOf(MODE_IDLE),
-                success ? BatteryDeviceStateConstants.StateLevel.NORMAL : BatteryDeviceStateConstants.StateLevel.WARN, optLogId);
+                success ? BatteryDeviceStateConstants.StateLevel.NORMAL : BatteryDeviceStateConstants.StateLevel.WARN,
+                optLogId);
     }
 
-    /**
-     * 从旧 M460 协议同步工作模式状态到缓存。
-     *
-     * @param batteryModeInfo M460 下发的工作模式信息
-     */
-    public void putFromM460(BatteryModeInfo batteryModeInfo) {
-        if (batteryModeInfo == null) {
-            return;
-        }
-
-        if (Objects.equals(batteryModeInfo.getStatus(), STATUS_STOP)) {
-            BatteryModeInfo oldBatteryModeInfo = getStored();
-            if (oldBatteryModeInfo != null) {
-                batteryModeInfo.setLastPackNum(oldBatteryModeInfo.getLastPackNum());
-                batteryModeInfo.setLastMode(oldBatteryModeInfo.getLastMode());
-                batteryModeInfo.setLastAddress(oldBatteryModeInfo.getAddress());
-                // 旧 M460 内阻测试启动后，短时间可能回复MODE_IDLE，页面仍沿用上一轮进行中状态
-                if (Objects.equals(oldBatteryModeInfo.getAddress(), 1)
-                        && Objects.equals(batteryModeInfo.getMode(), MODE_IDLE)) {
-                    batteryModeInfo.setResult(oldBatteryModeInfo.getResult());
-                    batteryModeInfo.setStatus(oldBatteryModeInfo.getStatus());
-                    batteryModeInfo.setAddress(oldBatteryModeInfo.getAddress());
-                }
-            }
-        }
-        cacheAccessor.put(cacheKeyEnum.getCache(), cacheKeyEnum.getKey(), batteryModeInfo);
-    }
 
     /** 将工作模式状态持久化到 battery_device_state。 */
-    private void persistModeState(Integer packNum, int mode, Integer address, String stateValue, String stateLevel, Long optLogId) {
+    private void persistModeState(Integer packNum, int mode, Integer address, String stateValue,
+                                  String stateLevel, Long optLogId) {
         if (batteryDeviceStateService == null) {
             return;
         }
@@ -230,30 +167,10 @@ public class BatteryModeStatusService {
     }
 
     interface CacheAccessor {
-        /**
-         * 获取缓存值
-         *
-         * @param cacheName 缓存名称
-         * @param key 缓存键
-         * @return 缓存值
-         */
         Object get(String cacheName, String key);
 
-        /**
-         * 设置缓存值
-         *
-         * @param cacheName 缓存名称
-         * @param key 缓存键
-         * @param value 缓存值
-         */
         void put(String cacheName, String key, Object value);
 
-        /**
-         * 删除缓存值
-         *
-         * @param cacheName 缓存名称
-         * @param key 缓存键
-         */
         void remove(String cacheName, String key);
     }
 

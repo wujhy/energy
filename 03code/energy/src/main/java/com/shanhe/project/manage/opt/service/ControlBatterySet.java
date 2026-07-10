@@ -6,20 +6,20 @@ import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandService;
 import com.shanhe.project.collector.battery.service.BatteryCollectorService;
-import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
+import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
+import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.GROUP_MODULE_ADDRESS;
 import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.UNSIGNED_SHORT_MAX;
-import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryPack;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.domain.ConfigAttribute;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.config.service.IConfigAttributeService;
 import com.shanhe.project.manage.host.domain.Host;
 import com.shanhe.project.manage.host.service.IHostService;
 import com.shanhe.project.manage.opt.vo.BatterySetVO;
-import com.shanhe.project.iot.model.BatteryModeInfo;
+import com.shanhe.project.collector.battery.model.BatteryModeInfo;
 import com.shanhe.project.monitor.server.service.SystemService;
 import com.shanhe.project.sync.domain.AlarmItemLevelVo;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +44,7 @@ public class ControlBatterySet extends ControlBase {
 
     /** 模块上报日志适配服务。 */
     @Resource
-    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
+    private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
     /** 配置属性服务。 */
     @Resource
     private IConfigAttributeService configAttributeService;
@@ -430,25 +430,27 @@ public class ControlBatterySet extends ControlBase {
      */
     private Long getCurrentResistanceValue(Integer packNum) {
         try {
-            return averageResistance(batteryModuleReportLogAdapterService.currentOrLastCache(packNum));
+            BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
+                    ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
+            return averageResistance(snapshot == null ? null : snapshot.getCells());
         } catch (Exception e) {
             log.warn("读取标准实时内阻基准数据失败, packNum={}", packNum, e);
         }
         return 0L;
     }
 
-    /** 按旧上报缓存语义计算单体平均内阻，空内阻按 0 参与平均。 */
-    private Long averageResistance(BatteryReportLog reportLog) {
-        if (reportLog == null || reportLog.getBatteryList() == null || reportLog.getBatteryList().isEmpty()) {
+    /** 按实时快照单体计算平均内阻，空内阻按 0 参与平均。 */
+    private Long averageResistance(List<BatteryModuleCellRealtime> cells) {
+        if (cells == null || cells.isEmpty()) {
             return 0L;
         }
         double resistanceValue = 0;
-        for (BatteryMonitor battery : reportLog.getBatteryList()) {
+        for (BatteryModuleCellRealtime battery : cells) {
             if (battery != null && battery.getResistance() != null) {
                 resistanceValue += battery.getResistance();
             }
         }
-        return Math.round(resistanceValue / reportLog.getBatteryList().size());
+        return Math.round(resistanceValue / cells.size());
     }
 
     /** 清除指定电池组的编号状态缓存。 */

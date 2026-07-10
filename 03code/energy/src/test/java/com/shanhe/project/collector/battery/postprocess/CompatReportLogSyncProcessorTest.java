@@ -8,7 +8,7 @@ import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapte
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.service.BatteryReportLogService;
-import com.shanhe.project.iot.service.DataService;
+import com.shanhe.project.collector.battery.service.BatteryStorageIntervalService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -42,16 +42,16 @@ class CompatReportLogSyncProcessorTest {
     void shouldProcessAndSyncOnlyCurrentBatch() {
         BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
         BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
-        DataService dataService = Mockito.mock(DataService.class);
+        BatteryStorageIntervalService storageIntervalService = Mockito.mock(BatteryStorageIntervalService.class);
 
         BatteryReportLog reportLog = new BatteryReportLog();
         reportLog.setPackParam(Collections.singletonMap("packVoltage", "220.1"));
         reportLog.setBatteryList(Collections.singletonList(new BatteryMonitor()));
         Mockito.when(adapterService.buildReportLog(Mockito.eq(1), Mockito.any(), Mockito.any()))
                 .thenReturn(reportLog);
-        Mockito.when(dataService.isInsert("1")).thenReturn(true);
+        Mockito.when(storageIntervalService.shouldInsert(1)).thenReturn(true);
 
-        CompatReportLogSyncProcessor processor = processor(adapterService, reportLogService, dataService);
+        CompatReportLogSyncProcessor processor = processor(adapterService, reportLogService, storageIntervalService);
         BatteryRealtimePostProcessContext context = context("batch-1", "batch-1", "batch-1");
 
         Assertions.assertTrue(processor.shouldProcess(context));
@@ -76,19 +76,19 @@ class CompatReportLogSyncProcessorTest {
         return processor(
                 Mockito.mock(BatteryModuleReportLogAdapterService.class),
                 Mockito.mock(BatteryReportLogService.class),
-                Mockito.mock(DataService.class));
+                Mockito.mock(BatteryStorageIntervalService.class));
     }
 
     private CompatReportLogSyncProcessor processor(BatteryModuleReportLogAdapterService adapterService,
                                                     BatteryReportLogService reportLogService,
-                                                    DataService dataService) {
+                                                    BatteryStorageIntervalService storageIntervalService) {
         BatteryCollectorProperties properties = new BatteryCollectorProperties();
         properties.setCompatReportLogEnabled(Boolean.TRUE);
         CompatReportLogSyncProcessor processor = new CompatReportLogSyncProcessor();
         ReflectionTestUtils.setField(processor, "properties", properties);
         ReflectionTestUtils.setField(processor, "adapterService", adapterService);
         ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
-        ReflectionTestUtils.setField(processor, "dataService", dataService);
+        ReflectionTestUtils.setField(processor, "storageIntervalService", storageIntervalService);
         return processor;
     }
 

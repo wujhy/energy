@@ -8,7 +8,7 @@ import com.shanhe.project.manage.config.service.IDevBatteryOptService;
 import com.shanhe.project.manage.opt.service.ControlBattery;
 import com.shanhe.project.manage.opt.service.BatteryOptExecuteType;
 import com.shanhe.project.manage.opt.service.OptLogService;
-import com.shanhe.project.iot.model.BatteryModeInfo;
+import com.shanhe.project.collector.battery.model.BatteryModeInfo;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import org.junit.jupiter.api.Assertions;

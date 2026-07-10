@@ -1,12 +1,13 @@
 package com.shanhe.project.manage.opt.service;
 
-import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjUtil;
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.framework.enums.*;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
-import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
+import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
+import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.manage.alarm.domain.AlarmLog;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.*;
@@ -18,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -34,9 +34,9 @@ public class ControlBattery extends ControlBase {
     /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
-    /** 模块上报日志适配服务。 */
+    /** 电池模组实时快照服务。 */
     @Resource
-    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
+    private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
     /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
@@ -49,6 +49,7 @@ public class ControlBattery extends ControlBase {
     /** 核容/备电模块命令适配器。 */
     @Resource
     private BatteryOptCapacityModuleCommandAdapter batteryOptCapacityModuleCommandAdapter;
+
     /** 统一执行蓄电池测试命令，页面立即执行和计划任务触发共用该入口。 */
     public AjaxResult executeBatteryOpt(DevBatteryOpt opt, BatteryOptExecuteType executeType) {
         return executeBatteryOptInternal(opt, executeType);
@@ -142,8 +143,8 @@ public class ControlBattery extends ControlBase {
         }
 
         // 是否采集
-        BatteryReportLog batteryReportLog = batteryModuleReportLogAdapterService.currentOrLastCache(context.opt.getPackNum());
-        if (null == batteryReportLog || null == batteryReportLog.getPackParam()) {
+        BatteryModuleGroupRealtime realtimeGroup = getRealtimeGroup(context.opt.getPackNum());
+        if (realtimeGroup == null) {
             return AjaxResult.error("暂无上报数据", 0);
         }
 
@@ -153,14 +154,13 @@ public class ControlBattery extends ControlBase {
             return AjaxResult.error(alarmLog.getDataInfo(), 0);
         }
 
-        return validateTestCondition(context, batteryReportLog);
+        return validateTestCondition(context, realtimeGroup);
     }
 
     /** 校验测试条件 */
-    private AjaxResult validateTestCondition(BatteryCommandContext context, BatteryReportLog batteryReportLog) {
+    private AjaxResult validateTestCondition(BatteryCommandContext context, BatteryModuleGroupRealtime realtimeGroup) {
         if (BatteryTestEnum._2.equals(context.testEnum)) {
-            // 连接条测试
-            Double current = MapUtil.getDouble(batteryReportLog.getPackParam(), "packCurrent");
+            Double current = realtimeGroup.getPackCurrent();
             if (current != null && Math.abs(current) < 5) {
                 throw new RuntimeException("电池组未到达测试条件，需组电流超过 5A 才可以进行连接条测试");
             }
@@ -170,14 +170,18 @@ public class ControlBattery extends ControlBase {
                 return AjaxResult.error("单节内阻测试单体编号无效", 0);
             }
         } else {
-            // 其他测试
-            Map<String, Object> packParam = batteryReportLog.getPackParam();
-            String batteryPackStatus = packParam != null ? Objects.toString(packParam.get("batteryPackStatus"), null) : null;
+            String batteryPackStatus = Objects.toString(realtimeGroup.getBatteryPackStatus(), null);
             if (!BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
                 return AjaxResult.error("电池组处于非空闲状态，不允许测试！", 0);
             }
         }
         return null;
+    }
+
+    private BatteryModuleGroupRealtime getRealtimeGroup(Integer packNum) {
+        BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
+                ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
+        return snapshot == null ? null : snapshot.getGroup();
     }
 
     /** 把统一执行入口来源写入旧 dev_opt_log.source，便于区分页面、计划和同步触发。 */

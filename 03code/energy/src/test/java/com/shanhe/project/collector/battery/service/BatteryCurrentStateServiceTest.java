@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.shanhe.project.iot.model.BatteryModeInfo;
+import com.shanhe.project.collector.battery.model.BatteryModeInfo;
 
 import java.util.Arrays;
 import java.util.Collections;

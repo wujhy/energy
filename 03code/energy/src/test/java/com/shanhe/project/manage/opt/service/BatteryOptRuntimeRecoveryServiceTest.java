@@ -4,8 +4,9 @@ import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
-import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
+import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
+import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -21,8 +22,8 @@ class BatteryOptRuntimeRecoveryServiceTest {
     @Test
     void shouldKeepBackupRunningLogWhenRealtimeStatusIsBackup() {
         Fixture fixture = new Fixture();
-        Mockito.when(fixture.adapterService.currentOrLastCache(1))
-                .thenReturn(reportLog(BatteryPackStatusEnum.BACKUP.getCode()));
+        Mockito.when(fixture.snapshotService.getCachedSnapshot(1))
+                .thenReturn(snapshot(BatteryPackStatusEnum.BACKUP.getCode()));
         Mockito.when(fixture.optLogService.selectRunningList(1))
                 .thenReturn(Collections.singletonList(backupLog()));
 
@@ -36,8 +37,8 @@ class BatteryOptRuntimeRecoveryServiceTest {
     @Test
     void shouldCloseBackupRunningLogWhenRealtimeStatusIsNotBackup() {
         Fixture fixture = new Fixture();
-        Mockito.when(fixture.adapterService.currentOrLastCache(1))
-                .thenReturn(reportLog(BatteryPackStatusEnum.IDLE.getCode()));
+        Mockito.when(fixture.snapshotService.getCachedSnapshot(1))
+                .thenReturn(snapshot(BatteryPackStatusEnum.IDLE.getCode()));
         Mockito.when(fixture.optLogService.selectRunningList(1))
                 .thenReturn(Collections.singletonList(backupLog()));
 
@@ -53,8 +54,8 @@ class BatteryOptRuntimeRecoveryServiceTest {
     void shouldKeepBackupRunningLogBeforeConfirmWindow() {
         Fixture fixture = new Fixture();
         fixture.properties.setBackupRuntimeRecoveryConfirmMs(14L * 60L * 60L * 1000L);
-        Mockito.when(fixture.adapterService.currentOrLastCache(1))
-                .thenReturn(reportLog(BatteryPackStatusEnum.IDLE.getCode()));
+        Mockito.when(fixture.snapshotService.getCachedSnapshot(1))
+                .thenReturn(snapshot(BatteryPackStatusEnum.IDLE.getCode()));
         Mockito.when(fixture.optLogService.selectRunningList(1))
                 .thenReturn(Collections.singletonList(backupLog()));
 
@@ -68,7 +69,7 @@ class BatteryOptRuntimeRecoveryServiceTest {
     @Test
     void shouldKeepBackupRunningLogWhenRealtimeStatusIsUnknown() {
         Fixture fixture = new Fixture();
-        Mockito.when(fixture.adapterService.currentOrLastCache(1)).thenReturn(new BatteryReportLog());
+        Mockito.when(fixture.snapshotService.getCachedSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder().build());
         Mockito.when(fixture.optLogService.selectRunningList(1))
                 .thenReturn(Collections.singletonList(backupLog()));
 
@@ -88,19 +89,19 @@ class BatteryOptRuntimeRecoveryServiceTest {
         return log;
     }
 
-    private static BatteryReportLog reportLog(String status) {
-        BatteryReportLog reportLog = new BatteryReportLog();
-        Map<String, Object> packParam = new HashMap<>();
-        packParam.put("batteryPackStatus", status);
-        reportLog.setPackParam(packParam);
-        return reportLog;
+    private static BatteryModuleRealtimeSnapshot snapshot(String status) {
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setBatteryPackStatus(Integer.valueOf(status));
+        return BatteryModuleRealtimeSnapshot.builder()
+                .group(group)
+                .build();
     }
 
     private static class Fixture {
         private final BatteryOptRuntimeRecoveryService service = new BatteryOptRuntimeRecoveryService();
         private final OptLogService optLogService = Mockito.mock(OptLogService.class);
         private final BatteryModeStatusService modeStatusService = Mockito.mock(BatteryModeStatusService.class);
-        private final BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
+        private final BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
         private final BatteryCollectorProperties properties = new BatteryCollectorProperties();
 
         private Fixture() {
@@ -108,7 +109,7 @@ class BatteryOptRuntimeRecoveryServiceTest {
             ReflectionTestUtils.setField(service, "optLogService", optLogService);
             ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
             ReflectionTestUtils.setField(service, "batteryCollectorProperties", properties);
-            ReflectionTestUtils.setField(service, "batteryModuleReportLogAdapterService", adapterService);
+            ReflectionTestUtils.setField(service, "realtimeSnapshotService", snapshotService);
         }
     }
 }

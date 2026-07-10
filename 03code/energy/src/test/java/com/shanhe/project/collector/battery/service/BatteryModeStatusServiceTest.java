@@ -2,7 +2,7 @@ package com.shanhe.project.collector.battery.service;
 
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
-import com.shanhe.project.iot.model.BatteryModeInfo;
+import com.shanhe.project.collector.battery.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -77,24 +77,6 @@ class BatteryModeStatusServiceTest {
     }
 
     @Test
-    void shouldKeepM460TemporaryIdleForInitialInternalResistance() {
-        service.markRunning(2, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 1);
-        BatteryModeInfo m460Idle = new BatteryModeInfo();
-        m460Idle.setPackNum(2);
-        m460Idle.setResult(0);
-        m460Idle.setMode(BatteryModeStatusService.MODE_IDLE);
-        m460Idle.setStatus(0);
-        m460Idle.setAddress(0);
-
-        service.putFromM460(m460Idle);
-        BatteryModeInfo modeInfo = service.get(2);
-
-        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
-        Assertions.assertEquals(1, modeInfo.getStatus());
-        Assertions.assertEquals(1, modeInfo.getAddress());
-    }
-
-    @Test
     void shouldClearCacheWhenPackNumMatches() {
         service.markRunning(2, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
 
@@ -158,48 +140,6 @@ class BatteryModeStatusServiceTest {
         Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
         Assertions.assertEquals(3, modeInfo.getLastPackNum());
         Assertions.assertEquals(BatteryModeStatusService.MODE_BALANCE, modeInfo.getLastMode());
-    }
-
-    @Test
-    void shouldIgnoreNullM460Input() {
-        Assertions.assertDoesNotThrow(() -> service.putFromM460(null));
-        BatteryModeInfo modeInfo = service.get(1);
-        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
-    }
-
-    @Test
-    void shouldApplyM460StopWhenAddressIsNotOne() {
-        service.markRunning(2, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
-        BatteryModeInfo m460Stop = new BatteryModeInfo();
-        m460Stop.setPackNum(2);
-        m460Stop.setResult(0);
-        m460Stop.setMode(BatteryModeStatusService.MODE_IDLE);
-        m460Stop.setStatus(0);
-        m460Stop.setAddress(5);
-
-        service.putFromM460(m460Stop);
-        BatteryModeInfo modeInfo = service.get(2);
-
-        Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
-        Assertions.assertEquals(0, modeInfo.getStatus());
-        Assertions.assertEquals(5, modeInfo.getAddress());
-    }
-
-    @Test
-    void shouldApplyM460RunningStatusDirectly() {
-        BatteryModeInfo running = new BatteryModeInfo();
-        running.setPackNum(1);
-        running.setResult(0);
-        running.setMode(BatteryModeStatusService.MODE_AUTO_MODEL_NUM);
-        running.setStatus(1);
-        running.setAddress(3);
-
-        service.putFromM460(running);
-        BatteryModeInfo modeInfo = service.get(1);
-
-        Assertions.assertEquals(BatteryModeStatusService.MODE_AUTO_MODEL_NUM, modeInfo.getMode());
-        Assertions.assertEquals(1, modeInfo.getStatus());
-        Assertions.assertEquals(3, modeInfo.getAddress());
     }
 
     @Test

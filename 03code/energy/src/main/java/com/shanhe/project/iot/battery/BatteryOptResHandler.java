@@ -5,8 +5,6 @@ import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import com.shanhe.project.manage.config.domain.Config;
-import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
-import com.shanhe.project.iot.model.BatteryModeInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -28,9 +26,6 @@ import java.util.Objects;
 public class BatteryOptResHandler {
     /** 缓存结果 **/
     CacheKeyEnum cacheKeyEnum = CacheKeyEnum.RESULT;
-    /** 电池组工作模式状态服务。 */
-    @Resource
-    private BatteryModeStatusService batteryModeStatusService;
 
     /**
      * 上传设备型号及软件版本号
@@ -112,15 +107,7 @@ public class BatteryOptResHandler {
             String binary = CodingUtil.hexString2binaryString(info.substring(0, 2));
             // 电池组编号
             Integer packNum = CodingUtil.binaryToDecimal(binary.substring(4, 8));
-            // 应答结果
-            BatteryModeInfo batteryModeInfo = new BatteryModeInfo();
-            batteryModeInfo.setPackNum(packNum);
-            batteryModeInfo.setResult(CodingUtil.binaryToDecimal(binary.substring(0, 4)));
-            batteryModeInfo.setMode(CodingUtil.hexStringToInteger(info.substring(2, 4)));
-            batteryModeInfo.setStatus(CodingUtil.hexStringToInteger(info.substring(4, 6)));
-            batteryModeInfo.setAddress(CodingUtil.hexStringToInteger(info.substring(6, 8)));
 
-            batteryModeStatusService.putFromM460(batteryModeInfo);
         } catch (Exception e) {
             log.error("电池组工作模式响应结果解析异常：{}", e.getMessage());
         }

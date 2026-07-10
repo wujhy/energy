@@ -11,7 +11,7 @@ import com.shanhe.project.manage.opt.service.BatteryOptExecuteType;
 import com.shanhe.project.manage.opt.service.BatteryOptRuntimeRecoveryService;
 import com.shanhe.project.manage.opt.service.ControlBattery;
 import com.shanhe.project.manage.opt.service.OptLogService;
-import com.shanhe.project.iot.model.BatteryModeInfo;
+import com.shanhe.project.collector.battery.model.BatteryModeInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;

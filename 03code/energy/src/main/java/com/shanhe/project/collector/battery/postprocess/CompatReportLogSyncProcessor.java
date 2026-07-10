@@ -9,7 +9,7 @@ import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapte
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.service.BatteryReportLogService;
-import com.shanhe.project.iot.service.DataService;
+import com.shanhe.project.collector.battery.service.BatteryStorageIntervalService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -38,7 +38,7 @@ public class CompatReportLogSyncProcessor implements BatteryRealtimePostProcesso
     private BatteryReportLogService batteryReportLogService;
 
     @Resource
-    private DataService dataService;
+    private BatteryStorageIntervalService storageIntervalService;
 
     @Override
     public String getName() {
@@ -91,7 +91,7 @@ public class CompatReportLogSyncProcessor implements BatteryRealtimePostProcesso
                 || reportLog.getPackParam() == null || reportLog.getPackParam().isEmpty()) {
             return;
         }
-        boolean isInsert = dataService.isInsert(channelConfig.getBatteryGroup() + "");
+        boolean isInsert = storageIntervalService.shouldInsert(channelConfig.getBatteryGroup());
         batteryReportLogService.insert(channelConfig.getBatteryGroup(),
                 reportLog.getPackParam(), batteryList, isInsert);
         log.debug("同步蓄电池模块实时数据到历史记录, 电池组={}, 是否插入={}",

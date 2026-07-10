@@ -6,7 +6,10 @@ import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.enums.YesNoEnum;
-import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
+import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
+import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.manage.alarm.domain.AlarmLog;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
@@ -59,9 +62,9 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     /** 预估电池组服务。 */
     @Resource
     private PreBatteryGroupService preBatteryGroupService;
-    /** 电池模组上报日志适配服务。 */
+    /** 电池模组实时快照服务。 */
     @Resource
-    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
+    private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
 
     @Override
     public BatteryHealthReport getBatteryHealthReport(Integer packNum) {
@@ -95,7 +98,66 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     }
 
     BatteryReportLog resolveBatteryReportLog(Integer packNum) {
-        return batteryModuleReportLogAdapterService.currentOrLastCache(packNum, true);
+        BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
+                ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
+        if (snapshot == null || snapshot.getGroup() == null) {
+            return null;
+        }
+        BatteryReportLog reportLog = new BatteryReportLog();
+        reportLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        reportLog.setPackNum(packNum);
+        reportLog.setCreateTime(snapshot.getGroup().getCreateTime());
+        reportLog.setPackParam(toPackParam(snapshot.getGroup()));
+        reportLog.setBatteryList(toBatteryList(packNum, snapshot.getCells()));
+        return reportLog;
+    }
+
+    private Map<String, Object> toPackParam(BatteryModuleGroupRealtime group) {
+        Map<String, Object> packMap = new LinkedHashMap<>();
+        if (group == null) {
+            return packMap;
+        }
+        put(packMap, "packVoltage", group.getPackVoltage());
+        put(packMap, "batteryPackOuterVoltage", group.getBatteryPackOuterVoltage());
+        put(packMap, "packCurrent", group.getPackCurrent());
+        put(packMap, "batteryPackFloatCurrent", group.getBatteryPackFloatCurrent());
+        put(packMap, "environmentTemperature1", group.getEnvironmentTemperature1());
+        put(packMap, "environmentTemperature2", group.getEnvironmentTemperature2());
+        put(packMap, "batteryPackStatus", group.getBatteryPackStatus());
+        put(packMap, "backupDuration", group.getBackupDuration());
+        return packMap;
+    }
+
+    private List<BatteryMonitor> toBatteryList(Integer packNum, List<BatteryModuleCellRealtime> cells) {
+        List<BatteryMonitor> result = new ArrayList<>();
+        if (cells == null || cells.isEmpty()) {
+            return result;
+        }
+        for (BatteryModuleCellRealtime cell : cells) {
+            if (cell == null) {
+                continue;
+            }
+            BatteryMonitor monitor = new BatteryMonitor();
+            monitor.setConfigId(Constants.DEFAULT_CONFIG_ID);
+            monitor.setPackNum(packNum);
+            monitor.setBatNum(cell.getBatNum());
+            monitor.setVoltage(cell.getVoltage());
+            monitor.setResistance(cell.getResistance());
+            monitor.setTemperature(cell.getTemperature());
+            monitor.setBcapacity(cell.getCapacity());
+            monitor.setResistancerageslip(cell.getResistanceRageSlip());
+            monitor.setResistanceRateChange(cell.getResistanceRateChange());
+            monitor.setGbvoltage(cell.getSwollenVoltage());
+            monitor.setCreateTime(cell.getCreateTime());
+            result.add(monitor);
+        }
+        return result;
+    }
+
+    private void put(Map<String, Object> packMap, String key, Object value) {
+        if (value != null) {
+            packMap.put(key, value);
+        }
     }
     @Override
     public Map<String, Object> getTempWarnLine(Integer packNum) {

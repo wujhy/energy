@@ -3,8 +3,9 @@ package com.shanhe.project.manage.screen.service.impl;
 import cn.hutool.core.date.DateUtil;
 import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.enums.YesNoEnum;
-import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
-import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
+import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
+import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.*;
 import com.shanhe.project.manage.config.service.BatteryReportLogService;
@@ -21,6 +22,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -50,12 +52,9 @@ public class ScreenServiceImpl implements ScreenService {
     /** 电池上报日志服务。 */
     @Resource
     private BatteryReportLogService batteryReportLogService;
-    /** 电池采集器配置。 */
+    /** 电池模组实时快照服务。 */
     @Resource
-    private BatteryCollectorProperties batteryCollectorProperties;
-    /** 电池模组上报日志适配服务。 */
-    @Resource
-    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
+    private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
     /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
@@ -161,11 +160,7 @@ public class ScreenServiceImpl implements ScreenService {
      */
     @Override
     public List<BatteryReportLogIndex> batteryList() {
-        if (batteryCollectorProperties != null
-                && Boolean.TRUE.equals(batteryCollectorProperties.getJsonTcpRealtimeSourceEnabled())) {
-            return realtimeBatteryList();
-        }
-        return batteryReportLogService.batteryList();
+        return realtimeBatteryList();
     }
 
     private List<BatteryReportLogIndex> realtimeBatteryList() {
@@ -196,19 +191,52 @@ public class ScreenServiceImpl implements ScreenService {
 
     private BatteryReportLogIndex buildRealtimeIndex(BatteryPack pack, BatteryReportLogIndex fallback) {
         try {
-            BatteryReportLog reportLog = batteryModuleReportLogAdapterService.buildReportLog(pack.getPackNum());
-            if (reportLog == null || reportLog.getPackParam() == null || reportLog.getPackParam().isEmpty()) {
+            BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
+                    ? null : realtimeSnapshotService.getCachedSnapshot(pack.getPackNum());
+            BatteryModuleGroupRealtime group = snapshot == null ? null : snapshot.getGroup();
+            Map<String, Object> packParam = buildPackParam(group);
+            if (packParam.isEmpty()) {
                 return fallback;
             }
             BatteryReportLogIndex index = new BatteryReportLogIndex();
             index.setPackNum(pack.getPackNum());
             index.setConfigId(pack.getConfigId() == null ? Constants.DEFAULT_CONFIG_ID : pack.getConfigId());
             index.setAlarm(alarmLogService.isAlarmByCache(pack.getPackNum()));
-            index.setCreateTime(reportLog.getCreateTime());
-            index.setPackParam(reportLog.getPackParam());
+            index.setCreateTime(group.getCreateTime());
+            index.setPackParam(packParam);
             return index;
         } catch (Exception ignored) {
             return fallback;
+        }
+    }
+
+    private Map<String, Object> buildPackParam(BatteryModuleGroupRealtime group) {
+        Map<String, Object> packParam = new LinkedHashMap<>();
+        if (group == null) {
+            return packParam;
+        }
+        putIfNotNull(packParam, "packVoltage", group.getPackVoltage());
+        putIfNotNull(packParam, "batteryPackOuterVoltage", group.getBatteryPackOuterVoltage());
+        putIfNotNull(packParam, "packCurrent", group.getPackCurrent());
+        putIfNotNull(packParam, "batteryPackFloatCurrent", group.getBatteryPackFloatCurrent());
+        putIfNotNull(packParam, "environmentTemperature1", group.getEnvironmentTemperature1());
+        putIfNotNull(packParam, "environmentTemperature2", group.getEnvironmentTemperature2());
+        putIfNotNull(packParam, "batteryPackSoc", group.getBatteryPackSoc());
+        putIfNotNull(packParam, "batteryPackSoh", group.getBatteryPackSoh());
+        putIfNotNull(packParam, "batteryPackStatus", group.getBatteryPackStatus());
+        putIfNotNull(packParam, "resistanceTestStatus", group.getResistanceTestStatus());
+        putIfNotNull(packParam, "deviceWorkStatus", group.getDeviceWorkStatus());
+        putIfNotNull(packParam, "deviceWorkIOStatus", group.getDeviceWorkIoStatus());
+        putIfNotNull(packParam, "disChargeCapacity", group.getDisChargeCapacity());
+        putIfNotNull(packParam, "disChargeDuration", group.getDisChargeDuration());
+        putIfNotNull(packParam, "residualDischargeDuration", group.getResidualDischargeDuration());
+        putIfNotNull(packParam, "backupDuration", group.getBackupDuration());
+        return packParam;
+    }
+
+    private void putIfNotNull(Map<String, Object> target, String key, Object value) {
+        if (value != null) {
+            target.put(key, value);
         }
     }
 

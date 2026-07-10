@@ -4,9 +4,10 @@ import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
-import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
-import com.shanhe.project.iot.model.BatteryModeInfo;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
+import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
+import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
+import com.shanhe.project.collector.battery.model.BatteryModeInfo;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,7 +38,7 @@ public class BatteryOptRuntimeRecoveryService {
     @Resource
     private BatteryCollectorProperties batteryCollectorProperties;
     @Resource
-    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
+    private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
 
     /** 调度前补偿指定电池组的残留运行态。 */
     public int recoverPack(Integer packNum) {
@@ -107,16 +108,13 @@ public class BatteryOptRuntimeRecoveryService {
     }
 
     private Boolean isRealtimeBackup(Integer packNum) {
-        BatteryReportLog reportLog = batteryModuleReportLogAdapterService.currentOrLastCache(packNum);
-        if (reportLog == null || reportLog.getPackParam() == null) {
+        BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
+                ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
+        BatteryModuleGroupRealtime group = snapshot == null ? null : snapshot.getGroup();
+        if (group == null || group.getBatteryPackStatus() == null) {
             return null;
         }
-        Map<String, Object> packParam = reportLog.getPackParam();
-        String status = Objects.toString(packParam.get("batteryPackStatus"), null);
-        if (status == null) {
-            return null;
-        }
-        return BatteryPackStatusEnum.isCode(status, BatteryPackStatusEnum.BACKUP);
+        return BatteryPackStatusEnum.isCode(String.valueOf(group.getBatteryPackStatus()), BatteryPackStatusEnum.BACKUP);
     }
 
     private Integer resolveMode(Integer testType) {

@@ -62,22 +62,29 @@ class BatteryOptCollectorCommandAdapterTest {
     void shouldReturnErrorWhenPreparedContextChannelMissing() {
         BatteryOptCollectorCommandAdapter adapter = adapter(true);
         BatteryCollectorCommandService commandService = commandService(adapter);
+        // 覆盖默认 mock，使 resolveChannelName 返回 null 模拟通道未找到
+        Mockito.when(commandService.resolveChannelName(1)).thenReturn(null);
+        Mockito.when(commandService.connectResistanceTest(null, 1, 24, null))
+                .thenReturn(BatteryCollectorCommandResult.builder()
+                        .success(false)
+                        .message("未找到电池组采集通道")
+                        .build());
 
         AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._2, null, 24));
 
         Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
         Assertions.assertEquals("未找到电池组采集通道", result.get(AjaxResult.MSG_TAG));
-        Mockito.verify(commandService, Mockito.never())
-                .connectResistanceTest(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt(), Mockito.any());
+        Mockito.verify(commandService).connectResistanceTest(null, 1, 24, null);
     }
 
     @Test
-    void shouldReturnNullWhenModuleCommandDisabled() {
+    void shouldReturnErrorWhenModuleCommandDisabled() {
         BatteryOptCollectorCommandAdapter adapter = adapter(false);
 
         AjaxResult result = adapter.tryExecutePrepared(context(BatteryTestEnum._2, null, 24));
 
-        Assertions.assertNull(result);
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Assertions.assertEquals("独立采集模块命令未启用，已迁移测试类型禁止回退旧 M460 指令", result.get(AjaxResult.MSG_TAG));
     }
 
     @Test
@@ -139,9 +146,10 @@ class BatteryOptCollectorCommandAdapterTest {
         BatteryOptCollectorCommandAdapter adapter = new BatteryOptCollectorCommandAdapter();
         BatteryCollectorProperties properties = new BatteryCollectorProperties();
         properties.setJsonTcpModuleCommandEnabled(moduleCommandEnabled);
+        BatteryCollectorCommandService mockService = Mockito.mock(BatteryCollectorCommandService.class);
+        Mockito.when(mockService.resolveChannelName(1)).thenReturn("battery-group-1");
         ReflectionTestUtils.setField(adapter, "batteryCollectorProperties", properties);
-        ReflectionTestUtils.setField(adapter, "batteryCollectorCommandService",
-                Mockito.mock(BatteryCollectorCommandService.class));
+        ReflectionTestUtils.setField(adapter, "batteryCollectorCommandService", mockService);
         return adapter;
     }
 

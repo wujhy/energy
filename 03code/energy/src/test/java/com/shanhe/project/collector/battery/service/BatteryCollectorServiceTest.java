@@ -24,7 +24,7 @@ import com.shanhe.project.collector.battery.state.BatteryCollectorDeviceStateSer
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import com.shanhe.project.manage.opt.mapper.OptLogMapper;
-import com.shanhe.project.iot.model.BatteryModeInfo;
+import com.shanhe.project.collector.battery.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

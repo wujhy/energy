@@ -15,7 +15,7 @@ import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
 import com.shanhe.project.manage.opt.mapper.OptLogMapper;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.opt.service.OptLogService;
-import com.shanhe.project.iot.model.BatteryModeInfo;
+import com.shanhe.project.collector.battery.model.BatteryModeInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -313,11 +313,7 @@ class BatteryCollectorCommandServiceTest {
     @Test
     void shouldAllowBalanceWhenSyncedModeIsStopped() {
         BatteryModeStatusService modeStatusService = newModeStatusService();
-        BatteryModeInfo stoppedMode = new BatteryModeInfo();
-        stoppedMode.setPackNum(1);
-        stoppedMode.setMode(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE);
-        stoppedMode.setStatus(0);
-        modeStatusService.putFromM460(stoppedMode);
+        modeStatusService.markStopped(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8, true);
         ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
 
         BatteryCollectorCommandResult result = service.singleBatteryBalance(
@@ -336,11 +332,7 @@ class BatteryCollectorCommandServiceTest {
     @Test
     void shouldRejectBalanceWhenSyncedStatusIsRunningEvenIfModeIdle() {
         BatteryModeStatusService modeStatusService = newModeStatusService();
-        BatteryModeInfo runningIdleMode = new BatteryModeInfo();
-        runningIdleMode.setPackNum(1);
-        runningIdleMode.setMode(BatteryModeStatusService.MODE_IDLE);
-        runningIdleMode.setStatus(1);
-        modeStatusService.putFromM460(runningIdleMode);
+        modeStatusService.markRunning(1, BatteryModeStatusService.MODE_IDLE, 0);
         ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
 
         BatteryCollectorCommandResult result = service.singleBatteryBalance(

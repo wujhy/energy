@@ -22,7 +22,6 @@ import com.shanhe.project.manage.stat.domain.StatBatteryPack;
 import com.shanhe.project.manage.stat.mapper.StatBatteryPackMapper;
 import com.shanhe.project.manage.stat.service.IStatBatteryBatService;
 import com.shanhe.project.manage.stat.service.IStatBatteryPackService;
-import com.shanhe.project.iot.data.MessageFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -276,8 +275,8 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
 
         statBatteries.forEach(item -> item.setPackId(statBatteryPack.getId()));
 
-        MessageFactory.pushData(statBatteryPack);
-        MessageFactory.pushData(statBatteries);
+        statBatteryPackMapper.insertOne(statBatteryPack);
+        statBatteryBatService.insertList(statBatteries);
     }
 
     /** 组电压 */
