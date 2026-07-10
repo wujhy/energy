@@ -12,6 +12,8 @@ import com.shanhe.common.utils.uuid.IdUtils;
 import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.framework.enums.ResistanceTestStatusEnum;
+import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
@@ -122,6 +124,36 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
                 || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
             // 记录迁移
             insert(packNum, packMap, batteryList);
+        }
+    }
+
+    @Async
+    @Override
+    public void insertRealtime(Integer packNum, BatteryModuleGroupRealtime group, List<BatteryModuleCellRealtime> cells) {
+        if (group == null || cells == null) {
+            return;
+        }
+        String resistanceTestStatus = Objects.toString(group.getResistanceTestStatus(), null);
+        if (ResistanceTestStatusEnum.isCode(resistanceTestStatus, ResistanceTestStatusEnum.TESTING)) {
+            insertRealtimePack(packNum, group, cells);
+            return;
+        }
+
+        String batteryPackStatus = Objects.toString(group.getBatteryPackStatus(), null);
+        if (BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
+            OptLog optLog = optLogService.selectNotFinishedCacheLog(packNum, 1);
+            if (optLog == null || optLog.getCreateTime() == null) {
+                return;
+            }
+            if (System.currentTimeMillis() - optLog.getCreateTime().getTime() > batteryFloatingTime) {
+                return;
+            }
+        }
+        if (BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.CHARGE)
+                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.CAPACITY_TEST)
+                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.BACKUP)
+                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
+            insertRealtimePack(packNum, group, cells);
         }
     }
 
@@ -279,8 +311,62 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         statBatteryBatService.insertList(statBatteries);
     }
 
+    /** 插入标准实时模型电池组统计数据。 */
+    private void insertRealtimePack(Integer packNum, BatteryModuleGroupRealtime group, List<BatteryModuleCellRealtime> cells) {
+        StatBatteryPack statBatteryPack = new StatBatteryPack();
+        statBatteryPack.setId(IdUtils.getSnowflakeId());
+        statBatteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        statBatteryPack.setPackNum(packNum);
+        statBatteryPack.setPackVoltage(getPackVoltage(group));
+        statBatteryPack.setPackCurrent(group.getPackCurrent());
+        statBatteryPack.setBatteryPackFloatCurrent(group.getBatteryPackFloatCurrent());
+        statBatteryPack.setEnvironmentTemperature1(group.getEnvironmentTemperature1());
+        statBatteryPack.setEnvironmentTemperature2(group.getEnvironmentTemperature2());
+        statBatteryPack.setBcapacity(group.getBcapacity());
+        statBatteryPack.setHydrogenConcentration(group.getHydrogenConcentration());
+
+        List<StatBatteryBat> statBatteries = cells.stream()
+                .filter(Objects::nonNull)
+                .map(cell -> toStatBatteryBat(packNum, cell))
+                .collect(Collectors.toList());
+        if (statBatteries.isEmpty()) {
+            return;
+        }
+        statBatteries.forEach(item -> item.setPackId(statBatteryPack.getId()));
+
+        statBatteryPackMapper.insertOne(statBatteryPack);
+        statBatteryBatService.insertList(statBatteries);
+    }
+
+    private StatBatteryBat toStatBatteryBat(Integer packNum, BatteryModuleCellRealtime cell) {
+        StatBatteryBat statBattery = new StatBatteryBat();
+        statBattery.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        statBattery.setPackNum(packNum);
+        statBattery.setBatNum(cell.getBatNum());
+        statBattery.setVoltage(cell.getVoltage());
+        statBattery.setResistance(cell.getResistance());
+        statBattery.setTemperature(cell.getTemperature());
+        statBattery.setBcapacity(cell.getCapacity());
+        return statBattery;
+    }
+
+    private Double getPackVoltage(BatteryModuleGroupRealtime group) {
+        if (group == null) {
+            return 0.0;
+        }
+        Double voltage = group.getBatteryPackOuterVoltage();
+        if (voltage != null && Double.compare(voltage, 0.0) != 0) {
+            return voltage;
+        }
+        voltage = group.getPackVoltage();
+        if (voltage != null && Double.compare(voltage, 0.0) != 0) {
+            return voltage;
+        }
+        return 0.0;
+    }
+
     /** 组电压 */
-    private Double getPackVoltage( Map<String, Object> packMap) {
+    private Double getPackVoltage(Map<String, Object> packMap) {
         // 组电压
         String voltage = Objects.toString(packMap.get("batteryPackOuterVoltage"), null);
         if (voltage != null && Double.parseDouble(voltage) != 0) {

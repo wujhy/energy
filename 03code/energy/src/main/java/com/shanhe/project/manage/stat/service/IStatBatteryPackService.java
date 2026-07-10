@@ -1,5 +1,7 @@
 package com.shanhe.project.manage.stat.service;
 
+import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
+import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.stat.domain.StatBatteryPack;
 
@@ -30,6 +32,15 @@ public interface IStatBatteryPackService {
      * @param batteryList 单体数据
      */
     void insertList(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList);
+
+    /**
+     * 新增标准实时模型电池组统计。
+     *
+     * @param packNum 电池组编号
+     * @param group 组实时数据
+     * @param cells 单体实时数据
+     */
+    void insertRealtime(Integer packNum, BatteryModuleGroupRealtime group, List<BatteryModuleCellRealtime> cells);
 
     /**
      * 删除记录

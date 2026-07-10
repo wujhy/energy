@@ -1,7 +1,6 @@
 package com.shanhe.project.collector.battery.postprocess;
 
 
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.stat.service.IStatBatteryPackService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -48,9 +47,7 @@ public class StatisticsProcessor implements BatteryRealtimePostProcessor {
     public void process(BatteryRealtimePostProcessContext context) {
         Integer packNum = context.getPackNum();
         try {
-            BatteryReportLog report = RealtimeToReportLogAdapter.adapt(
-                    packNum, context.getGroup(), context.getCells());
-            statBatteryPackService.insertList(packNum, report.getPackParam(), report.getBatteryList());
+            statBatteryPackService.insertRealtime(packNum, context.getGroup(), context.getCells());
         } catch (Exception e) {
             log.warn("统计后处理失败, packNum={}", packNum, e);
         }
