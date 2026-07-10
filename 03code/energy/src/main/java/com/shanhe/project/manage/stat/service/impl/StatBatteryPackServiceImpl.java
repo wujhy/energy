@@ -317,9 +317,9 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         statBatteryPack.setId(IdUtils.getSnowflakeId());
         statBatteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID);
         statBatteryPack.setPackNum(packNum);
-        statBatteryPack.setPackVoltage(getPackVoltage(group));
-        statBatteryPack.setPackCurrent(resolvePackCurrent(group));
-        statBatteryPack.setBatteryPackFloatCurrent(resolveFloatCurrent(group));
+        statBatteryPack.setPackVoltage(group.getExternalVoltage());
+        statBatteryPack.setPackCurrent(group.getChargeDischargeCurrent());
+        statBatteryPack.setBatteryPackFloatCurrent(group.getFloatCurrent());
         statBatteryPack.setEnvironmentTemperature1(group.getEnvironmentTemperature1());
         statBatteryPack.setEnvironmentTemperature2(group.getEnvironmentTemperature2());
         statBatteryPack.setBcapacity(group.getBcapacity());
@@ -348,40 +348,6 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         statBattery.setTemperature(cell.getTemperature());
         statBattery.setBcapacity(cell.getCapacity());
         return statBattery;
-    }
-
-    private Double getPackVoltage(BatteryModuleGroupRealtime group) {
-        if (group == null) {
-            return 0.0;
-        }
-        Double voltage = firstNonZero(group.getBatteryPackOuterVoltage(), group.getExternalVoltage());
-        if (voltage != null) {
-            return voltage;
-        }
-        voltage = group.getPackVoltage();
-        return voltage == null ? 0.0 : voltage;
-    }
-
-    private Double resolvePackCurrent(BatteryModuleGroupRealtime group) {
-        return group == null ? null : first(group.getPackCurrent(), group.getChargeDischargeCurrent());
-    }
-
-    private Double resolveFloatCurrent(BatteryModuleGroupRealtime group) {
-        return group == null ? null : first(group.getBatteryPackFloatCurrent(), group.getFloatCurrent());
-    }
-
-    private Double firstNonZero(Double primary, Double fallback) {
-        if (primary != null && Double.compare(primary, 0.0) != 0) {
-            return primary;
-        }
-        if (fallback != null && Double.compare(fallback, 0.0) != 0) {
-            return fallback;
-        }
-        return null;
-    }
-
-    private Double first(Double primary, Double fallback) {
-        return primary != null ? primary : fallback;
     }
 
     /** 组电压 */
