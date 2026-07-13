@@ -13,7 +13,6 @@ import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.ResistanceTestStatusEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.manage.config.domain.BatteryPack;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import com.shanhe.project.manage.opt.mapper.OptLogMapper;
@@ -100,22 +99,6 @@ public class OptLogServiceImpl implements OptLogService {
         return optLog.getId();
     }
 
-    /**
-     * 异步插入电池测试操作日志
-     *
-     * @param packNum 电池组编号
-     * @param packMap 电池组数据
-     * @param oldInfo 旧上报记录
-     */
-    @Async
-    @Override
-    public void insertBattery(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
-        // 备电测试记录
-        this.batteryTest(packNum, packMap, oldInfo);
-
-        // 内阻测试记录
-        this.resistanceTest(packNum, packMap, oldInfo);
-    }
 
     @Async
     @Override
@@ -125,41 +108,6 @@ public class OptLogServiceImpl implements OptLogService {
                                       Date previousRealtimeTime) {
         this.batteryTest(packNum, Objects.toString(batteryPackStatus, null), previousRealtimeTime);
         this.resistanceTest(packNum, Objects.toString(resistanceTestStatus, null), previousRealtimeTime);
-    }
-
-    /** 处理核容测试操作日志。 */
-    private void batteryTest(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
-        String batteryPackStatus = Objects.toString(packMap.get("batteryPackStatus"), null);
-        Integer type = getTestType(batteryPackStatus);
-
-        // 缓存记录
-        String cacheKey = String.format(logCache.getKey(), packNum, 1);
-        Object object = CacheUtils.get(logCache.getCache(), cacheKey);
-
-        // type == null 不需要记录，只需要结束
-        if (null == type) {
-            this.sotOptLog(object, cacheKey, oldInfo);
-        } else {
-
-            if (object == null) {
-                if (this.adoptRunningLog(packNum, type, cacheKey)) {
-                    return;
-                }
-                // 创建新纪录
-                this.create(packNum, type, cacheKey);
-            } else {
-                // 缓存记录
-                OptLog oldOptLog = (OptLog) object;
-                if (!type.equals(oldOptLog.getType())) {
-                    this.sotOptLog(object, cacheKey, oldInfo);
-
-                    this.create(packNum, type, cacheKey);
-                } else {
-                    insert(oldOptLog, cacheKey);
-                }
-            }
-        }
-
     }
 
     /** 处理标准实时状态下的核容测试操作日志。 */
@@ -237,10 +185,6 @@ public class OptLogServiceImpl implements OptLogService {
         return true;
     }
 
-    /** 判断是否需要插入操作日志。 */
-    private void sotOptLog(Object object, String cacheKey, BatteryReportLog oldInfo) {
-        sotOptLog(object, cacheKey, oldInfo == null ? null : oldInfo.getCreateTime());
-    }
 
     /** 判断是否需要插入操作日志。 */
     private void sotOptLog(Object object, String cacheKey, Date endTimeSource) {
@@ -287,33 +231,6 @@ public class OptLogServiceImpl implements OptLogService {
     }
 
 
-    /**
-     * 运行类型日志
-     *
-     * @param packNum 电池包序号
-     * @param packMap 电池组数据
-     */
-    private void resistanceTest(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo) {
-        String resistanceTestStatus = Objects.toString(packMap.get("resistanceTestStatus"), null);
-
-        // 缓存记录
-        String cacheKey = String.format(logCache.getKey(), packNum, 0);
-        Object object = CacheUtils.get(logCache.getCache(), cacheKey);
-        // 是否运行
-        if (ResistanceTestStatusEnum.isCode(resistanceTestStatus, ResistanceTestStatusEnum.TESTING)) {
-            // 记录不存在创建
-            if (object == null) {
-                // 创建新纪录
-                this.create(packNum, BatteryTestEnum._1.getDictValue(), cacheKey);
-            } else {
-                // 缓存记录
-                OptLog oldOptLog = (OptLog) object;
-                insert(oldOptLog, cacheKey);
-            }
-        } else {
-            this.sotOptLog(object, cacheKey, oldInfo);
-        }
-    }
 
     /** 处理标准实时状态下的内阻测试操作日志。 */
     private void resistanceTest(Integer packNum, String resistanceTestStatus, Date previousRealtimeTime) {

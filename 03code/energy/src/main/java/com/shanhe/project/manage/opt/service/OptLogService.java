@@ -1,6 +1,5 @@
 package com.shanhe.project.manage.opt.service;
 
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.opt.domain.OptLog;
 
 import java.util.Date;
@@ -45,14 +44,6 @@ public interface OptLogService {
      */
     Long insert(Map<String, Object> params, Integer result);
 
-    /**
-     * 插入蓄电池日志
-     *
-     * @param packNum 组序号
-     * @param packMap 操作参数
-     * @param oldInfo 旧电池信息
-     */
-    void insertBattery(Integer packNum, Map<String, Object> packMap, BatteryReportLog oldInfo);
 
     /**
      * 按标准实时状态插入蓄电池操作日志。
