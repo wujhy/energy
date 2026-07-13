@@ -38,7 +38,7 @@ public class BatteryModuleReportLogAdapterService {
      */
     public BatteryReportLog buildReportLog(Integer packNum) {
         BatteryModuleRealtimeSnapshot snapshot =
-                snapshotService == null ? null : snapshotService.getCachedSnapshot(packNum);
+                snapshotService == null ? null : snapshotService.getFreshCachedSnapshot(packNum);
         if (snapshot == null) {
             return null;
         }

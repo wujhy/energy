@@ -138,7 +138,7 @@ public class DeviceOnlineJob {
 
     private void syncBatteryOfflineAlarm(Integer packNum, boolean offline) {
         BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
-                ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
+                ? null : realtimeSnapshotService.getFreshCachedSnapshot(packNum);
         if (!offline) {
             alarmLogService.alarmFix(packNum, false, null, Collections.singletonList(ItemCode.TXZT.getCode()));
         } else if (snapshot == null || !snapshot.isDataReady()) {

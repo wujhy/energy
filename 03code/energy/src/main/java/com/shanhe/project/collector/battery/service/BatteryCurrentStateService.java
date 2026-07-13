@@ -75,7 +75,7 @@ public class BatteryCurrentStateService {
         state.setPackId(pack.getPackId());
         state.setExpectedCellCount(pack.getBatSinSize());
 
-        BatteryModuleRealtimeSnapshot snapshot = snapshotService == null ? null : snapshotService.getCachedSnapshot(packNum);
+        BatteryModuleRealtimeSnapshot snapshot = snapshotService == null ? null : snapshotService.getFreshCachedSnapshot(packNum);
         BatteryModuleGroupRealtime group = snapshot == null ? readGroup(packNum) : snapshot.getGroup();
         List<BatteryModuleCellRealtime> cells = snapshot == null ? readCells(packNum) : snapshot.getCells();
         state.setGroup(toGroupState(group));

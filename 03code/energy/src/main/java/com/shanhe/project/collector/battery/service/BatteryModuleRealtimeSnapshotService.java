@@ -2,6 +2,7 @@ package com.shanhe.project.collector.battery.service;
 
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
+import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
@@ -43,6 +44,8 @@ public class BatteryModuleRealtimeSnapshotService {
     /** 电池组配置服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
+    @Resource
+    private BatteryCollectorProperties properties;
 
     /**
      * 采集批次入库后刷新有效快照。
@@ -89,6 +92,20 @@ public class BatteryModuleRealtimeSnapshotService {
         }
         Object value = CacheUtils.get(CacheKeyEnum.BATTERY_REPORT.getCache(), snapshotKey(packNum));
         return value instanceof BatteryModuleRealtimeSnapshot ? (BatteryModuleRealtimeSnapshot) value : null;
+    }
+
+    public BatteryModuleRealtimeSnapshot getFreshCachedSnapshot(Integer packNum) {
+        BatteryModuleRealtimeSnapshot snapshot = getCachedSnapshot(packNum);
+        return isFresh(snapshot) ? snapshot : null;
+    }
+
+    public boolean isFresh(BatteryModuleRealtimeSnapshot snapshot) {
+        Date latest = latestSnapshotTime(snapshot);
+        if (latest == null) {
+            return false;
+        }
+        long thresholdMs = resolveFreshThresholdMs();
+        return System.currentTimeMillis() - latest.getTime() <= thresholdMs;
     }
 
     /**
@@ -225,6 +242,40 @@ public class BatteryModuleRealtimeSnapshotService {
             return;
         }
         CacheUtils.put(CacheKeyEnum.BATTERY_REPORT.getCache(), snapshotKey(snapshot.getPackNum()), snapshot);
+    }
+
+    private Date latestSnapshotTime(BatteryModuleRealtimeSnapshot snapshot) {
+        if (snapshot == null) {
+            return null;
+        }
+        Date latest = snapshot.getPollStartedAt();
+        BatteryModuleGroupRealtime group = snapshot.getGroup();
+        if (group != null) {
+            latest = max(latest, group.getLatestGroupUpdateTime());
+            latest = max(latest, group.getLatestCellUpdateTime());
+            latest = max(latest, group.getPollStartedAt());
+            latest = max(latest, group.getCreateTime());
+        }
+        for (BatteryModuleCellRealtime cell : snapshot.getCells()) {
+            latest = max(latest, cell.getPollStartedAt());
+            latest = max(latest, cell.getCreateTime());
+        }
+        return latest == null ? snapshot.getRefreshedAt() : latest;
+    }
+
+    private Date max(Date left, Date right) {
+        if (left == null) {
+            return right;
+        }
+        if (right == null) {
+            return left;
+        }
+        return right.after(left) ? right : left;
+    }
+
+    private long resolveFreshThresholdMs() {
+        Long value = properties == null ? null : properties.getRealtimeSnapshotFreshThresholdMs();
+        return value == null || value <= 0 ? 180_000L : value;
     }
 
     private String snapshotKey(Integer packNum) {

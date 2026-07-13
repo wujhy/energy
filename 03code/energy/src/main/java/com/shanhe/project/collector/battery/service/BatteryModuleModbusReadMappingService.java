@@ -118,7 +118,7 @@ public class BatteryModuleModbusReadMappingService {
     private ModbusReadSnapshot loadSnapshot(Integer packNum) {
         String channelName = resolveChannelName(packNum);
         if (snapshotService != null) {
-            BatteryModuleRealtimeSnapshot realtimeSnapshot = snapshotService.getCachedSnapshot(packNum);
+            BatteryModuleRealtimeSnapshot realtimeSnapshot = snapshotService.getFreshCachedSnapshot(packNum);
             if (realtimeSnapshot == null) {
                 return new ModbusReadSnapshot(null, null, packNum, channelName);
             }

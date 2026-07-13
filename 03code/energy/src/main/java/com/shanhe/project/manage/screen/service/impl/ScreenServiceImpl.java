@@ -179,7 +179,7 @@ public class ScreenServiceImpl implements ScreenService {
 
     private BatteryReportLogIndex buildRealtimeIndex(BatteryPack pack) {
         BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
-                ? null : realtimeSnapshotService.getCachedSnapshot(pack.getPackNum());
+                ? null : realtimeSnapshotService.getFreshCachedSnapshot(pack.getPackNum());
         BatteryModuleGroupRealtime group = snapshot == null ? null : snapshot.getGroup();
         Map<String, Object> packParam = buildPackParam(group);
         if (group == null || packParam.isEmpty()) {
