@@ -314,7 +314,6 @@ class BatteryCollectorServiceTest {
         Assertions.assertEquals(refreshedAt, channel.getSnapshotRefreshedAt());
         Assertions.assertTrue(channel.getSnapshotDataReady());
         Mockito.verify(realtimeSnapshotService).getCachedSnapshot(1);
-        Mockito.verify(realtimeSnapshotService, Mockito.never()).getSnapshot(Mockito.any());
     }
 
     @Test

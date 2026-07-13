@@ -216,9 +216,9 @@ public class BatteryConnectResistanceCommandProcessor {
         evictSnapshot(batteryGroup);
     }
 
-    /** 读取标准实时快照；未命中时由快照服务按实时表保守重建。 */
+    /** 读取标准实时快照；只读缓存，不回源实时表。 */
     private BatteryModuleRealtimeSnapshot snapshotOf(Integer batteryGroup) {
-        return snapshotService == null ? null : snapshotService.getSnapshot(batteryGroup);
+        return snapshotService == null ? null : snapshotService.getCachedSnapshot(batteryGroup);
     }
 
     /** 连接条电阻写回实时表后清理快照，避免外部读取旧缓存。 */

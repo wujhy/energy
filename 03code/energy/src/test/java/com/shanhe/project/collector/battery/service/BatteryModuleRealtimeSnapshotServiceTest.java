@@ -140,8 +140,8 @@ class BatteryModuleRealtimeSnapshotServiceTest {
     }
 
     @Test
-    void shouldReturnNullFromGetSnapshotWhenPackNumIsNull() {
-        BatteryModuleRealtimeSnapshot result = service.getSnapshot(null);
+    void shouldReturnNullFromGetCachedSnapshotWhenPackNumIsNull() {
+        BatteryModuleRealtimeSnapshot result = service.getCachedSnapshot(null);
         Assertions.assertNull(result);
     }
 

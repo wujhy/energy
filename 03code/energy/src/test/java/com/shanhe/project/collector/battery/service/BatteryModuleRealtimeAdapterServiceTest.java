@@ -63,7 +63,6 @@ class BatteryModuleRealtimeAdapterServiceTest {
         Assertions.assertEquals(3, service.getCellRealtime(1).get(0).getBatNum());
         Assertions.assertSame(group, service.getGroupRealtime(1));
         Mockito.verify(snapshotService, Mockito.times(2)).getCachedSnapshot(1);
-        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
         Mockito.verify(mapper, Mockito.never()).selectCells(1);
         Mockito.verify(mapper, Mockito.never()).selectGroup(1);
     }
@@ -80,7 +79,6 @@ class BatteryModuleRealtimeAdapterServiceTest {
         Assertions.assertNull(service.getCellRealtime(1));
         Assertions.assertNull(service.getGroupRealtime(1));
         Mockito.verify(snapshotService, Mockito.times(2)).getCachedSnapshot(1);
-        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
         Mockito.verifyNoInteractions(mapper);
     }
 

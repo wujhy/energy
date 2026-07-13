@@ -118,7 +118,6 @@ class BatteryCurrentStateServiceTest {
         Mockito.verify(realtimeMapper, Mockito.never()).selectGroup(1);
         Mockito.verify(realtimeMapper, Mockito.never()).selectCells(1);
         Mockito.verify(snapshotService).getCachedSnapshot(1);
-        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
     }
 
     @Test
@@ -143,7 +142,6 @@ class BatteryCurrentStateServiceTest {
         Assertions.assertEquals("batch-db", state.getLastPollBatchNo());
         Assertions.assertEquals(2, state.getCells().size());
         Mockito.verify(snapshotService).getCachedSnapshot(1);
-        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
         Mockito.verify(realtimeMapper).selectGroup(1);
         Mockito.verify(realtimeMapper).selectCells(1);
     }

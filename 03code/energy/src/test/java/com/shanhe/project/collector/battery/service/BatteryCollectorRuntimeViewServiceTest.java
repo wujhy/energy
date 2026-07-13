@@ -128,7 +128,6 @@ class BatteryCollectorRuntimeViewServiceTest {
         Assertions.assertTrue(channel.getSnapshotDataReady());
         Assertions.assertEquals("CLOSED", channel.getChannelHealth());
         Mockito.verify(realtimeSnapshotService).getCachedSnapshot(1);
-        Mockito.verify(realtimeSnapshotService, Mockito.never()).getSnapshot(Mockito.any());
     }
 
     /**

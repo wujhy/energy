@@ -9,7 +9,6 @@ import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
 import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -29,7 +28,6 @@ import java.util.Set;
  * @author wjh
  * @since 2026-06-15
  */
-@Slf4j
 @Service
 public class BatteryModuleRealtimeSnapshotService {
 
@@ -72,32 +70,12 @@ public class BatteryModuleRealtimeSnapshotService {
      * @param packNum 电池组编号
      * @return 当前缓存快照；缓存过期或未写入时返回 null
      */
-    public BatteryModuleRealtimeSnapshot getSnapshot(Integer packNum) {
-        return getCachedSnapshot(packNum);
-    }
-
-    /** 获取当前实时快照；只读 Ehcache，不回源实时表。 */
     public BatteryModuleRealtimeSnapshot getCachedSnapshot(Integer packNum) {
         if (packNum == null) {
             return null;
         }
         Object value = CacheUtils.get(CacheKeyEnum.REALTIME_SNAPSHOT.getCache(), snapshotKey(packNum));
         return value instanceof BatteryModuleRealtimeSnapshot ? (BatteryModuleRealtimeSnapshot) value : null;
-    }
-
-    /**
-     * 启动或人工恢复时从实时表预热快照；普通业务读取不得调用该方法。
-     *
-     * @param packNum 电池组编号
-     * @return 已写入缓存的快照；实时表数据已超过缓存 TTL 时返回 null
-     */
-    public BatteryModuleRealtimeSnapshot warmUpFromRealtime(Integer packNum) {
-        BatteryModuleRealtimeSnapshot snapshot = rebuildFromRealtime(packNum);
-        if (snapshot == null || isOlderThanCacheTtl(snapshot)) {
-            return null;
-        }
-        putSnapshot(snapshot);
-        return snapshot;
     }
 
     /**
@@ -196,83 +174,11 @@ public class BatteryModuleRealtimeSnapshotService {
                 .build();
     }
 
-    private BatteryModuleRealtimeSnapshot rebuildFromRealtime(Integer packNum) {
-        try {
-            List<BatteryModuleCellRealtime> cells = safeList(realtimeMapper.selectCells(packNum));
-            BatteryModuleGroupRealtime group = realtimeMapper.selectGroup(packNum);
-            Integer batSinSize = resolveBatSinSize(packNum);
-            List<BatteryModuleCellRealtime> selected = limit(sorted(cells), batSinSize);
-            Map<Integer, BatteryModuleCellRealtime> cellMap = toCellMap(selected);
-            Map<Integer, Integer> missCounts = new LinkedHashMap<>();
-            for (BatteryModuleCellRealtime cell : selected) {
-                if (cell != null && cell.getBatNum() != null) {
-                    missCounts.put(cell.getBatNum(), 1);
-                }
-            }
-            BatteryModuleRealtimeSnapshot snapshot = BatteryModuleRealtimeSnapshot.builder()
-                    .packNum(packNum)
-                    .batSinSize(batSinSize)
-                    .group(group)
-                    .cells(selected)
-                    .cellMap(cellMap)
-                    .currentBatchCellNums(Collections.emptySet())
-                    .staleCellNums(Collections.emptySet())
-                    .missingCellNums(resolveMissingNums(batSinSize, selected.size(), Collections.emptySet()))
-                    .cellMissCounts(missCounts)
-                    .refreshedAt(new Date())
-                    .build();
-            return snapshot;
-        } catch (Exception e) {
-            log.warn("重建蓄电池实时快照失败, packNum={}", packNum, e);
-            return null;
-        }
-    }
-
     private void putSnapshot(BatteryModuleRealtimeSnapshot snapshot) {
         if (snapshot == null || snapshot.getPackNum() == null) {
             return;
         }
         CacheUtils.put(CacheKeyEnum.REALTIME_SNAPSHOT.getCache(), snapshotKey(snapshot.getPackNum()), snapshot);
-    }
-
-    private boolean isOlderThanCacheTtl(BatteryModuleRealtimeSnapshot snapshot) {
-        Date latest = latestSnapshotTime(snapshot);
-        if (latest == null) {
-            return true;
-        }
-        long ttlMs = CacheUtils.getCache(CacheKeyEnum.REALTIME_SNAPSHOT.getCache())
-                .getCacheConfiguration()
-                .getTimeToLiveSeconds() * 1000L;
-        return ttlMs > 0 && System.currentTimeMillis() - latest.getTime() > ttlMs;
-    }
-
-    private Date latestSnapshotTime(BatteryModuleRealtimeSnapshot snapshot) {
-        if (snapshot == null) {
-            return null;
-        }
-        Date latest = snapshot.getPollStartedAt();
-        BatteryModuleGroupRealtime group = snapshot.getGroup();
-        if (group != null) {
-            latest = max(latest, group.getLatestGroupUpdateTime());
-            latest = max(latest, group.getLatestCellUpdateTime());
-            latest = max(latest, group.getPollStartedAt());
-            latest = max(latest, group.getCreateTime());
-        }
-        for (BatteryModuleCellRealtime cell : snapshot.getCells()) {
-            latest = max(latest, cell.getPollStartedAt());
-            latest = max(latest, cell.getCreateTime());
-        }
-        return latest;
-    }
-
-    private Date max(Date left, Date right) {
-        if (left == null) {
-            return right;
-        }
-        if (right == null) {
-            return left;
-        }
-        return right.after(left) ? right : left;
     }
 
     private String snapshotKey(Integer packNum) {
@@ -314,13 +220,6 @@ public class BatteryModuleRealtimeSnapshotService {
             }
         }
         return result;
-    }
-
-    private List<BatteryModuleCellRealtime> limit(List<BatteryModuleCellRealtime> cells, Integer batSinSize) {
-        if (batSinSize == null || batSinSize <= 0 || cells.size() <= batSinSize) {
-            return cells;
-        }
-        return new ArrayList<>(cells.subList(0, batSinSize));
     }
 
     /**

@@ -504,7 +504,6 @@ class BatteryModuleModbusReadMappingServiceTest {
                 service.readHoldingRegisters(1, 410004, 3));
 
         Mockito.verify(snapshotService, Mockito.times(1)).getCachedSnapshot(1);
-        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
         Mockito.verifyNoInteractions(mapper);
     }
 
@@ -520,7 +519,6 @@ class BatteryModuleModbusReadMappingServiceTest {
                 () -> service.readHoldingRegisters(1, 410004, 1));
 
         Mockito.verify(snapshotService, Mockito.times(1)).getCachedSnapshot(1);
-        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
         Mockito.verifyNoInteractions(mapper);
     }
 

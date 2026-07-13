@@ -110,7 +110,6 @@ class BatteryModuleReportLogAdapterServiceTest {
         Assertions.assertEquals("220.0", reportLog.getPackParam().get("packVoltage"));
         Assertions.assertEquals(1, reportLog.getBatteryList().size());
         Mockito.verify(snapshotService).getCachedSnapshot(1);
-        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
         Mockito.verifyNoInteractions(mapper);
     }
 
@@ -127,7 +126,6 @@ class BatteryModuleReportLogAdapterServiceTest {
         Assertions.assertTrue(reportLog.getPackParam().isEmpty());
         Assertions.assertTrue(reportLog.getBatteryList().isEmpty());
         Mockito.verify(snapshotService).getCachedSnapshot(1);
-        Mockito.verify(snapshotService, Mockito.never()).getSnapshot(Mockito.anyInt());
         Mockito.verifyNoInteractions(mapper);
     }
 
