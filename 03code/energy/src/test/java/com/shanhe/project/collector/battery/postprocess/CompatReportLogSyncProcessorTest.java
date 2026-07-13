@@ -4,11 +4,8 @@ import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
-import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
-import com.shanhe.project.manage.config.domain.BatteryMonitor;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.collector.battery.service.BatteryStorageIntervalService;
+import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -40,18 +37,11 @@ class CompatReportLogSyncProcessorTest {
 
     @Test
     void shouldProcessAndSyncOnlyCurrentBatch() {
-        BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
         BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
         BatteryStorageIntervalService storageIntervalService = Mockito.mock(BatteryStorageIntervalService.class);
-
-        BatteryReportLog reportLog = new BatteryReportLog();
-        reportLog.setPackParam(Collections.singletonMap("packVoltage", "220.1"));
-        reportLog.setBatteryList(Collections.singletonList(new BatteryMonitor()));
-        Mockito.when(adapterService.buildReportLog(Mockito.eq(1), Mockito.any(), Mockito.any()))
-                .thenReturn(reportLog);
         Mockito.when(storageIntervalService.shouldInsert(1)).thenReturn(true);
 
-        CompatReportLogSyncProcessor processor = processor(adapterService, reportLogService, storageIntervalService);
+        CompatReportLogSyncProcessor processor = processor(reportLogService, storageIntervalService);
         BatteryRealtimePostProcessContext context = context("batch-1", "batch-1", "batch-1");
 
         Assertions.assertTrue(processor.shouldProcess(context));
@@ -59,7 +49,7 @@ class CompatReportLogSyncProcessorTest {
 
         ArgumentCaptor<Map> packParamCaptor = ArgumentCaptor.forClass(Map.class);
         Mockito.verify(reportLogService).insert(Mockito.eq(1), packParamCaptor.capture(), Mockito.any(), Mockito.eq(true));
-        Assertions.assertEquals("220.1", packParamCaptor.getValue().get("packVoltage"));
+        Assertions.assertEquals(220.1d, (Double) packParamCaptor.getValue().get("packVoltage"));
     }
 
     @Test
@@ -73,20 +63,15 @@ class CompatReportLogSyncProcessorTest {
     }
 
     private CompatReportLogSyncProcessor processor() {
-        return processor(
-                Mockito.mock(BatteryModuleReportLogAdapterService.class),
-                Mockito.mock(BatteryReportLogService.class),
-                Mockito.mock(BatteryStorageIntervalService.class));
+        return processor(Mockito.mock(BatteryReportLogService.class), Mockito.mock(BatteryStorageIntervalService.class));
     }
 
-    private CompatReportLogSyncProcessor processor(BatteryModuleReportLogAdapterService adapterService,
-                                                    BatteryReportLogService reportLogService,
-                                                    BatteryStorageIntervalService storageIntervalService) {
+    private CompatReportLogSyncProcessor processor(BatteryReportLogService reportLogService,
+                                                   BatteryStorageIntervalService storageIntervalService) {
         BatteryCollectorProperties properties = new BatteryCollectorProperties();
         properties.setCompatReportLogEnabled(Boolean.TRUE);
         CompatReportLogSyncProcessor processor = new CompatReportLogSyncProcessor();
         ReflectionTestUtils.setField(processor, "properties", properties);
-        ReflectionTestUtils.setField(processor, "adapterService", adapterService);
         ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
         ReflectionTestUtils.setField(processor, "storageIntervalService", storageIntervalService);
         return processor;
@@ -99,10 +84,12 @@ class CompatReportLogSyncProcessorTest {
         channelConfig.setBatteryGroup(1);
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
         group.setPackNum(1);
+        group.setPackVoltage(220.1d);
         group.setPollBatchNo(groupBatchNo);
         BatteryModuleCellRealtime cell = new BatteryModuleCellRealtime();
         cell.setPackNum(1);
         cell.setBatNum(1);
+        cell.setVoltage(2.1d);
         cell.setPollBatchNo(cellBatchNo);
         return BatteryRealtimePostProcessContext.builder()
                 .packNum(1)

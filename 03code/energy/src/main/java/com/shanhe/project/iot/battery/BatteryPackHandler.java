@@ -8,7 +8,6 @@ import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
-import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
@@ -63,10 +62,6 @@ public class BatteryPackHandler {
     /** 数据服务。 */
     @Resource
     private DataService dataService;
-    /** 蓄电池模块上报日志适配服务。 */
-    @Resource
-    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
-
 
     /**
      * 上传电池组实时数据
@@ -115,7 +110,7 @@ public class BatteryPackHandler {
             return;
         }
         refreshConfigOnlineCache(deviceData);
-        BatteryReportLog oldInfo = batteryModuleReportLogAdapterService.currentOrLastCache(packNum);
+        BatteryReportLog oldInfo = null;
         saveReportLog(packNum, packMap, batteryList);
         executePostSaveProcesses(config, packNum, batteryPack, packMap, batteryList, oldInfo);
     }

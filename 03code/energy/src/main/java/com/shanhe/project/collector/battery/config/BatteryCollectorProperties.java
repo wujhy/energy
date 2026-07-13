@@ -43,8 +43,6 @@ public class BatteryCollectorProperties {
     /** 是否把独立模块采集结果同步为旧 dev_battery_report_log 历史记录。 */
     private Boolean compatReportLogEnabled = Boolean.FALSE;
 
-    /** JSON/TCP 上报是否优先读取独立模块实时模型。 */
-    private Boolean jsonTcpRealtimeSourceEnabled = Boolean.FALSE;
 
     /**
      * JSON/TCP/页面/计划控制是否优先尝试独立模块命令服务。

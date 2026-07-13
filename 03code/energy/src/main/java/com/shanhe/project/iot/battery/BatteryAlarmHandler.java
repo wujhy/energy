@@ -7,7 +7,6 @@ import com.shanhe.framework.enums.AlarmLevelEnum;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
-import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.domain.Config;
@@ -35,10 +34,6 @@ public class BatteryAlarmHandler {
     /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
-    /** 蓄电池模块上报日志适配服务。 */
-    @Resource
-    private BatteryModuleReportLogAdapterService batteryModuleReportLogAdapterService;
-
 
     /** 单体电池故障属性 **/
     private static final List<String> BATTERY_FAULT_CODE = Arrays.asList(
@@ -478,8 +473,8 @@ public class BatteryAlarmHandler {
         return batteryWarnInfo;
     }
 
-    /** 优先读取标准实时快照适配的告警上下文，失败时回退旧上报缓存。 */
+    /** 旧 iot 告警入口不再接入标准实时快照适配。 */
     private BatteryReportLog loadAlarmContextReportLog(Integer packNum) {
-        return batteryModuleReportLogAdapterService == null ? null : batteryModuleReportLogAdapterService.currentOrLastCache(packNum);
+        return null;
     }
 }

@@ -4,44 +4,45 @@ import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
+import java.util.List;
 
 class ConfigurationBatteryServiceImplTest {
 
     @Test
-    void shouldBuildReportLogFromRealtimeSnapshot() {
+    void shouldResolveCurrentRealtimeFromSnapshot() {
         ConfigurationBatteryServiceImpl service = newService();
         BatteryModuleRealtimeSnapshotService snapshotService =
                 (BatteryModuleRealtimeSnapshotService) ReflectionTestUtils.getField(service, "realtimeSnapshotService");
         Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(snapshot());
 
-        BatteryReportLog result = service.resolveBatteryReportLog(1);
+        ConfigurationBatteryServiceImpl.CurrentBatteryRealtime result = service.resolveCurrentRealtime(1);
 
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals(1, result.getPackNum());
-        Assertions.assertEquals(52.6, result.getPackParam().get("packVoltage"));
-        Assertions.assertEquals(2, result.getPackParam().get("batteryPackStatus"));
-        Assertions.assertEquals(1, result.getBatteryList().size());
-        Assertions.assertEquals(10, result.getBatteryList().get(0).getBatNum());
-        Assertions.assertEquals(2.21, result.getBatteryList().get(0).getVoltage());
+        BatteryModuleGroupRealtime group = (BatteryModuleGroupRealtime) ReflectionTestUtils.getField(result, "group");
+        List<?> cells = (List<?>) ReflectionTestUtils.getField(result, "cells");
+        Assertions.assertNotNull(group);
+        Assertions.assertEquals(1, group.getPackNum());
+        Assertions.assertEquals(52.6, group.getPackVoltage());
+        Assertions.assertEquals(1, cells.size());
+        Assertions.assertEquals(10, ((BatteryModuleCellRealtime) cells.get(0)).getBatNum());
     }
 
     @Test
-    void shouldReturnNullWhenRealtimeSnapshotUnavailable() {
+    void shouldReturnEmptyCurrentRealtimeWhenSnapshotUnavailable() {
         ConfigurationBatteryServiceImpl service = newService();
         BatteryModuleRealtimeSnapshotService snapshotService =
                 (BatteryModuleRealtimeSnapshotService) ReflectionTestUtils.getField(service, "realtimeSnapshotService");
         Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(null);
 
-        BatteryReportLog result = service.resolveBatteryReportLog(1);
+        ConfigurationBatteryServiceImpl.CurrentBatteryRealtime result = service.resolveCurrentRealtime(1);
 
-        Assertions.assertNull(result);
+        Assertions.assertNull(ReflectionTestUtils.getField(result, "group"));
+        Assertions.assertTrue(((List<?>) ReflectionTestUtils.getField(result, "cells")).isEmpty());
     }
 
     private ConfigurationBatteryServiceImpl newService() {

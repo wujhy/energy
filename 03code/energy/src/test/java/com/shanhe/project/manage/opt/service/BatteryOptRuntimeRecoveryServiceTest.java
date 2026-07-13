@@ -160,7 +160,6 @@ class BatteryOptRuntimeRecoveryServiceTest {
         private final BatteryCollectorProperties properties = new BatteryCollectorProperties();
 
         private Fixture() {
-            properties.setJsonTcpRealtimeSourceEnabled(false);
             ReflectionTestUtils.setField(service, "optLogService", optLogService);
             ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
             ReflectionTestUtils.setField(service, "batteryCollectorProperties", properties);

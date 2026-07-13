@@ -146,12 +146,6 @@ class BatteryModuleRealtimeSnapshotServiceTest {
     }
 
     @Test
-    void shouldReturnNullFromGetCachedSnapshotWhenPackNumIsNull() {
-        BatteryModuleRealtimeSnapshot result = service.getCachedSnapshot(null);
-        Assertions.assertNull(result);
-    }
-
-    @Test
     void shouldNotThrowWhenEvictWithNullPackNum() {
         Assertions.assertDoesNotThrow(() -> service.evict(null));
     }

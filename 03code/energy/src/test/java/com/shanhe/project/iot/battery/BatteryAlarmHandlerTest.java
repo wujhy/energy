@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.enums.AlarmLevelEnum;
 import com.shanhe.framework.enums.ItemCode;
-import com.shanhe.project.collector.battery.service.BatteryModuleReportLogAdapterService;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.domain.Config;
@@ -108,11 +107,7 @@ class BatteryAlarmHandlerTest {
     void shouldUploadSingleBatteryWarnUsingGroup87EffectiveBitMapping() {
         BatteryAlarmHandler handler = new BatteryAlarmHandler();
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
-        BatteryReportLog batteryReportLog = new BatteryReportLog();
-        BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
-        Mockito.when(adapterService.currentOrLastCache(1)).thenReturn(batteryReportLog);
         ReflectionTestUtils.setField(handler, "alarmLogService", alarmLogService);
-        ReflectionTestUtils.setField(handler, "batteryModuleReportLogAdapterService", adapterService);
 
         String payload = "0101" +
                 "4000" +
@@ -131,23 +126,17 @@ class BatteryAlarmHandlerTest {
                 Mockito.eq(1),
                 Mockito.eq(2),
                 warnParamCaptor.capture(),
-                Mockito.same(batteryReportLog));
+                Mockito.isNull());
         Assertions.assertEquals(
                 AlarmLevelEnum._1.getDictValue(),
                 warnParamCaptor.getValue().get(ItemCode.DTLJTGJ.getCode()));
     }
 
     @Test
-    void shouldPreferRealtimeReportLogForBatteryWarnContext() {
+    void shouldUseNullContextInOldBatteryWarnEntry() {
         BatteryAlarmHandler handler = new BatteryAlarmHandler();
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
-        BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
-        BatteryReportLog realtimeLog = new BatteryReportLog();
-        realtimeLog.setPackParam(new HashMap<>());
-        realtimeLog.getPackParam().put("packVoltage", "54.0");
-        Mockito.when(adapterService.currentOrLastCache(1)).thenReturn(realtimeLog);
         ReflectionTestUtils.setField(handler, "alarmLogService", alarmLogService);
-        ReflectionTestUtils.setField(handler, "batteryModuleReportLogAdapterService", adapterService);
 
         String payload = "0100" +
                 "5001" +
@@ -162,18 +151,14 @@ class BatteryAlarmHandlerTest {
                 Mockito.eq(1),
                 Mockito.isNull(),
                 Mockito.anyMap(),
-                Mockito.same(realtimeLog));
+                Mockito.isNull());
     }
 
     @Test
     void shouldUploadBatteryGroupWarnWithCorrectMappings() {
         BatteryAlarmHandler handler = new BatteryAlarmHandler();
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
-        BatteryReportLog batteryReportLog = new BatteryReportLog();
-        BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
-        Mockito.when(adapterService.currentOrLastCache(1)).thenReturn(batteryReportLog);
         ReflectionTestUtils.setField(handler, "alarmLogService", alarmLogService);
-        ReflectionTestUtils.setField(handler, "batteryModuleReportLogAdapterService", adapterService);
 
         // We want to test all commonly group alarm mappings:
         // status1 = hex "50" (index 1 = ZWDG)
@@ -196,7 +181,7 @@ class BatteryAlarmHandlerTest {
                 Mockito.eq(1),
                 Mockito.isNull(),
                 warnParamCaptor.capture(),
-                Mockito.same(batteryReportLog));
+                Mockito.isNull());
 
         Map<String, String> warnParams = warnParamCaptor.getValue();
 
@@ -217,11 +202,7 @@ class BatteryAlarmHandlerTest {
     void shouldUploadSingleBatteryWarnWithCorrectMappings() {
         BatteryAlarmHandler handler = new BatteryAlarmHandler();
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
-        BatteryReportLog batteryReportLog = new BatteryReportLog();
-        BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
-        Mockito.when(adapterService.currentOrLastCache(1)).thenReturn(batteryReportLog);
         ReflectionTestUtils.setField(handler, "alarmLogService", alarmLogService);
-        ReflectionTestUtils.setField(handler, "batteryModuleReportLogAdapterService", adapterService);
 
         // Test single battery commonly alarm mappings:
         // Commonly status1 = hex "60" -> index 0 = DTDCWDD
@@ -246,7 +227,7 @@ class BatteryAlarmHandlerTest {
                 Mockito.eq(1),
                 Mockito.eq(2),
                 warnParamCaptor.capture(),
-                Mockito.same(batteryReportLog));
+                Mockito.isNull());
 
         Map<String, String> warnParams = warnParamCaptor.getValue();
 
@@ -267,11 +248,7 @@ class BatteryAlarmHandlerTest {
     void shouldUploadDeviceFaultWithCorrectMappings() {
         BatteryAlarmHandler handler = new BatteryAlarmHandler();
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
-        BatteryReportLog batteryReportLog = new BatteryReportLog();
-        BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
-        Mockito.when(adapterService.currentOrLastCache(1)).thenReturn(batteryReportLog);
         ReflectionTestUtils.setField(handler, "alarmLogService", alarmLogService);
-        ReflectionTestUtils.setField(handler, "batteryModuleReportLogAdapterService", adapterService);
 
         // dfs = hex "AC" (binary "10101100")
         // Index 0: ZWLGZ (1)
@@ -291,7 +268,7 @@ class BatteryAlarmHandlerTest {
                 Mockito.eq(1),
                 Mockito.isNull(),
                 warnParamCaptor.capture(),
-                Mockito.same(batteryReportLog));
+                Mockito.isNull());
 
         Map<String, String> warnParam = warnParamCaptor.getValue();
         Assertions.assertEquals("1", warnParam.get(ItemCode.ZWLGZ.getCode()));
@@ -305,11 +282,7 @@ class BatteryAlarmHandlerTest {
     void shouldUploadSingleBatteryFaultWithCorrectMappings() {
         BatteryAlarmHandler handler = new BatteryAlarmHandler();
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
-        BatteryReportLog batteryReportLog = new BatteryReportLog();
-        BatteryModuleReportLogAdapterService adapterService = Mockito.mock(BatteryModuleReportLogAdapterService.class);
-        Mockito.when(adapterService.currentOrLastCache(1)).thenReturn(batteryReportLog);
         ReflectionTestUtils.setField(handler, "alarmLogService", alarmLogService);
-        ReflectionTestUtils.setField(handler, "batteryModuleReportLogAdapterService", adapterService);
 
         // batteryNumber = 2
         // status = hex "D8" (binary "11011000")
@@ -332,7 +305,7 @@ class BatteryAlarmHandlerTest {
                 Mockito.eq(1),
                 Mockito.eq(2),
                 warnParamCaptor.capture(),
-                Mockito.same(batteryReportLog));
+                Mockito.isNull());
 
         Map<String, String> warnParam = warnParamCaptor.getValue();
         Assertions.assertEquals("1", warnParam.get(ItemCode.DTLJTGJ.getCode()));
