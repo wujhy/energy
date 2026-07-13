@@ -119,7 +119,7 @@ public class BatteryModuleReportLogAdapterService {
         if (group == null) {
             return packMap;
         }
-        put(packMap, "packVoltage", group.getPackVoltage());
+        put(packMap, "packVoltage", groupVoltage(group));
         put(packMap, "batteryPackOuterVoltage", group.getExternalVoltage());
         put(packMap, "packCurrent", group.getChargeDischargeCurrent());
         put(packMap, "batteryPackFloatCurrent", group.getFloatCurrent());
@@ -201,6 +201,10 @@ public class BatteryModuleReportLogAdapterService {
             result.add(monitor);
         }
         return result;
+    }
+
+    private Double groupVoltage(BatteryModuleGroupRealtime group) {
+        return group.getPackVoltage() != null ? group.getPackVoltage() : group.getExternalVoltage();
     }
 
     private void put(Map<String, Object> packMap, String key, Object value) {

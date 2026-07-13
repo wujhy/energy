@@ -385,11 +385,11 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         // 电池组告警
         if (itemCode.contains("dy")) {
             // 组电压
-            String voltage = Objects.toString(packData.get("batteryPackOuterVoltage"), null);
+            String voltage = Objects.toString(packData.get("packVoltage"), null);
             if (voltage != null && Double.parseDouble(voltage) != 0) {
                 return voltage;
             }
-            return Objects.toString(packData.get("packVoltage"), null);
+            return Objects.toString(packData.get("batteryPackOuterVoltage"), null);
         }
         if (itemCode.contains("dl")) {
             // 组电流

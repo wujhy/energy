@@ -146,7 +146,7 @@ public class BatteryCurrentStateService {
         }
         BatteryCurrentGroupState target = new BatteryCurrentGroupState();
         target.setPackNum(source.getPackNum());
-        target.setPackVoltage(source.getPackVoltage());
+        target.setPackVoltage(groupVoltage(source));
         target.setPackCurrent(source.getChargeDischargeCurrent());
         target.setChargeDischargeCurrent(source.getChargeDischargeCurrent());
         target.setFloatCurrent(source.getFloatCurrent());
@@ -166,6 +166,10 @@ public class BatteryCurrentStateService {
         target.setResistanceTestStatus(source.getResistanceTestStatus());
         target.setDeviceWorkStatus(source.getDeviceWorkStatus());
         return target;
+    }
+
+    private Double groupVoltage(BatteryModuleGroupRealtime source) {
+        return source.getPackVoltage() != null ? source.getPackVoltage() : source.getExternalVoltage();
     }
 
     private List<BatteryCurrentCellState> toCellStates(List<BatteryModuleCellRealtime> sources) {

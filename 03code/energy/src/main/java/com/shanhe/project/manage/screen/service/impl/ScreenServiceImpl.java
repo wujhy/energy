@@ -199,7 +199,7 @@ public class ScreenServiceImpl implements ScreenService {
         if (group == null) {
             return packParam;
         }
-        putIfNotNull(packParam, "packVoltage", group.getPackVoltage());
+        putIfNotNull(packParam, "packVoltage", groupVoltage(group));
         putIfNotNull(packParam, "batteryPackOuterVoltage", group.getExternalVoltage());
         putIfNotNull(packParam, "packCurrent", group.getChargeDischargeCurrent());
         putIfNotNull(packParam, "batteryPackFloatCurrent", group.getFloatCurrent());
@@ -216,6 +216,10 @@ public class ScreenServiceImpl implements ScreenService {
         putIfNotNull(packParam, "residualDischargeDuration", group.getResidualDischargeDuration());
         putIfNotNull(packParam, "backupDuration", group.getBackupDuration());
         return packParam;
+    }
+
+    private Double groupVoltage(BatteryModuleGroupRealtime group) {
+        return group.getPackVoltage() != null ? group.getPackVoltage() : group.getExternalVoltage();
     }
 
     private void putIfNotNull(Map<String, Object> target, String key, Object value) {

@@ -152,6 +152,7 @@ public class BatteryModuleGroupCalculationService {
         calculation.setLatestCellUpdateTime(latestCellUpdateTime);
 
         voltage.applyVoltage(calculation);
+        calculation.setPackVoltage(voltage.sum());
         temperature.applyTemperature(calculation);
         resistance.apply(calculation);
 
@@ -162,7 +163,6 @@ public class BatteryModuleGroupCalculationService {
             if (!currentGroupModule) {
                 return calculation;
             }
-            calculation.setPackVoltage(group.getPackVoltage());
             calculation.setExternalVoltage(group.getExternalVoltage());
             calculation.setChargeDischargeCurrent(group.getChargeDischargeCurrent());
             calculation.setFloatCurrent(group.getFloatCurrent());
@@ -273,6 +273,10 @@ public class BatteryModuleGroupCalculationService {
 
         private Double range() {
             return min == null || max == null ? null : max - min;
+        }
+
+        private Double sum() {
+            return count == 0 ? null : sum;
         }
     }
 

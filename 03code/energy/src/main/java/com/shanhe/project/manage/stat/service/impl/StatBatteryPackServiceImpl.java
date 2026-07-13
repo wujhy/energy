@@ -317,7 +317,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         statBatteryPack.setId(IdUtils.getSnowflakeId());
         statBatteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID);
         statBatteryPack.setPackNum(packNum);
-        statBatteryPack.setPackVoltage(group.getPackVoltage());
+        statBatteryPack.setPackVoltage(groupVoltage(group));
         statBatteryPack.setPackCurrent(group.getChargeDischargeCurrent());
         statBatteryPack.setBatteryPackFloatCurrent(group.getFloatCurrent());
         statBatteryPack.setEnvironmentTemperature1(group.getEnvironmentTemperature1());
@@ -338,6 +338,10 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         statBatteryBatService.insertList(statBatteries);
     }
 
+    private Double groupVoltage(BatteryModuleGroupRealtime group) {
+        return group.getPackVoltage() != null ? group.getPackVoltage() : group.getExternalVoltage();
+    }
+
     private StatBatteryBat toStatBatteryBat(Integer packNum, BatteryModuleCellRealtime cell) {
         StatBatteryBat statBattery = new StatBatteryBat();
         statBattery.setConfigId(Constants.DEFAULT_CONFIG_ID);
@@ -353,11 +357,11 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
     /** 组电压 */
     private Double getPackVoltage(Map<String, Object> packMap) {
         // 组电压
-        String voltage = Objects.toString(packMap.get("batteryPackOuterVoltage"), null);
+        String voltage = Objects.toString(packMap.get("packVoltage"), null);
         if (voltage != null && Double.parseDouble(voltage) != 0) {
             return Double.parseDouble(voltage);
         }
-        voltage = Objects.toString(packMap.get("packVoltage"), null);
+        voltage = Objects.toString(packMap.get("batteryPackOuterVoltage"), null);
         if (voltage != null && Double.parseDouble(voltage) != 0) {
             return Double.parseDouble(voltage);
         }

@@ -152,7 +152,7 @@ public class BatteryModuleAlarmAdaptService {
     /** 追加组阈值告警参数。 */
     private void appendGroupThreshold(Map<String, String> warnParam, BatteryModuleGroupRealtime group) {
         // 组电压
-        Double groupVoltage = group.getExternalVoltage();
+        Double groupVoltage = groupVoltage(group);
         if (groupVoltage != null) {
             String value = String.valueOf(groupVoltage);
             warnParam.put(ItemCode.ZDYGC.getCode(), value);
@@ -179,7 +179,7 @@ public class BatteryModuleAlarmAdaptService {
 
     /** 追加组阈值告警候选。 */
     private void appendGroupThreshold(BatteryModuleAlarmContext context, BatteryModuleGroupRealtime group) {
-        Double groupVoltage = group.getExternalVoltage();
+        Double groupVoltage = groupVoltage(group);
         if (groupVoltage != null) {
             String value = String.valueOf(groupVoltage);
             context.putPackWarn(ItemCode.ZDYGC.getCode(), value);
@@ -200,6 +200,10 @@ public class BatteryModuleAlarmAdaptService {
         if (group.getBatteryPackSoh() != null) {
             context.putPackWarn(ItemCode.ZSOHDGJ.getCode(), String.valueOf(group.getBatteryPackSoh()));
         }
+    }
+
+    private Double groupVoltage(BatteryModuleGroupRealtime group) {
+        return group.getPackVoltage() != null ? group.getPackVoltage() : group.getExternalVoltage();
     }
 
     /** 追加电池组通信状态告警。 */
