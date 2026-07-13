@@ -86,56 +86,46 @@ class BatteryRealtimePostProcessorsTest {
     void operationLogProcessorShouldSkipUnknownStatus() {
         OperationLogProcessor processor = new OperationLogProcessor();
         OptLogService optLogService = Mockito.mock(OptLogService.class);
-        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
         ReflectionTestUtils.setField(processor, "optLogService", optLogService);
-        ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
 
         BatteryRealtimePostProcessContext context = context(group(99, null), cells());
         assertTrue(processor.shouldProcess(context));
         processor.process(context);
 
         Mockito.verifyNoInteractions(optLogService);
-        Mockito.verifyNoInteractions(reportLogService);
     }
 
     @Test
-    void operationLogProcessorShouldCallOldServiceForKnownStatus() {
+    void operationLogProcessorShouldCloseExistingLogsWhenBatteryStatusEnded() {
         OperationLogProcessor processor = new OperationLogProcessor();
         OptLogService optLogService = Mockito.mock(OptLogService.class);
-        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
-        BatteryReportLog oldInfo = new BatteryReportLog();
-        Mockito.when(reportLogService.lastCache(1)).thenReturn(oldInfo);
         ReflectionTestUtils.setField(processor, "optLogService", optLogService);
-        ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
 
         BatteryRealtimePostProcessContext context = context(group(6, null), cells());
         assertTrue(processor.shouldProcess(context));
         processor.process(context);
 
-        Mockito.verify(reportLogService).lastCache(1);
-        Mockito.verify(optLogService).insertBattery(Mockito.eq(1), Mockito.anyMap(), Mockito.same(oldInfo));
+        Mockito.verify(optLogService).doStopTest(1, 3);
+        Mockito.verify(optLogService).doStopTest(1, 5);
+        Mockito.verify(optLogService).doStopTest(1, 7);
+        Mockito.verify(optLogService, Mockito.never()).insertBatteryRealtime(Mockito.anyInt(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test
-    void operationLogProcessorShouldIgnoreCompatInsertOldReportLogBoundary() {
+    void operationLogProcessorShouldNotCloseBatteryLogWhenBatteryStatusActive() {
         OperationLogProcessor processor = new OperationLogProcessor();
         OptLogService optLogService = Mockito.mock(OptLogService.class);
-        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
-        BatteryReportLog contextOldInfo = new BatteryReportLog();
-        BatteryReportLog cachedOldInfo = new BatteryReportLog();
-        Mockito.when(reportLogService.lastCache(1)).thenReturn(cachedOldInfo);
         ReflectionTestUtils.setField(processor, "optLogService", optLogService);
-        ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
 
-        BatteryRealtimePostProcessContext context = context(group(6, null), cells());
-        context.setCompatInsert(true);
-        context.setOldReportLog(contextOldInfo);
-
+        BatteryRealtimePostProcessContext context = context(group(5, 0), cells());
         assertTrue(processor.shouldProcess(context));
         processor.process(context);
 
-        Mockito.verify(reportLogService).lastCache(1);
-        Mockito.verify(optLogService).insertBattery(Mockito.eq(1), Mockito.anyMap(), Mockito.same(cachedOldInfo));
+        Mockito.verify(optLogService).doStopTest(1, 1);
+        Mockito.verify(optLogService, Mockito.never()).doStopTest(1, 3);
+        Mockito.verify(optLogService, Mockito.never()).doStopTest(1, 5);
+        Mockito.verify(optLogService, Mockito.never()).doStopTest(1, 7);
+        Mockito.verify(optLogService, Mockito.never()).insertBatteryRealtime(Mockito.anyInt(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test
