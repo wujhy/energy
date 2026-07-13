@@ -3,6 +3,7 @@ package com.shanhe.project.manage.opt.service;
 import com.shanhe.project.manage.opt.domain.OptLog;
 
 import java.util.Date;
+
 import java.util.List;
 import java.util.Map;
 
@@ -44,16 +45,6 @@ public interface OptLogService {
      */
     Long insert(Map<String, Object> params, Integer result);
 
-
-    /**
-     * 按标准实时状态插入蓄电池操作日志。
-     *
-     * @param packNum 组序号
-     * @param batteryPackStatus 电池组状态
-     * @param resistanceTestStatus 内阻测试状态
-     * @param previousRealtimeTime 上一标准实时快照时间
-     */
-    void insertBatteryRealtime(Integer packNum, Integer batteryPackStatus, Integer resistanceTestStatus, Date previousRealtimeTime);
 
     /**
      * 更新操作日志

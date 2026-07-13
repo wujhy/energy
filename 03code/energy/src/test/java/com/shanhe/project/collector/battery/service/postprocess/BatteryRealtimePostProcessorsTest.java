@@ -3,7 +3,6 @@ package com.shanhe.project.collector.battery.service.postprocess;
 import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessor;
 import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessContext;
 import com.shanhe.project.collector.battery.postprocess.ResistanceStatisticsProcessor;
-import com.shanhe.project.collector.battery.postprocess.OperationLogProcessor;
 import com.shanhe.project.collector.battery.postprocess.CompatReportLogSyncProcessor;
 import com.shanhe.project.collector.battery.postprocess.CapacityPredictionProcessor;
 import com.shanhe.project.collector.battery.postprocess.AlarmContextProcessor;
@@ -82,78 +81,7 @@ class BatteryRealtimePostProcessorsTest {
         assertFalse(processor.shouldProcess(mismatchedBatch));
     }
 
-    @Test
-    void operationLogProcessorShouldSkipUnknownStatus() {
-        OperationLogProcessor processor = new OperationLogProcessor();
-        OptLogService optLogService = Mockito.mock(OptLogService.class);
-        ReflectionTestUtils.setField(processor, "optLogService", optLogService);
 
-        BatteryRealtimePostProcessContext context = context(group(99, null), cells());
-        assertTrue(processor.shouldProcess(context));
-        processor.process(context);
-
-        Mockito.verifyNoInteractions(optLogService);
-    }
-
-    @Test
-    void operationLogProcessorShouldCloseExistingLogsWhenBatteryStatusEnded() {
-        OperationLogProcessor processor = new OperationLogProcessor();
-        OptLogService optLogService = Mockito.mock(OptLogService.class);
-        ReflectionTestUtils.setField(processor, "optLogService", optLogService);
-
-        BatteryRealtimePostProcessContext context = context(group(6, null), cells());
-        assertTrue(processor.shouldProcess(context));
-        processor.process(context);
-
-        Mockito.verify(optLogService).doStopTest(1, 3);
-        Mockito.verify(optLogService).doStopTest(1, 5);
-        Mockito.verify(optLogService).doStopTest(1, 7);
-        Mockito.verify(optLogService, Mockito.never()).insertBatteryRealtime(Mockito.anyInt(), Mockito.any(), Mockito.any(), Mockito.any());
-    }
-
-    @Test
-    void operationLogProcessorShouldNotCloseBatteryLogWhenBatteryStatusActive() {
-        OperationLogProcessor processor = new OperationLogProcessor();
-        OptLogService optLogService = Mockito.mock(OptLogService.class);
-        ReflectionTestUtils.setField(processor, "optLogService", optLogService);
-
-        BatteryRealtimePostProcessContext context = context(group(5, 0), cells());
-        assertTrue(processor.shouldProcess(context));
-        processor.process(context);
-
-        Mockito.verify(optLogService).doStopTest(1, 1);
-        Mockito.verify(optLogService, Mockito.never()).doStopTest(1, 3);
-        Mockito.verify(optLogService, Mockito.never()).doStopTest(1, 5);
-        Mockito.verify(optLogService, Mockito.never()).doStopTest(1, 7);
-        Mockito.verify(optLogService, Mockito.never()).insertBatteryRealtime(Mockito.anyInt(), Mockito.any(), Mockito.any(), Mockito.any());
-    }
-
-    @Test
-    void operationLogProcessorShouldRejectMissingOrMismatchedBatch() {
-        OperationLogProcessor processor = new OperationLogProcessor();
-
-        BatteryRealtimePostProcessContext missingBatch = BatteryRealtimePostProcessContext.builder()
-                .packNum(1)
-                .group(group(6, null))
-                .cells(cells())
-                .build();
-        assertFalse(processor.shouldProcess(missingBatch));
-
-        BatteryModuleGroupRealtime mismatchedGroup = group(6, null);
-        mismatchedGroup.setPollBatchNo("other-batch");
-        BatteryRealtimePostProcessContext mismatchedBatch = BatteryRealtimePostProcessContext.builder()
-                .packNum(1)
-                .pollBatchNo(POLL_BATCH_NO)
-                .group(mismatchedGroup)
-                .cells(cells())
-                .build();
-        assertFalse(processor.shouldProcess(mismatchedBatch));
-
-        List<BatteryModuleCellRealtime> mismatchedCells = cells();
-        mismatchedCells.get(0).setPollBatchNo("other-batch");
-        BatteryRealtimePostProcessContext mismatchedCellBatch = context(group(6, null), mismatchedCells);
-        assertFalse(processor.shouldProcess(mismatchedCellBatch));
-    }
 
     @Test
     void capacityPredictionProcessorShouldTriggerForKnownStatusInSameBatch() {

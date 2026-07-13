@@ -3,6 +3,7 @@ package com.shanhe.project.manage.opt.service;
 import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
+import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessContext;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
@@ -80,6 +81,52 @@ class BatteryOptRuntimeRecoveryServiceTest {
         Mockito.verify(fixture.optLogService, Mockito.never()).updateCache();
     }
 
+
+    @Test
+    void shouldCloseExistingLogsWhenRealtimeBatteryStatusEnded() {
+        Fixture fixture = new Fixture();
+        BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .pollBatchNo("batch-1")
+                .group(group(6, null, "batch-1"))
+                .build();
+
+        fixture.service.process(context);
+
+        Mockito.verify(fixture.optLogService).doStopTest(1, BatteryTestEnum._3.getDictValue());
+        Mockito.verify(fixture.optLogService).doStopTest(1, BatteryTestEnum._5.getDictValue());
+        Mockito.verify(fixture.optLogService).doStopTest(1, BatteryTestEnum._7.getDictValue());
+    }
+
+    @Test
+    void shouldKeepBatteryLogsWhenRealtimeBatteryStatusActive() {
+        Fixture fixture = new Fixture();
+        BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .pollBatchNo("batch-1")
+                .group(group(5, 0, "batch-1"))
+                .build();
+
+        fixture.service.process(context);
+
+        Mockito.verify(fixture.optLogService).doStopTest(1, BatteryTestEnum._1.getDictValue());
+        Mockito.verify(fixture.optLogService, Mockito.never()).doStopTest(1, BatteryTestEnum._3.getDictValue());
+        Mockito.verify(fixture.optLogService, Mockito.never()).doStopTest(1, BatteryTestEnum._5.getDictValue());
+        Mockito.verify(fixture.optLogService, Mockito.never()).doStopTest(1, BatteryTestEnum._7.getDictValue());
+    }
+
+    @Test
+    void shouldRejectRealtimePostProcessWhenBatchMismatched() {
+        Fixture fixture = new Fixture();
+        BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .pollBatchNo("batch-1")
+                .group(group(6, null, "other-batch"))
+                .build();
+
+        org.junit.jupiter.api.Assertions.assertFalse(fixture.service.shouldProcess(context));
+    }
+
     private static OptLog backupLog() {
         OptLog log = new OptLog();
         log.setId(100L);
@@ -89,6 +136,14 @@ class BatteryOptRuntimeRecoveryServiceTest {
         return log;
     }
 
+
+    private static BatteryModuleGroupRealtime group(Integer batteryPackStatus, Integer resistanceTestStatus, String pollBatchNo) {
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setBatteryPackStatus(batteryPackStatus);
+        group.setResistanceTestStatus(resistanceTestStatus);
+        group.setPollBatchNo(pollBatchNo);
+        return group;
+    }
     private static BatteryModuleRealtimeSnapshot snapshot(String status) {
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
         group.setBatteryPackStatus(Integer.valueOf(status));

@@ -7,17 +7,14 @@ import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.text.Convert;
 import com.shanhe.common.utils.uuid.IdUtils;
-import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.framework.enums.CacheKeyEnum;
-import com.shanhe.framework.enums.ResistanceTestStatusEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import com.shanhe.project.manage.opt.mapper.OptLogMapper;
 import com.shanhe.project.manage.opt.service.OptLogService;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -100,90 +97,9 @@ public class OptLogServiceImpl implements OptLogService {
     }
 
 
-    @Async
-    @Override
-    public void insertBatteryRealtime(Integer packNum,
-                                      Integer batteryPackStatus,
-                                      Integer resistanceTestStatus,
-                                      Date previousRealtimeTime) {
-        this.batteryTest(packNum, Objects.toString(batteryPackStatus, null), previousRealtimeTime);
-        this.resistanceTest(packNum, Objects.toString(resistanceTestStatus, null), previousRealtimeTime);
-    }
 
-    /** 处理标准实时状态下的核容测试操作日志。 */
-    private void batteryTest(Integer packNum, String batteryPackStatus, Date previousRealtimeTime) {
-        Integer type = getTestType(batteryPackStatus);
-        String cacheKey = String.format(logCache.getKey(), packNum, 1);
-        Object object = CacheUtils.get(logCache.getCache(), cacheKey);
-        if (type == null) {
-            this.sotOptLog(object, cacheKey, previousRealtimeTime);
-        } else if (object == null) {
-            if (this.adoptRunningLog(packNum, type, cacheKey)) {
-                return;
-            }
-            this.create(packNum, type, cacheKey);
-        } else {
-            OptLog oldOptLog = (OptLog) object;
-            if (!type.equals(oldOptLog.getType())) {
-                this.sotOptLog(object, cacheKey, previousRealtimeTime);
-                this.create(packNum, type, cacheKey);
-            } else {
-                insert(oldOptLog, cacheKey);
-            }
-        }
-    }
 
-    /** 插入操作日志并更新缓存。 */
-    private void insert(OptLog oldOptLog, String cacheKey) {
-        // 已保存
-        if (oldOptLog.isSave()) {
-            return;
-        }
 
-        // 达到次数
-        if (oldOptLog.getCount() >= 1) {
-            oldOptLog.setSave(true);
-
-            Date createTime = oldOptLog.getCreateTime();
-            if (createTime == null) {
-                createTime = new Date();
-            }
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            oldOptLog.setCreateTimeStr(sdf.format(createTime));
-            optLogMapper.insert(oldOptLog);
-        } else {
-            oldOptLog.setCount(oldOptLog.getCount() + 1);
-        }
-        CacheUtils.put(logCache.getCache(), cacheKey, oldOptLog);
-    }
-
-    /** 创建新操作日志。 */
-    private void create(Integer packNum, Integer type, String cacheKey) {
-        // 创建新纪录
-        OptLog optLog = new OptLog();
-        optLog.setId(IdUtils.getSnowflakeId());
-        optLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
-        optLog.setPackNum(packNum);
-        optLog.setType(type);
-
-        optLog.setCreateTime(new Date());
-        optLog.setCount(1);
-        optLog.setSave(false);
-        // 缓存数据
-        CacheUtils.put(logCache.getCache(), cacheKey, optLog);
-    }
-
-    /** 采集状态后处理发现运行态时，优先接管入口已创建的业务 running log，避免重复落库。 */
-    private boolean adoptRunningLog(Integer packNum, Integer type, String cacheKey) {
-        OptLog runningLog = optLogMapper.getRunningOptLog(packNum, type);
-        if (runningLog == null) {
-            return false;
-        }
-        runningLog.setSave(true);
-        runningLog.setCount(100);
-        CacheUtils.put(logCache.getCache(), cacheKey, runningLog);
-        return true;
-    }
 
 
     /** 判断是否需要插入操作日志。 */
@@ -211,42 +127,7 @@ public class OptLogServiceImpl implements OptLogService {
         update(optLog.getId(), YesNoEnum.YES.getDictValue(), endTime);
     }
 
-    /** 状态转换 */
-    private Integer getTestType(String batteryPackStatus) {
-        Integer testType = null;
 
-        if (BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.CHARGE)) {
-            testType = BatteryTestEnum._7.getDictValue();
-
-        } else if (BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.CAPACITY_TEST)) {
-            testType = BatteryTestEnum._3.getDictValue();
-
-        } else if (BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.BACKUP)) {
-            testType = BatteryTestEnum._5.getDictValue();
-
-        } else if (BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
-            testType = BatteryTestEnum._4.getDictValue();
-        }
-        return testType;
-    }
-
-
-
-    /** 处理标准实时状态下的内阻测试操作日志。 */
-    private void resistanceTest(Integer packNum, String resistanceTestStatus, Date previousRealtimeTime) {
-        String cacheKey = String.format(logCache.getKey(), packNum, 0);
-        Object object = CacheUtils.get(logCache.getCache(), cacheKey);
-        if (ResistanceTestStatusEnum.isCode(resistanceTestStatus, ResistanceTestStatusEnum.TESTING)) {
-            if (object == null) {
-                this.create(packNum, BatteryTestEnum._1.getDictValue(), cacheKey);
-            } else {
-                OptLog oldOptLog = (OptLog) object;
-                insert(oldOptLog, cacheKey);
-            }
-        } else {
-            this.sotOptLog(object, cacheKey, previousRealtimeTime);
-        }
-    }
 
     /**
      * 更新操作日志
