@@ -180,7 +180,7 @@ public class ControlBattery extends ControlBase {
 
     private BatteryModuleGroupRealtime getRealtimeGroup(Integer packNum) {
         BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
-                ? null : realtimeSnapshotService.getFreshCachedSnapshot(packNum);
+                ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
         return snapshot == null ? null : snapshot.getGroup();
     }
 

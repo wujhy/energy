@@ -2,7 +2,6 @@ package com.shanhe.project.collector.battery.service;
 
 import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
-import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
@@ -44,8 +43,6 @@ public class BatteryModuleRealtimeSnapshotService {
     /** 电池组配置服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
-    @Resource
-    private BatteryCollectorProperties properties;
 
     /**
      * 采集批次入库后刷新有效快照。
@@ -61,7 +58,7 @@ public class BatteryModuleRealtimeSnapshotService {
         if (packNum == null || context == null) {
             return null;
         }
-        BatteryModuleRealtimeSnapshot previous = getSnapshot(packNum);
+        BatteryModuleRealtimeSnapshot previous = getCachedSnapshot(packNum);
         List<BatteryModuleCellRealtime> persistedCells = safeList(realtimeMapper.selectCells(packNum));
         BatteryModuleGroupRealtime group = calculatedGroup == null ? realtimeMapper.selectGroup(packNum) : calculatedGroup;
         BatteryModuleRealtimeSnapshot snapshot = buildSnapshot(packNum, context, persistedCells, group, previous);
@@ -70,42 +67,37 @@ public class BatteryModuleRealtimeSnapshotService {
     }
 
     /**
-     * 获取快照；缓存未命中时用实时表做一次保守重建。
+     * 获取当前实时快照；只读 Ehcache，不回源实时表。
      *
      * @param packNum 电池组编号
-     * @return 有效快照
+     * @return 当前缓存快照；缓存过期或未写入时返回 null
      */
     public BatteryModuleRealtimeSnapshot getSnapshot(Integer packNum) {
-        if (packNum == null) {
-            return null;
-        }
-        Object value = CacheUtils.get(CacheKeyEnum.BATTERY_REPORT.getCache(), snapshotKey(packNum));
-        if (value instanceof BatteryModuleRealtimeSnapshot) {
-            return (BatteryModuleRealtimeSnapshot) value;
-        }
-        return rebuildFromRealtime(packNum);
+        return getCachedSnapshot(packNum);
     }
 
+    /** 获取当前实时快照；只读 Ehcache，不回源实时表。 */
     public BatteryModuleRealtimeSnapshot getCachedSnapshot(Integer packNum) {
         if (packNum == null) {
             return null;
         }
-        Object value = CacheUtils.get(CacheKeyEnum.BATTERY_REPORT.getCache(), snapshotKey(packNum));
+        Object value = CacheUtils.get(CacheKeyEnum.REALTIME_SNAPSHOT.getCache(), snapshotKey(packNum));
         return value instanceof BatteryModuleRealtimeSnapshot ? (BatteryModuleRealtimeSnapshot) value : null;
     }
 
-    public BatteryModuleRealtimeSnapshot getFreshCachedSnapshot(Integer packNum) {
-        BatteryModuleRealtimeSnapshot snapshot = getCachedSnapshot(packNum);
-        return isFresh(snapshot) ? snapshot : null;
-    }
-
-    public boolean isFresh(BatteryModuleRealtimeSnapshot snapshot) {
-        Date latest = latestSnapshotTime(snapshot);
-        if (latest == null) {
-            return false;
+    /**
+     * 启动或人工恢复时从实时表预热快照；普通业务读取不得调用该方法。
+     *
+     * @param packNum 电池组编号
+     * @return 已写入缓存的快照；实时表数据已超过缓存 TTL 时返回 null
+     */
+    public BatteryModuleRealtimeSnapshot warmUpFromRealtime(Integer packNum) {
+        BatteryModuleRealtimeSnapshot snapshot = rebuildFromRealtime(packNum);
+        if (snapshot == null || isOlderThanCacheTtl(snapshot)) {
+            return null;
         }
-        long thresholdMs = resolveFreshThresholdMs();
-        return System.currentTimeMillis() - latest.getTime() <= thresholdMs;
+        putSnapshot(snapshot);
+        return snapshot;
     }
 
     /**
@@ -117,14 +109,14 @@ public class BatteryModuleRealtimeSnapshotService {
         if (packNum == null) {
             return;
         }
-        CacheUtils.remove(CacheKeyEnum.BATTERY_REPORT.getCache(), snapshotKey(packNum));
+        CacheUtils.remove(CacheKeyEnum.REALTIME_SNAPSHOT.getCache(), snapshotKey(packNum));
     }
 
     /** 删除全部标准实时快照缓存。 */
     public void evictAll() {
-        for (String key : CacheUtils.getCacheKeys(CacheKeyEnum.BATTERY_REPORT.getCache())) {
+        for (String key : CacheUtils.getCacheKeys(CacheKeyEnum.REALTIME_SNAPSHOT.getCache())) {
             if (key != null && key.startsWith("battery:module:snapshot:")) {
-                CacheUtils.remove(CacheKeyEnum.BATTERY_REPORT.getCache(), key);
+                CacheUtils.remove(CacheKeyEnum.REALTIME_SNAPSHOT.getCache(), key);
             }
         }
     }
@@ -229,7 +221,6 @@ public class BatteryModuleRealtimeSnapshotService {
                     .cellMissCounts(missCounts)
                     .refreshedAt(new Date())
                     .build();
-            putSnapshot(snapshot);
             return snapshot;
         } catch (Exception e) {
             log.warn("重建蓄电池实时快照失败, packNum={}", packNum, e);
@@ -241,7 +232,18 @@ public class BatteryModuleRealtimeSnapshotService {
         if (snapshot == null || snapshot.getPackNum() == null) {
             return;
         }
-        CacheUtils.put(CacheKeyEnum.BATTERY_REPORT.getCache(), snapshotKey(snapshot.getPackNum()), snapshot);
+        CacheUtils.put(CacheKeyEnum.REALTIME_SNAPSHOT.getCache(), snapshotKey(snapshot.getPackNum()), snapshot);
+    }
+
+    private boolean isOlderThanCacheTtl(BatteryModuleRealtimeSnapshot snapshot) {
+        Date latest = latestSnapshotTime(snapshot);
+        if (latest == null) {
+            return true;
+        }
+        long ttlMs = CacheUtils.getCache(CacheKeyEnum.REALTIME_SNAPSHOT.getCache())
+                .getCacheConfiguration()
+                .getTimeToLiveSeconds() * 1000L;
+        return ttlMs > 0 && System.currentTimeMillis() - latest.getTime() > ttlMs;
     }
 
     private Date latestSnapshotTime(BatteryModuleRealtimeSnapshot snapshot) {
@@ -260,7 +262,7 @@ public class BatteryModuleRealtimeSnapshotService {
             latest = max(latest, cell.getPollStartedAt());
             latest = max(latest, cell.getCreateTime());
         }
-        return latest == null ? snapshot.getRefreshedAt() : latest;
+        return latest;
     }
 
     private Date max(Date left, Date right) {
@@ -271,11 +273,6 @@ public class BatteryModuleRealtimeSnapshotService {
             return left;
         }
         return right.after(left) ? right : left;
-    }
-
-    private long resolveFreshThresholdMs() {
-        Long value = properties == null ? null : properties.getRealtimeSnapshotFreshThresholdMs();
-        return value == null || value <= 0 ? 180_000L : value;
     }
 
     private String snapshotKey(Integer packNum) {

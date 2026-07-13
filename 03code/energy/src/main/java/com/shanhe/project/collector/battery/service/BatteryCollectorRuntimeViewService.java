@@ -181,7 +181,7 @@ public class BatteryCollectorRuntimeViewService {
         if (metrics == null || realtimeSnapshotService == null || config == null || config.getBatteryGroup() == null) {
             return;
         }
-        BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService.getFreshCachedSnapshot(config.getBatteryGroup());
+        BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService.getCachedSnapshot(config.getBatteryGroup());
         if (snapshot == null) {
             return;
         }

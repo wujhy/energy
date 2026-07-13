@@ -31,6 +31,7 @@ public enum CacheKeyEnum {
     BATTERY("device-battery", "battery:%s:%s:%s", "单体电池"),
     /* battery.包编号 */
     BATTERY_REPORT("device-battery-report", "battery:%s", "蓄电池实时日志"),
+    REALTIME_SNAPSHOT("battery-realtime-snapshot", "battery:module:snapshot:%s", "标准实时快照"),
     /* comm:sticky */
     STICKY("comm-data", "comm:sticky", "粘包数据处理"),
     /* battery:mode:status */

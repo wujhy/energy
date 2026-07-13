@@ -121,7 +121,7 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
 
     List<BatteryModuleCellRealtime> resolveBatteryCells(Integer packNum) {
         BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
-                ? null : realtimeSnapshotService.getFreshCachedSnapshot(packNum);
+                ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
         return snapshot == null ? new ArrayList<>() : snapshot.getCells();
     }
 

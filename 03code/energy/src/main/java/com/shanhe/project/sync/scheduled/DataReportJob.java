@@ -128,7 +128,7 @@ public class DataReportJob {
     }
 
     BatteryModuleRealtimeSnapshot resolveRealtimeSnapshot(Integer packNum) {
-        return realtimeSnapshotService == null ? null : realtimeSnapshotService.getFreshCachedSnapshot(packNum);
+        return realtimeSnapshotService == null ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
     }
 
     boolean isUsableRealtimeSnapshot(BatteryModuleRealtimeSnapshot snapshot) {

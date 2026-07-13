@@ -431,7 +431,7 @@ public class ControlBatterySet extends ControlBase {
     private Long getCurrentResistanceValue(Integer packNum) {
         try {
             BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
-                    ? null : realtimeSnapshotService.getFreshCachedSnapshot(packNum);
+                    ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
             return averageResistance(snapshot == null ? null : snapshot.getCells());
         } catch (Exception e) {
             log.warn("读取标准实时内阻基准数据失败, packNum={}", packNum, e);

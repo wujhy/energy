@@ -90,6 +90,17 @@
            statistics="false">
     </cache>
 
+    <!-- 标准实时快照缓存：只由采集完成/显式启动预热写入，读取不回源数据库 -->
+    <cache name="battery-realtime-snapshot"
+           maxEntriesLocalHeap="100"
+           eternal="false"
+           timeToIdleSeconds="0"
+           timeToLiveSeconds="180"
+           overflowToDisk="false"
+           memoryStoreEvictionPolicy="LRU"
+           statistics="false">
+    </cache>
+
     <!-- 单体电池历史缓存 -->
     <cache name="device-battery-report"
            maxEntriesLocalHeap="100"

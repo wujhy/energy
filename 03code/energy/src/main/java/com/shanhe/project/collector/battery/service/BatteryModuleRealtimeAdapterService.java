@@ -56,7 +56,7 @@ public class BatteryModuleRealtimeAdapterService {
         }
         try {
             com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot snapshot =
-                    snapshotService == null ? null : snapshotService.getFreshCachedSnapshot(packNum);
+                    snapshotService == null ? null : snapshotService.getCachedSnapshot(packNum);
             if (snapshotService != null && snapshot == null) {
                 return null;
             }
@@ -80,7 +80,7 @@ public class BatteryModuleRealtimeAdapterService {
         }
         try {
             com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot snapshot =
-                    snapshotService == null ? null : snapshotService.getFreshCachedSnapshot(packNum);
+                    snapshotService == null ? null : snapshotService.getCachedSnapshot(packNum);
             if (snapshotService != null && snapshot == null) {
                 return null;
             }

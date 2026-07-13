@@ -61,9 +61,6 @@ public class BatteryCollectorProperties {
     /** 组计算时单体实时数据的新鲜度阈值。 */
     private Long groupCalculationStaleThresholdMs = 180_000L;
 
-    /** 当前态实时快照的新鲜度阈值；超过该时间的缓存不再作为当前态使用。 */
-    private Long realtimeSnapshotFreshThresholdMs = 180_000L;
-
     /** 全量发现后是否只轮询有响应的模块地址。 */
     private Boolean moduleAddressCacheEnabled = Boolean.TRUE;
 

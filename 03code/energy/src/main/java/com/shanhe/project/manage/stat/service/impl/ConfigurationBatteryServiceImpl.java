@@ -97,7 +97,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
 
     CurrentBatteryRealtime resolveCurrentRealtime(Integer packNum) {
         BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
-                ? null : realtimeSnapshotService.getFreshCachedSnapshot(packNum);
+                ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
         if (snapshot == null || snapshot.getGroup() == null) {
             return CurrentBatteryRealtime.empty();
         }

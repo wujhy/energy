@@ -109,7 +109,7 @@ public class BatteryOptRuntimeRecoveryService {
 
     private Boolean isRealtimeBackup(Integer packNum) {
         BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
-                ? null : realtimeSnapshotService.getFreshCachedSnapshot(packNum);
+                ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
         BatteryModuleGroupRealtime group = snapshot == null ? null : snapshot.getGroup();
         if (group == null || group.getBatteryPackStatus() == null) {
             return null;
