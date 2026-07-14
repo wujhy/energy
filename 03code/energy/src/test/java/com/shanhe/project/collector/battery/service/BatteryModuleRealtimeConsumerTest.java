@@ -7,8 +7,10 @@ import com.shanhe.project.collector.battery.model.BatteryModuleFrameData;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
+import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
@@ -82,9 +84,9 @@ class BatteryModuleRealtimeConsumerTest {
         Assertions.assertEquals(12.3d, realtime.getChargeDischargeCurrent(), 0.0001d);
         Assertions.assertEquals(0.123d, realtime.getFloatCurrent(), 0.0001d);
         Assertions.assertEquals(123.45d, realtime.getExternalVoltage(), 0.0001d);
-        Assertions.assertEquals(12.3d, realtime.getPackCurrent(), 0.0001d);
-        Assertions.assertEquals(0.123d, realtime.getBatteryPackFloatCurrent(), 0.0001d);
-        Assertions.assertEquals(123.45d, realtime.getBatteryPackOuterVoltage(), 0.0001d);
+        Assertions.assertNull(realtime.getPackCurrent());
+        Assertions.assertNull(realtime.getBatteryPackFloatCurrent());
+        Assertions.assertNull(realtime.getBatteryPackOuterVoltage());
         Assertions.assertTrue(realtime.getGroupModuleFresh());
     }
 
@@ -161,10 +163,63 @@ class BatteryModuleRealtimeConsumerTest {
         Assertions.assertEquals(180_000L, consumer.resolveCalculationStaleThresholdMs());
     }
 
+
     @Test
-    void shouldOnlyCalculateAfterGroupRealtimeSaved() {
-        Assertions.assertFalse(consumer.shouldCalculateAfterSave(BatteryModuleDataType.SINGLE_MODULE_INFO));
-        Assertions.assertTrue(consumer.shouldCalculateAfterSave(BatteryModuleDataType.ARRAY_MODULE_INFO));
+    void shouldIgnoreRealtimeFrameOutsidePollBatch() {
+        BatteryModulePollContextHolder.clear();
+        BatteryCollectorProperties properties = new BatteryCollectorProperties();
+        properties.setRealtimeDataEnabled(true);
+        BatteryModuleFrameDataParserService parserService = Mockito.mock(BatteryModuleFrameDataParserService.class);
+        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+        ReflectionTestUtils.setField(consumer, "properties", properties);
+        ReflectionTestUtils.setField(consumer, "parserService", parserService);
+        ReflectionTestUtils.setField(consumer, "realtimeMapper", realtimeMapper);
+        Mockito.when(parserService.parse(Mockito.any())).thenReturn(BatteryModuleFrameData.builder()
+                .type(BatteryModuleDataType.ARRAY_MODULE_INFO)
+                .moduleAddress(246)
+                .success(true)
+                .responseFlag(0)
+                .build());
+
+        consumer.consume(channelConfig(), Mockito.mock(com.shanhe.project.collector.battery.model.BatteryCollectorFrame.class), null);
+
+        Mockito.verify(parserService).parse(Mockito.any());
+        Mockito.verifyNoInteractions(realtimeMapper);
+    }
+
+    @Test
+    void shouldCollectRealtimeFrameIntoPollBatchWithoutImmediateUpsert() {
+        BatteryModulePollContext context = BatteryModulePollContext.builder()
+                .pollBatchNo("batch-1")
+                .pollStartedAt(new Date(1000L))
+                .build();
+        BatteryModulePollContextHolder.set(context);
+        try {
+            BatteryCollectorProperties properties = new BatteryCollectorProperties();
+            properties.setRealtimeDataEnabled(true);
+            BatteryModuleFrameDataParserService parserService = Mockito.mock(BatteryModuleFrameDataParserService.class);
+            BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
+            ReflectionTestUtils.setField(consumer, "properties", properties);
+            ReflectionTestUtils.setField(consumer, "parserService", parserService);
+            ReflectionTestUtils.setField(consumer, "realtimeMapper", realtimeMapper);
+            ReflectionTestUtils.setField(consumer, "compatibilityFillService", new BatteryModuleCellCompatibilityFillService());
+            Mockito.when(parserService.parse(Mockito.any())).thenReturn(BatteryModuleFrameData.builder()
+                    .type(BatteryModuleDataType.SINGLE_MODULE_INFO)
+                    .moduleAddress(8)
+                    .success(true)
+                    .responseFlag(0)
+                    .cellVoltage(2.5d)
+                    .build());
+
+            consumer.consume(channelConfig(), Mockito.mock(com.shanhe.project.collector.battery.model.BatteryCollectorFrame.class), null);
+
+            Assertions.assertEquals(1, context.getCells().size());
+            Assertions.assertEquals(8, context.getCells().get(0).getBatNum());
+            Mockito.verify(realtimeMapper, Mockito.never()).upsertCell(Mockito.any());
+            Mockito.verify(realtimeMapper, Mockito.never()).upsertGroup(Mockito.any());
+        } finally {
+            BatteryModulePollContextHolder.clear();
+        }
     }
 
     private BatteryCollectorChannelConfig channelConfig() {

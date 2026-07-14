@@ -87,32 +87,21 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
         if (data == null || data.getType() == null) {
             return;
         }
+        BatteryModulePollContext context = BatteryModulePollContextHolder.get();
+        if (context == null) {
+            log.debug("蓄电池模块实时帧不在轮询批次内，跳过实时入库, 通道={}, 类型={}",
+                    channelConfig == null ? null : channelConfig.getName(),
+                    data.getType());
+            return;
+        }
         try {
-            boolean saved = false;
             if (data.getType() == BatteryModuleDataType.SINGLE_MODULE_INFO) {
                 if (!data.isSuccess()) {
                     return;
                 }
-                BatteryModuleCellRealtime cell = buildCell(channelConfig, data);
-                BatteryModulePollContext context = BatteryModulePollContextHolder.get();
-                if (context == null) {
-                    realtimeMapper.upsertCell(cell);
-                } else {
-                    context.getCells().add(cell);
-                }
-                saved = true;
+                context.getCells().add(buildCell(channelConfig, data));
             } else if (data.getType() == BatteryModuleDataType.ARRAY_MODULE_INFO) {
-                BatteryModuleGroupRealtime group = buildGroup(channelConfig, data);
-                BatteryModulePollContext context = BatteryModulePollContextHolder.get();
-                if (context == null) {
-                    realtimeMapper.upsertGroup(group);
-                } else {
-                    context.getGroups().add(group);
-                }
-                saved = true;
-            }
-            if (saved && BatteryModulePollContextHolder.get() == null && shouldCalculateAfterSave(data.getType())) {
-                calculateIfEnabled(channelConfig, null);
+                context.getGroups().add(buildGroup(channelConfig, data));
             }
         } catch (Exception e) {
             log.warn("保存蓄电池模块实时数据失败, 通道={}, 类型={}",
@@ -122,9 +111,6 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
         }
     }
 
-    boolean shouldCalculateAfterSave(BatteryModuleDataType dataType) {
-        return dataType == BatteryModuleDataType.ARRAY_MODULE_INFO;
-    }
 
     /**
      * 批量刷写当前轮询批次内缓存的实时数据。
