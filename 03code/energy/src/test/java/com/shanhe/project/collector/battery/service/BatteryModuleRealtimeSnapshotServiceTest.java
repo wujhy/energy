@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -200,6 +201,21 @@ class BatteryModuleRealtimeSnapshotServiceTest {
         Assertions.assertEquals(1, snapshot.getCellMissCounts().get(1));
         Assertions.assertEquals(1, snapshot.getCellMissCounts().get(2));
         Assertions.assertEquals(1, snapshot.getCellMissCounts().get(3));
+    }
+
+    @Test
+    void shouldEvaluateSnapshotFreshnessByRefreshedAt() {
+        BatteryModuleRealtimeSnapshot fresh = BatteryModuleRealtimeSnapshot.builder()
+                .refreshedAt(new Date(10_000L))
+                .build();
+        BatteryModuleRealtimeSnapshot stale = BatteryModuleRealtimeSnapshot.builder()
+                .refreshedAt(new Date(1_000L))
+                .build();
+        BatteryModuleRealtimeSnapshot missing = BatteryModuleRealtimeSnapshot.builder().build();
+
+        Assertions.assertTrue(fresh.isFresh(new Date(11_000L), 2_000L));
+        Assertions.assertFalse(stale.isFresh(new Date(11_000L), 2_000L));
+        Assertions.assertFalse(missing.isFresh(new Date(11_000L), 2_000L));
     }
 
     private BatteryModuleCellRealtime cell(int batNum) {

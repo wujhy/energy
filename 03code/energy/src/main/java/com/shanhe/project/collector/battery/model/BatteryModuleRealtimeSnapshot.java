@@ -19,6 +19,9 @@ import java.util.Set;
 @Builder
 public class BatteryModuleRealtimeSnapshot {
 
+    /** 标准实时快照缓存 TTL，需与 ehcache/battery-realtime-snapshot 保持一致。 */
+    public static final long DEFAULT_FRESH_MILLIS = 180_000L;
+
     /** 电池组编号。 */
     private Integer packNum;
 
@@ -88,5 +91,20 @@ public class BatteryModuleRealtimeSnapshot {
     /** 判断快照是否包含有效数据（组数据或单体数据至少一项存在）。 */
     public boolean isDataReady() {
         return group != null || !getCells().isEmpty();
+    }
+
+    /** 判断快照是否仍在统一新鲜度窗口内。 */
+    public boolean isFresh(Date now, long freshMillis) {
+        if (refreshedAt == null || freshMillis <= 0) {
+            return false;
+        }
+        Date checkTime = now == null ? new Date() : now;
+        long ageMillis = checkTime.getTime() - refreshedAt.getTime();
+        return ageMillis >= 0 && ageMillis <= freshMillis;
+    }
+
+    /** 判断快照是否仍在默认实时新鲜度窗口内。 */
+    public boolean isFresh() {
+        return isFresh(new Date(), DEFAULT_FRESH_MILLIS);
     }
 }
