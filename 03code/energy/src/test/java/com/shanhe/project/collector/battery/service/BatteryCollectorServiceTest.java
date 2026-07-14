@@ -110,6 +110,7 @@ class BatteryCollectorServiceTest {
         BatteryConnectResistanceCommandProcessor processor = new BatteryConnectResistanceCommandProcessor();
         ReflectionTestUtils.setField(processor, "compatibilityFillService", compatibilityFillService);
         ReflectionTestUtils.setField(processor, "realtimeMapper", realtimeMapper);
+        ReflectionTestUtils.setField(processor, "snapshotService", Mockito.mock(BatteryModuleRealtimeSnapshotService.class));
         ReflectionTestUtils.setField(processor, "commandLogService", commandLogService);
         ReflectionTestUtils.setField(processor, "commandQueueService", commandQueueService);
         ReflectionTestUtils.setField(processor, "statisticsRefreshService",
@@ -1398,20 +1399,17 @@ class BatteryCollectorServiceTest {
                 compatibilityFillService,
                 realtimeMapper);
 
-        // Mock current in group
-        com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime groupRealtime = 
+        // Mock current in realtime snapshot.
+        com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime groupRealtime =
                 new com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime();
         groupRealtime.setChargeDischargeCurrent(10.0d); // 10.0 A
-        Mockito.when(realtimeMapper.selectGroup(2)).thenReturn(groupRealtime);
+        BatteryModuleRealtimeSnapshotService snapshotService = (BatteryModuleRealtimeSnapshotService) ReflectionTestUtils.getField(
+                ReflectionTestUtils.getField(service, "connectResistanceCommandProcessor"), "snapshotService");
+        Mockito.when(snapshotService.getCachedSnapshot(2)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
+                .packNum(2)
+                .group(groupRealtime)
+                .build());
 
-        // Mock existing cell
-        List<com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime> cells = new ArrayList<>();
-        com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime cellRealtime = 
-                new com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime();
-        cellRealtime.setPackNum(2);
-        cellRealtime.setBatNum(8);
-        cells.add(cellRealtime);
-        Mockito.when(realtimeMapper.selectCells(2)).thenReturn(cells);
 
         BatteryCollectorChannelConfig channelConfig = newChannelConfig();
         channelConfig.setBatteryGroup(2);
@@ -1440,8 +1438,9 @@ class BatteryCollectorServiceTest {
         // Verify cache fill is invoked with 10000.0 uΩ
         Mockito.verify(compatibilityFillService).putConnectResistance(2, 8, 10000.0d);
         
-        // Verify mapper updates the cell
-        Mockito.verify(realtimeMapper).upsertCell(Mockito.argThat(cell -> 
+        // Verify mapper writes the target cell directly without querying current cells.
+        Mockito.verify(realtimeMapper, Mockito.never()).selectCells(2);
+        Mockito.verify(realtimeMapper).upsertCell(Mockito.argThat(cell ->
                 cell.getPackNum() == 2 && cell.getBatNum() == 8 && cell.getResistanceRageSlip() == 10000.0d));
     }
 

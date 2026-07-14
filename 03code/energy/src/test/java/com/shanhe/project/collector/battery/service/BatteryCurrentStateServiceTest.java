@@ -1,7 +1,6 @@
 package com.shanhe.project.collector.battery.service;
 
 import com.shanhe.framework.enums.BatteryTestEnum;
-import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.model.BatteryCurrentState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
@@ -33,30 +32,24 @@ class BatteryCurrentStateServiceTest {
     void shouldReturnNoConfigWithoutReadingRealtimeTables() {
         BatteryCurrentStateService service = newService();
         IBatteryPackService batteryPackService = Mockito.mock(IBatteryPackService.class);
-        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
         Mockito.when(batteryPackService.selectBatteryInfoByPackNum(1)).thenReturn(null);
         ReflectionTestUtils.setField(service, "batteryPackService", batteryPackService);
-        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
-
         BatteryCurrentState state = service.getCurrentState(1);
 
         Assertions.assertEquals(1, state.getPackNum());
         Assertions.assertEquals(BatteryCurrentState.FRESHNESS_NO_CONFIG, state.getFreshness());
         Assertions.assertNull(state.getGroup());
         Assertions.assertTrue(state.getCells().isEmpty());
-        Mockito.verifyNoInteractions(realtimeMapper);
     }
 
     @Test
     void shouldReturnFreshCurrentStateWithStatusesAndAlarms() {
         BatteryCurrentStateService service = newService();
         IBatteryPackService batteryPackService = Mockito.mock(IBatteryPackService.class);
-        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
         BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
         BatteryDeviceStateService deviceStateService = Mockito.mock(BatteryDeviceStateService.class);
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
         ReflectionTestUtils.setField(service, "batteryPackService", batteryPackService);
-        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
         ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
         ReflectionTestUtils.setField(service, "batteryDeviceStateService", deviceStateService);
         ReflectionTestUtils.setField(service, "alarmLogService", alarmLogService);
@@ -115,47 +108,37 @@ class BatteryCurrentStateServiceTest {
                 "M460_NETWORK: represented only by collector communication state when available"));
         Assertions.assertTrue(state.getUnsupportedAlarmReasons().contains(
                 "M460_SENSOR: no independent sensor source in energy realtime model"));
-        Mockito.verify(realtimeMapper, Mockito.never()).selectGroup(1);
-        Mockito.verify(realtimeMapper, Mockito.never()).selectCells(1);
         Mockito.verify(snapshotService).getCachedSnapshot(1);
     }
 
     @Test
-    void shouldFallbackToRealtimeTablesWhenSnapshotIsMissing() {
+    void shouldReturnNotCollectedWhenSnapshotIsMissing() {
         BatteryCurrentStateService service = newServiceWithPack(1, 2);
-        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
         BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
-        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
         ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
-
-        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
-        group.setPackNum(1);
-        group.setPollBatchNo("batch-db");
-        group.setDataFresh(true);
         Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(null);
-        Mockito.when(realtimeMapper.selectGroup(1)).thenReturn(group);
-        Mockito.when(realtimeMapper.selectCells(1)).thenReturn(Arrays.asList(cell(1, 1, 2.10d), cell(1, 2, 2.11d)));
 
         BatteryCurrentState state = service.getCurrentState(1);
 
-        Assertions.assertEquals(BatteryCurrentState.FRESHNESS_FRESH, state.getFreshness());
-        Assertions.assertEquals("batch-db", state.getLastPollBatchNo());
-        Assertions.assertEquals(2, state.getCells().size());
+        Assertions.assertEquals(BatteryCurrentState.FRESHNESS_NOT_COLLECTED, state.getFreshness());
+        Assertions.assertNull(state.getGroup());
+        Assertions.assertTrue(state.getCells().isEmpty());
         Mockito.verify(snapshotService).getCachedSnapshot(1);
-        Mockito.verify(realtimeMapper).selectGroup(1);
-        Mockito.verify(realtimeMapper).selectCells(1);
     }
 
     @Test
     void shouldExposePartialWhenCollectedCellsAreLessThanConfiguredCount() {
         BatteryCurrentStateService service = newServiceWithPack(1, 4);
-        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
-        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
         group.setPackNum(1);
         group.setDataFresh(true);
-        Mockito.when(realtimeMapper.selectGroup(1)).thenReturn(group);
-        Mockito.when(realtimeMapper.selectCells(1)).thenReturn(Arrays.asList(cell(1, 1, 2.10d), cell(1, 3, 2.11d)));
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
+                .packNum(1)
+                .group(group)
+                .cells(Arrays.asList(cell(1, 1, 2.10d), cell(1, 3, 2.11d)))
+                .build());
 
         BatteryCurrentState state = service.getCurrentState(1);
 
@@ -166,13 +149,16 @@ class BatteryCurrentStateServiceTest {
     @Test
     void shouldExposeStaleWhenGroupRealtimeIsMarkedStale() {
         BatteryCurrentStateService service = newServiceWithPack(1, 1);
-        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
-        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
         group.setPackNum(1);
         group.setDataFresh(false);
-        Mockito.when(realtimeMapper.selectGroup(1)).thenReturn(group);
-        Mockito.when(realtimeMapper.selectCells(1)).thenReturn(Collections.singletonList(cell(1, 1, 2.10d)));
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
+                .packNum(1)
+                .group(group)
+                .cells(Collections.singletonList(cell(1, 1, 2.10d)))
+                .build());
 
         BatteryCurrentState state = service.getCurrentState(1);
 
@@ -180,12 +166,11 @@ class BatteryCurrentStateServiceTest {
     }
 
     @Test
-    void shouldExposeNotCollectedWhenRealtimeIsEmpty() {
+    void shouldExposeNotCollectedWhenSnapshotIsEmpty() {
         BatteryCurrentStateService service = newServiceWithPack(1, 1);
-        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
-        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
-        Mockito.when(realtimeMapper.selectGroup(1)).thenReturn(null);
-        Mockito.when(realtimeMapper.selectCells(1)).thenReturn(Collections.emptyList());
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder().packNum(1).build());
 
         BatteryCurrentState state = service.getCurrentState(1);
 
@@ -197,10 +182,8 @@ class BatteryCurrentStateServiceTest {
     @Test
     void shouldIncludeRunningOptLogsInCurrentState() {
         BatteryCurrentStateService service = newServiceWithPack(1, 2);
-        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
         BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
         OptLogService optLogService = Mockito.mock(OptLogService.class);
-        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
         ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
         ReflectionTestUtils.setField(service, "optLogService", optLogService);
 
@@ -347,9 +330,7 @@ class BatteryCurrentStateServiceTest {
     @Test
     void shouldReturnConnectResistanceStatusOkWhenDataPresentAndNullWhenAbsent() {
         BatteryCurrentStateService service = newServiceWithPack(1, 2);
-        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
         BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
-        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
         ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
 
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
@@ -381,14 +362,16 @@ class BatteryCurrentStateServiceTest {
     @Test
     void shouldNotFabricateResistanceValuesWhenDataIsStale() {
         BatteryCurrentStateService service = newServiceWithPack(1, 2);
-        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
-        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
         group.setPackNum(1);
-        group.setDataFresh(false); // stale 数据
-        // stale 数据不提供 resistanceRageSlip
-        Mockito.when(realtimeMapper.selectGroup(1)).thenReturn(group);
-        Mockito.when(realtimeMapper.selectCells(1)).thenReturn(Arrays.asList(cell(1, 1, 2.10d), cell(1, 2, 2.11d)));
+        group.setDataFresh(false);
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
+                .packNum(1)
+                .group(group)
+                .cells(Arrays.asList(cell(1, 1, 2.10d), cell(1, 2, 2.11d)))
+                .build());
 
         BatteryCurrentState state = service.getCurrentState(1);
 
@@ -407,10 +390,9 @@ class BatteryCurrentStateServiceTest {
     @Test
     void shouldReturnNullConnectResistanceWhenNotCollected() {
         BatteryCurrentStateService service = newServiceWithPack(1, 1);
-        BatteryModuleRealtimeMapper realtimeMapper = Mockito.mock(BatteryModuleRealtimeMapper.class);
-        ReflectionTestUtils.setField(service, "realtimeMapper", realtimeMapper);
-        Mockito.when(realtimeMapper.selectGroup(1)).thenReturn(null);
-        Mockito.when(realtimeMapper.selectCells(1)).thenReturn(Collections.emptyList());
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        ReflectionTestUtils.setField(service, "snapshotService", snapshotService);
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(null);
 
         BatteryCurrentState state = service.getCurrentState(1);
 

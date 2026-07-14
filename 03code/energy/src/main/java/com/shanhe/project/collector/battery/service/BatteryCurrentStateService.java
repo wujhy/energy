@@ -1,6 +1,5 @@
 package com.shanhe.project.collector.battery.service;
 
-import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.model.BatteryCurrentAlarmSummary;
 import com.shanhe.project.collector.battery.model.BatteryCurrentCellState;
 import com.shanhe.project.collector.battery.model.BatteryCurrentGroupState;
@@ -44,9 +43,6 @@ public class BatteryCurrentStateService {
     /** 电池组配置服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
-    /** 模块实时数据 Mapper。 */
-    @Resource
-    private BatteryModuleRealtimeMapper realtimeMapper;
     /** 实时快照服务。 */
     @Resource
     private BatteryModuleRealtimeSnapshotService snapshotService;
@@ -76,8 +72,8 @@ public class BatteryCurrentStateService {
         state.setExpectedCellCount(pack.getBatSinSize());
 
         BatteryModuleRealtimeSnapshot snapshot = snapshotService == null ? null : snapshotService.getCachedSnapshot(packNum);
-        BatteryModuleGroupRealtime group = snapshot == null ? readGroup(packNum) : snapshot.getGroup();
-        List<BatteryModuleCellRealtime> cells = snapshot == null ? readCells(packNum) : snapshot.getCells();
+        BatteryModuleGroupRealtime group = snapshot == null ? null : snapshot.getGroup();
+        List<BatteryModuleCellRealtime> cells = snapshot == null ? Collections.emptyList() : snapshot.getCells();
         state.setGroup(toGroupState(group));
         state.setCells(toCellStates(cells));
         state.setDeviceStates(batteryDeviceStateService == null
@@ -96,14 +92,6 @@ public class BatteryCurrentStateService {
         state.setLastPollBatchNo(resolveLastPollBatchNo(group, cells));
         state.setFreshness(resolveFreshness(pack.getBatSinSize(), group, cells));
         return state;
-    }
-
-    private BatteryModuleGroupRealtime readGroup(Integer packNum) {
-        return realtimeMapper == null ? null : realtimeMapper.selectGroup(packNum);
-    }
-
-    private List<BatteryModuleCellRealtime> readCells(Integer packNum) {
-        return realtimeMapper == null ? Collections.emptyList() : safeCells(realtimeMapper.selectCells(packNum));
     }
 
     private String resolveFreshness(Integer expectedCellCount,

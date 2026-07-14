@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.Date;
-import java.util.List;
 
 /**
  * 连接条电阻测试命令处理器。
@@ -179,9 +178,6 @@ public class BatteryConnectResistanceCommandProcessor {
     private Double currentOfGroup(Integer batteryGroup) {
         BatteryModuleRealtimeSnapshot snapshot = snapshotOf(batteryGroup);
         BatteryModuleGroupRealtime group = snapshot == null ? null : snapshot.getGroup();
-        if (group == null && realtimeMapper != null) {
-            group = realtimeMapper.selectGroup(batteryGroup);
-        }
         if (group == null) {
             return null;
         }
@@ -193,39 +189,17 @@ public class BatteryConnectResistanceCommandProcessor {
         if (realtimeMapper == null) {
             return;
         }
-        BatteryModuleRealtimeSnapshot snapshot = snapshotOf(batteryGroup);
-        List<BatteryModuleCellRealtime> cells = snapshot == null
-                ? realtimeMapper.selectCells(batteryGroup)
-                : snapshot.getCells();
-        if (cells != null) {
-            for (BatteryModuleCellRealtime cell : cells) {
-                if (cell.getBatNum() != null && cell.getBatNum() == address) {
-                    cell.setResistanceRageSlip(resistance);
-                    realtimeMapper.upsertCell(cell);
-                    evictSnapshot(batteryGroup);
-                    return;
-                }
-            }
-        }
-        BatteryModuleCellRealtime newCell = new BatteryModuleCellRealtime();
-        newCell.setPackNum(batteryGroup);
-        newCell.setBatNum(address);
-        newCell.setResistanceRageSlip(resistance);
-        newCell.setCreateTime(new Date());
-        realtimeMapper.upsertCell(newCell);
-        evictSnapshot(batteryGroup);
+        BatteryModuleCellRealtime cell = new BatteryModuleCellRealtime();
+        cell.setPackNum(batteryGroup);
+        cell.setBatNum(address);
+        cell.setResistanceRageSlip(resistance);
+        cell.setCreateTime(new Date());
+        realtimeMapper.upsertCell(cell);
     }
 
     /** 读取标准实时快照；只读缓存，不回源实时表。 */
     private BatteryModuleRealtimeSnapshot snapshotOf(Integer batteryGroup) {
         return snapshotService == null ? null : snapshotService.getCachedSnapshot(batteryGroup);
-    }
-
-    /** 连接条电阻写回实时表后清理快照，避免外部读取旧缓存。 */
-    private void evictSnapshot(Integer batteryGroup) {
-        if (snapshotService != null) {
-            snapshotService.evict(batteryGroup);
-        }
     }
 
     /** 计算真实连接条电阻，单位 uΩ；无法计算时返回 null。 */
