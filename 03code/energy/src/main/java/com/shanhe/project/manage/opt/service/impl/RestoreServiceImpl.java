@@ -125,7 +125,6 @@ public class RestoreServiceImpl implements RestoreService {
 
         // 删除历史记录
         batteryReportLogService.deleteByPackNum(null);
-        batteryReportLogService.updateCache();
 
         // 删除操作日志
         optLogService.deleteDefaultDeviceLogs();
@@ -196,7 +195,6 @@ public class RestoreServiceImpl implements RestoreService {
 
         // 删除历史记录
         batteryReportLogService.deleteByPackNum(batterySetVO.getPackNum());
-        batteryReportLogService.updateCache();
 
         // 删除600节模块端标准实时数据
         batteryModuleRealtimeMapper.deleteCellsByPackNum(batterySetVO.getPackNum());

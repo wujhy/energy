@@ -8,11 +8,8 @@ import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.fastjson.JSON;
 import com.github.pagehelper.PageHelper;
 import com.shanhe.common.constant.Constants;
-import com.shanhe.common.utils.CacheUtils;
 import com.shanhe.common.utils.file.FileUtils;
 import com.shanhe.common.utils.text.Convert;
-import com.shanhe.framework.enums.CacheKeyEnum;
-import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.manage.alarm.domain.AlarmLog;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
@@ -52,195 +49,85 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
     @Resource
     private IBatteryPackService batteryPackService;
 
-    CacheKeyEnum reportCache = CacheKeyEnum.BATTERY_REPORT;
-
-    /**
-     * 异步插入蓄电池上报日志
-     *
-     * @param packNum 电池组编号
-     * @param packParam 电池组参数
-     * @param batteryList 单体电池数据
-     * @param isInsert 是否入库
-     */
     @Async
     @Override
-    public void insert(Integer packNum, Map<String, Object> packParam, List<BatteryMonitor> batteryList, boolean isInsert) {
+    public void insert(Integer packNum, Map<String, Object> packParam, List<BatteryMonitor> batteryList) {
         // 直接新增
         BatteryReportLog batteryReportLog = new BatteryReportLog();
         batteryReportLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
         batteryReportLog.setPackNum(packNum);
-        batteryReportLog.setPackParam(packParam);
-        batteryReportLog.setBatteryList(batteryList);
         batteryReportLog.setCreateTime(new Date());
-
         batteryReportLog.setPackData(JSON.toJSONString(packParam));
         batteryReportLog.setMonitorData(JSON.toJSONString(batteryList));
-        if (isInsert) {
-            batteryReportLogMapper.insert(batteryReportLog);
-        } else {
-            log.info("数据未达到存储间隔:{}", packNum);
-        }
-        // 缓存
-        String key = String.format(reportCache.getKey(), batteryReportLog.getPackNum());
-        CacheUtils.put(reportCache.getCache(), key, batteryReportLog);
+        batteryReportLogMapper.insert(batteryReportLog);
     }
 
-    /**
-     * 查询最新一条上报记录（含告警信息）
-     *
-     * @param packNum 电池组编号
-     * @return 上报日志
-     */
     @Override
     public BatteryReportLog selectLastHasAlarm(Integer packNum) {
-        // 先取缓存
-        BatteryReportLog log = this.lastCache(packNum);
+        BatteryReportLog log = batteryReportLogMapper.selectLast(packNum);
         if (log == null) {
-            log = batteryReportLogMapper.selectLast(packNum);
-            if (log == null) {
-                return null;
-            }
+            return null;
         }
+
+        // 包数据
+        if (StrUtil.isNotBlank(log.getPackData())) {
+            log.setPackParam(JSON.parseObject(log.getPackData()));
+            log.setPackData(null);
+        }
+
         // 单体数据
         if (StrUtil.isNotBlank(log.getMonitorData())) {
-            if (log.getBatteryList() == null) {
-                log.setBatteryList(JSON.parseArray(log.getMonitorData(), BatteryMonitor.class));
-            }
-            if (!log.getBatteryList().isEmpty()) {
-
-                // 告警记录
-                List<AlarmLog> alarmLogs = alarmLogService.selectBatteryAlarmLogListCache(packNum);
-                Map<Integer, List<AlarmLog>> batAlarmMap = alarmLogs.stream()
-                        .filter(item -> item.getModelNum() != null)
-                        .collect(Collectors.groupingBy(AlarmLog::getModelNum));
-
-                // 单体电池告警记录
-                log.getBatteryList().forEach(entity -> entity.setAlarmList(batAlarmMap.getOrDefault(entity.getBatNum(), new ArrayList<>())));
-
-                log.setAlarmList(alarmLogs);
-                log.setAlarm(alarmLogs.isEmpty() ? 1 : 0);
-            }
+            log.setBatteryList(JSON.parseArray(log.getMonitorData(), BatteryMonitor.class));
+            log.setMonitorData(null);
         }
-        // 包数据
-        if (StrUtil.isNotBlank(log.getPackData()) && log.getPackParam() == null) {
-            log.setPackParam(JSON.parseObject(log.getPackData()));
+
+        // 告警记录
+        if (!log.getBatteryList().isEmpty()) {
+            List<AlarmLog> alarmLogs = alarmLogService.selectBatteryAlarmLogListCache(packNum);
+            Map<Integer, List<AlarmLog>> batAlarmMap = alarmLogs.stream()
+                    .filter(item -> item.getModelNum() != null)
+                    .collect(Collectors.groupingBy(AlarmLog::getModelNum));
+
+            // 单体电池告警记录
+            log.getBatteryList().forEach(entity -> entity.setAlarmList(batAlarmMap.getOrDefault(entity.getBatNum(), new ArrayList<>())));
+
+            log.setAlarmList(alarmLogs);
+            log.setAlarm(alarmLogs.isEmpty() ? 1 : 0);
         }
         return log;
     }
 
-    /**
-     * 从缓存获取最新上报记录
-     *
-     * @param packNum 电池组编号
-     * @return 上报日志
-     */
-    @Override
-    public BatteryReportLog lastCache(Integer packNum) {
-        Object log = CacheUtils.get(reportCache.getCache(), String.format(reportCache.getKey(), packNum));
-        if (log == null) {
-            return null;
-        }
-        BatteryReportLog result = (BatteryReportLog) log;
-        // 单体数据
-        if (StrUtil.isNotBlank(result.getMonitorData())) {
-            result.setBatteryList(JSON.parseArray(result.getMonitorData(), BatteryMonitor.class));
-        }
-        // 包数据
-        if (StrUtil.isNotBlank(result.getPackData())) {
-            result.setPackParam(JSON.parseObject(result.getPackData()));
-        }
-        return result;
-    }
-
-    /**
-     * 查询上报日志列表
-     *
-     * @param batteryReportLog 查询条件
-     * @return 上报日志列表
-     */
     @Override
     public List<BatteryReportLog> selectBatteryReportLog(BatteryReportLog batteryReportLog) {
         List<BatteryReportLog> list = batteryReportLogMapper.selectBatteryReportLog(batteryReportLog);
         for (BatteryReportLog log : list) {
             if (StrUtil.isNotBlank(log.getMonitorData())) {
                 log.setBatteryList(JSON.parseArray(log.getMonitorData(), BatteryMonitor.class));
+                log.setMonitorData(null);
             }
             if (StrUtil.isNotBlank(log.getPackData())) {
                 log.setPackParam(JSON.parseObject(log.getPackData()));
+                log.setPackData(null);
             }
         }
         return list;
     }
 
-    /**
-     * 根据ID批量删除上报日志
-     *
-     * @param ids 日志ID字符串，逗号分隔
-     * @return 结果
-     */
     @Override
     public int deleteByIds(String ids) {
         return batteryReportLogMapper.deleteByIds(Convert.toStrArray(ids));
     }
 
-    /**
-     * 删除指定天数之前的上报日志
-     *
-     * @param dayNum 天数
-     */
     @Override
     public void deleteByDays(Integer dayNum) {
         batteryReportLogMapper.deleteByDays(dayNum);
     }
 
-    /** 更新上报日志缓存 */
-    @Override
-    public void updateCache() {
-        // 旧缓存
-        List<String> startKeys = new ArrayList<>();
-        Set<String> oldKeys = CacheUtils.getCacheKeys(reportCache.getCache());
-
-        // 蓄电池组
-        List<BatteryPack> batteryPackList = batteryPackService.selectBatteryPackList(YesNoEnum.YES.getDictValue());
-        for (BatteryPack batteryPack : batteryPackList) {
-            // 查询最新一条记录
-            BatteryReportLog reportLog = this.selectLast(batteryPack.getPackNum());
-            if (reportLog == null) {
-                continue;
-            }
-
-            /* 缓存 */
-            String key = String.format(reportCache.getKey(), reportLog.getPackNum());
-            if (CacheUtils.get(reportCache.getCache(), key) == null) {
-                CacheUtils.put(reportCache.getCache(), key, reportLog);
-            }
-            startKeys.add(key);
-        }
-
-        // 删除
-        for (String key : oldKeys) {
-            if (!startKeys.contains(key)) {
-                CacheUtils.remove(reportCache.getCache(), key);
-            }
-        }
-    }
-
-
-    /**
-     * 删除指定电池组的上报日志
-     *
-     * @param packNum 电池组编号
-     */
     @Override
     public void deleteByPackNum(Integer packNum) {
         batteryReportLogMapper.deleteByPackNum(packNum);
     }
 
-    /**
-     * 导出上报日志到Excel
-     *
-     * @param params 查询条件
-     */
     @Override
     public void export(BatteryReportLog params) {
         params.setConfigId(Constants.DEFAULT_CONFIG_ID);
@@ -337,22 +224,5 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         excelData.addAll(temperatureList);
         //单体内阻
         excelData.addAll(resistanceList);
-    }
-
-    /** 查询最新一条记录 */
-    private BatteryReportLog selectLast(Integer packNum) {
-        BatteryReportLog log = batteryReportLogMapper.selectLast(packNum);
-        if (log == null) {
-            return null;
-        }
-        // 单体数据
-        if (StrUtil.isNotBlank(log.getMonitorData())) {
-            log.setBatteryList(JSON.parseArray(log.getMonitorData(), BatteryMonitor.class));
-        }
-        // 包数据
-        if (StrUtil.isNotBlank(log.getPackData())) {
-            log.setPackParam(JSON.parseObject(log.getPackData()));
-        }
-        return log;
     }
 }

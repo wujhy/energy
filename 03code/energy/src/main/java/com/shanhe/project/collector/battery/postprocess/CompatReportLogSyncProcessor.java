@@ -88,8 +88,9 @@ public class CompatReportLogSyncProcessor implements BatteryRealtimePostProcesso
             return;
         }
         boolean isInsert = storageIntervalService.shouldInsert(channelConfig.getBatteryGroup());
-        batteryReportLogService.insert(channelConfig.getBatteryGroup(),
-                reportLog.getPackParam(), batteryList, isInsert);
+        if (isInsert) {
+            batteryReportLogService.insert(channelConfig.getBatteryGroup(), reportLog.getPackParam(), batteryList);
+        }
         log.debug("同步蓄电池模块实时数据到历史记录, 电池组={}, 是否插入={}",
                 channelConfig.getBatteryGroup(), isInsert);
     }

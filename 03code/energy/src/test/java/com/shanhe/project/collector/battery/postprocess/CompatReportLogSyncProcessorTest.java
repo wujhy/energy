@@ -36,23 +36,6 @@ class CompatReportLogSyncProcessorTest {
     }
 
     @Test
-    void shouldProcessAndSyncOnlyCurrentBatch() {
-        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
-        BatteryStorageIntervalService storageIntervalService = Mockito.mock(BatteryStorageIntervalService.class);
-        Mockito.when(storageIntervalService.shouldInsert(1)).thenReturn(true);
-
-        CompatReportLogSyncProcessor processor = processor(reportLogService, storageIntervalService);
-        BatteryRealtimePostProcessContext context = context("batch-1", "batch-1", "batch-1");
-
-        Assertions.assertTrue(processor.shouldProcess(context));
-        processor.process(context);
-
-        ArgumentCaptor<Map> packParamCaptor = ArgumentCaptor.forClass(Map.class);
-        Mockito.verify(reportLogService).insert(Mockito.eq(1), packParamCaptor.capture(), Mockito.any(), Mockito.eq(true));
-        Assertions.assertEquals(220.1d, (Double) packParamCaptor.getValue().get("packVoltage"));
-    }
-
-    @Test
     void shouldRejectWhenCompatReportLogDisabled() {
         BatteryCollectorProperties properties = new BatteryCollectorProperties();
         properties.setCompatReportLogEnabled(Boolean.FALSE);

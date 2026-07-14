@@ -109,9 +109,7 @@ public class BatteryPackHandler {
             log.error("上传蓄电池实时数据出错，无单体数据！电池组：{}，info={}", packNum, deviceData.getInfo());
             return;
         }
-        refreshConfigOnlineCache(deviceData);
         BatteryReportLog oldInfo = null;
-        saveReportLog(packNum, packMap, batteryList);
         executePostSaveProcesses(config, packNum, batteryPack, packMap, batteryList, oldInfo);
     }
 
@@ -204,16 +202,6 @@ public class BatteryPackHandler {
         int num = Integer.parseInt(dataStr.substring(12, 14), 16);
         String batteryInfos = info.substring(index82, index82 + num * 9 * 2);
         this.getBatteryInfoDefault(num, batteryInfos, config.getConfigId(), packNum, batteryList);
-    }
-
-    private void refreshConfigOnlineCache(DeviceData deviceData) {
-        CacheUtils.put(String.format(CacheKeyEnum.CONFIG_ONLINE.getKey(),
-                deviceData.getC0(), deviceData.getC1(), deviceData.getC2()), new Date());
-    }
-
-    private void saveReportLog(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList) {
-        boolean isInsert = dataService.isInsert(packNum + "");
-        batteryReportLogService.insert(packNum, packMap, batteryList, isInsert);
     }
 
     private void executePostSaveProcesses(Config config,

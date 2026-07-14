@@ -13,15 +13,15 @@ import java.util.Map;
  * @since 2025/7/9
  */
 public interface BatteryReportLogService {
+
     /**
      * 插入记录
      *
      * @param packNum 电池组编号
      * @param packParam 电池组参数
      * @param batteryList 单体电池列表
-     * @param isInsert 是否新增
      */
-    void insert(Integer packNum, Map<String, Object> packParam, List<BatteryMonitor> batteryList, boolean isInsert);
+    void insert(Integer packNum, Map<String, Object> packParam, List<BatteryMonitor> batteryList);
 
     /**
      * 查电池历史（告警处理）
@@ -30,14 +30,6 @@ public interface BatteryReportLogService {
      * @return 结果
      */
     BatteryReportLog selectLastHasAlarm(Integer packNum);
-
-    /**
-     * 获取电池组最新记录（缓存）
-     *
-     * @param packNum 电池组编号
-     * @return 电池组
-     */
-    BatteryReportLog lastCache(Integer packNum);
 
     /**
      * 查电池历史
@@ -61,10 +53,6 @@ public interface BatteryReportLogService {
      * @param dayNum 天数
      */
     void deleteByDays(Integer dayNum);
-
-    /** 更新缓存 */
-    void updateCache();
-
 
     /**
      * 删除告警记录
