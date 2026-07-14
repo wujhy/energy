@@ -1,7 +1,6 @@
 package com.shanhe.project.scheduled;
 
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.config.service.IConfigAttributeService;
 import com.shanhe.project.manage.host.domain.Host;
@@ -36,8 +35,6 @@ public class CacheInit implements ApplicationRunner {
     IHostService hostService;
     @Resource
     IAlarmLogService alarmLogService;
-    @Resource
-    BatteryReportLogService batteryReportLogService;
     @Resource
     IBatteryPackService batteryPackService;
     @Resource
@@ -100,11 +97,6 @@ public class CacheInit implements ApplicationRunner {
             batteryPackService.updateCache();
         } catch (Exception e) {
             log.error("初始化电池组缓存异常：{}", e.getMessage());
-        }
-        try {
-            batteryReportLogService.updateCache();
-        } catch (Exception e) {
-            log.error("初始化电池组记录缓存异常：{}", e.getMessage());
         }
         try {
             preBatteryGroupService.updateCache();

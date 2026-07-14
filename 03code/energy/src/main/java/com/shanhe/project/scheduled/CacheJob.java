@@ -28,8 +28,6 @@ public class CacheJob {
     @Resource
     private IAlarmLogService alarmLogService;
     @Resource
-    private BatteryReportLogService batteryReportLogService;
-    @Resource
     private IBatteryPackService batteryPackService;
 
     /** 定时更新设备配置缓存 */
@@ -63,13 +61,6 @@ public class CacheJob {
             batteryPackService.updateCache();
         } catch (Exception e) {
             log.error("更新电池组缓存异常", e);
-        }
-
-        try {
-            log.debug("更新电池组历史缓存！");
-            batteryReportLogService.updateCache();
-        } catch (Exception e) {
-            log.error("更新电池组历史缓存异常", e);
         }
     }
 
