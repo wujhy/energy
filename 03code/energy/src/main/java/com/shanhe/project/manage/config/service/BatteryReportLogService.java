@@ -40,14 +40,6 @@ public interface BatteryReportLogService {
     BatteryReportLog lastCache(Integer packNum);
 
     /**
-     * 计算电电池内阻平均值
-     *
-     * @param packNum 电池组编号
-     * @return 电电池内阻平均值
-     */
-    Long resistanceValue(Integer packNum);
-
-    /**
      * 查电池历史
      *
      * @param batteryReportLog 电池

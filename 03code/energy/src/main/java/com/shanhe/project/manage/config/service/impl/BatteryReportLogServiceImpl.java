@@ -18,7 +18,6 @@ import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
-import com.shanhe.project.manage.config.mapper.BatteryPackMapper;
 import com.shanhe.project.manage.config.mapper.BatteryReportLogMapper;
 import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
@@ -49,9 +48,6 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
     /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
-    /** 电池组映射。 */
-    @Resource
-    private BatteryPackMapper batteryPackMapper;
     /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
@@ -157,38 +153,6 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
     }
 
     /**
-     * 计算电池组平均内阻值
-     *
-     * @param packNum 电池组编号
-     * @return 平均内阻值
-     */
-    @Override
-    public Long resistanceValue(Integer packNum) {
-        BatteryReportLog log = this.lastCache(packNum);
-        if (log == null) {
-            log = batteryReportLogMapper.selectLast(packNum);
-            if (log == null) {
-                return 0L;
-            }
-        }
-        List<BatteryMonitor> batteryList = log.getBatteryList();
-        if (batteryList == null || batteryList.isEmpty()) {
-            if (StrUtil.isNotBlank(log.getMonitorData())) {
-                batteryList = JSON.parseArray(log.getMonitorData(), BatteryMonitor.class);
-            }
-        }
-        if (batteryList == null || batteryList.isEmpty()) {
-            return 0L;
-        }
-        // 计算内阻总和
-        double resistanceValue = 0;
-        for (BatteryMonitor battery : batteryList) {
-            resistanceValue += battery.getResistance() != null ? battery.getResistance() : 0;
-        }
-        return Math.round(resistanceValue / batteryList.size());
-    }
-
-    /**
      * 查询上报日志列表
      *
      * @param batteryReportLog 查询条件
@@ -237,7 +201,7 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         Set<String> oldKeys = CacheUtils.getCacheKeys(reportCache.getCache());
 
         // 蓄电池组
-        List<BatteryPack> batteryPackList = batteryPackMapper.selectAllBattery();
+        List<BatteryPack> batteryPackList = batteryPackService.selectBatteryPackList(YesNoEnum.YES.getDictValue());
         for (BatteryPack batteryPack : batteryPackList) {
             // 查询最新一条记录
             BatteryReportLog reportLog = this.selectLast(batteryPack.getPackNum());

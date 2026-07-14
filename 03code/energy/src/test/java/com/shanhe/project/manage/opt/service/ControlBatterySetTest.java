@@ -1,7 +1,6 @@
 package com.shanhe.project.manage.opt.service;
 
 import com.shanhe.framework.web.domain.AjaxResult;
-import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryCollectorCommandResult;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
@@ -183,7 +182,7 @@ class ControlBatterySetTest {
     }
 
     @Test
-    void shouldReturnZeroResistanceValueWhenRealtimeHasNoCells() {
+    void shouldReturnNullResistanceValueWhenRealtimeHasNoCells() {
         BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
         Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder().build());
         ControlBatterySet service = resistanceValueService(snapshotService);
@@ -191,11 +190,11 @@ class ControlBatterySetTest {
         AjaxResult result = service.resistanceValue(request(1));
 
         Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
-        Assertions.assertEquals(0L, result.get(AjaxResult.DATA_TAG));
+        Assertions.assertNull(result.get(AjaxResult.DATA_TAG));
     }
 
     @Test
-    void shouldReturnZeroResistanceValueWhenRealtimeSnapshotUnavailable() {
+    void shouldReturnNullResistanceValueWhenRealtimeSnapshotUnavailable() {
         BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
         Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(null);
         ControlBatterySet service = resistanceValueService(snapshotService);
@@ -203,7 +202,7 @@ class ControlBatterySetTest {
         AjaxResult result = service.resistanceValue(request(1));
 
         Assertions.assertEquals(AjaxResult.Type.SUCCESS.value(), result.get(AjaxResult.CODE_TAG));
-        Assertions.assertEquals(0L, result.get(AjaxResult.DATA_TAG));
+        Assertions.assertNull(result.get(AjaxResult.DATA_TAG));
     }
 
     private ControlBatterySet resistanceValueService(BatteryModuleRealtimeSnapshotService snapshotService) {
