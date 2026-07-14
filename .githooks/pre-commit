@@ -1,0 +1,33 @@
+#!/bin/sh
+set -eu
+
+status=0
+files=$(git diff --cached --name-only --diff-filter=ACM | tr '\n' ' ')
+[ -z "$files" ] && exit 0
+
+for file in $files; do
+  case "$file" in
+    *.java|*.xml|*.yml|*.yaml|*.properties|*.sql|*.md|*.txt|*.ps1|*.json)
+      [ -f "$file" ] || continue
+      bom=$(git show ":$file" 2>/dev/null | head -c 3 | od -An -tx1 | tr -d ' \n')
+      if [ "$bom" = "efbbbf" ]; then
+        echo "ERROR: UTF-8 BOM is not allowed: $file" >&2
+        status=1
+      fi
+      utf16=$(git show ":$file" 2>/dev/null | head -c 2 | od -An -tx1 | tr -d ' \n')
+      if [ "$utf16" = "fffe" ] || [ "$utf16" = "feff" ]; then
+        echo "ERROR: UTF-16 text is not allowed: $file" >&2
+        status=1
+      fi
+      if git show ":$file" 2>/dev/null | grep -E '鏁|鍗|鐢|閫|鎵|涓|绋|锛|閿|���' >/dev/null; then
+        echo "ERROR: possible mojibake text detected: $file" >&2
+        status=1
+      fi
+      ;;
+  esac
+done
+
+if [ "$status" -ne 0 ]; then
+  echo "Commit blocked by encoding guard. Use UTF-8 without BOM and verify Chinese text with git diff." >&2
+fi
+exit "$status"
