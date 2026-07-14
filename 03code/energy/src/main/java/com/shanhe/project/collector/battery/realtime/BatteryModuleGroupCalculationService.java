@@ -18,10 +18,6 @@ import java.util.List;
  */
 @Service
 public class BatteryModuleGroupCalculationService {
-
-    /** 默认单体实时数据新鲜度阈值。 */
-    private static final long DEFAULT_STALE_THRESHOLD_MS = 180_000L;
-
     /** 实时数据 Mapper。 */
     @Resource
     private BatteryModuleRealtimeMapper realtimeMapper;
@@ -29,43 +25,6 @@ public class BatteryModuleGroupCalculationService {
     /** 电池组旧协议兼容字段填充服务。 */
     @Resource
     private BatteryModuleGroupCompatibilityFillService compatibilityFillService;
-
-    /**
-     * 按默认新鲜度阈值计算并保存电池组指标。
-     *
-     * @param batteryGroup 电池组编号
-     * @return 计算结果
-     */
-    public BatteryModuleGroupRealtime calculateAndSave(Integer batteryGroup) {
-        return calculateAndSave(batteryGroup, null, null, DEFAULT_STALE_THRESHOLD_MS);
-    }
-
-    /**
-     * 计算并保存电池组指标。
-     *
-     * @param batteryGroup 电池组编号
-     * @param staleThresholdMs 单体数据新鲜度阈值
-     * @return 计算结果
-     */
-    public BatteryModuleGroupRealtime calculateAndSave(Integer batteryGroup, long staleThresholdMs) {
-        return calculateAndSave(batteryGroup, null, null, staleThresholdMs);
-    }
-
-    /**
-     * 按指定轮询批次计算并保存电池组指标。
-     *
-     * @param batteryGroup 电池组编号
-     * @param pollBatchNo 轮询批次号
-     * @param pollStartedAt 轮询开始时间
-     * @param staleThresholdMs 单体数据新鲜度阈值
-     * @return 计算后的组实时数据
-     */
-    public BatteryModuleGroupRealtime calculateAndSave(Integer batteryGroup,
-                                                       String pollBatchNo,
-                                                       Date pollStartedAt,
-                                                       long staleThresholdMs) {
-        return calculateAndSave(null, batteryGroup, pollBatchNo, pollStartedAt, staleThresholdMs);
-    }
 
     /**
      * 按指定轮询批次计算并保存电池组指标，同时预留旧 pack_data 兼容字段填充入口。
@@ -82,9 +41,10 @@ public class BatteryModuleGroupCalculationService {
                                                        String pollBatchNo,
                                                        Date pollStartedAt,
                                                        long staleThresholdMs) {
-        List<BatteryModuleCellRealtime> cells = pollBatchNo == null
-                ? realtimeMapper.selectCells(batteryGroup)
-                : realtimeMapper.selectCellsByBatch(batteryGroup, pollBatchNo);
+        if (pollBatchNo == null) {
+            return null;
+        }
+        List<BatteryModuleCellRealtime> cells = realtimeMapper.selectCellsByBatch(batteryGroup, pollBatchNo);
         BatteryModuleGroupRealtime group = realtimeMapper.selectGroup(batteryGroup);
         BatteryModuleGroupRealtime calculation = buildCalculation(batteryGroup, cells, group,
                 new Date(), pollBatchNo, pollStartedAt, staleThresholdMs);

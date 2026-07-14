@@ -213,20 +213,15 @@ public class BatteryModuleRealtimeConsumer implements BatteryModuleFrameConsumer
                 || channelConfig.getName() == null || channelConfig.getBatteryGroup() == null) {
             return null;
         }
+        if (context == null) {
+            return null;
+        }
         try {
-            if (context == null) {
-                return calculationService.calculateAndSave(channelConfig,
-                        channelConfig.getBatteryGroup(),
-                        null,
-                        null,
-                        resolveCalculationStaleThresholdMs());
-            } else {
-                return calculationService.calculateAndSave(channelConfig,
-                        channelConfig.getBatteryGroup(),
-                        context.getPollBatchNo(),
-                        context.getPollStartedAt(),
-                        resolveCalculationStaleThresholdMs());
-            }
+            return calculationService.calculateAndSave(channelConfig,
+                    channelConfig.getBatteryGroup(),
+                    context.getPollBatchNo(),
+                    context.getPollStartedAt(),
+                    resolveCalculationStaleThresholdMs());
         } catch (Exception e) {
             log.warn("计算蓄电池模块组数据失败, 通道={}, 电池组={}",
                     channelConfig.getName(),
