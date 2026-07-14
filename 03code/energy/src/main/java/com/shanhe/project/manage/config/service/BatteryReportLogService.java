@@ -2,7 +2,6 @@ package com.shanhe.project.manage.config.service;
 
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
-import com.shanhe.project.manage.config.domain.BatteryReportLogIndex;
 
 import java.util.List;
 import java.util.Map;
@@ -74,12 +73,6 @@ public interface BatteryReportLogService {
     /** 更新缓存 */
     void updateCache();
 
-    /**
-     * 查询电池组最新记录
-     *
-     * @return 电池组
-     */
-    List<BatteryReportLogIndex> batteryList();
 
     /**
      * 删除告警记录

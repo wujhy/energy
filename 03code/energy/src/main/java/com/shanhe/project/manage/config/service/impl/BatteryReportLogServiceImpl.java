@@ -18,7 +18,6 @@ import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
-import com.shanhe.project.manage.config.domain.BatteryReportLogIndex;
 import com.shanhe.project.manage.config.mapper.BatteryPackMapper;
 import com.shanhe.project.manage.config.mapper.BatteryReportLogMapper;
 import com.shanhe.project.manage.config.service.BatteryReportLogService;
@@ -262,45 +261,6 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
         }
     }
 
-    /**
-     * 获取电池组列表索引（含最新数据和告警状态）
-     *
-     * @return 电池组索引列表
-     */
-    @Override
-    public List<BatteryReportLogIndex> batteryList() {
-        List<BatteryPack> batteryPacks = batteryPackMapper.selectAllBattery();
-        if (batteryPacks.isEmpty()) {
-            return new ArrayList<>();
-        }
-        List<BatteryReportLogIndex> list = new ArrayList<>();
-        batteryPacks.forEach(entity -> {
-            if (Objects.equals(entity.getIsEnabled(), YesNoEnum.NO.getDictValue())) {
-                return;
-            }
-            BatteryReportLogIndex result = new BatteryReportLogIndex();
-            result.setPackNum(entity.getPackNum());
-            result.setConfigId(Constants.DEFAULT_CONFIG_ID);
-            result.setAlarm(alarmLogService.isAlarmByCache(entity.getPackNum()));
-
-            Object log = CacheUtils.get(reportCache.getCache(), String.format(reportCache.getKey(), entity.getPackNum()));
-            if (log == null) {
-                log = batteryReportLogMapper.selectLast(entity.getPackNum());
-            }
-
-            if (log != null) {
-                // 包数据
-                BatteryReportLog reportLog = (BatteryReportLog) log;
-                result.setCreateTime(reportLog.getCreateTime());
-                result.setPackParam(reportLog.getPackParam());
-            }
-
-            list.add(result);
-        });
-        // list 根据 packNum 升序
-        list.sort(Comparator.comparingInt(BatteryReportLogIndex::getPackNum));
-        return list;
-    }
 
     /**
      * 删除指定电池组的上报日志
