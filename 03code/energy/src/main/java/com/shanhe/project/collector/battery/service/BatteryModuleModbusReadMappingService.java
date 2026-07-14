@@ -1,7 +1,6 @@
 package com.shanhe.project.collector.battery.service;
 
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
-import com.shanhe.project.collector.battery.mapper.BatteryModuleRealtimeMapper;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
@@ -51,8 +50,6 @@ public class BatteryModuleModbusReadMappingService {
     /** Modbus RTU单次读保持寄存器的常见上限。 */
     private static final int MAX_READ_QUANTITY = 125;
 
-    /** 600节采集模块实时数据Mapper。 */
-    private final BatteryModuleRealtimeMapper realtimeMapper;
 
     /** 设备状态服务，用于读取状态寄存器。 */
     private final BatteryDeviceStateService batteryDeviceStateService;
@@ -63,18 +60,10 @@ public class BatteryModuleModbusReadMappingService {
     /** 标准实时有效快照服务。 */
     private final BatteryModuleRealtimeSnapshotService snapshotService;
 
-    public BatteryModuleModbusReadMappingService(BatteryModuleRealtimeMapper realtimeMapper,
-                                                  BatteryDeviceStateService batteryDeviceStateService,
-                                                  BatteryCollectorProperties properties) {
-        this(realtimeMapper, batteryDeviceStateService, properties, null);
-    }
-
     @Autowired
-    public BatteryModuleModbusReadMappingService(BatteryModuleRealtimeMapper realtimeMapper,
-                                                  BatteryDeviceStateService batteryDeviceStateService,
+    public BatteryModuleModbusReadMappingService(BatteryDeviceStateService batteryDeviceStateService,
                                                   BatteryCollectorProperties properties,
                                                   BatteryModuleRealtimeSnapshotService snapshotService) {
-        this.realtimeMapper = realtimeMapper;
         this.batteryDeviceStateService = batteryDeviceStateService;
         this.properties = properties;
         this.snapshotService = snapshotService;
@@ -117,16 +106,11 @@ public class BatteryModuleModbusReadMappingService {
      */
     private ModbusReadSnapshot loadSnapshot(Integer packNum) {
         String channelName = resolveChannelName(packNum);
-        if (snapshotService != null) {
-            BatteryModuleRealtimeSnapshot realtimeSnapshot = snapshotService.getCachedSnapshot(packNum);
-            if (realtimeSnapshot == null) {
-                return new ModbusReadSnapshot(null, null, packNum, channelName);
-            }
-            return new ModbusReadSnapshot(realtimeSnapshot.getCells(), realtimeSnapshot.getGroup(), packNum, channelName);
+        BatteryModuleRealtimeSnapshot realtimeSnapshot = snapshotService == null ? null : snapshotService.getCachedSnapshot(packNum);
+        if (realtimeSnapshot == null) {
+            return new ModbusReadSnapshot(null, null, packNum, channelName);
         }
-        List<BatteryModuleCellRealtime> cells = realtimeMapper.selectCells(packNum);
-        BatteryModuleGroupRealtime group = realtimeMapper.selectGroup(packNum);
-        return new ModbusReadSnapshot(cells, group, packNum, channelName);
+        return new ModbusReadSnapshot(realtimeSnapshot.getCells(), realtimeSnapshot.getGroup(), packNum, channelName);
     }
 
     /** 按 packNum 解析通道名称。 */
