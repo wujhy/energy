@@ -113,8 +113,6 @@ class BatteryCollectorServiceTest {
         ReflectionTestUtils.setField(processor, "snapshotService", Mockito.mock(BatteryModuleRealtimeSnapshotService.class));
         ReflectionTestUtils.setField(processor, "commandLogService", commandLogService);
         ReflectionTestUtils.setField(processor, "commandQueueService", commandQueueService);
-        ReflectionTestUtils.setField(processor, "statisticsRefreshService",
-                Mockito.mock(BatteryConnectResistanceStatisticsRefreshService.class));
         return processor;
     }
 
@@ -1510,12 +1508,6 @@ class BatteryCollectorServiceTest {
         injectCommandLogMapper(optLogMapper);
         BatteryModeStatusService modeStatusService = newModeStatusService();
         injectModeStatusService(modeStatusService);
-        BatteryConnectResistanceStatisticsRefreshService refreshService =
-                Mockito.mock(BatteryConnectResistanceStatisticsRefreshService.class);
-        ReflectionTestUtils.setField(
-                ReflectionTestUtils.getField(service, "connectResistanceCommandProcessor"),
-                "statisticsRefreshService",
-                refreshService);
         modeStatusService.markRunning(2, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 10);
         BatteryCollectorChannelConfig channelConfig = newChannelConfig();
         channelConfig.setBatteryGroup(2);
@@ -1575,12 +1567,6 @@ class BatteryCollectorServiceTest {
         injectCommandLogMapper(optLogMapper);
         BatteryModeStatusService modeStatusService = newModeStatusService();
         injectModeStatusService(modeStatusService);
-        BatteryConnectResistanceStatisticsRefreshService refreshService =
-                Mockito.mock(BatteryConnectResistanceStatisticsRefreshService.class);
-        ReflectionTestUtils.setField(
-                ReflectionTestUtils.getField(service, "connectResistanceCommandProcessor"),
-                "statisticsRefreshService",
-                refreshService);
         modeStatusService.markRunning(2, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 10);
         BatteryCollectorChannelConfig channelConfig = newChannelConfig();
         channelConfig.setBatteryGroup(2);
@@ -1613,7 +1599,6 @@ class BatteryCollectorServiceTest {
         Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
         Assertions.assertEquals(0, modeInfo.getStatus());
         Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, modeInfo.getLastMode());
-        Mockito.verify(refreshService).refreshAfterCompletedTest(2);
     }
 
     @Test
@@ -2113,12 +2098,6 @@ class BatteryCollectorServiceTest {
         injectCommandLogMapper(optLogMapper);
         BatteryModeStatusService modeStatusService = newModeStatusService();
         injectModeStatusService(modeStatusService);
-        BatteryConnectResistanceStatisticsRefreshService refreshService =
-                Mockito.mock(BatteryConnectResistanceStatisticsRefreshService.class);
-        ReflectionTestUtils.setField(
-                ReflectionTestUtils.getField(service, "connectResistanceCommandProcessor"),
-                "statisticsRefreshService",
-                refreshService);
         modeStatusService.markRunning(2, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 3);
         BatteryCollectorChannelConfig channelConfig = newChannelConfig();
         channelConfig.setBatteryGroup(2);
@@ -2207,12 +2186,6 @@ class BatteryCollectorServiceTest {
         injectCommandLogMapper(optLogMapper);
         BatteryModeStatusService modeStatusService = newModeStatusService();
         injectModeStatusService(modeStatusService);
-        BatteryConnectResistanceStatisticsRefreshService refreshService =
-                Mockito.mock(BatteryConnectResistanceStatisticsRefreshService.class);
-        ReflectionTestUtils.setField(
-                ReflectionTestUtils.getField(service, "connectResistanceCommandProcessor"),
-                "statisticsRefreshService",
-                refreshService);
         modeStatusService.markRunning(2, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 3);
         BatteryCollectorChannelConfig channelConfig = newChannelConfig();
         channelConfig.setBatteryGroup(2);
@@ -2234,7 +2207,6 @@ class BatteryCollectorServiceTest {
 
         // 中间步骤不更新命令日志
         Mockito.verifyNoInteractions(optLogMapper);
-        Mockito.verifyNoInteractions(refreshService);
         // 模式仍为 CONNECT_RESISTANCE（未被关闭）
         Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE,
                 modeStatusService.get(2).getMode());
@@ -2259,7 +2231,6 @@ class BatteryCollectorServiceTest {
 
         // 中间步骤仍不更新命令日志
         Mockito.verifyNoInteractions(optLogMapper);
-        Mockito.verifyNoInteractions(refreshService);
         // 模式仍未被关闭
         Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE,
                 modeStatusService.get(2).getMode());
@@ -2296,7 +2267,6 @@ class BatteryCollectorServiceTest {
         Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
         Assertions.assertEquals(0, modeInfo.getStatus());
         Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, modeInfo.getLastMode());
-        Mockito.verify(refreshService).refreshAfterCompletedTest(2);
     }
 
     private BatteryCollectorChannelConfig newChannelConfig() {

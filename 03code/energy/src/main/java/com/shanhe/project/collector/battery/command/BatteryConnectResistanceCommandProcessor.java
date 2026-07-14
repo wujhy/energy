@@ -11,7 +11,6 @@ import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.collector.battery.model.BatteryPendingRequest;
 import com.shanhe.project.collector.battery.protocol.BatteryDeviceProtocolCode;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandLogService;
-import com.shanhe.project.collector.battery.service.BatteryConnectResistanceStatisticsRefreshService;
 import com.shanhe.project.collector.battery.service.BatteryModuleCellCompatibilityFillService;
 import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import lombok.extern.slf4j.Slf4j;
@@ -48,8 +47,6 @@ public class BatteryConnectResistanceCommandProcessor {
     private BatteryCollectorCommandLogService commandLogService;
     @Resource
     private BatteryCollectorCommandQueueService commandQueueService;
-    @Resource
-    private BatteryConnectResistanceStatisticsRefreshService statisticsRefreshService;
 
     /**
      * 根据连接条测试上下文排队下一条 11/91 读电压命令。
@@ -132,9 +129,6 @@ public class BatteryConnectResistanceCommandProcessor {
                     frame.getCommand(),
                     bytesToHex(frame.getPayloadSafe()));
             commandQueueService.markModeStopped(pendingRequest, finalSuccess);
-            if (finalSuccess && statisticsRefreshService != null) {
-                statisticsRefreshService.refreshAfterCompletedTest(pendingRequest.getBatteryGroup());
-            }
         }
     }
 
