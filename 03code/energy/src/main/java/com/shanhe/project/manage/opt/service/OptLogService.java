@@ -55,6 +55,9 @@ public interface OptLogService {
      */
     void update(Long id, Integer result, Date updateTime);
 
+    /** 更新测试运行状态，并兼容旧 result 字段。 */
+    void updateRuntime(Long id, String status, Integer result);
+
     /**
      * 查询操作日志
      *

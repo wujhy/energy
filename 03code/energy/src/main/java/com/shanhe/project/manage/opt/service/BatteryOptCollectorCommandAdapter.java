@@ -31,6 +31,8 @@ public class BatteryOptCollectorCommandAdapter {
     /** 采集命令服务。 */
     @Resource
     private BatteryCollectorCommandService batteryCollectorCommandService;
+    @Resource
+    private BatteryTestLifecycleService lifecycleService;
 
     /**
      * 尝试将测试计划转为独立采集模块命令执行。
@@ -62,22 +64,36 @@ public class BatteryOptCollectorCommandAdapter {
 
     private BatteryCollectorCommandResult executeCollectorCommand(BatteryCommandContext context) {
         Integer packNum = context.opt.getPackNum();
-        String channelName = batteryCollectorCommandService.resolveChannelName(packNum);
-        if (BatteryTestEnum._1.equals(context.testEnum)) {
-            return batteryCollectorCommandService.groupInternalResistanceTest(
-                    channelName, packNum, context.batteryCount, null);
+        Integer mode = resolveMode(context.opt.getTestType());
+        Integer address = context.opt.getModelNum();
+        Long businessOptLogId = lifecycleService.start(
+                packNum, context.opt.getTestType(), context.optLogSource);
+        try {
+            String channelName = batteryCollectorCommandService.resolveChannelName(packNum);
+            BatteryCollectorCommandResult result;
+            if (BatteryTestEnum._1.equals(context.testEnum)) {
+                result = batteryCollectorCommandService.groupInternalResistanceTest(
+                        channelName, packNum, context.batteryCount, null, businessOptLogId);
+            } else if (BatteryTestEnum._2.equals(context.testEnum)) {
+                result = batteryCollectorCommandService.connectResistanceTest(
+                        channelName, packNum, context.batteryCount, null, businessOptLogId);
+            } else if (BatteryTestEnum._6.equals(context.testEnum)) {
+                result = batteryCollectorCommandService.singleInternalResistanceTest(
+                        channelName, packNum, context.opt.getModelNum(), null, businessOptLogId);
+            } else {
+                result = null;
+            }
+            if (result != null && result.isSuccess()) {
+                lifecycleService.markRunning(businessOptLogId);
+            } else {
+                lifecycleService.complete(businessOptLogId, packNum, mode, address, false);
+            }
+            return result;
+        } catch (RuntimeException e) {
+            lifecycleService.complete(businessOptLogId, packNum, mode, address, false);
+            throw e;
         }
-        if (BatteryTestEnum._2.equals(context.testEnum)) {
-            return batteryCollectorCommandService.connectResistanceTest(
-                    channelName, packNum, context.batteryCount, null);
-        }
-        if (BatteryTestEnum._6.equals(context.testEnum)) {
-            return batteryCollectorCommandService.singleInternalResistanceTest(
-                    channelName, packNum, context.opt.getModelNum(), null);
-        }
-        return null;
     }
-
     /**
      * 尝试停止已接入 600 队列的测试命令。
      *

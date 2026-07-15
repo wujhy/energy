@@ -85,6 +85,8 @@ class BatteryOptRuntimeRecoveryServiceTest {
     @Test
     void shouldCloseExistingLogsWhenRealtimeBatteryStatusEnded() {
         Fixture fixture = new Fixture();
+        Mockito.when(fixture.optLogService.getRunningOptLog(Mockito.eq(1), Mockito.anyInt()))
+                .thenAnswer(invocation -> runningLog(invocation.getArgument(1)));
         BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
                 .pollBatchNo("batch-1")
@@ -101,6 +103,8 @@ class BatteryOptRuntimeRecoveryServiceTest {
     @Test
     void shouldKeepBatteryLogsWhenRealtimeBatteryStatusActive() {
         Fixture fixture = new Fixture();
+        Mockito.when(fixture.optLogService.getRunningOptLog(Mockito.eq(1), Mockito.anyInt()))
+                .thenAnswer(invocation -> runningLog(invocation.getArgument(1)));
         BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
                 .pollBatchNo("batch-1")
@@ -118,6 +122,8 @@ class BatteryOptRuntimeRecoveryServiceTest {
     @Test
     void shouldRejectRealtimePostProcessWhenBatchMismatched() {
         Fixture fixture = new Fixture();
+        Mockito.when(fixture.optLogService.getRunningOptLog(Mockito.eq(1), Mockito.anyInt()))
+                .thenAnswer(invocation -> runningLog(invocation.getArgument(1)));
         BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
                 .pollBatchNo("batch-1")
@@ -127,6 +133,13 @@ class BatteryOptRuntimeRecoveryServiceTest {
         org.junit.jupiter.api.Assertions.assertFalse(fixture.service.shouldProcess(context));
     }
 
+    private static OptLog runningLog(Integer type) {
+        OptLog log = new OptLog();
+        log.setId(100L + type);
+        log.setPackNum(1);
+        log.setType(type);
+        return log;
+    }
     private static OptLog backupLog() {
         OptLog log = new OptLog();
         log.setId(100L);

@@ -12,6 +12,7 @@ import com.shanhe.project.collector.battery.protocol.BatteryCollectorFrameCodec;
 import com.shanhe.project.collector.battery.service.BatteryCollectorCommandLogService;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.manage.opt.service.OptLogService;
+import com.shanhe.project.manage.opt.service.BatteryTestLifecycleService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -48,6 +49,8 @@ public class BatteryCollectorCommandQueueService {
     private BatteryCollectorCommandLogService commandLogService;
     @Resource
     private OptLogService optLogService;
+    @Resource
+    private BatteryTestLifecycleService lifecycleService;
     @Resource
     private BatteryCollectorFrameCodec frameCodec;
 
@@ -694,13 +697,13 @@ public class BatteryCollectorCommandQueueService {
     }
 
     public void closeGroupInternalResistanceBusinessLog(BatteryPendingRequest pendingRequest, boolean success) {
-        if (optLogService == null || !isGroupInternalResistanceRequest(pendingRequest) || pendingRequest.getBusinessOptLogId() == null) {
+        if (lifecycleService != null || optLogService == null || !isGroupInternalResistanceRequest(pendingRequest) || pendingRequest.getBusinessOptLogId() == null) {
             return;
         }
         optLogService.update(pendingRequest.getBusinessOptLogId(), success ? 0 : 1, null);
     }
     private void closeGroupInternalResistanceBusinessLog(BatteryModuleControlCommand command, boolean success) {
-        if (optLogService == null
+        if (lifecycleService != null || optLogService == null
                 || command == null
                 || command.getGroupInternalResistanceMaxAddress() == null
                 || command.getBusinessOptLogId() == null) {
@@ -713,15 +716,14 @@ public class BatteryCollectorCommandQueueService {
         if (command == null || command.getMode() == null) {
             return;
         }
-        batteryModeStatusService.markStopped(
-                command.getBatteryGroup(),
-                command.getMode(),
-                modeAddress(command),
-                success,
-                command.getBusinessOptLogId() == null ? command.getOptLogId() : command.getBusinessOptLogId());
-        closeGroupInternalResistanceBusinessLog(command, success);
+        if (command.getBusinessOptLogId() != null && lifecycleService != null) {
+            lifecycleService.complete(command.getBusinessOptLogId(), command.getBatteryGroup(),
+                    command.getMode(), modeAddress(command), success);
+        } else {
+            batteryModeStatusService.markStopped(command.getBatteryGroup(), command.getMode(),
+                    modeAddress(command), success, command.getOptLogId());
+        }
     }
-
     /**
      * 标记待响应请求关联的工作模式已停止。
      *
@@ -732,14 +734,14 @@ public class BatteryCollectorCommandQueueService {
         if (pendingRequest == null || pendingRequest.getMode() == null) {
             return;
         }
-        batteryModeStatusService.markStopped(
-                pendingRequest.getBatteryGroup(),
-                pendingRequest.getMode(),
-                pendingRequest.getRequestAddress(),
-                success,
-                pendingRequest.getBusinessOptLogId() == null ? pendingRequest.getOptLogId() : pendingRequest.getBusinessOptLogId());
+        if (pendingRequest.getBusinessOptLogId() != null && lifecycleService != null) {
+            lifecycleService.complete(pendingRequest.getBusinessOptLogId(), pendingRequest.getBatteryGroup(),
+                    pendingRequest.getMode(), pendingRequest.getRequestAddress(), success);
+        } else {
+            batteryModeStatusService.markStopped(pendingRequest.getBatteryGroup(), pendingRequest.getMode(),
+                    pendingRequest.getRequestAddress(), success, pendingRequest.getOptLogId());
+        }
     }
-
     /** 获取模式关联地址，自动编号组命令使用实际电池数量作为旧接口展示地址。 */
     private Integer modeAddress(BatteryModuleControlCommand command) {
         if (command == null) {

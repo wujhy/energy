@@ -27,9 +27,8 @@ public class BatteryOptCapacityModuleCommandAdapter extends ControlBase {
     /** 外部备电模块 energy 直控服务。 */
     @Resource
     private BackupExternalModuleControlService backupExternalModuleControlService;
-    /** 操作日志服务。 */
     @Resource
-    private OptLogService optLogService;
+    private BatteryTestLifecycleService lifecycleService;
 
     /** 兼容旧调用方；没有完整上下文时不在适配器内直接执行。 */
     public AjaxResult tryExecute(DevBatteryOpt opt) {
@@ -52,12 +51,21 @@ public class BatteryOptCapacityModuleCommandAdapter extends ControlBase {
             return null;
         }
 
-        AjaxResult result = backupExternalModuleControlService.startBackup(opt.getPackNum());
-        boolean success = Objects.equals(result.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value());
-        if (success) {
-            optLogService.insert(opt.getPackNum(), opt.getTestType(), null, context.optLogSource);
+        Long businessOptLogId = lifecycleService.start(
+                opt.getPackNum(), opt.getTestType(), context.optLogSource);
+        try {
+            AjaxResult result = backupExternalModuleControlService.startBackup(opt.getPackNum());
+            boolean success = Objects.equals(result.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value());
+            if (success) {
+                lifecycleService.markRunning(businessOptLogId);
+            } else {
+                lifecycleService.complete(businessOptLogId, opt.getPackNum(), null, null, false);
+            }
+            return result;
+        } catch (RuntimeException e) {
+            lifecycleService.complete(businessOptLogId, opt.getPackNum(), null, null, false);
+            throw e;
         }
-        return result;
     }
 
     /** 兼容旧调用方；没有完整上下文时不在适配器内直接执行。 */
@@ -74,7 +82,7 @@ public class BatteryOptCapacityModuleCommandAdapter extends ControlBase {
         AjaxResult result = backupExternalModuleControlService.stopBackup(opt.getPackNum());
         boolean success = Objects.equals(result.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value());
         if (success) {
-            optLogService.doStopTest(opt.getPackNum(), opt.getTestType());
+            lifecycleService.stop(opt.getPackNum(), opt.getTestType(), null, null);
         }
         return result;
     }

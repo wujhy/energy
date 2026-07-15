@@ -32,10 +32,10 @@ class BatteryModeStatusServiceTest {
     }
 
     @Test
-    void shouldUseConfigIndependentCacheKey() {
+    void shouldUsePackScopedCacheKey() {
         service.markRunning(2, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
 
-        Object result = cacheAccessor.get(service.cacheKeyEnum.getCache(), service.cacheKeyEnum.getKey());
+        Object result = cacheAccessor.get(service.cacheKeyEnum.getCache(), String.format(service.cacheKeyEnum.getKey(), 2));
 
         Assertions.assertTrue(result instanceof BatteryModeInfo);
         BatteryModeInfo modeInfo = (BatteryModeInfo) result;
@@ -45,6 +45,14 @@ class BatteryModeStatusServiceTest {
         Assertions.assertEquals(8, modeInfo.getAddress());
     }
 
+    @Test
+    void shouldKeepModesIndependentByPack() {
+        service.markRunning(1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 1);
+        service.markRunning(2, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 2);
+
+        Assertions.assertEquals(BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, service.get(1).getMode());
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, service.get(2).getMode());
+    }
     @Test
     void shouldMarkStoppedAndKeepLastMode() {
         service.markRunning(2, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
@@ -98,7 +106,7 @@ class BatteryModeStatusServiceTest {
     }
 
     @Test
-    void shouldClearCacheUnconditionallyWhenPackNumIsNull() {
+    void shouldClearAllPacksWhenPackNumIsNull() {
         service.markRunning(2, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 5);
 
         service.clear(null);
@@ -158,7 +166,7 @@ class BatteryModeStatusServiceTest {
 
     @Test
     void shouldReturnIdleWhenCacheContainsNonModeInfo() {
-        cacheAccessor.put(service.cacheKeyEnum.getCache(), service.cacheKeyEnum.getKey(), "not-a-mode-info");
+        cacheAccessor.put(service.cacheKeyEnum.getCache(), String.format(service.cacheKeyEnum.getKey(), 5), "not-a-mode-info");
 
         BatteryModeInfo modeInfo = service.get(5);
         Assertions.assertEquals(BatteryModeStatusService.MODE_IDLE, modeInfo.getMode());
@@ -192,6 +200,11 @@ class BatteryModeStatusServiceTest {
         @Override
         public void remove(String cacheName, String key) {
             cache.remove(cacheName + ":" + key);
+        }
+
+        @Override
+        public void removeByPrefix(String cacheName, String keyPrefix) {
+            cache.keySet().removeIf(key -> key.startsWith(cacheName + ":" + keyPrefix));
         }
     }
 }

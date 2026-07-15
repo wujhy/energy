@@ -30,6 +30,9 @@ public interface OptLogMapper {
      */
     void update(@Param("id") Long id, @Param("result") Integer result, @Param("updateTimeStr") String updateTimeStr);
 
+    void updateRuntime(@Param("id") Long id, @Param("status") String status, @Param("result") Integer result,
+                       @Param("endedAt") String endedAt);
+
     /**
      * 查询操作日志
      *

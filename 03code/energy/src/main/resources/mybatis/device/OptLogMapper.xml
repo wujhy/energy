@@ -61,6 +61,14 @@
         where id = #{id}
     </update>
 
+    <update id="updateRuntime">
+        update dev_opt_log
+        set status = #{status},
+            result = #{result},
+            <if test="endedAt != null">ended_at = #{endedAt},</if>
+            update_time = strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')
+        where id = #{id} and result is null
+    </update>
     <!-- 查询操作日志列表 -->
     <select id="select" parameterType="com.shanhe.project.manage.opt.domain.OptLog" resultMap="BaseResultMap">
         select

@@ -42,6 +42,10 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
     private BatteryCollectorProperties batteryCollectorProperties;
     @Resource
     private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
+    @Resource
+    private BatteryTestLifecycleService lifecycleService;
+    @Resource
+    private BackupExternalModuleControlService backupExternalModuleControlService;
 
     @Override
     public String getName() {
@@ -79,9 +83,23 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
         if (optLogService == null) {
             return 0;
         }
-        return recoverRunningLogs(optLogService.selectRunningList(null), true);
+        List<OptLog> running = optLogService.selectRunningList(null);
+        if (running == null || running.isEmpty()) {
+            return 0;
+        }
+        for (OptLog run : running) {
+            if (BatteryTestEnum._5.getDictValue().equals(run.getType())) {
+                try {
+                    backupExternalModuleControlService.stopBackup(run.getPackNum());
+                } catch (RuntimeException e) {
+                    log.warn("启动恢复备电外设失败, packNum={}, 原因={}", run.getPackNum(), e.getMessage());
+                }
+            }
+            lifecycleService.interrupt(run);
+        }
+        optLogService.updateCache();
+        return running.size();
     }
-
     /** 采集状态确认已离开测试态时，关闭已有 running log，不创建、不续写新日志。 */
     public void closeByRealtimeStatus(Integer packNum, BatteryModuleGroupRealtime group) {
         if (packNum == null || group == null || optLogService == null) {
@@ -118,12 +136,20 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
 
     private void closeIfRunning(Integer packNum, Integer type) {
         try {
-            optLogService.doStopTest(packNum, type);
+            OptLog running = optLogService.getRunningOptLog(packNum, type);
+            if (running == null) {
+                return;
+            }
+            if (lifecycleService != null) {
+                lifecycleService.complete(running.getId(), packNum, resolveMode(type),
+                        running.getTargetAddress(), true);
+            } else {
+                optLogService.doStopTest(packNum, type);
+            }
         } catch (Exception e) {
             log.warn("操作日志运行态补偿关闭失败, packNum={}, type={}", packNum, type, e);
         }
     }
-
     private boolean isActiveBatteryPackStatus(String status) {
         return BatteryPackStatusEnum.isCode(status, BatteryPackStatusEnum.CHARGE)
                 || BatteryPackStatusEnum.isCode(status, BatteryPackStatusEnum.CAPACITY_TEST)
@@ -150,19 +176,19 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
         return recovered;
     }
 
+
     private void closeRunningLog(OptLog optLog, long now) {
-        optLogService.update(optLog.getId(), 1, new Date(now));
-        Integer mode = resolveMode(optLog.getType());
-        if (mode != null && batteryModeStatusService != null) {
-            batteryModeStatusService.markStopped(
-                    optLog.getPackNum(),
-                    mode,
-                    optLog.getTargetAddress(),
-                    false,
-                    optLog.getId());
+        if (lifecycleService != null) {
+            lifecycleService.complete(optLog.getId(), optLog.getPackNum(), resolveMode(optLog.getType()),
+                    optLog.getTargetAddress(), false);
+        } else {
+            optLogService.update(optLog.getId(), 1, new Date(now));
+            Integer mode = resolveMode(optLog.getType());
+            if (mode != null && batteryModeStatusService != null) {
+                batteryModeStatusService.markStopped(optLog.getPackNum(), mode, optLog.getTargetAddress(), false, optLog.getId());
+            }
         }
     }
-
     private boolean shouldCloseRunningLog(OptLog log, long now) {
         if (log == null || log.getId() == null || log.getPackNum() == null) {
             return false;

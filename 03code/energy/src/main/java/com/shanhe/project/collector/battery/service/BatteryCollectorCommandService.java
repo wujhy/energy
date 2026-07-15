@@ -8,6 +8,7 @@ import com.shanhe.project.collector.battery.protocol.BatteryAggregateCommandDefi
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.opt.service.OptLogService;
+import com.shanhe.project.manage.opt.service.BatteryTestLifecycleService;
 import com.shanhe.project.collector.battery.model.BatteryModeInfo;
 
 import static com.shanhe.project.collector.battery.protocol.BatteryModuleProtocolConstants.MAX_CELL_ADDRESS;
@@ -64,6 +65,8 @@ public class BatteryCollectorCommandService {
     /** 操作日志服务。 */
     @Resource
     private OptLogService optLogService;
+    @Resource
+    private BatteryTestLifecycleService lifecycleService;
     /** 电池组配置服务。 */
     @Autowired(required = false)
     private IBatteryPackService batteryPackService;
@@ -85,12 +88,21 @@ public class BatteryCollectorCommandService {
                                                  String channelName,
                                                  Long timeoutMs,
                                                  int... payloadBytes) {
+        return execute(commandDefinition, channelName, timeoutMs, null, payloadBytes);
+    }
+
+    public BatteryCollectorCommandResult execute(BatteryAggregateCommandDefinition commandDefinition,
+                                                 String channelName,
+                                                 Long timeoutMs,
+                                                 Long businessOptLogId,
+                                                 int... payloadBytes) {
         BatteryModuleControlCommand moduleCommand = mapToModuleCommand(commandDefinition, payloadBytes);
         if (moduleCommand == null) {
             // 兼容入口只保留旧 980 语义，不允许绕过映射直写 600 节下行总线。
             return unsupported(commandDefinition, channelName);
         }
         applyModeContext(moduleCommand, commandDefinition, payloadBytes);
+        moduleCommand.setBusinessOptLogId(businessOptLogId);
         return mapped(commandDefinition, channelName, moduleCommand, queueModuleCommand(channelName, moduleCommand));
     }
 
@@ -98,6 +110,10 @@ public class BatteryCollectorCommandService {
      * 执行单体内阻测试命令。
      */
     public BatteryCollectorCommandResult singleInternalResistanceTest(String channelName, int batteryGroup, Integer batteryNumber, Long timeoutMs) {
+        return singleInternalResistanceTest(channelName, batteryGroup, batteryNumber, timeoutMs, null);
+    }
+
+    public BatteryCollectorCommandResult singleInternalResistanceTest(String channelName, int batteryGroup, Integer batteryNumber, Long timeoutMs, Long businessOptLogId) {
         BatteryCollectorCommandResult runningResult = rejectRunningWorkMode(
                 BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST,
                 channelName,
@@ -113,13 +129,17 @@ public class BatteryCollectorCommandService {
         if (addressResult != null) {
             return addressResult;
         }
-        return execute(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST, channelName, timeoutMs, batteryGroup, batteryNumber);
+        return execute(BatteryAggregateCommandDefinition.SINGLE_INTERNAL_RESISTANCE_TEST, channelName, timeoutMs, businessOptLogId, batteryGroup, batteryNumber);
     }
 
     /**
      * 执行整组内阻测试：按 1..batteryCount 顺序下发 02/82 单体内阻命令。
      */
     public BatteryCollectorCommandResult groupInternalResistanceTest(String channelName, int batteryGroup, int batteryCount, Long timeoutMs) {
+        return groupInternalResistanceTest(channelName, batteryGroup, batteryCount, timeoutMs, null);
+    }
+
+    public BatteryCollectorCommandResult groupInternalResistanceTest(String channelName, int batteryGroup, int batteryCount, Long timeoutMs, Long existingBusinessOptLogId) {
         if (isBlank(channelName)) {
             return BatteryCollectorCommandResult.builder()
                     .success(false)
@@ -155,10 +175,10 @@ public class BatteryCollectorCommandService {
                     channelName,
                     "整组内阻首节地址无效");
         }
-        Long businessOptLogId = optLogService == null
+        Long businessOptLogId = existingBusinessOptLogId != null ? existingBusinessOptLogId : (optLogService == null
                 ? null
                 : optLogService.insert(batteryGroup, BatteryTestEnum._1.getDictValue(), null,
-                com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants.Source.COLLECTOR);
+                com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants.Source.COLLECTOR));
         moduleCommand.setDescription("整组内阻测试第1节");
         moduleCommand.setOptLogType(BatteryTestEnum._99.getDictValue());
         moduleCommand.setBusinessOptLogId(businessOptLogId);
@@ -236,8 +256,6 @@ public class BatteryCollectorCommandService {
             return stopRejected("测试类型不支持停止");
         }
 
-        closeRunningOptLog(batteryGroup, optLogType);
-
         BatteryModeInfo modeInfo = batteryModeStatusService == null ? null : batteryModeStatusService.get(batteryGroup);
         if (modeInfo == null || !Objects.equals(modeInfo.getPackNum(), batteryGroup)
                 || !Objects.equals(modeInfo.getStatus(), 1)) {
@@ -248,7 +266,14 @@ public class BatteryCollectorCommandService {
         }
 
         int cancelled = collectorService == null ? 0 : collectorService.cancelQueuedModuleCommands(batteryGroup, mode);
-        batteryModeStatusService.markStopped(batteryGroup, mode, modeInfo.getAddress(), true);
+        if (lifecycleService != null) {
+            if (!lifecycleService.stop(batteryGroup, optLogType, mode, modeInfo.getAddress())) {
+                return stopRejected("未找到对应的运行日志");
+            }
+        } else {
+            closeRunningOptLog(batteryGroup, optLogType);
+            batteryModeStatusService.markStopped(batteryGroup, mode, modeInfo.getAddress(), true);
+        }
         return BatteryCollectorCommandResult.builder()
                 .success(true)
                 .timeout(false)
@@ -302,6 +327,10 @@ public class BatteryCollectorCommandService {
      * @return 命令结果
      */
     public BatteryCollectorCommandResult connectResistanceTest(String channelName, int batteryGroup, int batteryCount, Long timeoutMs) {
+        return connectResistanceTest(channelName, batteryGroup, batteryCount, timeoutMs, null);
+    }
+
+    public BatteryCollectorCommandResult connectResistanceTest(String channelName, int batteryGroup, int batteryCount, Long timeoutMs, Long businessOptLogId) {
         if (channelName == null || channelName.trim().isEmpty()) {
             return BatteryCollectorCommandResult.builder().success(false).message("通道名称不能为空").build();
         }
@@ -339,6 +368,7 @@ public class BatteryCollectorCommandService {
             moduleCommand.setConnectResistanceNextAddress(1);
             moduleCommand.setConnectResistanceMaxAddress(batteryCount);
             moduleCommand.setOptLogType(BatteryTestEnum._2.getDictValue());
+            moduleCommand.setBusinessOptLogId(businessOptLogId);
         } catch (IllegalArgumentException e) {
             log.warn("连接条测试命令被拒绝, 通道={}, 电池组={}, 原因={}", channelName, batteryGroup, e.getMessage());
             return unsupported(BatteryAggregateCommandDefinition.CONNECT_RESISTANCE_TEST, channelName);

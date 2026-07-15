@@ -154,6 +154,12 @@ public class OptLogServiceImpl implements OptLogService {
      * @return 操作日志列表
      */
     @Override
+    public void updateRuntime(Long id, String status, Integer result) {
+        String endedAt = result == null ? null : new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+        optLogMapper.updateRuntime(id, status, result, endedAt);
+    }
+
+    @Override
     public List<OptLog> select(OptLog optLog) {
         List<OptLog> optLogList = optLogMapper.select(optLog);
         Map<Integer, Double> batCapacityMap = new HashMap<>(16);

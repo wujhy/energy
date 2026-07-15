@@ -52,7 +52,7 @@ public class BatteryModeStatusService {
 
     /** 获取当前蓄电池测试/维护工作模式状态。 */
     public BatteryModeInfo get(Integer packNum) {
-        Object result = cacheAccessor.get(cacheKeyEnum.getCache(), cacheKeyEnum.getKey());
+        Object result = cacheAccessor.get(cacheKeyEnum.getCache(), cacheKey(packNum));
         if (result instanceof BatteryModeInfo) {
             return (BatteryModeInfo) result;
         }
@@ -62,14 +62,14 @@ public class BatteryModeStatusService {
     /** 清除指定电池组的工作模式缓存。 */
     public void clear(Integer packNum) {
         if (packNum == null) {
-            cacheAccessor.remove(cacheKeyEnum.getCache(), cacheKeyEnum.getKey());
+            cacheAccessor.removeByPrefix(cacheKeyEnum.getCache(), cacheKeyPrefix());
             return;
         }
-        Object result = cacheAccessor.get(cacheKeyEnum.getCache(), cacheKeyEnum.getKey());
+        Object result = cacheAccessor.get(cacheKeyEnum.getCache(), cacheKey(packNum));
         if (result instanceof BatteryModeInfo) {
             BatteryModeInfo batteryModeInfo = (BatteryModeInfo) result;
             if (ObjUtil.equals(packNum, batteryModeInfo.getPackNum())) {
-                cacheAccessor.remove(cacheKeyEnum.getCache(), cacheKeyEnum.getKey());
+                cacheAccessor.remove(cacheKeyEnum.getCache(), cacheKey(packNum));
             }
         }
     }
@@ -87,7 +87,7 @@ public class BatteryModeStatusService {
         batteryModeInfo.setMode(mode);
         batteryModeInfo.setStatus(STATUS_RUNNING);
         batteryModeInfo.setAddress(address);
-        cacheAccessor.put(cacheKeyEnum.getCache(), cacheKeyEnum.getKey(), batteryModeInfo);
+        cacheAccessor.put(cacheKeyEnum.getCache(), cacheKey(packNum), batteryModeInfo);
         persistModeState(packNum, mode, address, String.valueOf(mode),
                 BatteryDeviceStateConstants.StateLevel.RUNNING, optLogId);
     }
@@ -99,7 +99,7 @@ public class BatteryModeStatusService {
 
     /** 标记指定电池组测试/维护已停止，并关联操作日志。 */
     public void markStopped(Integer packNum, int mode, Integer address, boolean success, Long optLogId) {
-        BatteryModeInfo previous = getStored();
+        BatteryModeInfo previous = getStored(packNum);
         BatteryModeInfo batteryModeInfo = new BatteryModeInfo();
         batteryModeInfo.setPackNum(packNum);
         batteryModeInfo.setResult(success ? 0 : 1);
@@ -117,7 +117,7 @@ public class BatteryModeStatusService {
         if (batteryModeInfo.getLastMode() == null) {
             batteryModeInfo.setLastMode(mode);
         }
-        cacheAccessor.put(cacheKeyEnum.getCache(), cacheKeyEnum.getKey(), batteryModeInfo);
+        cacheAccessor.put(cacheKeyEnum.getCache(), cacheKey(packNum), batteryModeInfo);
         persistModeState(packNum, MODE_IDLE, address, String.valueOf(MODE_IDLE),
                 success ? BatteryDeviceStateConstants.StateLevel.NORMAL : BatteryDeviceStateConstants.StateLevel.WARN,
                 optLogId);
@@ -151,9 +151,17 @@ public class BatteryModeStatusService {
     }
 
     /** 从缓存获取已存储的工作模式信息。 */
-    private BatteryModeInfo getStored() {
-        Object result = cacheAccessor.get(cacheKeyEnum.getCache(), cacheKeyEnum.getKey());
+    private BatteryModeInfo getStored(Integer packNum) {
+        Object result = cacheAccessor.get(cacheKeyEnum.getCache(), cacheKey(packNum));
         return result instanceof BatteryModeInfo ? (BatteryModeInfo) result : null;
+    }
+
+    private String cacheKey(Integer packNum) {
+        return String.format(cacheKeyEnum.getKey(), packNum);
+    }
+
+    private String cacheKeyPrefix() {
+        return cacheKeyEnum.getKey().substring(0, cacheKeyEnum.getKey().indexOf("%s"));
     }
 
     /** 构造空闲状态的工作模式信息。 */
@@ -172,6 +180,9 @@ public class BatteryModeStatusService {
         void put(String cacheName, String key, Object value);
 
         void remove(String cacheName, String key);
+
+        default void removeByPrefix(String cacheName, String keyPrefix) {
+        }
     }
 
     private static class CacheUtilsAccessor implements CacheAccessor {
@@ -188,6 +199,15 @@ public class BatteryModeStatusService {
         @Override
         public void remove(String cacheName, String key) {
             CacheUtils.remove(cacheName, key);
+        }
+
+        @Override
+        public void removeByPrefix(String cacheName, String keyPrefix) {
+            for (String key : CacheUtils.getCacheKeys(cacheName)) {
+                if (key != null && key.startsWith(keyPrefix)) {
+                    CacheUtils.remove(cacheName, key);
+                }
+            }
         }
     }
 }
