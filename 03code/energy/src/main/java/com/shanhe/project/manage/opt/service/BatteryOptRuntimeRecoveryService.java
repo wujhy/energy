@@ -107,7 +107,6 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
                 recovered++;
             }
         }
-        optLogService.updateCache();
         return recovered;
     }
     /** 采集状态确认已离开测试态时，关闭已有 running log，不创建、不续写新日志。 */
@@ -196,9 +195,6 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
                             optLog.getPackNum(), optLog.getType(), optLog.getId());
                 }
             }
-        }
-        if (recovered > 0) {
-            optLogService.updateCache();
         }
         return recovered;
     }

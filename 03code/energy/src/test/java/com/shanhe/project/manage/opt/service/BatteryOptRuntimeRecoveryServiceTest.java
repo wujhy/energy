@@ -47,7 +47,7 @@ class BatteryOptRuntimeRecoveryServiceTest {
 
         Mockito.verify(fixture.optLogService)
                 .update(Mockito.eq(100L), Mockito.eq(1), Mockito.any(Date.class));
-        Mockito.verify(fixture.optLogService).updateCache();
+        Mockito.verify(fixture.optLogService, Mockito.never()).updateCache();
         Mockito.verifyNoInteractions(fixture.modeStatusService);
     }
 

@@ -47,7 +47,6 @@ public class BatteryTestLifecycleService {
     public void markRunning(Long businessOptLogId) {
         if (businessOptLogId != null) {
             optLogService.updateRuntime(businessOptLogId, RUNNING, null);
-            optLogService.updateCache();
         }
     }
 
@@ -60,7 +59,6 @@ public class BatteryTestLifecycleService {
         if (mode != null) {
             modeStatusService.markStopped(packNum, mode, address, success, businessOptLogId);
         }
-        optLogService.updateCache();
     }
 
     public boolean stop(Integer packNum, Integer testType, Integer mode, Integer address) {
@@ -92,7 +90,6 @@ public class BatteryTestLifecycleService {
         if (mode != null) {
             modeStatusService.markStopped(log.getPackNum(), mode, log.getTargetAddress(), false, log.getId());
         }
-        optLogService.updateCache();
     }
 
     private boolean finishAfterAction(OptLog running, Integer mode, Integer address,
@@ -103,14 +100,12 @@ public class BatteryTestLifecycleService {
         }
         optLogService.updateRuntime(running.getId(), STOPPING, null);
         if (action != null && !action.execute()) {
-            optLogService.updateCache();
             return false;
         }
         optLogService.updateRuntime(running.getId(), finalStatus, result);
         if (mode != null) {
             modeStatusService.markStopped(running.getPackNum(), mode, address, modeSuccess, running.getId());
         }
-        optLogService.updateCache();
         return true;
     }
 

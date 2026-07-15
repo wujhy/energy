@@ -38,6 +38,10 @@ public class OptLogServiceImpl implements OptLogService {
     private IBatteryPackService batteryPackService;
 
     CacheKeyEnum logCache = CacheKeyEnum.OPT_LOG;
+    private LogCacheAccessor cacheAccessor = new EhcacheLogCacheAccessor();
+
+    private static final int INTERNAL_RESISTANCE_SLOT = 0;
+    private static final int GENERAL_TEST_SLOT = 1;
 
     /**
      * 插入操作日志
@@ -61,17 +65,12 @@ public class OptLogServiceImpl implements OptLogService {
         optLog.setType(type);
         optLog.setResult(result);
         optLog.setSource(source);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        optLog.setCreateTimeStr(sdf.format(new Date()));
+        Date now = new Date();
+        optLog.setCreateTime(now);
+        optLog.setCreateTimeStr(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(now));
         optLogMapper.insert(optLog);
-
-        // 当前状态运行中，需要把旧记录运行中的置为超时
         if (result == null) {
-            Object object = CacheUtils.get(logCache.getCache(),
-                    String.format(logCache.getKey(), optLog.getPackNum(), optLog.getType()));
-            if (object != null) {
-                update(((OptLog) object).getId(), 2, null);
-            }
+            cacheRunning(optLog);
         }
         return optLog.getId();
     }
@@ -111,7 +110,7 @@ public class OptLogServiceImpl implements OptLogService {
         // 未运行，缓存记录未结束则更新并清除缓存
 
         // 没保存，则不更新
-        CacheUtils.remove(logCache.getCache(), cacheKey);
+        cacheAccessor.remove(cacheKey);
 
         if (!optLog.isSave()) {
             return;
@@ -145,6 +144,9 @@ public class OptLogServiceImpl implements OptLogService {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String updateTimeStr = sdf.format(updateTime);
         optLogMapper.update(id, result, updateTimeStr);
+        if (result != null) {
+            evictRunningCache(id);
+        }
     }
 
     /**
@@ -157,6 +159,9 @@ public class OptLogServiceImpl implements OptLogService {
     public void updateRuntime(Long id, String status, Integer result) {
         String endedAt = result == null ? null : new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
         optLogMapper.updateRuntime(id, status, result, endedAt);
+        if (result != null) {
+            evictRunningCache(id);
+        }
     }
 
     @Override
@@ -217,47 +222,48 @@ public class OptLogServiceImpl implements OptLogService {
     /** 更新操作日志缓存 */
     @Override
     public void updateCache() {
-        // 旧缓存
-        List<String> startKeys = new ArrayList<>();
-        Set<String> oldKeys = CacheUtils.getCacheKeys(logCache.getCache());
-
-        // 所有未完日志
         List<OptLog> list = optLogMapper.findRunningList();
-        for (OptLog log : list) {
-            // 电池测试
-            int type = 1;
-            if (BatteryTestEnum._1.getDictValue().equals(log.getType())) {
-                // 内阻测试
-                type = 0;
-            }
-            // 缓存
-            String key = String.format(logCache.getKey(), log.getPackNum(), type);
-            // 存在重复数据，时间排序靠后的完成掉（脏数据）
-            Object object = CacheUtils.get(logCache.getCache(), key);
-            if (object != null) {
-                OptLog old = (OptLog) object;
-                if (!Objects.equals(old.getId(), log.getId())) {
-                    update(log.getId(), YesNoEnum.YES.getDictValue(), null);
-                    continue;
-                }
-                log.setSave(old.isSave());
-                log.setCount(old.getCount());
-            } else {
-                log.setSave(true);
-                log.setCount(100);
-            }
-            startKeys.add(key);
-            CacheUtils.put(logCache.getCache(), key, log);
+        if (list == null) {
+            return;
         }
-
-        // 删除
+        Set<String> oldKeys = cacheAccessor.keys();
         for (String key : oldKeys) {
-            if (!startKeys.contains(key)) {
-                CacheUtils.remove(logCache.getCache(), key);
+            cacheAccessor.remove(key);
+        }
+        for (OptLog log : list) {
+            String key = cacheKey(log.getPackNum(), log.getType());
+            if (cacheAccessor.get(key) == null) {
+                cacheRunning(log);
             }
         }
     }
 
+    private void cacheRunning(OptLog log) {
+        if (log == null || log.getPackNum() == null || log.getType() == null) {
+            return;
+        }
+        log.setSave(true);
+        log.setCount(100);
+        cacheAccessor.put(cacheKey(log.getPackNum(), log.getType()), log);
+    }
+
+    private void evictRunningCache(Long id) {
+        if (id == null) {
+            return;
+        }
+        for (String key : cacheAccessor.keys()) {
+            Object value = cacheAccessor.get(key);
+            if (value instanceof OptLog && Objects.equals(id, ((OptLog) value).getId())) {
+                cacheAccessor.remove(key);
+            }
+        }
+    }
+
+    private String cacheKey(Integer packNum, Integer type) {
+        int slot = BatteryTestEnum._1.getDictValue().equals(type)
+                ? INTERNAL_RESISTANCE_SLOT : GENERAL_TEST_SLOT;
+        return String.format(logCache.getKey(), packNum, slot);
+    }
     /**
      * 从缓存获取未完成的操作日志
      *
@@ -269,7 +275,7 @@ public class OptLogServiceImpl implements OptLogService {
     public OptLog selectNotFinishedCacheLog(Integer packNum, Integer type) {
         // 缓存记录
         String cacheKey = String.format(logCache.getKey(), packNum, type);
-        Object object = CacheUtils.get(logCache.getCache(), cacheKey);
+        Object object = cacheAccessor.get(cacheKey);
         if (object == null) {
             return null;
         }
@@ -350,11 +356,11 @@ public class OptLogServiceImpl implements OptLogService {
      */
     @Override
     public void closeOptLog(Integer packNum) {
-        Set<String> oldKeys = CacheUtils.getCacheKeys(logCache.getCache());
+        Set<String> oldKeys = cacheAccessor.keys();
         for (String key : oldKeys) {
-            OptLog log = (OptLog) CacheUtils.get(logCache.getCache(), key);
+            OptLog log = (OptLog) cacheAccessor.get(key);
             if (log != null && ObjUtil.equals(log.getConfigId(), Constants.DEFAULT_CONFIG_ID) && ObjUtil.equals(log.getPackNum(), packNum)) {
-                CacheUtils.remove(logCache.getCache(), key);
+                cacheAccessor.remove(key);
                 update(log.getId(), YesNoEnum.YES.getDictValue(), null);
             }
         }
@@ -368,24 +374,44 @@ public class OptLogServiceImpl implements OptLogService {
      */
     @Override
     public void doStopTest(Integer packNum, Integer type) {
-        // 缓存记录
-        int keyType = 1;
-        if (BatteryTestEnum._1.getDictValue().equals(type)) {
-            // 内阻测试
-            keyType = 0;
-        }
-        String cacheKey = String.format(logCache.getKey(), packNum, keyType);
-        OptLog log = (OptLog) CacheUtils.get(logCache.getCache(), cacheKey);
-        if (log == null) {
+        String cacheKey = cacheKey(packNum, type);
+        OptLog log = (OptLog) cacheAccessor.get(cacheKey);
+        if (log == null || !Objects.equals(log.getType(), type)) {
             log = optLogMapper.getRunningOptLog(packNum, type);
             if (log == null) {
                 return;
             }
-        }
-        // 类型一致
-        if (!log.getType().equals(type)) {
-            return;
+            log.setSave(true);
         }
         sotOptLog(log, cacheKey, (Date) null);
+    }
+
+    interface LogCacheAccessor {
+        Object get(String key);
+        void put(String key, Object value);
+        void remove(String key);
+        Set<String> keys();
+    }
+
+    private class EhcacheLogCacheAccessor implements LogCacheAccessor {
+        @Override
+        public Object get(String key) {
+            return CacheUtils.get(logCache.getCache(), key);
+        }
+
+        @Override
+        public void put(String key, Object value) {
+            CacheUtils.put(logCache.getCache(), key, value);
+        }
+
+        @Override
+        public void remove(String key) {
+            CacheUtils.remove(logCache.getCache(), key);
+        }
+
+        @Override
+        public Set<String> keys() {
+            return CacheUtils.getCacheKeys(logCache.getCache());
+        }
     }
 }
