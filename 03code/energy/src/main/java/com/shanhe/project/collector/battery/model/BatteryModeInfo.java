@@ -16,6 +16,7 @@ public class BatteryModeInfo implements Serializable {
     private Integer mode;
     private Integer status;
     private Integer address;
+    private Long businessOptLogId;
     private Integer lastPackNum;
     private Integer lastMode;
     private Integer lastAddress;

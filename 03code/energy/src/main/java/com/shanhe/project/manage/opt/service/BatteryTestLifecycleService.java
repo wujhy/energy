@@ -15,6 +15,7 @@ public class BatteryTestLifecycleService {
 
     public static final String STARTING = "starting";
     public static final String RUNNING = "running";
+    public static final String STOPPING = "stopping";
     public static final String SUCCEEDED = "success";
     public static final String FAILED = "failed";
     public static final String CANCELLED = "cancelled";
@@ -30,9 +31,17 @@ public class BatteryTestLifecycleService {
         if (active != null && !active.isEmpty()) {
             throw new ServiceException("当前电池组已有测试运行中");
         }
-        Long id = optLogService.insert(packNum, testType, null, source);
-        optLogService.updateRuntime(id, STARTING, null);
-        return id;
+        try {
+            Long id = optLogService.insert(packNum, testType, null, source);
+            optLogService.updateRuntime(id, STARTING, null);
+            return id;
+        } catch (RuntimeException e) {
+            List<OptLog> concurrent = optLogService.selectRunningList(packNum);
+            if (concurrent != null && !concurrent.isEmpty()) {
+                throw new ServiceException("当前电池组已有测试运行中");
+            }
+            throw e;
+        }
     }
 
     public void markRunning(Long businessOptLogId) {
@@ -41,6 +50,7 @@ public class BatteryTestLifecycleService {
             optLogService.updateCache();
         }
     }
+
     public void complete(Long businessOptLogId, Integer packNum, Integer mode,
                          Integer address, boolean success) {
         if (businessOptLogId == null) {
@@ -54,16 +64,23 @@ public class BatteryTestLifecycleService {
     }
 
     public boolean stop(Integer packNum, Integer testType, Integer mode, Integer address) {
+        return stop(packNum, testType, mode, address, () -> true);
+    }
+
+    public boolean stop(Integer packNum, Integer testType, Integer mode, Integer address,
+                        StopAction action) {
         OptLog running = optLogService.getRunningOptLog(packNum, testType);
-        if (running == null) {
-            return false;
-        }
-        optLogService.updateRuntime(running.getId(), CANCELLED, 1);
-        if (mode != null) {
-            modeStatusService.markStopped(packNum, mode, address, true, running.getId());
-        }
-        optLogService.updateCache();
-        return true;
+        return finishAfterAction(running, mode, address, CANCELLED, 1, true, action);
+    }
+
+    public boolean completeAfterRestore(OptLog running, Integer mode, Integer address,
+                                        StopAction restoreAction) {
+        return finishAfterAction(running, mode, address, SUCCEEDED, 0, true, restoreAction);
+    }
+
+    public boolean interruptAfterRestore(OptLog running, StopAction restoreAction) {
+        return finishAfterAction(running, resolveMode(running == null ? null : running.getType()),
+                running == null ? null : running.getTargetAddress(), INTERRUPTED, 1, false, restoreAction);
     }
 
     public void interrupt(OptLog log) {
@@ -75,6 +92,26 @@ public class BatteryTestLifecycleService {
         if (mode != null) {
             modeStatusService.markStopped(log.getPackNum(), mode, log.getTargetAddress(), false, log.getId());
         }
+        optLogService.updateCache();
+    }
+
+    private boolean finishAfterAction(OptLog running, Integer mode, Integer address,
+                                      String finalStatus, Integer result, boolean modeSuccess,
+                                      StopAction action) {
+        if (running == null || running.getId() == null) {
+            return false;
+        }
+        optLogService.updateRuntime(running.getId(), STOPPING, null);
+        if (action != null && !action.execute()) {
+            optLogService.updateCache();
+            return false;
+        }
+        optLogService.updateRuntime(running.getId(), finalStatus, result);
+        if (mode != null) {
+            modeStatusService.markStopped(running.getPackNum(), mode, address, modeSuccess, running.getId());
+        }
+        optLogService.updateCache();
+        return true;
     }
 
     public Integer resolveMode(Integer testType) {
@@ -89,5 +126,10 @@ public class BatteryTestLifecycleService {
             return BatteryModeStatusService.MODE_CONNECT_RESISTANCE;
         }
         return null;
+    }
+
+    @FunctionalInterface
+    public interface StopAction {
+        boolean execute();
     }
 }

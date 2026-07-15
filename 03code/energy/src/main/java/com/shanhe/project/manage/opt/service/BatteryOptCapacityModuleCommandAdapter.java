@@ -79,14 +79,21 @@ public class BatteryOptCapacityModuleCommandAdapter extends ControlBase {
             return null;
         }
 
-        AjaxResult result = backupExternalModuleControlService.stopBackup(opt.getPackNum());
-        boolean success = Objects.equals(result.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value());
-        if (success) {
-            lifecycleService.stop(opt.getPackNum(), opt.getTestType(), null, null);
+        AjaxResult[] result = new AjaxResult[1];
+        boolean stopped = lifecycleService.stop(opt.getPackNum(), opt.getTestType(), null, null, () -> {
+            result[0] = backupExternalModuleControlService.stopBackup(opt.getPackNum());
+            return isSuccess(result[0]);
+        });
+        if (result[0] != null) {
+            return result[0];
         }
-        return result;
+        return stopped ? AjaxResult.success() : AjaxResult.error("未找到正在运行的备电测试", 0);
     }
 
+    private boolean isSuccess(AjaxResult result) {
+        return result != null
+                && Objects.equals(result.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value());
+    }
     private boolean isBackupTest(DevBatteryOpt opt) {
         return opt != null && BatteryTestEnum._5.getDictValue().equals(opt.getTestType());
     }

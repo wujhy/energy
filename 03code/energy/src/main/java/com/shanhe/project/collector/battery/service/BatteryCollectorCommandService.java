@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 980聚合命令兼容服务。
@@ -265,12 +266,19 @@ public class BatteryCollectorCommandService {
             return stopRejected("当前运行测试类型与停止类型不一致");
         }
 
-        int cancelled = collectorService == null ? 0 : collectorService.cancelQueuedModuleCommands(batteryGroup, mode);
+        AtomicInteger cancelled = new AtomicInteger();
         if (lifecycleService != null) {
-            if (!lifecycleService.stop(batteryGroup, optLogType, mode, modeInfo.getAddress())) {
+            boolean stopped = lifecycleService.stop(batteryGroup, optLogType, mode, modeInfo.getAddress(), () -> {
+                cancelled.set(collectorService == null ? 0
+                        : collectorService.cancelQueuedModuleCommands(batteryGroup, mode));
+                return true;
+            });
+            if (!stopped) {
                 return stopRejected("未找到对应的运行日志");
             }
         } else {
+            cancelled.set(collectorService == null ? 0
+                    : collectorService.cancelQueuedModuleCommands(batteryGroup, mode));
             closeRunningOptLog(batteryGroup, optLogType);
             batteryModeStatusService.markStopped(batteryGroup, mode, modeInfo.getAddress(), true);
         }
@@ -278,7 +286,7 @@ public class BatteryCollectorCommandService {
                 .success(true)
                 .timeout(false)
                 .mappedToModuleCommand(true)
-                .message("测试停止成功，已取消未下发命令" + cancelled + "条")
+                .message("测试停止成功，已取消未下发命令" + cancelled.get() + "条")
                 .build();
     }
     private BatteryCollectorCommandResult stopRejected(String reason) {

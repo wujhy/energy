@@ -682,7 +682,8 @@ public class BatteryCollectorCommandQueueService {
                     command.getBatteryGroup(),
                     command.getMode(),
                     command.getAddress(),
-                    command.getBusinessOptLogId() == null ? command.getOptLogId() : command.getBusinessOptLogId());
+                    command.getOptLogId(),
+                    command.getBusinessOptLogId());
         }
         return true;
     }
@@ -721,7 +722,7 @@ public class BatteryCollectorCommandQueueService {
                     command.getMode(), modeAddress(command), success);
         } else {
             batteryModeStatusService.markStopped(command.getBatteryGroup(), command.getMode(),
-                    modeAddress(command), success, command.getOptLogId());
+                    modeAddress(command), success, command.getOptLogId(), null);
         }
     }
     /**
@@ -739,7 +740,7 @@ public class BatteryCollectorCommandQueueService {
                     pendingRequest.getMode(), pendingRequest.getRequestAddress(), success);
         } else {
             batteryModeStatusService.markStopped(pendingRequest.getBatteryGroup(), pendingRequest.getMode(),
-                    pendingRequest.getRequestAddress(), success, pendingRequest.getOptLogId());
+                    pendingRequest.getRequestAddress(), success, pendingRequest.getOptLogId(), null);
         }
     }
     /** 获取模式关联地址，自动编号组命令使用实际电池数量作为旧接口展示地址。 */

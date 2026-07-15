@@ -237,7 +237,8 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
                 command.getBatteryGroup(),
                 command.getMode(),
                 command.getAddress(),
-                command.getBusinessOptLogId() == null ? command.getOptLogId() : command.getBusinessOptLogId());
+                command.getOptLogId(),
+                command.getBusinessOptLogId());
     }
 
     /** 校验通道配置的名称、串口、地址和电池组编号是否有效。 */

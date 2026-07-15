@@ -81,12 +81,17 @@ public class BatteryModeStatusService {
 
     /** 标记指定电池组进入测试/维护运行状态，并关联操作日志。 */
     public void markRunning(Integer packNum, int mode, Integer address, Long optLogId) {
+        markRunning(packNum, mode, address, optLogId, optLogId);
+    }
+
+    public void markRunning(Integer packNum, int mode, Integer address, Long optLogId, Long businessOptLogId) {
         BatteryModeInfo batteryModeInfo = new BatteryModeInfo();
         batteryModeInfo.setPackNum(packNum);
         batteryModeInfo.setResult(0);
         batteryModeInfo.setMode(mode);
         batteryModeInfo.setStatus(STATUS_RUNNING);
         batteryModeInfo.setAddress(address);
+        batteryModeInfo.setBusinessOptLogId(businessOptLogId);
         cacheAccessor.put(cacheKeyEnum.getCache(), cacheKey(packNum), batteryModeInfo);
         persistModeState(packNum, mode, address, String.valueOf(mode),
                 BatteryDeviceStateConstants.StateLevel.RUNNING, optLogId);
@@ -99,7 +104,18 @@ public class BatteryModeStatusService {
 
     /** 标记指定电池组测试/维护已停止，并关联操作日志。 */
     public void markStopped(Integer packNum, int mode, Integer address, boolean success, Long optLogId) {
+        markStopped(packNum, mode, address, success, optLogId, optLogId);
+    }
+
+    public void markStopped(Integer packNum, int mode, Integer address, boolean success,
+                            Long optLogId, Long businessOptLogId) {
         BatteryModeInfo previous = getStored(packNum);
+        if (businessOptLogId != null && previous != null && previous.getBusinessOptLogId() != null
+                && !businessOptLogId.equals(previous.getBusinessOptLogId())) {
+            log.debug("忽略非当前测试运行的模式停止, packNum={}, currentOptLogId={}, requestedOptLogId={}",
+                    packNum, previous.getBusinessOptLogId(), businessOptLogId);
+            return;
+        }
         BatteryModeInfo batteryModeInfo = new BatteryModeInfo();
         batteryModeInfo.setPackNum(packNum);
         batteryModeInfo.setResult(success ? 0 : 1);

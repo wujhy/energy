@@ -54,6 +54,18 @@ class BatteryModeStatusServiceTest {
         Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, service.get(2).getMode());
     }
     @Test
+    void shouldIgnoreLateStopFromPreviousBusinessRun() {
+        service.markRunning(2, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8, 200L);
+        service.markRunning(2, BatteryModeStatusService.MODE_CONNECT_RESISTANCE, 9, 201L);
+
+        service.markStopped(2, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8, true, 200L);
+
+        BatteryModeInfo modeInfo = service.get(2);
+        Assertions.assertEquals(BatteryModeStatusService.MODE_CONNECT_RESISTANCE, modeInfo.getMode());
+        Assertions.assertEquals(201L, modeInfo.getBusinessOptLogId());
+        Assertions.assertEquals(1, modeInfo.getStatus());
+    }
+    @Test
     void shouldMarkStoppedAndKeepLastMode() {
         service.markRunning(2, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8);
 
