@@ -18,6 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -128,8 +130,23 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
             return;
         }
         closeIfRunning(packNum, BatteryTestEnum._3.getDictValue());
-        closeIfRunning(packNum, BatteryTestEnum._5.getDictValue());
+        closeBackupIfConfirmedEnded(packNum);
         closeIfRunning(packNum, BatteryTestEnum._7.getDictValue());
+    }
+
+    /** `_5` 备电日志只在状态已非 BACKUP 且超过现场确认窗口时关闭，避免单帧状态波动误停。 */
+    private void closeBackupIfConfirmedEnded(Integer packNum) {
+        OptLog running = optLogService.getRunningOptLog(packNum, BatteryTestEnum._5.getDictValue());
+        if (running == null) {
+            return;
+        }
+        long confirmWindow = timeoutMillis(BatteryTestEnum._5.getDictValue());
+        Date progressTime = resolveProgressTime(running);
+        if (progressTime == null || System.currentTimeMillis() - progressTime.getTime() < confirmWindow) {
+            log.debug("备电运行日志未超过确认窗口，暂不补偿关闭, packNum={}, optLogId={}", packNum, running.getId());
+            return;
+        }
+        closeIfRunning(packNum, BatteryTestEnum._5.getDictValue());
     }
 
     private void closeResistanceLogIfEnded(Integer packNum, Integer resistanceTestStatusValue) {
@@ -221,8 +238,8 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
         if (log == null || log.getId() == null || log.getPackNum() == null) {
             return false;
         }
-        Date startTime = log.getCreateTime() == null ? log.getUpdateTime() : log.getCreateTime();
-        if (startTime == null || now - startTime.getTime() < timeoutMillis(log.getType())) {
+        Date progressTime = resolveProgressTime(log);
+        if (progressTime == null || now - progressTime.getTime() < timeoutMillis(log.getType())) {
             return false;
         }
         if (BatteryTestEnum._5.getDictValue().equals(log.getType())) {
@@ -233,6 +250,26 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
         return modeInfo == null
                 || !Objects.equals(modeInfo.getPackNum(), log.getPackNum())
                 || !Objects.equals(modeInfo.getStatus(), 1);
+    }
+
+    /** 超时窗口按无进展时长判断：优先最后进展时间，缺失时退化到创建/更新时间。 */
+    private Date resolveProgressTime(OptLog log) {
+        Date progress = parseTime(log.getLastProgressAt());
+        if (progress != null) {
+            return progress;
+        }
+        return log.getCreateTime() == null ? log.getUpdateTime() : log.getCreateTime();
+    }
+
+    private Date parseTime(String text) {
+        if (text == null || text.isEmpty()) {
+            return null;
+        }
+        try {
+            return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(text);
+        } catch (ParseException e) {
+            return null;
+        }
     }
 
     private Boolean isRealtimeBackup(Integer packNum) {
@@ -258,16 +295,19 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
 
     private long timeoutMillis(Integer testType) {
         if (BatteryTestEnum._5.getDictValue().equals(testType)) {
-            return batteryCollectorProperties.getBackupRuntimeRecoveryConfirmMs() == null ?
-                    12L * HOUR : batteryCollectorProperties.getBackupRuntimeRecoveryConfirmMs();
+            return orDefault(batteryCollectorProperties.getBackupRuntimeRecoveryConfirmMs(), 12L * HOUR);
         }
         if (BatteryTestEnum._6.getDictValue().equals(testType)) {
-            return 30L * MINUTE;
+            return orDefault(batteryCollectorProperties.getSingleResistanceRuntimeRecoveryConfirmMs(), 30L * MINUTE);
         }
         if (BatteryTestEnum._1.getDictValue().equals(testType)
                 || BatteryTestEnum._2.getDictValue().equals(testType)) {
-            return 6L * HOUR;
+            return orDefault(batteryCollectorProperties.getResistanceRuntimeRecoveryConfirmMs(), 6L * HOUR);
         }
         return 12L * HOUR;
+    }
+
+    private long orDefault(Long value, long defaultValue) {
+        return value == null ? defaultValue : value;
     }
 }

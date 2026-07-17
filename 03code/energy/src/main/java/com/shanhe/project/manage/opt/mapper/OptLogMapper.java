@@ -34,6 +34,13 @@ public interface OptLogMapper {
                        @Param("endedAt") String endedAt);
 
     /**
+     * 刷新业务运行进展时间；日志已终态时不生效。
+     *
+     * @param id 记录ID
+     */
+    void touchProgress(@Param("id") Long id);
+
+    /**
      * 查询操作日志
      *
      * @param optLog 查询参数

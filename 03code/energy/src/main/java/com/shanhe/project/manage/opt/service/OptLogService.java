@@ -37,6 +37,9 @@ public interface OptLogService {
     /** 更新测试运行状态，并兼容旧 result 字段。 */
     void updateRuntime(Long id, String status, Integer result);
 
+    /** 刷新业务运行进展时间；日志已终态时不生效。 */
+    void touchProgress(Long id);
+
     /**
      * 查询操作日志
      *

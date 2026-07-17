@@ -76,6 +76,8 @@ public class OptLog extends BaseEntity {
     private String startedAt;
     /** 结束时间。 */
     private String endedAt;
+    /** 最后进展时间，业务运行推进时刷新。 */
+    private String lastProgressAt;
 
     ///////////////////////////////////////// 缓存
 

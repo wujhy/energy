@@ -50,6 +50,13 @@ public class BatteryTestLifecycleService {
         }
     }
 
+    /** 业务运行有实际推进时刷新进展时间；队列与 pending 只经此入口推进，不暴露内部命令字段。 */
+    public void touchProgress(Long businessOptLogId) {
+        if (businessOptLogId != null) {
+            optLogService.touchProgress(businessOptLogId);
+        }
+    }
+
     public void complete(Long businessOptLogId, Integer packNum, Integer mode,
                          Integer address, boolean success) {
         if (businessOptLogId == null) {

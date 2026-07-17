@@ -96,8 +96,51 @@ class BatteryOptRuntimeRecoveryServiceTest {
         fixture.service.process(context);
 
         Mockito.verify(fixture.optLogService).doStopTest(1, BatteryTestEnum._3.getDictValue());
-        Mockito.verify(fixture.optLogService).doStopTest(1, BatteryTestEnum._5.getDictValue());
+        // _5 未超过确认窗口时保留，避免单帧状态波动误停备电
+        Mockito.verify(fixture.optLogService, Mockito.never()).doStopTest(1, BatteryTestEnum._5.getDictValue());
         Mockito.verify(fixture.optLogService).doStopTest(1, BatteryTestEnum._7.getDictValue());
+    }
+
+    @Test
+    void shouldCloseBackupLogByRealtimeStatusOnlyAfterConfirmWindow() {
+        Fixture fixture = new Fixture();
+        OptLog backup = backupLog();
+        backup.setLastProgressAt(timeText(System.currentTimeMillis() - 13L * 60L * 60L * 1000L));
+        Mockito.when(fixture.optLogService.getRunningOptLog(Mockito.eq(1), Mockito.anyInt()))
+                .thenAnswer(invocation -> {
+                    Integer type = invocation.getArgument(1);
+                    return BatteryTestEnum._5.getDictValue().equals(type) ? backup : runningLog(type);
+                });
+        BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .pollBatchNo("batch-1")
+                .group(group(6, null, "batch-1"))
+                .build();
+
+        fixture.service.process(context);
+
+        Mockito.verify(fixture.optLogService).doStopTest(1, BatteryTestEnum._5.getDictValue());
+    }
+
+    @Test
+    void shouldKeepBackupLogByRealtimeStatusWhenProgressFresh() {
+        Fixture fixture = new Fixture();
+        OptLog backup = backupLog();
+        backup.setLastProgressAt(timeText(System.currentTimeMillis() - 60_000L));
+        Mockito.when(fixture.optLogService.getRunningOptLog(Mockito.eq(1), Mockito.anyInt()))
+                .thenAnswer(invocation -> {
+                    Integer type = invocation.getArgument(1);
+                    return BatteryTestEnum._5.getDictValue().equals(type) ? backup : runningLog(type);
+                });
+        BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .pollBatchNo("batch-1")
+                .group(group(6, null, "batch-1"))
+                .build();
+
+        fixture.service.process(context);
+
+        Mockito.verify(fixture.optLogService, Mockito.never()).doStopTest(1, BatteryTestEnum._5.getDictValue());
     }
 
     @Test
@@ -147,6 +190,10 @@ class BatteryOptRuntimeRecoveryServiceTest {
         log.setType(BatteryTestEnum._5.getDictValue());
         log.setCreateTime(new Date(System.currentTimeMillis() - 13L * 60L * 60L * 1000L));
         return log;
+    }
+
+    private static String timeText(long epochMillis) {
+        return new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(epochMillis));
     }
 
 

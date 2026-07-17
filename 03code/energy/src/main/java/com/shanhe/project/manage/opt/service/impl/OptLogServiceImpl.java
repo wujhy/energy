@@ -83,6 +83,14 @@ public class OptLogServiceImpl implements OptLogService {
     }
 
     @Override
+    public void touchProgress(Long id) {
+        if (id == null) {
+            return;
+        }
+        optLogMapper.touchProgress(id);
+    }
+
+    @Override
     public List<OptLog> select(OptLog optLog) {
         List<OptLog> optLogList = optLogMapper.select(optLog);
         Map<Integer, Double> batCapacityMap = new HashMap<>(16);

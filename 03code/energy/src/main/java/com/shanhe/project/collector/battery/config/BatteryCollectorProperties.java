@@ -56,6 +56,12 @@ public class BatteryCollectorProperties {
     /** _5 备电运行日志补偿前等待实时状态离开 BACKUP 的确认窗口。 */
     private Long backupRuntimeRecoveryConfirmMs = 12L * 60L * 60L * 1000L;
 
+    /** _1/_2 内阻/连接条测试无进展补偿窗口；现场确认典型耗时后调整。 */
+    private Long resistanceRuntimeRecoveryConfirmMs = 6L * 60L * 60L * 1000L;
+
+    /** _6 单节内阻测试无进展补偿窗口；现场确认典型耗时后调整。 */
+    private Long singleResistanceRuntimeRecoveryConfirmMs = 30L * 60L * 1000L;
+
     /** 组计算时单体实时数据的新鲜度阈值。 */
     private Long groupCalculationStaleThresholdMs = 180_000L;
 

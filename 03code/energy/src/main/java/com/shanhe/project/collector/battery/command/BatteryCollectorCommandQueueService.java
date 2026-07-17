@@ -397,6 +397,9 @@ public class BatteryCollectorCommandQueueService {
             return false;
         }
         pendingRequest.setConnectResistanceNextAddress(address + 1);
+        if (lifecycleService != null) {
+            lifecycleService.touchProgress(pendingRequest.getBusinessOptLogId());
+        }
         return true;
     }
 
@@ -684,6 +687,9 @@ public class BatteryCollectorCommandQueueService {
                     command.getAddress(),
                     command.getOptLogId(),
                     command.getBusinessOptLogId());
+        }
+        if (lifecycleService != null) {
+            lifecycleService.touchProgress(command.getBusinessOptLogId());
         }
         return true;
     }

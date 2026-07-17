@@ -32,13 +32,14 @@
         <result property="pollBatchNo" column="poll_batch_no" />
         <result property="startedAt" column="started_at" />
         <result property="endedAt" column="ended_at" />
+        <result property="lastProgressAt" column="last_progress_at" />
     </resultMap>
 
     <sql id="Base_Column_List">
         id,config_id,pack_num,type,content,result,create_time,update_time,bcapacity,current,discharge_capacity,
         source,channel_name,target_type,target_address,mode,status,request_code,response_code,
         protocol_code,command_name,request_payload,response_payload,error_message,
-        poll_batch_no,started_at,ended_at
+        poll_batch_no,started_at,ended_at,last_progress_at
     </sql>
 
     <!-- 插入操作日志 -->
@@ -46,11 +47,11 @@
         insert into dev_opt_log (id,config_id,pack_num,type,content,result,create_time,
             source,channel_name,target_type,target_address,mode,status,
             request_code,response_code,protocol_code,command_name,
-            request_payload,response_payload,error_message,poll_batch_no,started_at,ended_at)
+            request_payload,response_payload,error_message,poll_batch_no,started_at,ended_at,last_progress_at)
         values (#{id},#{configId},#{packNum},#{type},#{content},#{result},#{createTimeStr},
             #{source},#{channelName},#{targetType},#{targetAddress},#{mode},#{status},
             #{requestCode},#{responseCode},#{protocolCode},#{commandName},
-            #{requestPayload},#{responsePayload},#{errorMessage},#{pollBatchNo},#{startedAt},#{endedAt})
+            #{requestPayload},#{responsePayload},#{errorMessage},#{pollBatchNo},#{startedAt},#{endedAt},#{createTimeStr})
     </insert>
 
     <!-- 更新操作结果 -->
@@ -66,7 +67,15 @@
         set status = #{status},
             result = #{result},
             <if test="endedAt != null">ended_at = #{endedAt},</if>
+            last_progress_at = strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime'),
             update_time = strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')
+        where id = #{id} and result is null
+    </update>
+
+    <!-- 刷新业务运行进展时间；终态后不可再刷 -->
+    <update id="touchProgress">
+        update dev_opt_log
+        set last_progress_at = strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')
         where id = #{id} and result is null
     </update>
     <!-- 查询操作日志列表 -->
