@@ -139,17 +139,52 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
         }
         Integer type = running.getType();
         if (BatteryTestEnum._1.getDictValue().equals(type)) {
-            closeResistanceLogIfEnded(packNum, group.getResistanceTestStatus());
+            closeResistanceLogIfEnded(running, group.getResistanceTestStatus());
             return;
         }
         if (BatteryTestEnum._3.getDictValue().equals(type)
                 || BatteryTestEnum._5.getDictValue().equals(type)
                 || BatteryTestEnum._7.getDictValue().equals(type)) {
-            closeBatteryPackLogIfEnded(packNum, running, group);
+            closeBatteryPackLogIfEnded(running, group);
         }
     }
 
-    private void closeBatteryPackLogIfEnded(Integer packNum, OptLog running, BatteryModuleGroupRealtime group) {
+    /**
+     * 定时兜底：采集数据缺失时备电时长到期也能停止 `_5` 并关闭外设。
+     * 截止电压依赖实时值，仍由采集后处理评估。
+     *
+     * @return 停止的运行数
+     */
+    public int autoStopExpiredBackupRuns() {
+        if (optLogService == null || lifecycleService == null || devBatteryOptService == null
+                || !Boolean.TRUE.equals(batteryCollectorProperties.getBackupAutoStopEnabled())) {
+            return 0;
+        }
+        List<OptLog> runningLogs = optLogService.selectRunningList(null);
+        if (runningLogs == null || runningLogs.isEmpty()) {
+            return 0;
+        }
+        int stopped = 0;
+        for (OptLog running : runningLogs) {
+            if (!BatteryTestEnum._5.getDictValue().equals(running.getType())
+                    || running.getPackNum() == null || withinStartupGrace(running)) {
+                continue;
+            }
+            DevBatteryOpt opt = devBatteryOptService.selectDevBatteryOptByPackNum(
+                    running.getPackNum(), BatteryTestEnum._5.getDictValue());
+            if (opt == null) {
+                continue;
+            }
+            String reason = resolveBackupStopReason(opt, running, null);
+            if (reason != null && stopBackupRun(running, reason)) {
+                stopped++;
+            }
+        }
+        return stopped;
+    }
+
+    private void closeBatteryPackLogIfEnded(OptLog running, BatteryModuleGroupRealtime group) {
+        Integer packNum = running.getPackNum();
         Integer type = running.getType();
         String batteryPackStatus = Objects.toString(group.getBatteryPackStatus(), null);
         if (BatteryPackStatusEnum.find(batteryPackStatus) == null) {
@@ -159,34 +194,40 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
         if (isActiveBatteryPackStatus(batteryPackStatus)) {
             backupEndFirstSeen.remove(packNum);
             if (BatteryTestEnum._5.getDictValue().equals(type)) {
-                evaluateBackupAutoStop(packNum, running, group);
+                evaluateBackupAutoStop(running, group);
             }
             return;
         }
         if (BatteryTestEnum._5.getDictValue().equals(type)) {
-            closeBackupIfConfirmedEnded(packNum);
+            closeBackupIfConfirmedEnded(running);
             return;
         }
-        closeIfRunning(packNum, type);
+        closeRunningByRealtime(running);
     }
 
     /**
      * `_5` 自动停止评估：按 `DevBatteryOpt` 计划的截止电压/备电时长（对应 M460 0x30 下层停止语义）主动停止，
      * 命中后按计划完成语义走 STOPPING 两阶段关闭并停止外部备电模块。
      */
-    private void evaluateBackupAutoStop(Integer packNum, OptLog running, BatteryModuleGroupRealtime group) {
+    private void evaluateBackupAutoStop(OptLog running, BatteryModuleGroupRealtime group) {
         if (!Boolean.TRUE.equals(batteryCollectorProperties.getBackupAutoStopEnabled())
                 || devBatteryOptService == null || lifecycleService == null) {
             return;
         }
-        DevBatteryOpt opt = devBatteryOptService.selectDevBatteryOptByPackNum(packNum, BatteryTestEnum._5.getDictValue());
+        DevBatteryOpt opt = devBatteryOptService.selectDevBatteryOptByPackNum(
+                running.getPackNum(), BatteryTestEnum._5.getDictValue());
         if (opt == null) {
             return;
         }
         String reason = resolveBackupStopReason(opt, running, group);
-        if (reason == null) {
-            return;
+        if (reason != null) {
+            stopBackupRun(running, reason);
         }
+    }
+
+    /** 按完成语义停止备电运行并关闭外设；返回是否已确认停止。 */
+    private boolean stopBackupRun(OptLog running, String reason) {
+        Integer packNum = running.getPackNum();
         boolean stopped = lifecycleService.completeAfterRestore(running, null, null,
                 () -> isSuccess(backupExternalModuleControlService.stopBackup(packNum)));
         if (stopped) {
@@ -194,14 +235,20 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
         } else {
             log.warn("备电测试命中自动停止条件但外设停止未确认, packNum={}, optLogId={}, 原因={}", packNum, running.getId(), reason);
         }
+        return stopped;
     }
 
-    /** 返回命中的停止原因；未命中返回 null。缺失参数或缺失实时值不参与判断，不用假默认值驱动停止。 */
+    /**
+     * 返回命中的停止原因；未命中返回 null。缺失参数或缺失实时值不参与判断，不用假默认值驱动停止。
+     * `group` 为 null 时（采集缺失的定时兜底）只评估备电时长。
+     */
     private String resolveBackupStopReason(DevBatteryOpt opt, OptLog running, BatteryModuleGroupRealtime group) {
-        Double endVoltage = opt.getEndVoltage();
-        Double packVoltage = group.getPackVoltage() != null ? group.getPackVoltage() : group.getExternalVoltage();
-        if (endVoltage != null && endVoltage > 0 && packVoltage != null && packVoltage <= endVoltage) {
-            return String.format("组电压 %.3fV 已达截止电压 %.3fV", packVoltage, endVoltage);
+        if (group != null) {
+            Double endVoltage = opt.getEndVoltage();
+            Double packVoltage = group.getPackVoltage() != null ? group.getPackVoltage() : group.getExternalVoltage();
+            if (endVoltage != null && endVoltage > 0 && packVoltage != null && packVoltage <= endVoltage) {
+                return String.format("组电压 %.3fV 已达截止电压 %.3fV", packVoltage, endVoltage);
+            }
         }
         Integer dischargeTime = opt.getDischargeTime();
         Date createTime = running.getCreateTime();
@@ -223,12 +270,8 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
     }
 
     /** `_5` 备电日志需实时状态持续离开 BACKUP 超过防抖窗口才关闭，单帧波动会被活跃状态重置。 */
-    private void closeBackupIfConfirmedEnded(Integer packNum) {
-        OptLog running = optLogService.getRunningOptLog(packNum, BatteryTestEnum._5.getDictValue());
-        if (running == null) {
-            backupEndFirstSeen.remove(packNum);
-            return;
-        }
+    private void closeBackupIfConfirmedEnded(OptLog running) {
+        Integer packNum = running.getPackNum();
         long now = System.currentTimeMillis();
         long firstSeen = backupEndFirstSeen.computeIfAbsent(packNum, key -> now);
         // 新启动的备电测试从日志创建时间起算，避免残留的离开标记立即关闭新任务
@@ -240,10 +283,10 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
             return;
         }
         backupEndFirstSeen.remove(packNum);
-        closeIfRunning(packNum, BatteryTestEnum._5.getDictValue());
+        closeRunningByRealtime(running);
     }
 
-    private void closeResistanceLogIfEnded(Integer packNum, Integer resistanceTestStatusValue) {
+    private void closeResistanceLogIfEnded(OptLog running, Integer resistanceTestStatusValue) {
         String resistanceTestStatus = Objects.toString(resistanceTestStatusValue, null);
         if (ResistanceTestStatusEnum.find(resistanceTestStatus) == null) {
             return;
@@ -251,15 +294,14 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
         if (ResistanceTestStatusEnum.isCode(resistanceTestStatus, ResistanceTestStatusEnum.TESTING)) {
             return;
         }
-        closeIfRunning(packNum, BatteryTestEnum._1.getDictValue());
+        closeRunningByRealtime(running);
     }
 
-    private void closeIfRunning(Integer packNum, Integer type) {
+    /** 按采集状态自然结束语义关闭已确认的运行日志。 */
+    private void closeRunningByRealtime(OptLog running) {
+        Integer packNum = running.getPackNum();
+        Integer type = running.getType();
         try {
-            OptLog running = optLogService.getRunningOptLog(packNum, type);
-            if (running == null) {
-                return;
-            }
             if (lifecycleService != null) {
                 if (BatteryTestEnum._5.getDictValue().equals(type)) {
                     boolean restored = lifecycleService.completeAfterRestore(running, null, null,

@@ -61,6 +61,7 @@ public class BatteryOptScheduleJob {
     /** 扫描并执行到期的蓄电池测试计划。 */
     @Scheduled(cron = "${job.batteryOptSchedule:0 0/1 * * * ?}")
     public void executeDueBatteryOpt() {
+        autoStopExpiredBackupRuns();
         DevBatteryOpt query = new DevBatteryOpt();
         query.setIsEnabled(YesNoEnum.YES.getDictValue());
         List<DevBatteryOpt> optList = devBatteryOptService.selectDevBatteryOptList(query);
@@ -122,6 +123,18 @@ public class BatteryOptScheduleJob {
             recordScheduleResult(opt, "ERROR", e.getMessage());
         } finally {
             runningKeys.remove(key);
+        }
+    }
+
+    /** 定时兜底：采集数据缺失时备电时长到期也能停止 `_5` 并关闭外设。 */
+    private void autoStopExpiredBackupRuns() {
+        try {
+            int stopped = batteryOptRuntimeRecoveryService.autoStopExpiredBackupRuns();
+            if (stopped > 0) {
+                log.info("备电时长到期定时兜底已停止运行, stopped={}", stopped);
+            }
+        } catch (Exception e) {
+            log.warn("备电时长到期定时兜底执行异常, 原因={}", e.getMessage());
         }
     }
 

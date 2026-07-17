@@ -286,6 +286,53 @@ class BatteryOptRuntimeRecoveryServiceTest {
     }
 
     @Test
+    void shouldAutoStopExpiredBackupRunWithoutRealtimeData() {
+        Fixture fixture = new Fixture();
+        ReflectionTestUtils.setField(fixture.service, "lifecycleService", fixture.lifecycleService);
+        OptLog backup = backupLog();
+        Mockito.when(fixture.optLogService.selectRunningList(null))
+                .thenReturn(Collections.singletonList(backup));
+        DevBatteryOpt opt = new DevBatteryOpt();
+        opt.setPackNum(1);
+        opt.setTestType(BatteryTestEnum._5.getDictValue());
+        opt.setDischargeTime(60);
+        opt.setEndVoltage(45.0D);
+        Mockito.when(fixture.devBatteryOptService.selectDevBatteryOptByPackNum(1, BatteryTestEnum._5.getDictValue()))
+                .thenReturn(opt);
+        Mockito.when(fixture.lifecycleService.completeAfterRestore(Mockito.eq(backup), Mockito.isNull(),
+                Mockito.isNull(), Mockito.any())).thenReturn(true);
+
+        // 无采集数据：定时兜底按备电时长到期停止，截止电压不参与判断
+        int stopped = fixture.service.autoStopExpiredBackupRuns();
+
+        org.junit.jupiter.api.Assertions.assertEquals(1, stopped);
+        Mockito.verify(fixture.lifecycleService).completeAfterRestore(Mockito.eq(backup), Mockito.isNull(),
+                Mockito.isNull(), Mockito.any());
+    }
+
+    @Test
+    void shouldNotAutoStopExpiredBackupRunBeforeDischargeTime() {
+        Fixture fixture = new Fixture();
+        ReflectionTestUtils.setField(fixture.service, "lifecycleService", fixture.lifecycleService);
+        OptLog backup = backupLog();
+        // 运行 13 小时，计划放电时长 14 小时：未到期不停止
+        Mockito.when(fixture.optLogService.selectRunningList(null))
+                .thenReturn(Collections.singletonList(backup));
+        DevBatteryOpt opt = new DevBatteryOpt();
+        opt.setPackNum(1);
+        opt.setTestType(BatteryTestEnum._5.getDictValue());
+        opt.setDischargeTime(14 * 60);
+        Mockito.when(fixture.devBatteryOptService.selectDevBatteryOptByPackNum(1, BatteryTestEnum._5.getDictValue()))
+                .thenReturn(opt);
+
+        int stopped = fixture.service.autoStopExpiredBackupRuns();
+
+        org.junit.jupiter.api.Assertions.assertEquals(0, stopped);
+        Mockito.verify(fixture.lifecycleService, Mockito.never()).completeAfterRestore(
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
     void shouldRejectRealtimePostProcessWhenBatchMismatched() {
         Fixture fixture = new Fixture();
         Mockito.when(fixture.optLogService.getRunningOptLog(Mockito.eq(1), Mockito.anyInt()))
