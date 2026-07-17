@@ -128,7 +128,6 @@ public class RestoreServiceImpl implements RestoreService {
 
         // 删除操作日志
         optLogService.deleteDefaultDeviceLogs();
-        optLogService.updateCache();
 
         // 删除统计数据
         statBatteryBatService.deleteByPackNum(null);
@@ -202,7 +201,6 @@ public class RestoreServiceImpl implements RestoreService {
 
         // 删除操作日志
         optLogService.deleteByPackNum(batterySetVO.getPackNum());
-        optLogService.updateCache();
 
         // 删除统计数据
         statBatteryBatService.deleteByPackNum(batterySetVO.getPackNum());

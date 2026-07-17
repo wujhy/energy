@@ -2,11 +2,9 @@ package com.shanhe.project.manage.stat.service;
 
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
-import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.stat.domain.StatBatteryPack;
 
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -23,15 +21,6 @@ public interface IStatBatteryPackService {
      * @return 电池组统计集合
      */
     List<StatBatteryPack> selectList(StatBatteryPack statBatteryPack);
-
-    /**
-     * 新增电池组统计
-     *
-     * @param packNum 电池组编号
-     * @param packMap 电池组参数
-     * @param batteryList 单体数据
-     */
-    void insertList(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList);
 
     /**
      * 新增标准实时模型电池组统计。

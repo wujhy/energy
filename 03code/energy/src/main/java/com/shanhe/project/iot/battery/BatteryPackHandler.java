@@ -3,8 +3,6 @@ package com.shanhe.project.iot.battery;
 import cn.hutool.core.util.StrUtil;
 import com.shanhe.common.constant.Constants;
 import com.shanhe.framework.enums.BatteryPackStatusEnum;
-import com.shanhe.common.utils.CacheUtils;
-import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
@@ -12,15 +10,12 @@ import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.domain.Config;
-import com.shanhe.project.manage.config.service.BatteryReportLogService;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.config.service.IConfigService;
 import com.shanhe.project.manage.capacity.service.PreBatteryGroupService;
 import com.shanhe.project.manage.capacity.vo.PreBatteryGroup;
 import com.shanhe.project.manage.capacity.vo.PreBatteryVo;
-import com.shanhe.project.manage.stat.service.IStatBatteryPackService;
 import com.shanhe.project.manage.stat.service.IStatBatteryResService;
-import com.shanhe.project.iot.service.DataService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -47,21 +42,12 @@ public class BatteryPackHandler {
     /** 配置服务。 */
     @Resource
     private IConfigService configService;
-    /** 蓄电池上报日志服务。 */
-    @Resource
-    private BatteryReportLogService batteryReportLogService;
-    /** 电池组统计服务。 */
-    @Resource
-    private IStatBatteryPackService statBatteryPackService;
     /** 电池内阻统计服务。 */
     @Resource
     private IStatBatteryResService statBatteryResService;
     /** 预估电池组服务。 */
     @Resource
     private PreBatteryGroupService preBatteryGroupService;
-    /** 数据服务。 */
-    @Resource
-    private DataService dataService;
 
     /**
      * 上传电池组实时数据
@@ -210,12 +196,6 @@ public class BatteryPackHandler {
                                           Map<String, Object> packMap,
                                           List<BatteryMonitor> batteryList,
                                           BatteryReportLog oldInfo) {
-
-        try {
-            statBatteryPackService.insertList(packNum, packMap, batteryList);
-        } catch (Exception e) {
-            log.error("数据迁移异常 imei {} 电池组编号 {} ", config.getConfigId(), packNum, e);
-        }
 
         try {
             statBatteryResService.init(packNum, packMap, batteryList, oldInfo);

@@ -78,10 +78,6 @@ public class OptLog extends BaseEntity {
     private String endedAt;
 
     ///////////////////////////////////////// 缓存
-    /** 是否保存 */
-    private boolean isSave = false;
-    /** 次数 */
-    private int count = 0;
 
 
 }

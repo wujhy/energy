@@ -81,7 +81,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         }
 
         // 更新操作日志
-        optLogService.updateBatteryBcapacity(optLog.getId(), preBatteryGroup.getDischargeCapacity(), preBatteryGroup.getBcapacity(), preBatteryGroup.getCurrent(), preBatteryGroup.getEndTime());
+        optLogService.updateBatteryCapacity(optLog.getId(), preBatteryGroup.getDischargeCapacity(), preBatteryGroup.getBcapacity(), preBatteryGroup.getCurrent(), preBatteryGroup.getEndTime());
     }
 
     /** 计算电池组预估容量。 */

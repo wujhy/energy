@@ -5,7 +5,6 @@ import com.shanhe.project.manage.opt.domain.OptLog;
 import java.util.Date;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 设备操作日志
@@ -14,16 +13,6 @@ import java.util.Map;
  * @since 2025/7/9
  */
 public interface OptLogService {
-
-    /**
-     * 插入操作日志
-     *
-     * @param packNum 组序号
-     * @param type 操作类型
-     * @param result 结果
-     * @return 记录ID
-     */
-    Long insert(Integer packNum, Integer type, Integer result);
 
     /**
      * 插入操作日志。
@@ -35,16 +24,6 @@ public interface OptLogService {
      * @return 记录ID
      */
     Long insert(Integer packNum, Integer type, Integer result, String source);
-
-    /**
-     * 插入操作日志
-     *
-     * @param params 操作参数
-     * @param result 结果
-     * @return 记录ID
-     */
-    Long insert(Map<String, Object> params, Integer result);
-
 
     /**
      * 更新操作日志
@@ -84,21 +63,14 @@ public interface OptLogService {
 
     /**
      * 删除历史记录
-     *
      */
     void deleteDefaultDeviceLogs();
 
     /** 更新缓存 */
     void updateCache();
 
-    /**
-     * 查询未完成缓存日志
-     *
-     * @param packNum 组序号
-     * @param type 操作类型
-     * @return 操作日志
-     */
-    OptLog selectNotFinishedCacheLog(Integer packNum, Integer type);
+    /** 查询指定电池组当前运行中的缓存日志。 */
+    OptLog selectRunningCacheLog(Integer packNum);
 
     /**
      * 查询设备是否正在执行测试操作
@@ -123,11 +95,11 @@ public interface OptLogService {
      *
      * @param optId 操作记录ID
      * @param dischargeCapacity 放电容量
-     * @param bcapacity 预估容量
+     * @param capacity 预估容量
      * @param current 放电电流
      * @param endTime 结束时间
      */
-    void updateBatteryBcapacity(Long optId, Double dischargeCapacity, Double bcapacity, Double current, Date endTime);
+    void updateBatteryCapacity(Long optId, Double dischargeCapacity, Double capacity, Double current, Date endTime);
 
     /**
      * 获取最后一次操作记录

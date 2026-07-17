@@ -29,7 +29,7 @@ class OptLogServiceImplTest {
         ReflectionTestUtils.setField(service, "optLogMapper", optLogMapper);
         ReflectionTestUtils.setField(service, "batteryPackService", batteryPackService);
 
-        service.insert(2, 1, 0);
+        service.insert(2, 1, 0, null);
 
         ArgumentCaptor<OptLog> captor = ArgumentCaptor.forClass(OptLog.class);
         Mockito.verify(optLogMapper).insert(captor.capture());
@@ -145,7 +145,7 @@ class OptLogServiceImplTest {
     }
 
     @Test
-    void runningInsertShouldPopulateGeneralSlot() {
+    void runningInsertShouldPopulateExactTypeKey() {
         OptLogServiceImpl service = new OptLogServiceImpl();
         OptLogMapper mapper = Mockito.mock(OptLogMapper.class);
         TestLogCacheAccessor cache = new TestLogCacheAccessor();
@@ -154,7 +154,7 @@ class OptLogServiceImplTest {
 
         Long id = service.insert(2, 5, null, "web");
 
-        OptLog cached = (OptLog) cache.get("log:2:1");
+        OptLog cached = (OptLog) cache.get("log:2:5");
         Assertions.assertNotNull(cached);
         Assertions.assertEquals(id, cached.getId());
         Assertions.assertNotNull(cached.getCreateTime());

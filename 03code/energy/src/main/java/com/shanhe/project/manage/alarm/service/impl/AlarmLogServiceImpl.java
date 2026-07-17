@@ -226,7 +226,8 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
                 existingKeys.add(communicationAlarmKey(alarmLog));
             }
         }
-        alarmLogList.addAll(buildStateCommunicationAlarms(null, existingKeys));
+        // 通讯状态告警合并暂停用：与在线校验/缓存告警是否重复，随 TASK-ALARM-REFORM-001 统一梳理
+//        alarmLogList.addAll(buildStateCommunicationAlarms(null, existingKeys));
         return alarmLogList;
     }
 
@@ -1009,7 +1010,8 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
                 }
             }
         }
-        alarmLogs.addAll(buildStateCommunicationAlarms(packNum, existingKeys));
+        // 通讯状态告警合并暂停用：与在线校验/缓存告警是否重复，随 TASK-ALARM-REFORM-001 统一梳理
+//        alarmLogs.addAll(buildStateCommunicationAlarms(packNum, existingKeys));
         return alarmLogs;
     }
 
