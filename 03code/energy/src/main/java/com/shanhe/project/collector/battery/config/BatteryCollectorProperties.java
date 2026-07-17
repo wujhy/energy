@@ -56,6 +56,15 @@ public class BatteryCollectorProperties {
     /** _5 备电运行日志补偿前等待实时状态离开 BACKUP 的确认窗口。 */
     private Long backupRuntimeRecoveryConfirmMs = 12L * 60L * 60L * 1000L;
 
+    /** _5 采集后处理关闭备电日志前，实时状态需持续离开 BACKUP 的防抖确认窗口。 */
+    private Long backupEndConfirmMs = 180_000L;
+
+    /** 测试启动后采集状态的滞后宽限期；宽限期内不做状态自然结束补偿和自动停止评估。 */
+    private Long testStartupStatusGraceMs = 120_000L;
+
+    /** 是否启用 _5 备电自动停止评估（截止电压/备电时长，对应 M460 0x30 下层停止语义）。 */
+    private Boolean backupAutoStopEnabled = Boolean.TRUE;
+
     /** _1/_2 内阻/连接条测试无进展补偿窗口；现场确认典型耗时后调整。 */
     private Long resistanceRuntimeRecoveryConfirmMs = 6L * 60L * 60L * 1000L;
 

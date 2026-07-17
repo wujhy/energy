@@ -13,6 +13,8 @@ import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProce
 import com.shanhe.project.collector.battery.postprocess.PostProcessBatchGuard;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
+import com.shanhe.project.manage.config.domain.DevBatteryOpt;
+import com.shanhe.project.manage.config.service.IDevBatteryOptService;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,7 +24,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 收口崩溃、异常停止和采集状态自然结束后的蓄电池测试运行态。
@@ -37,6 +41,9 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
     private static final long MINUTE = 60_000L;
     private static final long HOUR = 60L * MINUTE;
 
+    /** 各电池组实时状态首次离开 BACKUP 的时间；活跃状态帧会重置。 */
+    private final Map<Integer, Long> backupEndFirstSeen = new ConcurrentHashMap<>();
+
     @Resource
     private OptLogService optLogService;
     @Resource
@@ -49,6 +56,8 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
     private BatteryTestLifecycleService lifecycleService;
     @Resource
     private BackupExternalModuleControlService backupExternalModuleControlService;
+    @Resource
+    private IDevBatteryOptService devBatteryOptService;
 
     @Override
     public String getName() {
@@ -116,36 +125,121 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
         if (packNum == null || group == null || optLogService == null) {
             return;
         }
-        closeBatteryPackLogsIfEnded(packNum, group.getBatteryPackStatus());
-        closeResistanceLogIfEnded(packNum, group.getResistanceTestStatus());
+        // 先查运行缓存；无运行中的测试任务直接返回，不做状态解析和数据库查询
+        OptLog running = optLogService.selectRunningCacheLog(packNum);
+        if (running == null || running.getType() == null) {
+            backupEndFirstSeen.remove(packNum);
+            return;
+        }
+        // 测试启动后采集数据存在滞后，宽限期内不按采集状态做自然结束补偿
+        if (withinStartupGrace(running)) {
+            log.debug("测试启动宽限期内跳过状态自然结束补偿, packNum={}, type={}, optLogId={}",
+                    packNum, running.getType(), running.getId());
+            return;
+        }
+        Integer type = running.getType();
+        if (BatteryTestEnum._1.getDictValue().equals(type)) {
+            closeResistanceLogIfEnded(packNum, group.getResistanceTestStatus());
+            return;
+        }
+        if (BatteryTestEnum._3.getDictValue().equals(type)
+                || BatteryTestEnum._5.getDictValue().equals(type)
+                || BatteryTestEnum._7.getDictValue().equals(type)) {
+            closeBatteryPackLogIfEnded(packNum, running, group);
+        }
     }
 
-    private void closeBatteryPackLogsIfEnded(Integer packNum, Integer batteryPackStatusValue) {
-        String batteryPackStatus = Objects.toString(batteryPackStatusValue, null);
+    private void closeBatteryPackLogIfEnded(Integer packNum, OptLog running, BatteryModuleGroupRealtime group) {
+        Integer type = running.getType();
+        String batteryPackStatus = Objects.toString(group.getBatteryPackStatus(), null);
         if (BatteryPackStatusEnum.find(batteryPackStatus) == null) {
             log.debug("操作日志运行态补偿跳过：电池组状态未确认, packNum={}, status={}", packNum, batteryPackStatus);
             return;
         }
         if (isActiveBatteryPackStatus(batteryPackStatus)) {
+            backupEndFirstSeen.remove(packNum);
+            if (BatteryTestEnum._5.getDictValue().equals(type)) {
+                evaluateBackupAutoStop(packNum, running, group);
+            }
             return;
         }
-        closeIfRunning(packNum, BatteryTestEnum._3.getDictValue());
-        closeBackupIfConfirmedEnded(packNum);
-        closeIfRunning(packNum, BatteryTestEnum._7.getDictValue());
+        if (BatteryTestEnum._5.getDictValue().equals(type)) {
+            closeBackupIfConfirmedEnded(packNum);
+            return;
+        }
+        closeIfRunning(packNum, type);
     }
 
-    /** `_5` 备电日志只在状态已非 BACKUP 且超过现场确认窗口时关闭，避免单帧状态波动误停。 */
+    /**
+     * `_5` 自动停止评估：按 `DevBatteryOpt` 计划的截止电压/备电时长（对应 M460 0x30 下层停止语义）主动停止，
+     * 命中后按计划完成语义走 STOPPING 两阶段关闭并停止外部备电模块。
+     */
+    private void evaluateBackupAutoStop(Integer packNum, OptLog running, BatteryModuleGroupRealtime group) {
+        if (!Boolean.TRUE.equals(batteryCollectorProperties.getBackupAutoStopEnabled())
+                || devBatteryOptService == null || lifecycleService == null) {
+            return;
+        }
+        DevBatteryOpt opt = devBatteryOptService.selectDevBatteryOptByPackNum(packNum, BatteryTestEnum._5.getDictValue());
+        if (opt == null) {
+            return;
+        }
+        String reason = resolveBackupStopReason(opt, running, group);
+        if (reason == null) {
+            return;
+        }
+        boolean stopped = lifecycleService.completeAfterRestore(running, null, null,
+                () -> isSuccess(backupExternalModuleControlService.stopBackup(packNum)));
+        if (stopped) {
+            log.info("备电测试命中自动停止条件已关闭, packNum={}, optLogId={}, 原因={}", packNum, running.getId(), reason);
+        } else {
+            log.warn("备电测试命中自动停止条件但外设停止未确认, packNum={}, optLogId={}, 原因={}", packNum, running.getId(), reason);
+        }
+    }
+
+    /** 返回命中的停止原因；未命中返回 null。缺失参数或缺失实时值不参与判断，不用假默认值驱动停止。 */
+    private String resolveBackupStopReason(DevBatteryOpt opt, OptLog running, BatteryModuleGroupRealtime group) {
+        Double endVoltage = opt.getEndVoltage();
+        Double packVoltage = group.getPackVoltage() != null ? group.getPackVoltage() : group.getExternalVoltage();
+        if (endVoltage != null && endVoltage > 0 && packVoltage != null && packVoltage <= endVoltage) {
+            return String.format("组电压 %.3fV 已达截止电压 %.3fV", packVoltage, endVoltage);
+        }
+        Integer dischargeTime = opt.getDischargeTime();
+        Date createTime = running.getCreateTime();
+        if (dischargeTime != null && dischargeTime > 0 && createTime != null
+                && System.currentTimeMillis() - createTime.getTime() >= dischargeTime * MINUTE) {
+            return String.format("备电时长已达计划 %d 分钟", dischargeTime);
+        }
+        return null;
+    }
+
+    /** 测试启动初期采集状态可能仍反映旧状态，宽限期内不做自然结束判断。 */
+    private boolean withinStartupGrace(OptLog running) {
+        Date createTime = running.getCreateTime();
+        if (createTime == null) {
+            return false;
+        }
+        long grace = orDefault(batteryCollectorProperties.getTestStartupStatusGraceMs(), 120_000L);
+        return System.currentTimeMillis() - createTime.getTime() < grace;
+    }
+
+    /** `_5` 备电日志需实时状态持续离开 BACKUP 超过防抖窗口才关闭，单帧波动会被活跃状态重置。 */
     private void closeBackupIfConfirmedEnded(Integer packNum) {
         OptLog running = optLogService.getRunningOptLog(packNum, BatteryTestEnum._5.getDictValue());
         if (running == null) {
+            backupEndFirstSeen.remove(packNum);
             return;
         }
-        long confirmWindow = timeoutMillis(BatteryTestEnum._5.getDictValue());
-        Date progressTime = resolveProgressTime(running);
-        if (progressTime == null || System.currentTimeMillis() - progressTime.getTime() < confirmWindow) {
-            log.debug("备电运行日志未超过确认窗口，暂不补偿关闭, packNum={}, optLogId={}", packNum, running.getId());
+        long now = System.currentTimeMillis();
+        long firstSeen = backupEndFirstSeen.computeIfAbsent(packNum, key -> now);
+        // 新启动的备电测试从日志创建时间起算，避免残留的离开标记立即关闭新任务
+        Date createTime = running.getCreateTime();
+        long baseline = createTime == null ? firstSeen : Math.max(firstSeen, createTime.getTime());
+        long confirmWindow = orDefault(batteryCollectorProperties.getBackupEndConfirmMs(), 180_000L);
+        if (now - baseline < confirmWindow) {
+            log.debug("备电结束状态未持续超过防抖窗口，暂不补偿关闭, packNum={}, optLogId={}", packNum, running.getId());
             return;
         }
+        backupEndFirstSeen.remove(packNum);
         closeIfRunning(packNum, BatteryTestEnum._5.getDictValue());
     }
 
