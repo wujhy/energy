@@ -59,22 +59,15 @@ class AlarmLogServiceImplTest {
     }
 
     @Test
-    void shouldAppendCommunicationStateAlarmsToBatteryAlarmCacheList() {
+    void shouldNotAppendCommunicationStateAlarmsWhileMergeDisabled() {
+        // 通讯状态告警合并已停用（随 TASK-ALARM-REFORM-001 统一梳理），列表不再合成状态告警
         Mockito.when(batteryDeviceStateService.selectByPackNum(2)).thenReturn(Arrays.asList(
                 state(2, null, BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, "open failed",
                         BatteryDeviceStateConstants.StateLevel.ERROR),
                 state(2, 8, BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT, "01/81",
-                        BatteryDeviceStateConstants.StateLevel.WARN),
-                state(2, null, BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, "fresh",
-                        BatteryDeviceStateConstants.StateLevel.NORMAL)));
+                        BatteryDeviceStateConstants.StateLevel.WARN)));
 
-        List<AlarmLog> alarmLogs = service.selectBatteryAlarmLogListCache(2);
-
-        List<String> itemCodes = alarmLogs.stream().map(AlarmLog::getItemCode).collect(Collectors.toList());
-        Assertions.assertEquals(2, alarmLogs.size());
-        Assertions.assertTrue(itemCodes.contains(ItemCode.DTTXZT.getCode()));
-        Assertions.assertTrue(itemCodes.contains(ItemCode.TXZT.getCode()));
-        Assertions.assertTrue(alarmLogs.stream().allMatch(log -> YesNoEnum.NO.getDictValue().equals(log.getStatus())));
+        Assertions.assertTrue(service.selectBatteryAlarmLogListCache(2).isEmpty());
     }
 
     @Test
@@ -89,21 +82,16 @@ class AlarmLogServiceImplTest {
     }
 
     @Test
-    void shouldAppendCommunicationStateAlarmsToCacheAlarmListAndBatteryAlarmNum() {
+    void shouldNotAppendCommunicationStateAlarmsToCacheAlarmListWhileMergeDisabled() {
+        // 通讯状态告警合并已停用（随 TASK-ALARM-REFORM-001 统一梳理），总列表与计数不含状态告警
         Mockito.when(batteryDeviceStateService.selectList(Mockito.any(BatteryDeviceState.class))).thenReturn(Arrays.asList(
                 state(2, null, BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, "stale",
                         BatteryDeviceStateConstants.StateLevel.WARN),
                 state(3, null, BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, "open failed",
                         BatteryDeviceStateConstants.StateLevel.ERROR)));
 
-        List<AlarmLog> alarmLogs = service.cacheAlarmList();
-
-        Assertions.assertEquals(2, alarmLogs.size());
-        Assertions.assertEquals(2L, service.batteryAlarmNum());
-        Assertions.assertTrue(alarmLogs.stream().anyMatch(log -> Integer.valueOf(2).equals(log.getPackNum())
-                && ItemCode.TXZT.getCode().equals(log.getItemCode())));
-        Assertions.assertTrue(alarmLogs.stream().anyMatch(log -> Integer.valueOf(3).equals(log.getPackNum())
-                && ItemCode.DTTXZT.getCode().equals(log.getItemCode())));
+        Assertions.assertTrue(service.cacheAlarmList().isEmpty());
+        Assertions.assertEquals(0L, service.batteryAlarmNum());
     }
 
     @Test
@@ -160,14 +148,12 @@ class AlarmLogServiceImplTest {
 
     @Test
     void shouldMapChannelTimeoutCountToCommunicationAlarm() {
+        // 合并停用后状态告警不进列表，但 isAlarmByCache 仍通过通讯状态判定告警
         Mockito.when(batteryDeviceStateService.selectByPackNum(2)).thenReturn(Collections.singletonList(
                 state(2, null, BatteryDeviceStateConstants.StateCode.CHANNEL_TIMEOUT_COUNT, "3",
                         BatteryDeviceStateConstants.StateLevel.WARN)));
 
-        List<AlarmLog> alarmLogs = service.selectBatteryAlarmLogListCache(2);
-
-        Assertions.assertEquals(1, alarmLogs.size());
-        Assertions.assertEquals(ItemCode.TXZT.getCode(), alarmLogs.get(0).getItemCode());
+        Assertions.assertEquals(YesNoEnum.YES.getDictValue(), service.isAlarmByCache(2));
     }
 
     @Test
