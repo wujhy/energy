@@ -119,7 +119,8 @@ class BatteryOptCapacityModuleCommandAdapterTest {
             running.setPackNum(1);
             running.setType(BatteryTestEnum._5.getDictValue());
             Mockito.when(optLogService.selectRunningList(1)).thenReturn(Collections.emptyList());
-            Mockito.when(optLogService.insert(1, BatteryTestEnum._5.getDictValue(), null, "web"))
+            Mockito.when(optLogService.insert(Mockito.eq(1), Mockito.eq(BatteryTestEnum._5.getDictValue()),
+                            Mockito.isNull(), Mockito.eq("web"), Mockito.any()))
                     .thenReturn(100L);
             Mockito.when(optLogService.getRunningOptLog(1, BatteryTestEnum._5.getDictValue()))
                     .thenReturn(running);

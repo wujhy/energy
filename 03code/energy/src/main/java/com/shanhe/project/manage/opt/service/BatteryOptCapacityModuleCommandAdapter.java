@@ -1,5 +1,6 @@
 package com.shanhe.project.manage.opt.service;
 
+import com.alibaba.fastjson.JSON;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.manage.config.domain.DevBatteryOpt;
@@ -8,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -52,7 +55,7 @@ public class BatteryOptCapacityModuleCommandAdapter extends ControlBase {
         }
 
         Long businessOptLogId = lifecycleService.start(
-                opt.getPackNum(), opt.getTestType(), context.optLogSource);
+                opt.getPackNum(), opt.getTestType(), context.optLogSource, backupStopParams(opt));
         try {
             AjaxResult result = backupExternalModuleControlService.startBackup(opt.getPackNum());
             boolean success = Objects.equals(result.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value());
@@ -93,6 +96,18 @@ public class BatteryOptCapacityModuleCommandAdapter extends ControlBase {
     private boolean isSuccess(AjaxResult result) {
         return result != null
                 && Objects.equals(result.get(AjaxResult.CODE_TAG), AjaxResult.Type.SUCCESS.value());
+    }
+
+    /** 快照本次备电运行的停止参数；手动与计划执行同等保存，自动停止只依据本次运行参数。 */
+    private String backupStopParams(DevBatteryOpt opt) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        if (opt.getEndVoltage() != null) {
+            params.put("endVoltage", opt.getEndVoltage());
+        }
+        if (opt.getDischargeTime() != null) {
+            params.put("dischargeTime", opt.getDischargeTime());
+        }
+        return params.isEmpty() ? null : JSON.toJSONString(params);
     }
     private boolean isBackupTest(DevBatteryOpt opt) {
         return opt != null && BatteryTestEnum._5.getDictValue().equals(opt.getTestType());

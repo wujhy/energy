@@ -27,12 +27,17 @@ public class BatteryTestLifecycleService {
     private BatteryModeStatusService modeStatusService;
 
     public synchronized Long start(Integer packNum, Integer testType, String source) {
+        return start(packNum, testType, source, null);
+    }
+
+    /** 启动业务运行；content 为本次运行参数快照 JSON，手动与计划执行同等保存。 */
+    public synchronized Long start(Integer packNum, Integer testType, String source, String content) {
         List<OptLog> active = optLogService.selectRunningList(packNum);
         if (active != null && !active.isEmpty()) {
             throw new ServiceException("当前电池组已有测试运行中");
         }
         try {
-            Long id = optLogService.insert(packNum, testType, null, source);
+            Long id = optLogService.insert(packNum, testType, null, source, content);
             optLogService.updateRuntime(id, STARTING, null);
             return id;
         } catch (RuntimeException e) {

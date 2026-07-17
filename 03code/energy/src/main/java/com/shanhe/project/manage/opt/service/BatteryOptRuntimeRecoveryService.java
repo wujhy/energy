@@ -11,10 +11,10 @@ import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessContext;
 import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessor;
 import com.shanhe.project.collector.battery.postprocess.PostProcessBatchGuard;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
-import com.shanhe.project.manage.config.domain.DevBatteryOpt;
-import com.shanhe.project.manage.config.service.IDevBatteryOptService;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -56,8 +57,6 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
     private BatteryTestLifecycleService lifecycleService;
     @Resource
     private BackupExternalModuleControlService backupExternalModuleControlService;
-    @Resource
-    private IDevBatteryOptService devBatteryOptService;
 
     @Override
     public String getName() {
@@ -156,7 +155,7 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
      * @return 停止的运行数
      */
     public int autoStopExpiredBackupRuns() {
-        if (optLogService == null || lifecycleService == null || devBatteryOptService == null
+        if (optLogService == null || lifecycleService == null
                 || !Boolean.TRUE.equals(batteryCollectorProperties.getBackupAutoStopEnabled())) {
             return 0;
         }
@@ -170,12 +169,7 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
                     || running.getPackNum() == null || withinStartupGrace(running)) {
                 continue;
             }
-            DevBatteryOpt opt = devBatteryOptService.selectDevBatteryOptByPackNum(
-                    running.getPackNum(), BatteryTestEnum._5.getDictValue());
-            if (opt == null) {
-                continue;
-            }
-            String reason = resolveBackupStopReason(opt, running, null);
+            String reason = resolveBackupStopReason(running, null);
             if (reason != null && stopBackupRun(running, reason)) {
                 stopped++;
             }
@@ -206,20 +200,15 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
     }
 
     /**
-     * `_5` 自动停止评估：按 `DevBatteryOpt` 计划的截止电压/备电时长（对应 M460 0x30 下层停止语义）主动停止，
+     * `_5` 自动停止评估：按本次运行快照的截止电压/备电时长（对应 M460 0x30 下层停止语义）主动停止，
      * 命中后按计划完成语义走 STOPPING 两阶段关闭并停止外部备电模块。
      */
     private void evaluateBackupAutoStop(OptLog running, BatteryModuleGroupRealtime group) {
         if (!Boolean.TRUE.equals(batteryCollectorProperties.getBackupAutoStopEnabled())
-                || devBatteryOptService == null || lifecycleService == null) {
+                || lifecycleService == null) {
             return;
         }
-        DevBatteryOpt opt = devBatteryOptService.selectDevBatteryOptByPackNum(
-                running.getPackNum(), BatteryTestEnum._5.getDictValue());
-        if (opt == null) {
-            return;
-        }
-        String reason = resolveBackupStopReason(opt, running, group);
+        String reason = resolveBackupStopReason(running, group);
         if (reason != null) {
             stopBackupRun(running, reason);
         }
@@ -239,24 +228,64 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
     }
 
     /**
-     * 返回命中的停止原因；未命中返回 null。缺失参数或缺失实时值不参与判断，不用假默认值驱动停止。
+     * 返回命中的停止原因；未命中返回 null。停止参数来自本次运行的快照（`dev_opt_log.content`），
+     * 手动与计划执行同等生效；无快照参数的运行不做自动停止。缺失实时值不参与判断，不用假默认值驱动停止。
      * `group` 为 null 时（采集缺失的定时兜底）只评估备电时长。
      */
-    private String resolveBackupStopReason(DevBatteryOpt opt, OptLog running, BatteryModuleGroupRealtime group) {
+    private String resolveBackupStopReason(OptLog running, BatteryModuleGroupRealtime group) {
+        Map<String, Object> params = parseRunParams(running.getContent());
+        if (params.isEmpty()) {
+            return null;
+        }
         if (group != null) {
-            Double endVoltage = opt.getEndVoltage();
+            Double endVoltage = toDouble(params.get("endVoltage"));
             Double packVoltage = group.getPackVoltage() != null ? group.getPackVoltage() : group.getExternalVoltage();
             if (endVoltage != null && endVoltage > 0 && packVoltage != null && packVoltage <= endVoltage) {
                 return String.format("组电压 %.3fV 已达截止电压 %.3fV", packVoltage, endVoltage);
             }
         }
-        Integer dischargeTime = opt.getDischargeTime();
+        Integer dischargeTime = toInteger(params.get("dischargeTime"));
         Date createTime = running.getCreateTime();
         if (dischargeTime != null && dischargeTime > 0 && createTime != null
                 && System.currentTimeMillis() - createTime.getTime() >= dischargeTime * MINUTE) {
             return String.format("备电时长已达计划 %d 分钟", dischargeTime);
         }
         return null;
+    }
+
+    /** 解析运行参数快照；内容缺失或非法时返回空 Map，不驱动停止。 */
+    private Map<String, Object> parseRunParams(String content) {
+        if (content == null || content.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            Map<String, Object> params = JSON.parseObject(content, new TypeReference<Map<String, Object>>() {});
+            return params == null ? Collections.emptyMap() : params;
+        } catch (RuntimeException e) {
+            return Collections.emptyMap();
+        }
+    }
+
+    private Double toDouble(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+        try {
+            return value == null ? null : Double.valueOf(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private Integer toInteger(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        try {
+            return value == null ? null : Integer.valueOf(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /** 测试启动初期采集状态可能仍反映旧状态，宽限期内不做自然结束判断。 */

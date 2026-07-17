@@ -16,7 +16,7 @@ class BatteryTestLifecycleServiceTest {
         OptLogService optLogService = Mockito.mock(OptLogService.class);
         BatteryModeStatusService modeStatusService = Mockito.mock(BatteryModeStatusService.class);
         Mockito.when(optLogService.selectRunningList(1)).thenReturn(Collections.emptyList());
-        Mockito.when(optLogService.insert(1, 6, null, "web")).thenReturn(100L);
+        Mockito.when(optLogService.insert(1, 6, null, "web", null)).thenReturn(100L);
         BatteryTestLifecycleService service = new BatteryTestLifecycleService();
         ReflectionTestUtils.setField(service, "optLogService", optLogService);
         ReflectionTestUtils.setField(service, "modeStatusService", modeStatusService);

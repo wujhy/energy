@@ -8,8 +8,6 @@ import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
-import com.shanhe.project.manage.config.domain.DevBatteryOpt;
-import com.shanhe.project.manage.config.service.IDevBatteryOptService;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -209,13 +207,8 @@ class BatteryOptRuntimeRecoveryServiceTest {
         Fixture fixture = new Fixture();
         ReflectionTestUtils.setField(fixture.service, "lifecycleService", fixture.lifecycleService);
         OptLog backup = backupLog();
+        backup.setContent("{\"endVoltage\":45.0}");
         Mockito.when(fixture.optLogService.selectRunningCacheLog(1)).thenReturn(backup);
-        DevBatteryOpt opt = new DevBatteryOpt();
-        opt.setPackNum(1);
-        opt.setTestType(BatteryTestEnum._5.getDictValue());
-        opt.setEndVoltage(45.0D);
-        Mockito.when(fixture.devBatteryOptService.selectDevBatteryOptByPackNum(1, BatteryTestEnum._5.getDictValue()))
-                .thenReturn(opt);
         Mockito.when(fixture.lifecycleService.completeAfterRestore(Mockito.eq(backup), Mockito.isNull(),
                 Mockito.isNull(), Mockito.any())).thenReturn(true);
         BatteryModuleGroupRealtime group = group(5, 0, "batch-1");
@@ -237,13 +230,8 @@ class BatteryOptRuntimeRecoveryServiceTest {
         Fixture fixture = new Fixture();
         ReflectionTestUtils.setField(fixture.service, "lifecycleService", fixture.lifecycleService);
         OptLog backup = backupLog();
+        backup.setContent("{\"dischargeTime\":60}");
         Mockito.when(fixture.optLogService.selectRunningCacheLog(1)).thenReturn(backup);
-        DevBatteryOpt opt = new DevBatteryOpt();
-        opt.setPackNum(1);
-        opt.setTestType(BatteryTestEnum._5.getDictValue());
-        opt.setDischargeTime(60);
-        Mockito.when(fixture.devBatteryOptService.selectDevBatteryOptByPackNum(1, BatteryTestEnum._5.getDictValue()))
-                .thenReturn(opt);
         Mockito.when(fixture.lifecycleService.completeAfterRestore(Mockito.eq(backup), Mockito.isNull(),
                 Mockito.isNull(), Mockito.any())).thenReturn(true);
         BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
@@ -263,14 +251,9 @@ class BatteryOptRuntimeRecoveryServiceTest {
         Fixture fixture = new Fixture();
         ReflectionTestUtils.setField(fixture.service, "lifecycleService", fixture.lifecycleService);
         OptLog backup = backupLog();
+        // 快照未配置放电时长，组电压高于截止电压：不停止
+        backup.setContent("{\"endVoltage\":45.0}");
         Mockito.when(fixture.optLogService.selectRunningCacheLog(1)).thenReturn(backup);
-        DevBatteryOpt opt = new DevBatteryOpt();
-        opt.setPackNum(1);
-        opt.setTestType(BatteryTestEnum._5.getDictValue());
-        opt.setEndVoltage(45.0D);
-        // 未配置放电时长，组电压高于截止电压：不停止
-        Mockito.when(fixture.devBatteryOptService.selectDevBatteryOptByPackNum(1, BatteryTestEnum._5.getDictValue()))
-                .thenReturn(opt);
         BatteryModuleGroupRealtime group = group(5, 0, "batch-1");
         group.setPackVoltage(48.0D);
         BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
@@ -286,19 +269,38 @@ class BatteryOptRuntimeRecoveryServiceTest {
     }
 
     @Test
+    void shouldNotAutoStopBackupWithoutRunParams() {
+        Fixture fixture = new Fixture();
+        ReflectionTestUtils.setField(fixture.service, "lifecycleService", fixture.lifecycleService);
+        // 手动启动且未快照停止参数：不做自动停止，由手动停止/防抖/watchdog 收口
+        OptLog backup = backupLog();
+        Mockito.when(fixture.optLogService.selectRunningCacheLog(1)).thenReturn(backup);
+        Mockito.when(fixture.optLogService.selectRunningList(null))
+                .thenReturn(Collections.singletonList(backup));
+        BatteryModuleGroupRealtime group = group(5, 0, "batch-1");
+        group.setPackVoltage(30.0D);
+        BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
+                .packNum(1)
+                .pollBatchNo("batch-1")
+                .group(group)
+                .build();
+
+        fixture.service.process(context);
+        int stopped = fixture.service.autoStopExpiredBackupRuns();
+
+        org.junit.jupiter.api.Assertions.assertEquals(0, stopped);
+        Mockito.verify(fixture.lifecycleService, Mockito.never()).completeAfterRestore(
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
     void shouldAutoStopExpiredBackupRunWithoutRealtimeData() {
         Fixture fixture = new Fixture();
         ReflectionTestUtils.setField(fixture.service, "lifecycleService", fixture.lifecycleService);
         OptLog backup = backupLog();
+        backup.setContent("{\"endVoltage\":45.0,\"dischargeTime\":60}");
         Mockito.when(fixture.optLogService.selectRunningList(null))
                 .thenReturn(Collections.singletonList(backup));
-        DevBatteryOpt opt = new DevBatteryOpt();
-        opt.setPackNum(1);
-        opt.setTestType(BatteryTestEnum._5.getDictValue());
-        opt.setDischargeTime(60);
-        opt.setEndVoltage(45.0D);
-        Mockito.when(fixture.devBatteryOptService.selectDevBatteryOptByPackNum(1, BatteryTestEnum._5.getDictValue()))
-                .thenReturn(opt);
         Mockito.when(fixture.lifecycleService.completeAfterRestore(Mockito.eq(backup), Mockito.isNull(),
                 Mockito.isNull(), Mockito.any())).thenReturn(true);
 
@@ -315,15 +317,10 @@ class BatteryOptRuntimeRecoveryServiceTest {
         Fixture fixture = new Fixture();
         ReflectionTestUtils.setField(fixture.service, "lifecycleService", fixture.lifecycleService);
         OptLog backup = backupLog();
-        // 运行 13 小时，计划放电时长 14 小时：未到期不停止
+        // 运行 13 小时，快照放电时长 14 小时：未到期不停止
+        backup.setContent("{\"dischargeTime\":" + (14 * 60) + "}");
         Mockito.when(fixture.optLogService.selectRunningList(null))
                 .thenReturn(Collections.singletonList(backup));
-        DevBatteryOpt opt = new DevBatteryOpt();
-        opt.setPackNum(1);
-        opt.setTestType(BatteryTestEnum._5.getDictValue());
-        opt.setDischargeTime(14 * 60);
-        Mockito.when(fixture.devBatteryOptService.selectDevBatteryOptByPackNum(1, BatteryTestEnum._5.getDictValue()))
-                .thenReturn(opt);
 
         int stopped = fixture.service.autoStopExpiredBackupRuns();
 
@@ -384,7 +381,6 @@ class BatteryOptRuntimeRecoveryServiceTest {
         private final BatteryModeStatusService modeStatusService = Mockito.mock(BatteryModeStatusService.class);
         private final BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
         private final BatteryCollectorProperties properties = new BatteryCollectorProperties();
-        private final IDevBatteryOptService devBatteryOptService = Mockito.mock(IDevBatteryOptService.class);
         private final BatteryTestLifecycleService lifecycleService = Mockito.mock(BatteryTestLifecycleService.class);
 
         private Fixture() {
@@ -392,7 +388,6 @@ class BatteryOptRuntimeRecoveryServiceTest {
             ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
             ReflectionTestUtils.setField(service, "batteryCollectorProperties", properties);
             ReflectionTestUtils.setField(service, "realtimeSnapshotService", snapshotService);
-            ReflectionTestUtils.setField(service, "devBatteryOptService", devBatteryOptService);
         }
     }
 }

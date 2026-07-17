@@ -129,12 +129,22 @@ public class BatteryOptScheduleJob {
     /** 定时兜底：采集数据缺失时备电时长到期也能停止 `_5` 并关闭外设。 */
     private void autoStopExpiredBackupRuns() {
         try {
+            reconcileRunningCache();
             int stopped = batteryOptRuntimeRecoveryService.autoStopExpiredBackupRuns();
             if (stopped > 0) {
                 log.info("备电时长到期定时兜底已停止运行, stopped={}", stopped);
             }
         } catch (Exception e) {
             log.warn("备电时长到期定时兜底执行异常, 原因={}", e.getMessage());
+        }
+    }
+
+    /** 每轮轻量对账运行缓存，缓存与库不一致时自愈，避免状态自然结束补偿长时间降级到 watchdog。 */
+    private void reconcileRunningCache() {
+        try {
+            optLogService.updateCache();
+        } catch (Exception e) {
+            log.warn("运行日志缓存对账异常, 原因={}", e.getMessage());
         }
     }
 

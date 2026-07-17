@@ -42,6 +42,11 @@ public class OptLogServiceImpl implements OptLogService {
 
     @Override
     public Long insert(Integer packNum, Integer type, Integer result, String source) {
+        return insert(packNum, type, result, source, null);
+    }
+
+    @Override
+    public Long insert(Integer packNum, Integer type, Integer result, String source, String content) {
         OptLog optLog = new OptLog();
         optLog.setId(IdUtils.getSnowflakeId());
         optLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
@@ -49,6 +54,7 @@ public class OptLogServiceImpl implements OptLogService {
         optLog.setType(type);
         optLog.setResult(result);
         optLog.setSource(source);
+        optLog.setContent(content);
         Date now = new Date();
         optLog.setCreateTime(now);
         optLog.setCreateTimeStr(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(now));

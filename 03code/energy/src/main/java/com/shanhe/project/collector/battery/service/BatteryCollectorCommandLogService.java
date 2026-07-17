@@ -40,7 +40,11 @@ public class BatteryCollectorCommandLogService {
      */
     public Long createCommandOptLog(BatteryCollectorChannelConfig config, BatteryModuleControlCommand command) {
         try {
-            if (!shouldCreateCommandOptLog(command)) {
+            if (command == null) {
+                return null;
+            }
+            Integer effectiveType = resolveCommandLogType(command);
+            if (!shouldCreateCommandOptLog(effectiveType)) {
                 return null;
             }
             String now = now();
@@ -48,7 +52,7 @@ public class BatteryCollectorCommandLogService {
             optLog.setId(IdUtils.getSnowflakeId());
             optLog.setConfigId(config == null ? null : config.getConfigId());
             optLog.setPackNum(command.getBatteryGroup());
-            optLog.setType(command.getOptLogType() == null ? BatteryTestEnum._99.getDictValue() : command.getOptLogType());
+            optLog.setType(effectiveType);
             optLog.setContent(command.getDescription());
             optLog.setCreateTimeStr(now);
             optLog.setSource(BatteryDeviceStateConstants.Source.COLLECTOR);
@@ -108,12 +112,25 @@ public class BatteryCollectorCommandLogService {
         }
     }
 
-    private boolean shouldCreateCommandOptLog(BatteryModuleControlCommand command) {
-        if (command == null) {
+    /**
+     * 解析命令明细日志的落库类型。业务日志已由生命周期入口创建（businessOptLogId 非空）时，
+     * 明细日志统一降级为 _99，避免与活动运行唯一索引冲突导致插入必然失败。
+     */
+    private Integer resolveCommandLogType(BatteryModuleControlCommand command) {
+        if (command == null || command.getOptLogType() == null) {
+            return BatteryTestEnum._99.getDictValue();
+        }
+        if (command.getBusinessOptLogId() != null) {
+            return BatteryTestEnum._99.getDictValue();
+        }
+        return command.getOptLogType();
+    }
+
+    private boolean shouldCreateCommandOptLog(Integer effectiveType) {
+        if (effectiveType == null) {
             return false;
         }
-        Integer type = command.getOptLogType() == null ? BatteryTestEnum._99.getDictValue() : command.getOptLogType();
-        if (!BatteryTestEnum._99.getDictValue().equals(type)) {
+        if (!BatteryTestEnum._99.getDictValue().equals(effectiveType)) {
             return true;
         }
         return properties == null || Boolean.TRUE.equals(properties.getModuleCommandSuccessLogEnabled());
