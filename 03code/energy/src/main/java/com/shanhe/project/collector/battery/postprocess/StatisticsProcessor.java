@@ -10,8 +10,8 @@ import javax.annotation.Resource;
 /**
  * 统计数据后处理器。
  * <p>
- * 将标准实时模型数据适配为旧 BatteryReportLog 格式，
- * 供统计 service 写入 stat_battery_bat / stat_battery_pack / stat_battery_res。
+ * 直接以标准实时模型（组实时 + 单体实时）调用统计 service，
+ * 写入 stat_battery_bat / stat_battery_pack，不再经过旧上报日志结构。
  *
  * @author wjh
  * @since 2026-06-05

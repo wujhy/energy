@@ -1,7 +1,6 @@
 package com.shanhe.project.manage.stat.domain;
 
 
-import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.MonitorData;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -49,16 +48,4 @@ public class StatBatteryBat extends MonitorData {
 
     /** 排序方式 */
     private String isAsc = "desc";
-
-    public static StatBatteryBat of(BatteryMonitor batteryInfo) {
-        StatBatteryBat statBattery = new StatBatteryBat();
-        statBattery.setConfigId(batteryInfo.getConfigId());
-        statBattery.setPackNum(batteryInfo.getPackNum());
-        statBattery.setBatNum(batteryInfo.getBatNum());
-        statBattery.setVoltage(batteryInfo.getVoltage());
-        statBattery.setResistance(batteryInfo.getResistance());
-        statBattery.setTemperature(batteryInfo.getTemperature());
-        statBattery.setBcapacity(batteryInfo.getBcapacity());
-        return statBattery;
-    }
 }
