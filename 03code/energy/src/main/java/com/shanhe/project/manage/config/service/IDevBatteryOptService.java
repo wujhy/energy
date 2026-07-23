@@ -11,13 +11,6 @@ import java.util.List;
  * @since 2025/5/15
  */
 public interface IDevBatteryOptService {
-    /**
-     * 查询【蓄电池测试操作参数】
-     *
-     * @param optId 【蓄电池测试操作参数】主键
-     * @return 【蓄电池测试操作参数】
-     */
-    DevBatteryOpt selectDevBatteryOptByOptId(Long optId);
 
     /**
      * 查询【蓄电池测试操作参数】
@@ -44,35 +37,11 @@ public interface IDevBatteryOptService {
     void insertDevBatteryOpt(DevBatteryOpt devBatteryOpt);
 
     /**
-     * 批量插入蓄电池测试参数
-     *
-     * @param devBatteryOpts 测试参数列表
-     * @return 结果
-     */
-    int insertDevBatteryOptList(List<DevBatteryOpt> devBatteryOpts);
-
-    /**
      * 修改【蓄电池测试操作参数】
      *
      * @param devBatteryOpt 【蓄电池测试操作参数】
      */
     void updateDevBatteryOpt(DevBatteryOpt devBatteryOpt);
-
-    /**
-     * 批量删除【蓄电池测试操作参数】
-     *
-     * @param optIds 需要删除的【蓄电池测试操作参数】主键集合
-     * @return 结果
-     */
-    int deleteDevBatteryOptByOptIds(List<Long> optIds);
-
-    /**
-     * 删除【蓄电池测试操作参数】信息
-     *
-     * @param optId 【蓄电池测试操作参数】主键
-     * @return 结果
-     */
-    int deleteDevBatteryOptByOptId(Long optId);
 
     /**
      * 删除【蓄电池测试操作参数】信息

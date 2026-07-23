@@ -68,15 +68,6 @@
         </where>
     </select>
 
-    <!-- 按ID查询测试配置 -->
-    <select id="selectDevBatteryOptByOptId" parameterType="Long"
-        resultType="com.shanhe.project.manage.config.domain.DevBatteryOpt">
-        select
-        <include refid="selectDevBatteryOptVo"/>
-        from dev_battery_opt
-        where opt_id = #{optId}
-    </select>
-
     <!-- 插入电池测试配置 -->
     <insert id="insertDevBatteryOpt" parameterType="com.shanhe.project.manage.config.domain.DevBatteryOpt">
         insert into dev_battery_opt
@@ -168,47 +159,6 @@
         </trim>
     </insert>
 
-    <!-- 批量插入测试配置 -->
-    <insert id="insertDevBatteryOptList" >
-        insert into dev_battery_opt (
-            opt_id ,
-            pack_num ,
-            config_id ,
-            test_type ,
-            is_enabled ,
-            test_time ,
-            end_voltage ,
-            rec_voltage ,
-            Interval_days ,
-            exec_count ,
-            discharge_time ,
-            model_num ,
-            opt_command ,
-            create_time ,
-            update_time
-        ) values
-        <foreach collection="list" item="item" separator=",">
-            (
-                #{item.optId} ,
-                #{item.packNum} ,
-                #{item.configId} ,
-                #{item.testType} ,
-                #{item.isEnabled} ,
-                #{item.testTimeStr} ,
-                #{item.endVoltage} ,
-                #{item.recVoltage} ,
-                #{item.intervalDays} ,
-                #{item.execCount} ,
-                #{item.dischargeTime} ,
-                #{item.modelNum} ,
-                #{item.optCommand} ,
-                datetime(CURRENT_TIMESTAMP,'localtime'),
-                datetime(CURRENT_TIMESTAMP,'localtime')
-            )
-        </foreach>
-
-    </insert>
-
     <!-- 更新电池测试配置 -->
     <update id="updateDevBatteryOpt" parameterType="com.shanhe.project.manage.config.domain.DevBatteryOpt">
         update dev_battery_opt
@@ -253,19 +203,6 @@
         </trim>
         where opt_id = #{optId}
     </update>
-
-    <!-- 按ID删除测试配置 -->
-    <delete id="deleteDevBatteryOptByOptId" parameterType="Long">
-        delete from dev_battery_opt where opt_id = #{optId}
-    </delete>
-
-    <!-- 批量删除测试配置 -->
-    <delete id="deleteDevBatteryOptByOptIds" parameterType="String">
-        delete from dev_battery_opt where opt_id in
-        <foreach item="optId" collection="optIds" open="(" separator="," close=")">
-            #{optId}
-        </foreach>
-    </delete>
 
     <!-- 按默认设备和电池组删除 -->
     <delete id="deleteByPackNum">

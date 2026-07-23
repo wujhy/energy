@@ -14,13 +14,6 @@ import java.util.List;
  */
 @Mapper
 public interface DevBatteryOptMapper {
-    /**
-     * 查询【蓄电池测试操作参数】
-     *
-     * @param optId 【蓄电池测试操作参数】主键
-     * @return 【蓄电池测试操作参数】
-     */
-     DevBatteryOpt selectDevBatteryOptByOptId(Long optId);
 
     /**
      * 查询【蓄电池测试操作参数】列表
@@ -39,36 +32,12 @@ public interface DevBatteryOptMapper {
     int insertDevBatteryOpt(DevBatteryOpt devBatteryOpt);
 
     /**
-     * 批量插入蓄电池测试参数
-     *
-     * @param devBatteryOpt 测试参数列表
-     * @return 结果
-     */
-    int insertDevBatteryOptList(@Param("list")List<DevBatteryOpt> devBatteryOpt);
-
-    /**
      * 修改【蓄电池测试操作参数】
      *
      * @param devBatteryOpt 【蓄电池测试操作参数】
      * @return 结果
      */
     int updateDevBatteryOpt(DevBatteryOpt devBatteryOpt);
-
-    /**
-     * 删除【蓄电池测试操作参数】
-     *
-     * @param optId 【蓄电池测试操作参数】主键
-     * @return 结果
-     */
-    int deleteDevBatteryOptByOptId(Long optId);
-
-    /**
-     * 批量删除【蓄电池测试操作参数】
-     *
-     * @param optIds 需要删除的数据主键集合
-     * @return 结果
-     */
-    int deleteDevBatteryOptByOptIds(@Param("optIds") List<Long> optIds);
 
     /**
      * 根据电池组编号删除
