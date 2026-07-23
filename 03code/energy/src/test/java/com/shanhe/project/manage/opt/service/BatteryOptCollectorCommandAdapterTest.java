@@ -174,7 +174,6 @@ class BatteryOptCollectorCommandAdapterTest {
                 testEnum,
                 BatteryOptExecuteType.MANUAL,
                 null,
-                null,
                 batteryCount,
                 null);
     }

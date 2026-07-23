@@ -40,7 +40,7 @@ import java.util.Map;
  */
 @Slf4j
 @Service
-public class ControlBatterySet extends ControlBase {
+public class ControlBatterySet {
 
     /** 模块上报日志适配服务。 */
     @Resource

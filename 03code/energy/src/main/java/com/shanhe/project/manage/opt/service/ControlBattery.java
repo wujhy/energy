@@ -29,7 +29,7 @@ import java.util.Objects;
  */
 @Slf4j
 @Service
-public class ControlBattery extends ControlBase {
+public class ControlBattery {
 
     /** 操作日志服务。 */
     @Resource
@@ -203,15 +203,6 @@ public class ControlBattery extends ControlBase {
 
     /** 校验设备和电池组信息，入口后续会用到的配置聚合起来。 */
     private BatteryCommandContext getCommandContext(DevBatteryOpt devBatteryOpt, BatteryOptExecuteType executeType) {
-        // 设备
-        Config config = configService.selectDefaultConfig();
-        if (config == null) {
-            throw new ServiceException("设备不存在，操作执行失败");
-        }
-        if (!Objects.equals(config.getType(), DeviceTypeEnum._1.getDictValue())) {
-            throw new ServiceException("非蓄电池设备，操作执行失败！");
-        }
-
         // 蓄电池组
         BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(devBatteryOpt.getPackNum());
         if (batteryPack == null) {
@@ -228,7 +219,6 @@ public class ControlBattery extends ControlBase {
                 devBatteryOpt,
                 testEnum,
                 executeType,
-                config,
                 batteryPack,
                 batteryCount == null ? 0 : Math.min(batteryCount, 245),
                 resolveOptLogSource(executeType));

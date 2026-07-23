@@ -25,22 +25,13 @@ import java.util.Objects;
  */
 @Slf4j
 @Service
-public class BatteryOptCapacityModuleCommandAdapter extends ControlBase {
+public class BatteryOptCapacityModuleCommandAdapter {
 
     /** 外部备电模块 energy 直控服务。 */
     @Resource
     private BackupExternalModuleControlService backupExternalModuleControlService;
     @Resource
     private BatteryTestLifecycleService lifecycleService;
-
-    /** 兼容旧调用方；没有完整上下文时不在适配器内直接执行。 */
-    public AjaxResult tryExecute(DevBatteryOpt opt) {
-        if (isBackupTest(opt) || isCapacityTest(opt)) {
-            log.debug("核容/备电开始命令缺少执行上下文，保留调用方边界处理, packNum={}, testType={}",
-                    opt.getPackNum(), opt.getTestType());
-        }
-        return null;
-    }
 
     /** `_3/_5` 开始入口。 */
     public AjaxResult tryExecute(BatteryCommandContext context) {
@@ -109,6 +100,7 @@ public class BatteryOptCapacityModuleCommandAdapter extends ControlBase {
         }
         return params.isEmpty() ? null : JSON.toJSONString(params);
     }
+
     private boolean isBackupTest(DevBatteryOpt opt) {
         return opt != null && BatteryTestEnum._5.getDictValue().equals(opt.getTestType());
     }

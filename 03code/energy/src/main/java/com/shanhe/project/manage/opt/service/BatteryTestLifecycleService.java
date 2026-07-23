@@ -9,7 +9,12 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.List;
 
-/** 统一维护测试业务日志及其模式状态投影。 */
+/**
+ * 统一维护测试业务日志及其模式状态投影
+ *
+ * @author wjh
+ * @since 2026/7/23
+ */
 @Service
 public class BatteryTestLifecycleService {
 

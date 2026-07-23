@@ -87,14 +87,13 @@ class BatteryOptCapacityModuleCommandAdapterTest {
     void shouldReturnNullForEmptyInput() {
         Fixture fixture = new Fixture();
 
-        Assertions.assertNull(fixture.adapter.tryExecute(new DevBatteryOpt()));
         Assertions.assertNull(fixture.adapter.tryExecute((BatteryCommandContext) null));
         Assertions.assertNull(fixture.adapter.tryStop(new DevBatteryOpt()));
     }
 
     private static BatteryCommandContext context(BatteryTestEnum testEnum) {
         return new BatteryCommandContext(opt(testEnum.getDictValue()), testEnum,
-                BatteryOptExecuteType.MANUAL, null, null, 12, "web");
+                BatteryOptExecuteType.MANUAL, null, 12, "web");
     }
 
     private static DevBatteryOpt opt(Integer testType) {

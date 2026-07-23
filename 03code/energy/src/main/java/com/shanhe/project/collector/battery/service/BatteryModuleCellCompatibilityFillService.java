@@ -38,7 +38,7 @@ public class BatteryModuleCellCompatibilityFillService {
         if (cell == null) {
             return;
         }
-        fillBcapacity(channelConfig, cell);
+        fillCapacity(channelConfig, cell);
         fillConnectResistance(channelConfig, cell);
     }
 
@@ -57,7 +57,7 @@ public class BatteryModuleCellCompatibilityFillService {
     }
 
     /** 从预估容量缓存填充单体容量字段。 */
-    private void fillBcapacity(BatteryCollectorChannelConfig channelConfig, BatteryModuleCellRealtime cell) {
+    private void fillCapacity(BatteryCollectorChannelConfig channelConfig, BatteryModuleCellRealtime cell) {
         if (preBatteryGroupService == null
                 || channelConfig == null
                 || channelConfig.getBatteryGroup() == null
