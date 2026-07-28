@@ -11,7 +11,6 @@ import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.Config;
 import com.shanhe.project.iot.model.BatteryWarnInfo;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -27,7 +26,6 @@ import java.util.*;
  * @since 2026-05-25
  */
 @Slf4j
-@Service
 public class BatteryAlarmHandler {
 
     /** 告警日志服务。 */
