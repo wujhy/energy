@@ -1,7 +1,8 @@
 package com.shanhe.project.collector.battery.service;
 
 import com.shanhe.project.collector.battery.realtime.BatteryModuleGroupCompatibilityFillService;
-import com.shanhe.common.constant.Constants;
+import com.shanhe.framework.enums.ResistanceTestStatusEnum;
+import com.shanhe.project.collector.battery.model.BatteryModeInfo;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.manage.capacity.service.PreBatteryGroupService;
@@ -20,7 +21,7 @@ class BatteryModuleGroupCompatibilityFillServiceTest {
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
         group.setAvgCellTemperature(25.6d);
         group.setVoltageRange(0.12d);
-        group.setPackCurrent(-3.4d);
+        group.setChargeDischargeCurrent(-3.4d);
 
         service.fillAfterCalculation(null, group);
 
@@ -40,14 +41,14 @@ class BatteryModuleGroupCompatibilityFillServiceTest {
     void shouldMapStatusCorrectlyBasedOnCurrentDirection() {
         // Charging current
         BatteryModuleGroupRealtime group1 = new BatteryModuleGroupRealtime();
-        group1.setPackCurrent(1.0d);
+        group1.setChargeDischargeCurrent(1.0d);
         service.fillAfterCalculation(null, group1);
         Assertions.assertEquals(1, group1.getBatteryPackStatus());
         Assertions.assertEquals(0, group1.getResistanceTestStatus());
 
         // Zero / Idle current
         BatteryModuleGroupRealtime group2 = new BatteryModuleGroupRealtime();
-        group2.setPackCurrent(0.0d);
+        group2.setChargeDischargeCurrent(0.0d);
         service.fillAfterCalculation(null, group2);
         Assertions.assertEquals(0, group2.getBatteryPackStatus());
         Assertions.assertEquals(0, group2.getResistanceTestStatus());
@@ -97,7 +98,7 @@ class BatteryModuleGroupCompatibilityFillServiceTest {
         BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
         channelConfig.setBatteryGroup(1);
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
-        group.setPackCurrent(-1.0d);
+        group.setChargeDischargeCurrent(-1.0d);
         group.setPackVoltage(53.2d);
         group.setAvgCellVoltage(2.21d);
         group.setMinCellVoltage(2.08d);
@@ -112,5 +113,49 @@ class BatteryModuleGroupCompatibilityFillServiceTest {
         Assertions.assertNull(group.getCapacity());
         Assertions.assertNull(group.getBackupDuration());
         Assertions.assertNull(group.getDisChargeCapacity());
+    }
+
+    @Test
+    void shouldProjectResistanceTestingWhenInternalResistanceModeRunning() {
+        BatteryModeStatusService modeStatusService = Mockito.mock(BatteryModeStatusService.class);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        Mockito.when(modeStatusService.get(1)).thenReturn(modeInfo(
+                BatteryModeStatusService.MODE_INTERNAL_RESISTANCE,
+                BatteryModeStatusService.STATUS_RUNNING));
+
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setBatteryGroup(1);
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+
+        service.fillAfterCalculation(channelConfig, group);
+
+        Assertions.assertEquals(Integer.valueOf(ResistanceTestStatusEnum.TESTING.getCode()),
+                group.getResistanceTestStatus());
+    }
+
+    @Test
+    void shouldProjectResistanceTestingWhenConnectResistanceModeRunningByGroupPackNum() {
+        BatteryModeStatusService modeStatusService = Mockito.mock(BatteryModeStatusService.class);
+        ReflectionTestUtils.setField(service, "batteryModeStatusService", modeStatusService);
+        Mockito.when(modeStatusService.get(2)).thenReturn(modeInfo(
+                BatteryModeStatusService.MODE_CONNECT_RESISTANCE,
+                BatteryModeStatusService.STATUS_RUNNING));
+
+        BatteryCollectorChannelConfig channelConfig = new BatteryCollectorChannelConfig();
+        channelConfig.setBatteryGroup(1);
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setPackNum(2);
+
+        service.fillAfterCalculation(channelConfig, group);
+
+        Assertions.assertEquals(Integer.valueOf(ResistanceTestStatusEnum.TESTING.getCode()),
+                group.getResistanceTestStatus());
+    }
+
+    private BatteryModeInfo modeInfo(Integer mode, Integer status) {
+        BatteryModeInfo modeInfo = new BatteryModeInfo();
+        modeInfo.setMode(mode);
+        modeInfo.setStatus(status);
+        return modeInfo;
     }
 }

@@ -1,11 +1,16 @@
 package com.shanhe.project.collector.battery.realtime;
 
+import com.shanhe.framework.enums.ResistanceTestStatusEnum;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
+import com.shanhe.project.collector.battery.model.BatteryModeInfo;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.manage.capacity.service.PreBatteryGroupService;
 import com.shanhe.project.manage.capacity.vo.PreBatteryGroup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 /**
  * 电池组兼容字段扩展填充服务。
@@ -19,6 +24,9 @@ public class BatteryModuleGroupCompatibilityFillService {
     /** 旧预估容量缓存服务，缺失时不影响600节实时采集。 */
     @Autowired(required = false)
     private PreBatteryGroupService preBatteryGroupService;
+    /** 测试/维护工作模式状态服务，缺失时按非测试兼容投影处理。 */
+    @Autowired(required = false)
+    private BatteryModeStatusService batteryModeStatusService;
 
     /**
      * 在轮询结束组计算后补充旧 pack_data 兼容字段。
@@ -31,7 +39,7 @@ public class BatteryModuleGroupCompatibilityFillService {
             return;
         }
         fillCalculatedAliases(group);
-        fillStatus(group);
+        fillStatus(channelConfig, group);
         fillCapacityCache(channelConfig, group);
     }
 
@@ -42,7 +50,7 @@ public class BatteryModuleGroupCompatibilityFillService {
     }
 
     /** 根据充放电电流和缺省规则设置电池组及内阻测试状态。 */
-    private void fillStatus(BatteryModuleGroupRealtime group) {
+    private void fillStatus(BatteryCollectorChannelConfig channelConfig, BatteryModuleGroupRealtime group) {
         Double current = group.getChargeDischargeCurrent();
         if (current == null) {
             group.setBatteryPackStatus(null);
@@ -57,10 +65,33 @@ public class BatteryModuleGroupCompatibilityFillService {
             group.setBatteryPackStatus(0);
         }
 
+        Integer packNum = resolvePackNum(channelConfig, group);
+        if (isResistanceModeRunning(packNum)) {
+            group.setResistanceTestStatus(Integer.valueOf(ResistanceTestStatusEnum.TESTING.getCode()));
+            return;
+        }
         if (group.getResistanceTestStatus() == null) {
             // NOT_TESTING 不在内阻测试
-            group.setResistanceTestStatus(0);
+            group.setResistanceTestStatus(Integer.valueOf(ResistanceTestStatusEnum.NOT_TESTING.getCode()));
         }
+    }
+
+    private Integer resolvePackNum(BatteryCollectorChannelConfig channelConfig, BatteryModuleGroupRealtime group) {
+        if (group.getPackNum() != null) {
+            return group.getPackNum();
+        }
+        return channelConfig == null ? null : channelConfig.getBatteryGroup();
+    }
+
+    private boolean isResistanceModeRunning(Integer packNum) {
+        if (batteryModeStatusService == null || packNum == null) {
+            return false;
+        }
+        BatteryModeInfo modeInfo = batteryModeStatusService.get(packNum);
+        return modeInfo != null
+                && Objects.equals(modeInfo.getStatus(), BatteryModeStatusService.STATUS_RUNNING)
+                && (Objects.equals(modeInfo.getMode(), BatteryModeStatusService.MODE_INTERNAL_RESISTANCE)
+                || Objects.equals(modeInfo.getMode(), BatteryModeStatusService.MODE_CONNECT_RESISTANCE));
     }
 
     /** 从预估容量缓存补充兼容字段。 */
