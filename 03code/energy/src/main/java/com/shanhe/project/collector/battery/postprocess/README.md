@@ -17,7 +17,7 @@
 | AlarmContextProcessor | postprocess | 告警上下文处理器 |
 | CapacityPredictionProcessor | postprocess | 容量预测处理器 |
 | CompatReportLogSyncProcessor | postprocess | 兼容历史同步处理器 |
-| ResistanceStatisticsProcessor | postprocess | 内阻统计处理器 |
+| ResistanceStatisticsAfterCompletionProcessor | postprocess | 内阻测试完成后延迟统计处理器 |
 
 ## 禁止事项
 

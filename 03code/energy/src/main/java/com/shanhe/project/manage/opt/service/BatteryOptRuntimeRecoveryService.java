@@ -2,7 +2,6 @@ package com.shanhe.project.manage.opt.service;
 
 import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
-import com.shanhe.framework.enums.ResistanceTestStatusEnum;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryModeInfo;
@@ -137,8 +136,9 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
             return;
         }
         Integer type = running.getType();
-        if (BatteryTestEnum._1.getDictValue().equals(type)) {
-            closeResistanceLogIfEnded(running, group.getResistanceTestStatus());
+        if (BatteryTestEnum._1.getDictValue().equals(type)
+                || BatteryTestEnum._6.getDictValue().equals(type)) {
+            // 新链路 resistanceTestStatus 当前仅作对外投影，内阻测试结束由队列/生命周期信号收口。
             return;
         }
         if (BatteryTestEnum._3.getDictValue().equals(type)
@@ -312,17 +312,6 @@ public class BatteryOptRuntimeRecoveryService implements BatteryRealtimePostProc
             return;
         }
         backupEndFirstSeen.remove(packNum);
-        closeRunningByRealtime(running);
-    }
-
-    private void closeResistanceLogIfEnded(OptLog running, Integer resistanceTestStatusValue) {
-        String resistanceTestStatus = Objects.toString(resistanceTestStatusValue, null);
-        if (ResistanceTestStatusEnum.find(resistanceTestStatus) == null) {
-            return;
-        }
-        if (ResistanceTestStatusEnum.isCode(resistanceTestStatus, ResistanceTestStatusEnum.TESTING)) {
-            return;
-        }
         closeRunningByRealtime(running);
     }
 

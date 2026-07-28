@@ -2,7 +2,6 @@ package com.shanhe.project.manage.stat.service.impl;
 
 import com.google.common.collect.Lists;
 import com.shanhe.common.constant.Constants;
-import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.enums.YesNoEnum;
@@ -458,8 +457,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
             return batteryPack.getVoltageRange();
         }
 
-        String batteryPackStatus = Objects.toString(group.getBatteryPackStatus(), null);
-        if (!BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
+        if (optLogService.selectRunningCacheLog(batteryPack.getPackNum()) != null) {
             return batteryPack.getVoltageRange();
         }
 

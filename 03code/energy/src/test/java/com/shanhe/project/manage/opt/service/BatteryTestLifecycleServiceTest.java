@@ -1,6 +1,9 @@
 package com.shanhe.project.manage.opt.service;
 
+import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
+import com.shanhe.project.collector.battery.postprocess.ResistanceStatisticsAfterCompletionProcessor;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
+import com.shanhe.project.collector.battery.service.BatteryModulePollContextHolder;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
@@ -31,6 +34,31 @@ class BatteryTestLifecycleServiceTest {
         order.verify(optLogService).updateRuntime(100L, BatteryTestLifecycleService.SUCCEEDED, 0);
         order.verify(modeStatusService).markStopped(
                 1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 8, true, 100L);
+    }
+
+    @Test
+    void shouldDeferResistanceStatisticsWhenInternalResistanceCompletesSuccessfully() {
+        OptLogService optLogService = Mockito.mock(OptLogService.class);
+        BatteryModeStatusService modeStatusService = Mockito.mock(BatteryModeStatusService.class);
+        ResistanceStatisticsAfterCompletionProcessor resistanceStatisticsProcessor =
+                Mockito.mock(ResistanceStatisticsAfterCompletionProcessor.class);
+        OptLog running = runningLog();
+        Mockito.when(optLogService.selectRunningCacheLog(1)).thenReturn(running);
+        BatteryTestLifecycleService service = service(optLogService, modeStatusService);
+        ReflectionTestUtils.setField(service, "resistanceStatisticsProcessor", resistanceStatisticsProcessor);
+
+        BatteryModulePollContextHolder.set(BatteryModulePollContext.builder()
+                .pollBatchNo("batch-1")
+                .build());
+        try {
+            service.complete(100L, 1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 2, true);
+        } finally {
+            BatteryModulePollContextHolder.clear();
+        }
+
+        Mockito.verify(resistanceStatisticsProcessor).deferAfterNextRealtimeBatch(1, 100L, "batch-1");
+        Mockito.verify(modeStatusService).markStopped(
+                1, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE, 2, true, 100L);
     }
 
     @Test
@@ -82,4 +110,6 @@ class BatteryTestLifecycleServiceTest {
         log.setPackNum(1);
         log.setType(6);
         return log;
-    }}
+    }
+
+}

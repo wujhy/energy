@@ -1,16 +1,12 @@
 package com.shanhe.project.manage.stat.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.shanhe.framework.enums.ResistanceTestStatusEnum;
 import com.alibaba.excel.EasyExcel;
 import com.google.common.collect.Lists;
 import com.shanhe.common.constant.Constants;
 import com.shanhe.common.utils.file.FileUtils;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
-import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryPack;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.stat.domain.DevBatteryMonomer;
 import com.shanhe.project.manage.stat.domain.StatBatteryRes;
@@ -187,55 +183,8 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
 
     @Async
     @Override
-    public void init(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList, BatteryReportLog oldInfo) {
-        if (null == oldInfo) {
-            return;
-        }
-        Map<String, Object> packParam = oldInfo.getPackParam();
-        if (packParam == null) {
-            return;
-        }
-
-        // 上一次不是内阻测试状态
-        String resistanceTestStatus = Objects.toString(packParam.get("resistanceTestStatus"), null);
-        if (!ResistanceTestStatusEnum.isCode(resistanceTestStatus, ResistanceTestStatusEnum.TESTING)) {
-            return;
-        }
-
-        // 内阻测试未完成
-        String newResistanceTestStatus = Objects.toString(packMap.get("resistanceTestStatus"), null);
-        if (StrUtil.equals(resistanceTestStatus, newResistanceTestStatus)) {
-            return;
-        }
-
-        if (batteryList == null || batteryList.isEmpty()) {
-            return;
-        }
-        // 结束内阻测试，生成内阻值
-        List<StatBatteryRes> statBatteryResList = generateStatBatteryRes(packNum, batteryList);
-
-        try {
-            statBatteryResMapper.insertList(statBatteryResList);
-        } catch (Exception e) {
-            log.error("插入数据异常", e);
-        }
-    }
-
-    @Async
-    @Override
-    public void initRealtime(Integer packNum,
-                             Integer previousResistanceTestStatus,
-                             Integer currentResistanceTestStatus,
-                             List<BatteryModuleCellRealtime> cells) {
-        String previousStatus = Objects.toString(previousResistanceTestStatus, null);
-        if (!ResistanceTestStatusEnum.isCode(previousStatus, ResistanceTestStatusEnum.TESTING)) {
-            return;
-        }
-        String currentStatus = Objects.toString(currentResistanceTestStatus, null);
-        if (StrUtil.equals(previousStatus, currentStatus)) {
-            return;
-        }
-        if (cells == null || cells.isEmpty()) {
+    public void initRealtime(Integer packNum, List<BatteryModuleCellRealtime> cells) {
+        if (!isCompleteRealtimeCells(packNum, cells)) {
             return;
         }
         List<StatBatteryRes> statBatteryResList = generateRealtimeStatBatteryRes(packNum, cells);
@@ -246,6 +195,35 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
             statBatteryResMapper.insertList(statBatteryResList);
         } catch (Exception e) {
             log.error("插入数据异常", e);
+        }
+    }
+
+    private boolean isCompleteRealtimeCells(Integer packNum, List<BatteryModuleCellRealtime> cells) {
+        if (cells == null || cells.isEmpty()) {
+            return false;
+        }
+        Integer expectedCellCount = resolveExpectedCellCount(packNum);
+        if (expectedCellCount != null && expectedCellCount > 0 && cells.size() < expectedCellCount) {
+            return false;
+        }
+        for (BatteryModuleCellRealtime cell : cells) {
+            if (cell == null || cell.getBatNum() == null || cell.getResistance() == null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private Integer resolveExpectedCellCount(Integer packNum) {
+        if (batteryPackService == null || packNum == null) {
+            return null;
+        }
+        try {
+            BatteryPack batteryPack = batteryPackService.selectBatteryInfoByPackNum(packNum);
+            return batteryPack == null ? null : batteryPack.getBatSinSize();
+        } catch (Exception e) {
+            log.debug("获取电池组单体数失败, packNum={}", packNum, e);
+            return null;
         }
     }
 
@@ -337,24 +315,6 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
         }
         return list;
     }
-
-
-    /** 生成内阻值 */
-    private static List<StatBatteryRes> generateStatBatteryRes(Integer packNum, List<BatteryMonitor> batteryList) {
-        List<StatBatteryRes> statBatteryResList = new ArrayList<>();
-        for (BatteryMonitor batteryInfo : batteryList) {
-            StatBatteryRes statBatteryRes = new StatBatteryRes();
-            statBatteryRes.setConfigId(Constants.DEFAULT_CONFIG_ID);
-            statBatteryRes.setPackNum(packNum);
-
-            statBatteryRes.setBatNum(batteryInfo.getBatNum());
-            statBatteryRes.setResistance(batteryInfo.getResistance());
-
-            statBatteryResList.add(statBatteryRes);
-        }
-        return statBatteryResList;
-    }
-
     /** 生成标准实时模型内阻值。 */
     private static List<StatBatteryRes> generateRealtimeStatBatteryRes(Integer packNum, List<BatteryModuleCellRealtime> cells) {
         List<StatBatteryRes> statBatteryResList = new ArrayList<>();

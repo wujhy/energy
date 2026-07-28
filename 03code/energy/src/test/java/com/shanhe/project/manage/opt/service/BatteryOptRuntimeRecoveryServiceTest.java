@@ -137,13 +137,10 @@ class BatteryOptRuntimeRecoveryServiceTest {
     }
 
     @Test
-    void shouldKeepBatteryLogsWhenRealtimeBatteryStatusActive() {
+    void shouldKeepResistanceLogUntilLifecycleCompletes() {
         Fixture fixture = new Fixture();
-        // 运行中为 _1 内阻测试，内阻状态已非 TESTING 时按 _1 关闭
         Mockito.when(fixture.optLogService.selectRunningCacheLog(1))
                 .thenReturn(runningLog(BatteryTestEnum._1.getDictValue()));
-        Mockito.when(fixture.optLogService.getRunningOptLog(Mockito.eq(1), Mockito.anyInt()))
-                .thenAnswer(invocation -> runningLog(invocation.getArgument(1)));
         BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
                 .pollBatchNo("batch-1")
@@ -152,7 +149,7 @@ class BatteryOptRuntimeRecoveryServiceTest {
 
         fixture.service.process(context);
 
-        Mockito.verify(fixture.optLogService).doStopTest(1, BatteryTestEnum._1.getDictValue());
+        Mockito.verify(fixture.optLogService, Mockito.never()).doStopTest(1, BatteryTestEnum._1.getDictValue());
         Mockito.verify(fixture.optLogService, Mockito.never()).doStopTest(1, BatteryTestEnum._3.getDictValue());
         Mockito.verify(fixture.optLogService, Mockito.never()).doStopTest(1, BatteryTestEnum._5.getDictValue());
         Mockito.verify(fixture.optLogService, Mockito.never()).doStopTest(1, BatteryTestEnum._7.getDictValue());

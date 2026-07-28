@@ -2,12 +2,16 @@ package com.shanhe.project.manage.opt.service;
 
 import com.shanhe.common.exception.ServiceException;
 import com.shanhe.framework.enums.BatteryTestEnum;
+import com.shanhe.project.collector.battery.model.BatteryModulePollContext;
+import com.shanhe.project.collector.battery.postprocess.ResistanceStatisticsAfterCompletionProcessor;
 import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
+import com.shanhe.project.collector.battery.service.BatteryModulePollContextHolder;
 import com.shanhe.project.manage.opt.domain.OptLog;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 统一维护测试业务日志及其模式状态投影
@@ -30,6 +34,8 @@ public class BatteryTestLifecycleService {
     private OptLogService optLogService;
     @Resource
     private BatteryModeStatusService modeStatusService;
+    @Resource
+    private ResistanceStatisticsAfterCompletionProcessor resistanceStatisticsProcessor;
 
     public synchronized Long start(Integer packNum, Integer testType, String source) {
         return start(packNum, testType, source, null);
@@ -72,7 +78,9 @@ public class BatteryTestLifecycleService {
         if (businessOptLogId == null) {
             return;
         }
+        OptLog running = currentRunningLog(packNum, businessOptLogId);
         optLogService.updateRuntime(businessOptLogId, success ? SUCCEEDED : FAILED, success ? 0 : 1);
+        deferResistanceStatisticsIfNeeded(running, mode, success);
         if (mode != null) {
             modeStatusService.markStopped(packNum, mode, address, success, businessOptLogId);
         }
@@ -138,6 +146,45 @@ public class BatteryTestLifecycleService {
             return BatteryModeStatusService.MODE_CONNECT_RESISTANCE;
         }
         return null;
+    }
+
+    private OptLog currentRunningLog(Integer packNum, Long businessOptLogId) {
+        if (packNum == null || businessOptLogId == null) {
+            return null;
+        }
+        OptLog cached = optLogService.selectRunningCacheLog(packNum);
+        if (cached != null && Objects.equals(cached.getId(), businessOptLogId)) {
+            return cached;
+        }
+        List<OptLog> runningLogs = optLogService.selectRunningList(packNum);
+        if (runningLogs == null || runningLogs.isEmpty()) {
+            return null;
+        }
+        for (OptLog log : runningLogs) {
+            if (log != null && Objects.equals(log.getId(), businessOptLogId)) {
+                return log;
+            }
+        }
+        return null;
+    }
+
+    private void deferResistanceStatisticsIfNeeded(OptLog running, Integer mode, boolean success) {
+        if (!success
+                || running == null
+                || !Objects.equals(mode, BatteryModeStatusService.MODE_INTERNAL_RESISTANCE)
+                || !isInternalResistanceTest(running.getType())
+                || resistanceStatisticsProcessor == null) {
+            return;
+        }
+        BatteryModulePollContext pollContext = BatteryModulePollContextHolder.get();
+        String excludedPollBatchNo = pollContext == null ? null : pollContext.getPollBatchNo();
+        resistanceStatisticsProcessor.deferAfterNextRealtimeBatch(
+                running.getPackNum(), running.getId(), excludedPollBatchNo);
+    }
+
+    private boolean isInternalResistanceTest(Integer testType) {
+        return BatteryTestEnum._1.getDictValue().equals(testType)
+                || BatteryTestEnum._6.getDictValue().equals(testType);
     }
 
     @FunctionalInterface

@@ -8,14 +8,12 @@ import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryPack;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.domain.Config;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.config.service.IConfigService;
 import com.shanhe.project.manage.capacity.service.PreBatteryGroupService;
 import com.shanhe.project.manage.capacity.vo.PreBatteryGroup;
 import com.shanhe.project.manage.capacity.vo.PreBatteryVo;
-import com.shanhe.project.manage.stat.service.IStatBatteryResService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -42,9 +40,6 @@ public class BatteryPackHandler {
     /** 配置服务。 */
     @Resource
     private IConfigService configService;
-    /** 电池内阻统计服务。 */
-    @Resource
-    private IStatBatteryResService statBatteryResService;
     /** 预估电池组服务。 */
     @Resource
     private PreBatteryGroupService preBatteryGroupService;
@@ -95,8 +90,6 @@ public class BatteryPackHandler {
             log.error("上传蓄电池实时数据出错，无单体数据！电池组：{}，info={}", packNum, deviceData.getInfo());
             return;
         }
-        BatteryReportLog oldInfo = null;
-        executePostSaveProcesses(config, packNum, batteryPack, packMap, batteryList, oldInfo);
     }
 
     /** 解析单体电池数据 */
@@ -188,72 +181,6 @@ public class BatteryPackHandler {
         int num = Integer.parseInt(dataStr.substring(12, 14), 16);
         String batteryInfos = info.substring(index82, index82 + num * 9 * 2);
         this.getBatteryInfoDefault(num, batteryInfos, config.getConfigId(), packNum, batteryList);
-    }
-
-    private void executePostSaveProcesses(Config config,
-                                          Integer packNum,
-                                          BatteryPack batteryPack,
-                                          Map<String, Object> packMap,
-                                          List<BatteryMonitor> batteryList,
-                                          BatteryReportLog oldInfo) {
-
-        try {
-            statBatteryResService.init(packNum, packMap, batteryList, oldInfo);
-        } catch (Exception e) {
-            log.error("电池组内阻计算异常 imei {} 电池组编号 {} ", config.getConfigId(), packNum, e);
-        }
-
-        try {
-            updateVoltageRange(batteryPack, packMap, batteryList, oldInfo);
-        } catch (Exception e) {
-            log.error("电池组电压极差计算异常 imei {} 电池组编号 {} ", config.getConfigId(), packNum, e);
-        }
-    }
-
-    /** 浮充结束更新电压极差 */
-    private void updateVoltageRange(BatteryPack batteryPack, Map<String, Object> packMap, List<BatteryMonitor> batteryList, BatteryReportLog oldInfo) {
-        if (null == oldInfo) {
-            return;
-        }
-        Map<String, Object> oldPackParam = oldInfo.getPackParam();
-        if (oldPackParam == null) {
-            return;
-        }
-
-        // 电池状态0：监控1：充电2：停电3：核容4：未连接5：备电6：空闲
-        String batteryPackStatus = Objects.toString(oldPackParam.get("batteryPackStatus"), null);
-        if (!BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
-            return;
-        }
-
-        // 内阻测试未完成
-        String newBatteryPackStatus = Objects.toString(packMap.get("batteryPackStatus"), null);
-        // 如果状态未发生变化，则不需要处理
-        if (StrUtil.equals(batteryPackStatus, newBatteryPackStatus)) {
-            return;
-        }
-
-        if (batteryList == null || batteryList.isEmpty()) {
-            return;
-        }
-        // 电压极差（mV） = 单体最高电压(V) - 单体最低电压(V)
-        // 使用 summaryStatistics 避免两次流操作，同时处理可能的空流情况
-        DoubleSummaryStatistics voltageStats = batteryList.stream()
-                .mapToDouble(BatteryMonitor::getVoltage)
-                .summaryStatistics();
-
-        if (voltageStats.getCount() == 0) {
-            return;
-        }
-
-        double maxVoltage = voltageStats.getMax();
-        double minVoltage = voltageStats.getMin();
-
-        // 单位转换 V 转换 mV，不保留小数点
-        Integer voltageRange = (int) ((maxVoltage - minVoltage) * 1000);
-
-        batteryPack.setVoltageRange(voltageRange);
-        batteryPackService.update(batteryPack);
     }
 
     /** 负数处理 */

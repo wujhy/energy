@@ -5,8 +5,10 @@ import com.shanhe.common.exception.ServiceException;
 import com.shanhe.framework.enums.*;
 import com.shanhe.framework.web.domain.AjaxResult;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
+import com.shanhe.project.collector.battery.model.BatteryModeInfo;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
+import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.manage.alarm.domain.AlarmLog;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
@@ -37,6 +39,9 @@ public class ControlBattery {
     /** 电池模组实时快照服务。 */
     @Resource
     private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
+    /** 测试/维护工作模式状态服务。 */
+    @Resource
+    private BatteryModeStatusService batteryModeStatusService;
     /** 告警日志服务。 */
     @Resource
     private IAlarmLogService alarmLogService;
@@ -141,6 +146,9 @@ public class ControlBattery {
         if (runningLogs != null && !runningLogs.isEmpty()) {
             return AjaxResult.error("蓄电池正在执行测试工作，请稍后再试！", 0);
         }
+        if (isModeRunning(context.opt.getPackNum())) {
+            return AjaxResult.error("蓄电池正在执行测试工作，请稍后再试！", 0);
+        }
 
         // 是否采集
         BatteryModuleGroupRealtime realtimeGroup = getRealtimeGroup(context.opt.getPackNum());
@@ -170,12 +178,24 @@ public class ControlBattery {
                 return AjaxResult.error("单节内阻测试单体编号无效", 0);
             }
         } else {
-            String batteryPackStatus = Objects.toString(realtimeGroup.getBatteryPackStatus(), null);
-            if (!BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
+            if (!isProjectedNonActiveStatus(realtimeGroup.getBatteryPackStatus())) {
                 return AjaxResult.error("电池组处于非空闲状态，不允许测试！", 0);
             }
         }
         return null;
+    }
+
+    private boolean isModeRunning(Integer packNum) {
+        BatteryModeInfo modeInfo = batteryModeStatusService == null ? null : batteryModeStatusService.get(packNum);
+        return modeInfo != null
+                && Objects.equals(modeInfo.getStatus(), BatteryModeStatusService.STATUS_RUNNING)
+                && !Objects.equals(modeInfo.getMode(), BatteryModeStatusService.MODE_IDLE);
+    }
+
+    private boolean isProjectedNonActiveStatus(Integer batteryPackStatusValue) {
+        String batteryPackStatus = Objects.toString(batteryPackStatusValue, null);
+        return BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.MONITOR)
+                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE);
     }
 
     private BatteryModuleGroupRealtime getRealtimeGroup(Integer packNum) {

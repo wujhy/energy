@@ -11,9 +11,10 @@ import com.shanhe.common.utils.file.FileUtils;
 import com.shanhe.common.utils.uuid.IdUtils;
 import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.framework.enums.BatteryTestEnum;
-import com.shanhe.framework.enums.ResistanceTestStatusEnum;
+import com.shanhe.project.collector.battery.model.BatteryModeInfo;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.service.BatteryModeStatusService;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import com.shanhe.project.manage.opt.domain.OptLog;
@@ -23,7 +24,6 @@ import com.shanhe.project.manage.stat.domain.StatBatteryPack;
 import com.shanhe.project.manage.stat.mapper.StatBatteryPackMapper;
 import com.shanhe.project.manage.stat.service.IStatBatteryBatService;
 import com.shanhe.project.manage.stat.service.IStatBatteryPackService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -55,13 +55,9 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
     /** 电池组服务。 */
     @Resource
     private IBatteryPackService batteryPackService;
-
-    /**
-     # 电池状态转变为浮充时
-     * 浮充数据迁移时长 毫秒
-     */
-    @Value("${stat.battery.floating:7200000}")
-    private long batteryFloatingTime;
+    /** 测试/维护工作模式状态服务。 */
+    @Resource
+    private BatteryModeStatusService batteryModeStatusService;
 
 
     @Override
@@ -94,28 +90,34 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         if (group == null || cells == null) {
             return;
         }
-        String resistanceTestStatus = Objects.toString(group.getResistanceTestStatus(), null);
-        if (ResistanceTestStatusEnum.isCode(resistanceTestStatus, ResistanceTestStatusEnum.TESTING)) {
+        if (hasActiveRun(packNum)) {
             insertRealtimePack(packNum, group, cells);
             return;
         }
 
         String batteryPackStatus = Objects.toString(group.getBatteryPackStatus(), null);
-        if (BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
-            OptLog optLog = optLogService.selectRunningCacheLog(packNum);
-            if (optLog == null || optLog.getCreateTime() == null) {
-                return;
-            }
-            if (System.currentTimeMillis() - optLog.getCreateTime().getTime() > batteryFloatingTime) {
-                return;
-            }
-        }
-        if (BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.CHARGE)
-                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.CAPACITY_TEST)
-                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.BACKUP)
-                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE)) {
+        if (isStatisticsStatus(batteryPackStatus)) {
             insertRealtimePack(packNum, group, cells);
         }
+    }
+
+    private boolean hasActiveRun(Integer packNum) {
+        OptLog optLog = optLogService == null ? null : optLogService.selectRunningCacheLog(packNum);
+        if (optLog != null) {
+            return true;
+        }
+        BatteryModeInfo modeInfo = batteryModeStatusService == null ? null : batteryModeStatusService.get(packNum);
+        return modeInfo != null
+                && Objects.equals(modeInfo.getStatus(), BatteryModeStatusService.STATUS_RUNNING)
+                && !Objects.equals(modeInfo.getMode(), BatteryModeStatusService.MODE_IDLE);
+    }
+
+    private boolean isStatisticsStatus(String batteryPackStatus) {
+        return BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.MONITOR)
+                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.CHARGE)
+                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.CAPACITY_TEST)
+                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.BACKUP)
+                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE);
     }
 
     @Override

@@ -2,22 +2,16 @@ package com.shanhe.project.collector.battery.service.postprocess;
 
 import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessor;
 import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessContext;
-import com.shanhe.project.collector.battery.postprocess.ResistanceStatisticsProcessor;
-import com.shanhe.project.collector.battery.postprocess.CompatReportLogSyncProcessor;
 import com.shanhe.project.collector.battery.postprocess.CapacityPredictionProcessor;
-import com.shanhe.project.collector.battery.postprocess.AlarmContextProcessor;
 import com.shanhe.project.collector.battery.postprocess.StatisticsProcessor;
-import com.shanhe.project.collector.battery.postprocess.OnlineStatusProcessor;
 import com.shanhe.project.collector.battery.postprocess.VoltageRangeProcessor;
 import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessService;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
-import com.shanhe.project.manage.opt.service.OptLogService;
 import com.shanhe.project.manage.capacity.service.BatteryPredictorService;
 import com.shanhe.project.manage.stat.service.IStatBatteryPackService;
-import com.shanhe.project.manage.stat.service.IStatBatteryResService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -29,7 +23,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BatteryRealtimePostProcessorsTest {
@@ -142,104 +135,6 @@ class BatteryRealtimePostProcessorsTest {
         processor.process(context);
 
         Mockito.verifyNoInteractions(predictorService);
-    }
-
-    @Test
-    void resistanceStatisticsProcessorShouldSkipWhenStatusMissing() {
-        ResistanceStatisticsProcessor processor = new ResistanceStatisticsProcessor();
-        IStatBatteryResService statBatteryResService = Mockito.mock(IStatBatteryResService.class);
-        ReflectionTestUtils.setField(processor, "statBatteryResService", statBatteryResService);
-
-        BatteryRealtimePostProcessContext context = context(group(6, null), cells());
-        assertFalse(processor.shouldProcess(context));
-
-        processor.process(context);
-
-        Mockito.verifyNoInteractions(statBatteryResService);
-    }
-
-    @Test
-    void resistanceStatisticsProcessorShouldCallOldServiceWhenStatusExists() {
-        ResistanceStatisticsProcessor processor = new ResistanceStatisticsProcessor();
-        IStatBatteryResService statBatteryResService = Mockito.mock(IStatBatteryResService.class);
-        IBatteryPackService batteryPackService = Mockito.mock(IBatteryPackService.class);
-        BatteryPack pack = new BatteryPack();
-        pack.setBatSinSize(2);
-        Mockito.when(batteryPackService.selectBatteryInfoByPackNum(1)).thenReturn(pack);
-        ReflectionTestUtils.setField(processor, "statBatteryResService", statBatteryResService);
-        ReflectionTestUtils.setField(processor, "batteryPackService", batteryPackService);
-
-        List<BatteryModuleCellRealtime> cells = cells();
-        cells.get(0).setResistanceRageSlip(9000.0d);
-
-        BatteryRealtimePostProcessContext context = context(group(6, 2), cells);
-        assertTrue(processor.shouldProcess(context));
-
-        processor.process(context);
-
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<BatteryModuleCellRealtime>> cellsCaptor = ArgumentCaptor.forClass(List.class);
-        Mockito.verify(statBatteryResService).initRealtime(Mockito.eq(1), Mockito.isNull(), Mockito.eq(2), cellsCaptor.capture());
-        assertEquals(2, cellsCaptor.getValue().size());
-        assertEquals(Integer.valueOf(110), cellsCaptor.getValue().get(0).getResistance());
-    }
-
-    @Test
-    void resistanceStatisticsProcessorShouldSkipIncompleteCellCountOrResistance() {
-        ResistanceStatisticsProcessor processor = new ResistanceStatisticsProcessor();
-        IStatBatteryResService statBatteryResService = Mockito.mock(IStatBatteryResService.class);
-        IBatteryPackService batteryPackService = Mockito.mock(IBatteryPackService.class);
-        BatteryPack pack = new BatteryPack();
-        pack.setBatSinSize(2);
-        Mockito.when(batteryPackService.selectBatteryInfoByPackNum(1)).thenReturn(pack);
-        ReflectionTestUtils.setField(processor, "statBatteryResService", statBatteryResService);
-        ReflectionTestUtils.setField(processor, "batteryPackService", batteryPackService);
-
-        processor.process(context(group(6, 7), Arrays.asList(cells().get(0))));
-        Mockito.verifyNoInteractions(statBatteryResService);
-
-        List<BatteryModuleCellRealtime> cells = cells();
-        cells.get(1).setResistance(null);
-        processor.process(context(group(6, 7), cells));
-
-        Mockito.verifyNoInteractions(statBatteryResService);
-    }
-
-    @Test
-    void resistanceStatisticsProcessorShouldSkipDuplicateBatch() {
-        ResistanceStatisticsProcessor processor = new ResistanceStatisticsProcessor();
-        IStatBatteryResService statBatteryResService = Mockito.mock(IStatBatteryResService.class);
-        ReflectionTestUtils.setField(processor, "statBatteryResService", statBatteryResService);
-
-        BatteryRealtimePostProcessContext context = context(group(6, 7), cells());
-
-        processor.process(context);
-        processor.process(context);
-
-        Mockito.verify(statBatteryResService, Mockito.times(1))
-                .initRealtime(Mockito.eq(1), Mockito.isNull(), Mockito.eq(7), Mockito.anyList());
-    }
-
-    @Test
-    void resistanceStatisticsProcessorShouldRejectMissingOrMismatchedBatch() {
-        ResistanceStatisticsProcessor processor = new ResistanceStatisticsProcessor();
-        List<BatteryModuleCellRealtime> cells = cells();
-
-        BatteryRealtimePostProcessContext missingBatch = BatteryRealtimePostProcessContext.builder()
-                .packNum(1)
-                .group(group(6, 2))
-                .cells(cells)
-                .build();
-        assertFalse(processor.shouldProcess(missingBatch));
-
-        cells.get(0).setPollBatchNo("other-batch");
-        BatteryRealtimePostProcessContext mismatchedBatch = BatteryRealtimePostProcessContext.builder()
-                .packNum(1)
-                .pollBatchNo(POLL_BATCH_NO)
-                .group(group(6, 2))
-                .cells(cells)
-                .build();
-        assertFalse(processor.shouldProcess(mismatchedBatch));
     }
 
     @Test

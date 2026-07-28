@@ -2,8 +2,6 @@ package com.shanhe.project.manage.stat.service;
 
 
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
-import com.shanhe.project.manage.config.domain.BatteryMonitor;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.stat.domain.StatBatteryRes;
 
 import java.util.List;
@@ -26,27 +24,12 @@ public interface IStatBatteryResService {
     Map<String, Object> getResistanceReport(Integer packNum);
 
     /**
-     * 初始化
-     *
-     * @param packNum 电池组编号
-     * @param packMap 电池组参数
-     * @param batteryList 单体电池列表
-     * @param oldInfo 旧数据
-     */
-    void init(Integer packNum, Map<String, Object> packMap, List<BatteryMonitor> batteryList, BatteryReportLog oldInfo);
-
-    /**
      * 基于标准实时模型初始化内阻统计。
      *
      * @param packNum 电池组编号
-     * @param previousResistanceTestStatus 上一轮内阻测试状态
-     * @param currentResistanceTestStatus 当前内阻测试状态
      * @param cells 单体实时数据
      */
-    void initRealtime(Integer packNum,
-                      Integer previousResistanceTestStatus,
-                      Integer currentResistanceTestStatus,
-                      List<BatteryModuleCellRealtime> cells);
+    void initRealtime(Integer packNum, List<BatteryModuleCellRealtime> cells);
 
     /**
      * 获取最新数据

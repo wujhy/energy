@@ -41,9 +41,9 @@ public class BatteryModeStatusService {
     public static final int MODE_BALANCE = 11;
 
     /** 工作模式状态值：停止。 */
-    private static final int STATUS_STOP = 0;
+    public static final int STATUS_STOP = 0;
     /** 工作模式状态值：运行中。 */
-    private static final int STATUS_RUNNING = 1;
+    public static final int STATUS_RUNNING = 1;
 
     /** 缓存键枚举。 */
     public final CacheKeyEnum cacheKeyEnum = CacheKeyEnum.MODE_STATUS;
