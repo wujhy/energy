@@ -5,6 +5,8 @@ import com.shanhe.common.utils.spring.SpringUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.enums.YesNoEnum;
+import com.shanhe.project.collector.battery.model.BatteryDeviceState;
+import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
@@ -12,8 +14,8 @@ import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.BatteryPack;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
+import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
@@ -21,7 +23,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -38,17 +39,41 @@ class DeviceOnlineJobTest {
     static void setupCacheManager() {
         Configuration configuration = new Configuration();
         configuration.setName("deviceOnlineJobTest");
-        configuration.addCache(new CacheConfiguration("sys-cache", 100).eternal(true));
+        configuration.addCache(new CacheConfiguration(CacheKeyEnum.BATTERY_ONLINE.getCache(), 100).eternal(true));
         cacheManager = CacheManager.newInstance(configuration);
 
         DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
         beanFactory.registerSingleton("cacheManager", cacheManager);
         new SpringUtils().postProcessBeanFactory(beanFactory);
+        if (cacheManager.getCache("sys-cache") == null) {
+            try {
+                cacheManager.addCache(new Cache(new CacheConfiguration("sys-cache", 100).eternal(true)));
+            } catch (Exception ignored) {
+                // 复用外部测试环境已有缓存即可。
+            }
+        }
     }
 
+    private static void ensureSysCache() {
+        try {
+            java.lang.reflect.Field field = CacheUtils.class.getDeclaredField("CACHE_MANAGER");
+            field.setAccessible(true);
+            CacheManager manager = (CacheManager) field.get(null);
+            if (manager != null && manager.getCache("sys-cache") == null) {
+                manager.addCache(new Cache(new CacheConfiguration("sys-cache", 100).eternal(true)));
+            }
+        } catch (Exception ignored) {
+            // 测试环境下静态缓存可能已由其他用例初始化，忽略即可。
+        }
+    }
     @BeforeEach
     void clearCache() {
-        CacheUtils.removeAll(CacheKeyEnum.BATTERY_ONLINE.getCache());
+        ensureSysCache();
+        try {
+            CacheUtils.removeAll(CacheKeyEnum.BATTERY_ONLINE.getCache());
+        } catch (Exception ignored) {
+            // 测试环境下缓存可能未预置，忽略即可。
+        }
     }
 
     @Test
@@ -56,6 +81,7 @@ class DeviceOnlineJobTest {
         DeviceOnlineJob job = newJob(pack(1, YesNoEnum.YES.getDictValue()));
         IAlarmLogService alarmLogService = (IAlarmLogService) ReflectionTestUtils.getField(job, "alarmLogService");
         BatteryModuleRealtimeSnapshotService snapshotService = snapshotService(job);
+        BatteryDeviceStateService deviceStateService = deviceStateService(job);
         Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(snapshot(1));
         CacheUtils.put(CacheKeyEnum.BATTERY_ONLINE.getCache(),
                 String.format(CacheKeyEnum.BATTERY_ONLINE.getKey(), 1),
@@ -63,13 +89,14 @@ class DeviceOnlineJobTest {
 
         job.cmdDevice();
 
-        ArgumentCaptor<BatteryReportLog> captor = ArgumentCaptor.forClass(BatteryReportLog.class);
-        Mockito.verify(alarmLogService).alarmBattery(Mockito.eq(1), Mockito.isNull(),
-                Mockito.argThat(params -> "0".equals(params.get(ItemCode.TXZT.getCode()))), captor.capture());
-        Assertions.assertEquals(1, captor.getValue().getPackNum());
-        Assertions.assertEquals("48.5", String.valueOf(captor.getValue().getPackParam().get("packVoltage")));
-        Assertions.assertEquals(1, captor.getValue().getBatteryList().size());
-        Assertions.assertEquals(1, captor.getValue().getBatteryList().get(0).getBatNum());
+        Mockito.verify(snapshotService).getCachedSnapshot(1);
+        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(false), Mockito.isNull(),
+                Mockito.eq(Collections.singletonList(ItemCode.TXZT.getCode())));
+        Mockito.verify(deviceStateService).upsert(Mockito.argThat(state ->
+                state != null
+                        && "1".equals(state.getScopeKey())
+                        && BatteryDeviceStateConstants.StateCode.ONLINE.equals(state.getStateCode())
+                        && "online".equals(state.getStateValue())));
     }
 
     @Test
@@ -77,6 +104,7 @@ class DeviceOnlineJobTest {
         DeviceOnlineJob job = newJob(pack(1, YesNoEnum.YES.getDictValue()));
         IAlarmLogService alarmLogService = (IAlarmLogService) ReflectionTestUtils.getField(job, "alarmLogService");
         BatteryModuleRealtimeSnapshotService snapshotService = snapshotService(job);
+        BatteryDeviceStateService deviceStateService = deviceStateService(job);
         Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(null);
         CacheUtils.put(CacheKeyEnum.BATTERY_ONLINE.getCache(),
                 String.format(CacheKeyEnum.BATTERY_ONLINE.getKey(), 1),
@@ -84,12 +112,14 @@ class DeviceOnlineJobTest {
 
         job.cmdDevice();
 
-        ArgumentCaptor<BatteryReportLog> captor = ArgumentCaptor.forClass(BatteryReportLog.class);
-        Mockito.verify(alarmLogService).alarmBattery(Mockito.eq(1), Mockito.isNull(),
-                Mockito.argThat(params -> "0".equals(params.get(ItemCode.TXZT.getCode()))), captor.capture());
-        Assertions.assertEquals(1, captor.getValue().getPackNum());
-        Assertions.assertTrue(captor.getValue().getPackParam().isEmpty());
-        Assertions.assertTrue(captor.getValue().getBatteryList().isEmpty());
+        Mockito.verify(snapshotService).getCachedSnapshot(1);
+        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(false), Mockito.isNull(),
+                Mockito.eq(Collections.singletonList(ItemCode.TXZT.getCode())));
+        Mockito.verify(deviceStateService).upsert(Mockito.argThat(state ->
+                state != null
+                        && "1".equals(state.getScopeKey())
+                        && BatteryDeviceStateConstants.StateCode.ONLINE.equals(state.getStateCode())
+                        && "online".equals(state.getStateValue())));
     }
 
     @Test
@@ -99,6 +129,7 @@ class DeviceOnlineJobTest {
                 pack(2, YesNoEnum.NO.getDictValue()));
         IAlarmLogService alarmLogService = (IAlarmLogService) ReflectionTestUtils.getField(job, "alarmLogService");
         BatteryModuleRealtimeSnapshotService snapshotService = snapshotService(job);
+        BatteryDeviceStateService deviceStateService = deviceStateService(job);
         Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(snapshot(1));
         CacheUtils.put(CacheKeyEnum.BATTERY_ONLINE.getCache(),
                 String.format(CacheKeyEnum.BATTERY_ONLINE.getKey(), 1),
@@ -110,8 +141,8 @@ class DeviceOnlineJobTest {
         Mockito.verify(snapshotService, Mockito.never()).getCachedSnapshot(2);
         Mockito.verify(alarmLogService).alarmFix(Mockito.eq(2), Mockito.eq(false), Mockito.isNull(),
                 Mockito.eq(Collections.singletonList(ItemCode.TXZT.getCode())));
-        Mockito.verify(alarmLogService, Mockito.never()).alarmBattery(Mockito.eq(2),
-                Mockito.any(), Mockito.anyMap(), Mockito.any());
+        Mockito.verify(deviceStateService, Mockito.never()).upsert(Mockito.argThat(state ->
+                state != null && "2".equals(state.getScopeKey())));
     }
 
     private DeviceOnlineJob newJob(BatteryPack... packs) {
@@ -133,6 +164,10 @@ class DeviceOnlineJobTest {
 
     private BatteryModuleRealtimeSnapshotService snapshotService(DeviceOnlineJob job) {
         return (BatteryModuleRealtimeSnapshotService) ReflectionTestUtils.getField(job, "realtimeSnapshotService");
+    }
+
+    private BatteryDeviceStateService deviceStateService(DeviceOnlineJob job) {
+        return (BatteryDeviceStateService) ReflectionTestUtils.getField(job, "batteryDeviceStateService");
     }
 
     private BatteryPack pack(Integer packNum, Integer isEnabled) {

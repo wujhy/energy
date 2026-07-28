@@ -4,7 +4,6 @@ import cn.hutool.core.util.StrUtil;
 import com.shanhe.framework.enums.BatteryCidEnum;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.project.manage.config.domain.Config;
-import com.shanhe.project.iot.battery.BatteryAlarmHandler;
 import com.shanhe.project.iot.battery.BatteryOptResHandler;
 import com.shanhe.project.iot.battery.BatteryPackHandler;
 import com.shanhe.project.iot.battery.BatteryParamsHandler;
@@ -33,9 +32,6 @@ public class BatteryHandler {
     /** 蓄电池操作响应处理器。 */
     @Resource
     private BatteryOptResHandler batteryOptResHandler;
-    /** 蓄电池告警处理器。 */
-    @Resource
-    private BatteryAlarmHandler batteryAlarmHandler;
     /** 蓄电池组处理器。 */
     @Resource
     private BatteryPackHandler batteryPackHandler;
@@ -72,8 +68,8 @@ public class BatteryHandler {
                 batteryPackHandler.uploadBatterPack(config, deviceData);
                 break;
             case _87:
-                //上传电池组报警状态
-                batteryAlarmHandler.uploadBatteryWarnData(config, deviceData);
+                // 旧 87 告警位图入口已停用，标准实时告警由采集后处理承载。
+                log.debug("忽略旧 87 电池组报警状态上报, info={}", deviceData.getInfo());
                 break;
             case _8A:
                 //响应单个告警参数屏蔽
@@ -84,8 +80,8 @@ public class BatteryHandler {
                 batteryParamsHandler.uploadBatteryParamsData(config, deviceData);
                 break;
             case _8D:
-                //上传设备故障类告警状态
-                batteryAlarmHandler.deviceFaultAlarmUpload(config, deviceData);
+                // 旧 8D 设备故障告警位图入口已停用。
+                log.debug("忽略旧 8D 设备故障告警状态上报, info={}", deviceData.getInfo());
                 break;
             case _8E:
                 //上传设备型号及软件版本号

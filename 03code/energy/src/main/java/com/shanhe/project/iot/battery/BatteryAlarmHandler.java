@@ -8,7 +8,6 @@ import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.comm.tcp.model.DeviceData;
 import com.shanhe.framework.comm.tcp.utils.CodingUtil;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.domain.Config;
 import com.shanhe.project.iot.model.BatteryWarnInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -92,15 +91,13 @@ public class BatteryAlarmHandler {
         String seriousStatus = group87EffectiveStatus(serious);
 
         // 最新电池组上报记录
-        BatteryReportLog batteryReportLog = loadAlarmContextReportLog(warnInfo.getBatteryPackNumber());
-
         // 电池组告警参数
         Map<String, String> warnParam = new HashMap<>(14);
         this.dealPackWarnParam(seriousStatus, AlarmLevelEnum._1.getDictValue(), warnParam);
         this.dealPackWarnParam(abnormalStatus, AlarmLevelEnum._1.getDictValue(), warnParam);
         this.dealPackWarnParam(commonlyStatus, AlarmLevelEnum._1.getDictValue(), warnParam);
         if (!warnParam.isEmpty()) {
-            alarmLogService.alarmBattery(warnInfo.getBatteryPackNumber(), null, warnParam, batteryReportLog);
+            log.debug("忽略旧 87 告警上下文写入, packNum={}, warnParam={}", warnInfo.getBatteryPackNumber(), warnParam);
         }
 
         //处理单体电池信息 获取单体电池报警个数
@@ -138,7 +135,7 @@ public class BatteryAlarmHandler {
             this.dealSingleWarnParam(abnormalStatus1, AlarmLevelEnum._1.getDictValue(), warnParam1);
             this.dealSingleWarnParam(commonlyStatus1, AlarmLevelEnum._1.getDictValue(), warnParam1);
             if (!warnParam1.isEmpty()) {
-                alarmLogService.alarmBattery(warnInfo.getBatteryPackNumber(), batteryNumber, warnParam1, batteryReportLog);
+                log.debug("忽略旧 87 单体告警上下文写入, packNum={}, batteryNumber={}, warnParam={}", warnInfo.getBatteryPackNumber(), batteryNumber, warnParam1);
             }
             excludeModelNum.add(batteryNumber);
         }
@@ -362,8 +359,6 @@ public class BatteryAlarmHandler {
         }
 
         // 最新电池组上报记录
-        BatteryReportLog batteryReportLog = loadAlarmContextReportLog(batteryWarnInfo.getBatteryPackNumber());
-
         /*电池组故障状态*/
         String dfs = batteryWarnInfo.getDeviceFaultStatus();
         if(dfs != null) {
@@ -384,7 +379,7 @@ public class BatteryAlarmHandler {
             // 组压模块通信异常
             warnParam.put(ItemCode.TXZT.getCode(), String.valueOf(dfs.charAt(5)));
             // 保存告警记录
-            alarmLogService.alarmBattery(batteryWarnInfo.getBatteryPackNumber(), null, warnParam, batteryReportLog);
+            log.debug("忽略旧 8D 故障告警上下文写入, packNum={}, warnParam={}", batteryWarnInfo.getBatteryPackNumber(), warnParam);
         }
 
         // 排除单体电池序号
@@ -423,7 +418,7 @@ public class BatteryAlarmHandler {
                 // 单体电池监测模块通信异常
                 warnParam.put(ItemCode.DTTXZT.getCode(), String.valueOf(status.charAt(4)));
                 // 保存告警记录
-                alarmLogService.alarmBattery(batteryWarnInfo.getBatteryPackNumber(), batteryNumber, warnParam, batteryReportLog);
+                log.debug("忽略旧 8D 单体故障告警上下文写入, packNum={}, batteryNumber={}, warnParam={}", batteryWarnInfo.getBatteryPackNumber(), batteryNumber, warnParam);
                 // 不存在的故障
                 excludeModelNum.add(batteryNumber);
             }
@@ -471,10 +466,5 @@ public class BatteryAlarmHandler {
         index8D = index8D + batteryWarnInfo.getAlarmBatterySum() * 4;
         batteryWarnInfo.setDeviceFaultStatus(CodingUtil.hexString2binaryString(info.substring(index8D, index8D + 2)));
         return batteryWarnInfo;
-    }
-
-    /** 旧 iot 告警入口不再接入标准实时快照适配。 */
-    private BatteryReportLog loadAlarmContextReportLog(Integer packNum) {
-        return null;
     }
 }

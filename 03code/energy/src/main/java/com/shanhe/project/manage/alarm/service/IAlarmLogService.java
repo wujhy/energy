@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.shanhe.project.manage.alarm.domain.AlarmLog;
-import com.shanhe.project.manage.config.domain.BatteryReportLog;
 import com.shanhe.project.manage.config.domain.Config;
 import com.shanhe.project.manage.config.domain.ConfigAttribute;
 
@@ -91,16 +90,6 @@ public interface IAlarmLogService
      * @return 告警日志列表
      */
     List<AlarmLog> cacheAlarmList();
-
-    /**
-     * 告警（蓄电池）
-     *
-     * @param packNum 组编码
-     * @param modelNum 模块编号
-     * @param warnParam 告警参数
-     * @param batteryReportLog 电池上报记录
-     */
-    void alarmBattery(Integer packNum, Integer modelNum, Map<String, String> warnParam, BatteryReportLog batteryReportLog);
 
     /**
      * 蓄电池故障告警（值）
