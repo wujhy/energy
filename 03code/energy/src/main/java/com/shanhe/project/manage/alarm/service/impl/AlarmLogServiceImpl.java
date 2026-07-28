@@ -26,9 +26,6 @@ import com.shanhe.project.manage.config.service.IConfigAttributeService;
 import com.shanhe.project.manage.host.service.IHostService;
 import com.shanhe.project.manage.opt.service.ControlBatterySet;
 import com.shanhe.project.manage.opt.service.OptLogService;
-import com.shanhe.project.collector.battery.model.BatteryDeviceState;
-import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
-import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import com.shanhe.project.sync.domain.AlarmItemLevelVo;
 import com.shanhe.project.sync.service.ClientReportService;
 import org.springframework.stereotype.Service;
@@ -65,10 +62,6 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     /** 蓄电池控制集合。 */
     @Resource
     private ControlBatterySet controlBatterySet;
-    /** 蓄电池设备状态服务。 */
-    @Resource
-    private BatteryDeviceStateService batteryDeviceStateService;
-
     /** 缓存枚举 */
     CacheKeyEnum alarmCache = CacheKeyEnum.ALARM;
 
@@ -132,9 +125,6 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
                 isAlarm = YesNoEnum.YES.getDictValue();
                 break;
             }
-        }
-        if (Objects.equals(isAlarm, YesNoEnum.NO.getDictValue()) && hasStateCommunicationAlarm(packNum)) {
-            isAlarm = YesNoEnum.YES.getDictValue();
         }
         return isAlarm;
     }
@@ -216,16 +206,10 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     public List<AlarmLog> cacheAlarmList() {
         List<AlarmLog> alarmLogList = new ArrayList<>();
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
-        Set<String> existingKeys = new HashSet<>();
         for (String key : keys) {
             AlarmLog alarmLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
             alarmLogList.add(alarmLog);
-            if (alarmLog != null && StrUtil.startWith(key, "alarm:")) {
-                existingKeys.add(communicationAlarmKey(alarmLog));
-            }
         }
-        // 通讯状态告警合并暂停用：与在线校验/缓存告警是否重复，随 TASK-ALARM-REFORM-001 统一梳理
-//        alarmLogList.addAll(buildStateCommunicationAlarms(null, existingKeys));
         return alarmLogList;
     }
 
@@ -798,127 +782,14 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
 
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
         List<AlarmLog> alarmLogs = new ArrayList<>();
-        Set<String> existingKeys = new HashSet<>();
         for (String key : keys) {
             if (StrUtil.startWith(key, prefix)) {
                 AlarmLog alarmLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
                 alarmLogs.add(alarmLog);
-                if (alarmLog != null) {
-                    existingKeys.add(communicationAlarmKey(alarmLog));
-                }
-            }
-        }
-        // 通讯状态告警合并暂停用：与在线校验/缓存告警是否重复，随 TASK-ALARM-REFORM-001 统一梳理
-//        alarmLogs.addAll(buildStateCommunicationAlarms(packNum, existingKeys));
-        return alarmLogs;
-    }
-
-    private boolean hasStateCommunicationAlarm(Integer packNum) {
-        return !buildStateCommunicationAlarms(packNum, Collections.emptySet()).isEmpty();
-    }
-
-    private List<AlarmLog> buildStateCommunicationAlarms(Integer packNum, Set<String> excludedKeys) {
-        if (batteryDeviceStateService == null) {
-            return Collections.emptyList();
-        }
-        List<BatteryDeviceState> states = packNum == null ?
-                batteryDeviceStateService.selectList(new BatteryDeviceState()) :
-                batteryDeviceStateService.selectByPackNum(packNum);
-        if (states == null || states.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<AlarmLog> alarmLogs = new ArrayList<>();
-        Set<String> dedupe = new HashSet<>();
-        for (BatteryDeviceState state : states) {
-            AlarmLog alarmLog = toCommunicationAlarmLog(state);
-            if (alarmLog == null) {
-                continue;
-            }
-            String key = communicationAlarmKey(alarmLog);
-            if (excludedKeys != null && excludedKeys.contains(key)) {
-                continue;
-            }
-            if (dedupe.add(key)) {
-                alarmLogs.add(alarmLog);
             }
         }
         return alarmLogs;
     }
-
-    private String communicationAlarmKey(AlarmLog alarmLog) {
-        return alarmLog.getPackNum() + ":" + alarmLog.getModelNum() + ":" + alarmLog.getItemCode();
-    }
-
-    private AlarmLog toCommunicationAlarmLog(BatteryDeviceState state) {
-        if (state == null || state.getPackNum() == null || !isActiveCommunicationState(state)) {
-            return null;
-        }
-        String itemCode = toCommunicationItemCode(state.getStateCode());
-        if (itemCode == null) {
-            return null;
-        }
-        AlarmLog alarmLog = new AlarmLog();
-        alarmLog.setConfigId(Constants.DEFAULT_CONFIG_ID);
-        alarmLog.setConfigName("蓄电池");
-        alarmLog.setType(DeviceTypeEnum._1.getDictValue());
-        alarmLog.setPackNum(state.getPackNum());
-        alarmLog.setModelNum(state.getModelNum());
-        alarmLog.setItemCode(itemCode);
-        alarmLog.setAlarmLevel("2");
-        alarmLog.setStatus(YesNoEnum.NO.getDictValue());
-        alarmLog.setDuration(0L);
-        alarmLog.setDataInfo(toCommunicationAlarmInfo(state, itemCode));
-        alarmLog.setCreateTime(state.getFirstSeenTime() == null ? state.getLastChangeTime() : state.getFirstSeenTime());
-        alarmLog.setUpdateTime(state.getLastUpdateTime() == null ? state.getLastChangeTime() : state.getLastUpdateTime());
-        return alarmLog;
-    }
-
-    private boolean isActiveCommunicationState(BatteryDeviceState state) {
-        String code = state.getStateCode();
-        String value = state.getStateValue();
-        String level = state.getStateLevel();
-        if (BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN.equals(code)) {
-            return BatteryDeviceStateConstants.StateLevel.ERROR.equals(level) || "closed".equals(value);
-        }
-        if (BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR.equals(code)) {
-            return BatteryDeviceStateConstants.StateLevel.ERROR.equals(level);
-        }
-        if (BatteryDeviceStateConstants.StateCode.CHANNEL_TIMEOUT_COUNT.equals(code)) {
-            return BatteryDeviceStateConstants.StateLevel.WARN.equals(level)
-                    || BatteryDeviceStateConstants.StateLevel.ERROR.equals(level);
-        }
-        if (BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT.equals(code)) {
-            return !BatteryDeviceStateConstants.StateLevel.NORMAL.equals(level) && !"recovered".equals(value);
-        }
-        if (BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE.equals(code)) {
-            return "inactive".equals(value);
-        }
-        if (BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS.equals(code)) {
-            return "stale".equals(value);
-        }
-        return false;
-    }
-
-    private String toCommunicationItemCode(String stateCode) {
-        if (BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN.equals(stateCode)
-                || BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR.equals(stateCode)) {
-            return ItemCode.DTTXZT.getCode();
-        }
-        if (BatteryDeviceStateConstants.StateCode.CHANNEL_TIMEOUT_COUNT.equals(stateCode)
-                || BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT.equals(stateCode)
-                || BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE.equals(stateCode)
-                || BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS.equals(stateCode)) {
-            return ItemCode.TXZT.getCode();
-        }
-        return null;
-    }
-
-    private String toCommunicationAlarmInfo(BatteryDeviceState state, String itemCode) {
-        String detail = StrUtil.isNotBlank(state.getDetail()) ? state.getDetail() : state.getStateValue();
-        String prefix = ItemCode.DTTXZT.getCode().equals(itemCode) ? "单体通信异常" : "组压通讯异常";
-        return StrUtil.isBlank(detail) ? prefix : prefix + "：" + detail;
-    }
-
     /**
      * 获取当前属性编码是否存在未处理告警
      *

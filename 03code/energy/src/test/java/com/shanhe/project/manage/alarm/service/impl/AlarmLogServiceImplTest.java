@@ -5,9 +5,6 @@ import com.shanhe.common.utils.spring.SpringUtils;
 import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.enums.YesNoEnum;
-import com.shanhe.project.collector.battery.model.BatteryDeviceState;
-import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
-import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import com.shanhe.project.manage.alarm.domain.AlarmLog;
 import com.shanhe.project.manage.config.service.IConfigAttributeService;
 import net.sf.ehcache.CacheManager;
@@ -22,17 +19,13 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 class AlarmLogServiceImplTest {
 
     private static CacheManager cacheManager;
 
     private final AlarmLogServiceImpl service = new AlarmLogServiceImpl();
-    private BatteryDeviceStateService batteryDeviceStateService;
 
     @BeforeAll
     static void setupCacheManager() {
@@ -49,8 +42,6 @@ class AlarmLogServiceImplTest {
     @BeforeEach
     void setUp() {
         CacheUtils.removeAll(CacheKeyEnum.ALARM.getCache());
-        batteryDeviceStateService = Mockito.mock(BatteryDeviceStateService.class);
-        ReflectionTestUtils.setField(service, "batteryDeviceStateService", batteryDeviceStateService);
     }
 
     @AfterEach
@@ -59,101 +50,30 @@ class AlarmLogServiceImplTest {
     }
 
     @Test
-    void shouldNotAppendCommunicationStateAlarmsWhileMergeDisabled() {
-        // 通讯状态告警合并已停用（随 TASK-ALARM-REFORM-001 统一梳理），列表不再合成状态告警
-        Mockito.when(batteryDeviceStateService.selectByPackNum(2)).thenReturn(Arrays.asList(
-                state(2, null, BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, "open failed",
-                        BatteryDeviceStateConstants.StateLevel.ERROR),
-                state(2, 8, BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT, "01/81",
-                        BatteryDeviceStateConstants.StateLevel.WARN)));
+    void shouldUseOnlyCachedAlarmLogsWhenCheckingAlarmByCache() {
+        Assertions.assertEquals(YesNoEnum.NO.getDictValue(), service.isAlarmByCache(2));
 
-        Assertions.assertTrue(service.selectBatteryAlarmLogListCache(2).isEmpty());
-    }
-
-    @Test
-    void shouldUseCommunicationStateWhenCheckingAlarmByCache() {
-        Mockito.when(batteryDeviceStateService.selectByPackNum(2)).thenReturn(Collections.singletonList(
-                state(2, null, BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, "stale",
-                        BatteryDeviceStateConstants.StateLevel.WARN)));
-
-        Integer isAlarm = service.isAlarmByCache(2);
-
-        Assertions.assertEquals(YesNoEnum.YES.getDictValue(), isAlarm);
-    }
-
-    @Test
-    void shouldNotAppendCommunicationStateAlarmsToCacheAlarmListWhileMergeDisabled() {
-        // 通讯状态告警合并已停用（随 TASK-ALARM-REFORM-001 统一梳理），总列表与计数不含状态告警
-        Mockito.when(batteryDeviceStateService.selectList(Mockito.any(BatteryDeviceState.class))).thenReturn(Arrays.asList(
-                state(2, null, BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, "stale",
-                        BatteryDeviceStateConstants.StateLevel.WARN),
-                state(3, null, BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, "open failed",
-                        BatteryDeviceStateConstants.StateLevel.ERROR)));
-
-        Assertions.assertTrue(service.cacheAlarmList().isEmpty());
-        Assertions.assertEquals(0L, service.batteryAlarmNum());
-    }
-
-    @Test
-    void shouldNotDoubleCountStateAlarmWhenSameCachedAlarmExistsInBatteryAlarmNum() {
-        AlarmLog cachedAlarm = new AlarmLog();
-        cachedAlarm.setPackNum(2);
-        cachedAlarm.setModelNum(null);
-        cachedAlarm.setItemCode(ItemCode.TXZT.getCode());
-        cachedAlarm.setStatus(YesNoEnum.NO.getDictValue());
+        AlarmLog cachedAlarm = alarm(2, null, ItemCode.TXZT.getCode(), YesNoEnum.NO.getDictValue());
         CacheUtils.put(CacheKeyEnum.ALARM.getCache(),
                 String.format(CacheKeyEnum.ALARM.getKey(), 2, null, ItemCode.TXZT.getCode()),
                 cachedAlarm);
-        Mockito.when(batteryDeviceStateService.selectList(Mockito.any(BatteryDeviceState.class))).thenReturn(Collections.singletonList(
-                state(2, null, BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, "stale",
-                        BatteryDeviceStateConstants.StateLevel.WARN)));
-
-        Assertions.assertEquals(1L, service.batteryAlarmNum());
-        Assertions.assertEquals(1, service.cacheAlarmList().size());
-    }
-
-    @Test
-    void shouldIgnoreRecoveredCommunicationStates() {
-        Mockito.when(batteryDeviceStateService.selectByPackNum(2)).thenReturn(Arrays.asList(
-                state(2, null, BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR, "cleared",
-                        BatteryDeviceStateConstants.StateLevel.NORMAL),
-                state(2, 8, BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT, "recovered",
-                        BatteryDeviceStateConstants.StateLevel.NORMAL),
-                state(2, 8, BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE, "active",
-                        BatteryDeviceStateConstants.StateLevel.NORMAL)));
-
-        Assertions.assertTrue(service.selectBatteryAlarmLogListCache(2).isEmpty());
-        Assertions.assertEquals(YesNoEnum.NO.getDictValue(), service.isAlarmByCache(2));
-    }
-
-    @Test
-    void shouldNotAppendStateAlarmWhenSameCachedAlarmExists() {
-        AlarmLog handledCacheAlarm = new AlarmLog();
-        handledCacheAlarm.setPackNum(2);
-        handledCacheAlarm.setItemCode(ItemCode.TXZT.getCode());
-        handledCacheAlarm.setStatus(YesNoEnum.YES.getDictValue());
-        CacheUtils.put(CacheKeyEnum.ALARM.getCache(),
-                String.format(CacheKeyEnum.ALARM.getKey(), 2, null, ItemCode.TXZT.getCode()),
-                handledCacheAlarm);
-        Mockito.when(batteryDeviceStateService.selectByPackNum(2)).thenReturn(Collections.singletonList(
-                state(2, null, BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS, "stale",
-                        BatteryDeviceStateConstants.StateLevel.WARN)));
-
-        List<AlarmLog> alarmLogs = service.selectBatteryAlarmLogListCache(2);
-
-        Assertions.assertEquals(1, alarmLogs.size());
-        Assertions.assertSame(handledCacheAlarm, alarmLogs.get(0));
-        Assertions.assertEquals(YesNoEnum.YES.getDictValue(), alarmLogs.get(0).getStatus());
-    }
-
-    @Test
-    void shouldMapChannelTimeoutCountToCommunicationAlarm() {
-        // 合并停用后状态告警不进列表，但 isAlarmByCache 仍通过通讯状态判定告警
-        Mockito.when(batteryDeviceStateService.selectByPackNum(2)).thenReturn(Collections.singletonList(
-                state(2, null, BatteryDeviceStateConstants.StateCode.CHANNEL_TIMEOUT_COUNT, "3",
-                        BatteryDeviceStateConstants.StateLevel.WARN)));
 
         Assertions.assertEquals(YesNoEnum.YES.getDictValue(), service.isAlarmByCache(2));
+        Assertions.assertEquals(YesNoEnum.NO.getDictValue(), service.isAlarmByCache(3));
+    }
+
+    @Test
+    void shouldCountOnlyOpenBatteryAlarmLogsFromCache() {
+        CacheUtils.put(CacheKeyEnum.ALARM.getCache(),
+                String.format(CacheKeyEnum.ALARM.getKey(), 2, null, ItemCode.TXZT.getCode()),
+                alarm(2, null, ItemCode.TXZT.getCode(), YesNoEnum.NO.getDictValue()));
+        CacheUtils.put(CacheKeyEnum.ALARM.getCache(),
+                String.format(CacheKeyEnum.ALARM.getKey(), 2, 1, ItemCode.DTDYGC.getCode()),
+                alarm(2, 1, ItemCode.DTDYGC.getCode(), YesNoEnum.YES.getDictValue()));
+
+        Assertions.assertEquals(2, service.selectBatteryAlarmLogListCache(2).size());
+        Assertions.assertEquals(1L, service.batteryAlarmNum());
+        Assertions.assertEquals(2, service.cacheAlarmList().size());
     }
 
     @Test
@@ -168,20 +88,12 @@ class AlarmLogServiceImplTest {
 
     @Test
     void shouldIsolateCellAlarmCacheByModelNum() {
-        AlarmLog cell1Alarm = new AlarmLog();
-        cell1Alarm.setPackNum(1);
-        cell1Alarm.setModelNum(1);
-        cell1Alarm.setItemCode(ItemCode.DTDYGC.getCode());
-        cell1Alarm.setStatus(YesNoEnum.NO.getDictValue());
+        AlarmLog cell1Alarm = alarm(1, 1, ItemCode.DTDYGC.getCode(), YesNoEnum.NO.getDictValue());
         CacheUtils.put(CacheKeyEnum.ALARM.getCache(),
                 String.format(CacheKeyEnum.ALARM.getKey(), 1, 1, ItemCode.DTDYGC.getCode()),
                 cell1Alarm);
 
-        AlarmLog cell2Alarm = new AlarmLog();
-        cell2Alarm.setPackNum(1);
-        cell2Alarm.setModelNum(2);
-        cell2Alarm.setItemCode(ItemCode.DTDYGC.getCode());
-        cell2Alarm.setStatus(YesNoEnum.YES.getDictValue());
+        AlarmLog cell2Alarm = alarm(1, 2, ItemCode.DTDYGC.getCode(), YesNoEnum.YES.getDictValue());
         CacheUtils.put(CacheKeyEnum.ALARM.getCache(),
                 String.format(CacheKeyEnum.ALARM.getKey(), 1, 2, ItemCode.DTDYGC.getCode()),
                 cell2Alarm);
@@ -198,14 +110,12 @@ class AlarmLogServiceImplTest {
         Assertions.assertNotSame(cached1, cached2);
     }
 
-    private BatteryDeviceState state(Integer packNum, Integer modelNum, String stateCode,
-                                     String stateValue, String stateLevel) {
-        BatteryDeviceState state = new BatteryDeviceState();
-        state.setPackNum(packNum);
-        state.setModelNum(modelNum);
-        state.setStateCode(stateCode);
-        state.setStateValue(stateValue);
-        state.setStateLevel(stateLevel);
-        return state;
+    private AlarmLog alarm(Integer packNum, Integer modelNum, String itemCode, Integer status) {
+        AlarmLog alarm = new AlarmLog();
+        alarm.setPackNum(packNum);
+        alarm.setModelNum(modelNum);
+        alarm.setItemCode(itemCode);
+        alarm.setStatus(status);
+        return alarm;
     }
 }
