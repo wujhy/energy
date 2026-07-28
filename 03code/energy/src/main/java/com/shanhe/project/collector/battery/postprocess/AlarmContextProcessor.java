@@ -112,7 +112,7 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
             return;
         }
         if (source.getPackWarnParam() != null) {
-            target.getPackWarnParam().putAll(source.getPackWarnParam());
+            mergePackWarnParam(target, source.getPackWarnParam());
         }
         if (source.getCellWarnParam() == null || source.getCellWarnParam().isEmpty()) {
             return;
@@ -127,6 +127,15 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
         }
     }
 
+    private void mergePackWarnParam(BatteryModuleAlarmContext target, Map<String, String> sourceWarnParam) {
+        for (Map.Entry<String, String> entry : sourceWarnParam.entrySet()) {
+            String currentValue = target.getPackWarnParam().get(entry.getKey());
+            if ("1".equals(currentValue) && "0".equals(entry.getValue())) {
+                continue;
+            }
+            target.getPackWarnParam().put(entry.getKey(), entry.getValue());
+        }
+    }
     /** 将告警上下文提交给告警服务，并恢复本轮未上报单体的告警。 */
     private void handleAlarmContext(BatteryRealtimePostProcessContext context,
                                     BatteryModuleAlarmContext alarmContext) {

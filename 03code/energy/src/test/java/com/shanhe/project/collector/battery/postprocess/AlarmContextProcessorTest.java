@@ -108,6 +108,28 @@ class AlarmContextProcessorTest {
     }
 
     @Test
+    void processShouldKeepRealtimeCommunicationAlarmWhenRecoveredStateIsMerged() {
+        AlarmContextProcessor processor = newProcessor();
+        BatteryModuleAlarmAdaptService alarmAdaptService = Mockito.mock(BatteryModuleAlarmAdaptService.class);
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryModuleAlarmContext realtimeContext = alarmContext(1);
+        realtimeContext.putPackWarn(ItemCode.TXZT.getCode(), "1");
+        BatteryModuleAlarmContext communicationContext = alarmContext(1);
+        communicationContext.putPackWarn(ItemCode.TXZT.getCode(), "0");
+        BatteryRealtimePostProcessContext context = contextWithChannelConfig();
+        Mockito.when(alarmAdaptService.buildContext(context.getGroup(), context.getCells()))
+                .thenReturn(realtimeContext);
+        Mockito.when(alarmAdaptService.buildCommunicationAlarmContext(1, "COM1"))
+                .thenReturn(communicationContext);
+        ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
+        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+
+        processor.process(context);
+
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+                Mockito.isNull(), Mockito.argThat(params -> "1".equals(params.get(ItemCode.TXZT.getCode()))));
+    }
+    @Test
     void processShouldSendMergedPackAndCellAlarmContext() {
         AlarmContextProcessor processor = newProcessor();
         BatteryModuleAlarmAdaptService alarmAdaptService = Mockito.mock(BatteryModuleAlarmAdaptService.class);

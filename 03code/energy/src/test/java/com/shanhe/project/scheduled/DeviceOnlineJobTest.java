@@ -90,8 +90,7 @@ class DeviceOnlineJobTest {
         job.cmdDevice();
 
         Mockito.verify(snapshotService).getCachedSnapshot(1);
-        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(false), Mockito.isNull(),
-                Mockito.eq(Collections.singletonList(ItemCode.TXZT.getCode())));
+        Mockito.verify(alarmLogService, Mockito.never()).alarmBatteryValue(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyMap());
         Mockito.verify(deviceStateService).upsert(Mockito.argThat(state ->
                 state != null
                         && "1".equals(state.getScopeKey())
@@ -113,8 +112,7 @@ class DeviceOnlineJobTest {
         job.cmdDevice();
 
         Mockito.verify(snapshotService).getCachedSnapshot(1);
-        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(false), Mockito.isNull(),
-                Mockito.eq(Collections.singletonList(ItemCode.TXZT.getCode())));
+        Mockito.verify(alarmLogService, Mockito.never()).alarmBatteryValue(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyMap());
         Mockito.verify(deviceStateService).upsert(Mockito.argThat(state ->
                 state != null
                         && "1".equals(state.getScopeKey())
@@ -143,6 +141,28 @@ class DeviceOnlineJobTest {
                 Mockito.eq(Collections.singletonList(ItemCode.TXZT.getCode())));
         Mockito.verify(deviceStateService, Mockito.never()).upsert(Mockito.argThat(state ->
                 state != null && "2".equals(state.getScopeKey())));
+    }
+
+    @Test
+    void shouldCreateOfflineAlarmWhenOnlineCacheMissingTooLong() {
+        DeviceOnlineJob job = newJob(pack(1, YesNoEnum.YES.getDictValue()));
+        IAlarmLogService alarmLogService = (IAlarmLogService) ReflectionTestUtils.getField(job, "alarmLogService");
+        BatteryDeviceStateService deviceStateService = deviceStateService(job);
+        @SuppressWarnings("unchecked")
+        java.util.Map<Integer, Integer> offlineCounts =
+                (java.util.Map<Integer, Integer>) ReflectionTestUtils.getField(job, "offlineBatteryPackNumMap");
+        offlineCounts.put(1, 6);
+
+        job.cmdDevice();
+
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1), Mockito.isNull(),
+                Mockito.argThat(params -> "1".equals(params.get(ItemCode.TXZT.getCode()))));
+        Mockito.verify(deviceStateService).upsert(Mockito.argThat(state ->
+                state != null
+                        && "1".equals(state.getScopeKey())
+                        && BatteryDeviceStateConstants.StateCode.ONLINE.equals(state.getStateCode())
+                        && "offline".equals(state.getStateValue())
+                        && BatteryDeviceStateConstants.StateLevel.WARN.equals(state.getStateLevel())));
     }
 
     private DeviceOnlineJob newJob(BatteryPack... packs) {

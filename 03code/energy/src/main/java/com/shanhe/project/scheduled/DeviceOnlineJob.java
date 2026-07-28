@@ -139,14 +139,15 @@ public class DeviceOnlineJob {
     private void syncBatteryOfflineAlarm(Integer packNum, boolean offline) {
         BatteryModuleRealtimeSnapshot snapshot = realtimeSnapshotService == null
                 ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
-        if (!offline) {
-            alarmLogService.alarmFix(packNum, false, null, Collections.singletonList(ItemCode.TXZT.getCode()));
-        } else if (snapshot == null || !snapshot.isDataReady() || !snapshot.isFresh()) {
-            log.debug("电池组离线告警暂不触发旧告警上下文, packNum={}", packNum);
-        } else {
-            log.debug("电池组离线状态已写入 battery_device_state, 告警上下文等待迁移到标准实时模型, packNum={}", packNum);
-        }
         persistOnlineState(packNum, offline);
+        if (offline) {
+            alarmLogService.alarmBatteryValue(null, packNum, null,
+                    Collections.singletonMap(ItemCode.TXZT.getCode(), "1"));
+            if (snapshot == null || !snapshot.isDataReady() || !snapshot.isFresh()) {
+                log.debug("电池组离线状态已按 energy 告警上下文处理, packNum={}, snapshotReady={}",
+                        packNum, snapshot != null && snapshot.isDataReady());
+            }
+        }
     }
 
     /** 持久化电池组在线/离线状态到 battery_device_state。 */

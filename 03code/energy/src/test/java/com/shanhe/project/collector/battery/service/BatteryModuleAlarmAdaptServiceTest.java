@@ -123,6 +123,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         Assertions.assertTrue(context.getPackWarnParam().isEmpty());
         Assertions.assertTrue(context.getCellWarnParam().isEmpty());
     }
+
     @Test
     void shouldBuildFlatThresholdAlarmCandidatesForHighAndLowItems() {
         BatteryModuleCellRealtime cell = cell(1, null);
@@ -182,7 +183,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
         Assertions.assertEquals(1, context.getPackNum());
-        Assertions.assertFalse(context.getPackWarnParam().containsKey(ItemCode.TXZT.getCode()));
+        Assertions.assertEquals("0", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
     }
 
     @Test
@@ -218,6 +219,37 @@ class BatteryModuleAlarmAdaptServiceTest {
     }
 
     @Test
+    void shouldEmitRecoveredChannelCommunicationCandidate() throws Exception {
+        BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
+                Collections.singletonList(channelState(BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN,
+                        "open", BatteryDeviceStateConstants.StateLevel.NORMAL)));
+
+        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+
+        Assertions.assertEquals("0", context.getPackWarnParam().get(ItemCode.DTTXZT.getCode()));
+    }
+
+    @Test
+    void shouldMapOfflineOnlineStateToCommunicationAlarm() throws Exception {
+        BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
+                Collections.singletonList(packOnlineState("offline", BatteryDeviceStateConstants.StateLevel.WARN)));
+
+        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+
+        Assertions.assertEquals("1", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
+    }
+
+    @Test
+    void shouldEmitRecoveredOnlineStateCandidate() throws Exception {
+        BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
+                Collections.singletonList(packOnlineState("online", BatteryDeviceStateConstants.StateLevel.NORMAL)));
+
+        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+
+        Assertions.assertEquals("0", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
+    }
+
+    @Test
     void shouldMapActiveModuleTimeoutToCommunicationAlarm() throws Exception {
         BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
                 Collections.singletonList(moduleTimeout(1, "01/81", BatteryDeviceStateConstants.StateLevel.WARN)));
@@ -234,7 +266,7 @@ class BatteryModuleAlarmAdaptServiceTest {
 
         BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
-        Assertions.assertFalse(context.getPackWarnParam().containsKey(ItemCode.TXZT.getCode()));
+        Assertions.assertEquals("0", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
     }
 
     @Test
@@ -254,7 +286,7 @@ class BatteryModuleAlarmAdaptServiceTest {
 
         BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
-        Assertions.assertFalse(context.getPackWarnParam().containsKey(ItemCode.TXZT.getCode()));
+        Assertions.assertEquals("0", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
     }
 
     @Test
@@ -356,6 +388,17 @@ class BatteryModuleAlarmAdaptServiceTest {
         state.setPackNum(1);
         state.setChannelName("COM1");
         state.setStateCode(stateCode);
+        state.setStateValue(stateValue);
+        state.setStateLevel(stateLevel);
+        return state;
+    }
+
+    private BatteryDeviceState packOnlineState(String stateValue, String stateLevel) {
+        BatteryDeviceState state = new BatteryDeviceState();
+        state.setScopeType(BatteryDeviceStateConstants.ScopeType.PACK);
+        state.setScopeKey("1");
+        state.setPackNum(1);
+        state.setStateCode(BatteryDeviceStateConstants.StateCode.ONLINE);
         state.setStateValue(stateValue);
         state.setStateLevel(stateLevel);
         return state;

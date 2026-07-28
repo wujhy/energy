@@ -58,10 +58,23 @@ public class BatteryModuleAlarmAdaptService {
         BatteryModuleAlarmContext context = new BatteryModuleAlarmContext();
         context.setPackNum(packNum);
         try {
-            appendChannelStatus(context, channelName);
-            appendModuleTimeout(context, packNum, channelName);
-            appendModuleActive(context, packNum, channelName);
-            appendGroup246Freshness(context, packNum);
+            Boolean channelAlarm = appendChannelStatus(context, channelName);
+            if (Boolean.FALSE.equals(channelAlarm)) {
+                context.putPackWarn(ItemCode.DTTXZT.getCode(), "0");
+            }
+            Boolean onlineAlarm = appendOnlineStatus(context, packNum);
+            Boolean moduleTimeoutAlarm = appendModuleTimeout(context, packNum, channelName);
+            Boolean moduleActiveAlarm = appendModuleActive(context, packNum, channelName);
+            Boolean groupFreshnessAlarm = appendGroup246Freshness(context, packNum);
+            boolean hasPackSignal = onlineAlarm != null || moduleTimeoutAlarm != null
+                    || moduleActiveAlarm != null || groupFreshnessAlarm != null;
+            boolean packCommunicationAlarm = Boolean.TRUE.equals(onlineAlarm)
+                    || Boolean.TRUE.equals(moduleTimeoutAlarm)
+                    || Boolean.TRUE.equals(moduleActiveAlarm)
+                    || Boolean.TRUE.equals(groupFreshnessAlarm);
+            if (hasPackSignal && !packCommunicationAlarm) {
+                context.putPackWarn(ItemCode.TXZT.getCode(), "0");
+            }
         } catch (Exception e) {
             log.warn("构建通信告警上下文失败, 电池组={}, 原因={}", packNum, e.getMessage());
         }
@@ -203,7 +216,13 @@ public class BatteryModuleAlarmAdaptService {
     }
 
     private Double groupVoltage(BatteryModuleGroupRealtime group) {
-        return group.getPackVoltage() != null ? group.getPackVoltage() : group.getExternalVoltage();
+        if (group.getPackVoltage() != null) {
+            return group.getPackVoltage();
+        }
+        if (group.getBatteryPackOuterVoltage() != null) {
+            return group.getBatteryPackOuterVoltage();
+        }
+        return group.getExternalVoltage();
     }
 
     /** 追加电池组通信状态告警。 */
@@ -235,64 +254,81 @@ public class BatteryModuleAlarmAdaptService {
     }
 
     /** 追加通道串口状态告警（CHANNEL_OPEN + CHANNEL_ERROR）。 */
-    private void appendChannelStatus(BatteryModuleAlarmContext context, String channelName) {
+    private Boolean appendChannelStatus(BatteryModuleAlarmContext context, String channelName) {
         if (channelName == null) {
-            return;
+            return null;
         }
-        // 通道关闭检测
+        boolean hasSignal = false;
         BatteryDeviceState channelOpen = batteryDeviceStateService.selectByScope(
                 BatteryDeviceStateConstants.ScopeType.CHANNEL, channelName,
                 BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN);
-        if (channelOpen != null && BatteryDeviceStateConstants.StateLevel.ERROR.equals(channelOpen.getStateLevel())) {
-            context.putPackWarn(ItemCode.DTTXZT.getCode(), "1");
-            return;
+        if (channelOpen != null) {
+            hasSignal = true;
+            if (BatteryDeviceStateConstants.StateLevel.ERROR.equals(channelOpen.getStateLevel())) {
+                context.putPackWarn(ItemCode.DTTXZT.getCode(), "1");
+                return true;
+            }
         }
-        // 通道异常检测（串口打开失败、读写异常）
         BatteryDeviceState channelError = batteryDeviceStateService.selectByScope(
                 BatteryDeviceStateConstants.ScopeType.CHANNEL, channelName,
                 BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR);
-        if (channelError != null && BatteryDeviceStateConstants.StateLevel.ERROR.equals(channelError.getStateLevel())) {
-            context.putPackWarn(ItemCode.DTTXZT.getCode(), "1");
+        if (channelError != null) {
+            hasSignal = true;
+            if (BatteryDeviceStateConstants.StateLevel.ERROR.equals(channelError.getStateLevel())) {
+                context.putPackWarn(ItemCode.DTTXZT.getCode(), "1");
+                return true;
+            }
         }
+        return hasSignal ? Boolean.FALSE : null;
     }
 
     /** 追加模块超时告警（MODULE_TIMEOUT）。 */
-    private void appendModuleTimeout(BatteryModuleAlarmContext context, Integer packNum, String channelName) {
+    private Boolean appendModuleTimeout(BatteryModuleAlarmContext context, Integer packNum, String channelName) {
         if (channelName == null) {
-            return;
+            return null;
         }
         List<BatteryDeviceState> timeoutStates = batteryDeviceStateService.selectByChannelAndCode(
                 channelName, BatteryDeviceStateConstants.StateCode.MODULE_TIMEOUT);
         if (timeoutStates == null || timeoutStates.isEmpty()) {
-            return;
+            return null;
         }
+        boolean hasSignal = false;
         for (BatteryDeviceState state : timeoutStates) {
-            if (state != null
-                    && belongsToPack(state, packNum)
-                    && !BatteryDeviceStateConstants.StateLevel.NORMAL.equals(state.getStateLevel())
+            if (state == null || !belongsToPack(state, packNum)) {
+                continue;
+            }
+            hasSignal = true;
+            if (!BatteryDeviceStateConstants.StateLevel.NORMAL.equals(state.getStateLevel())
                     && !"recovered".equals(state.getStateValue())) {
-                // 存在模块超时记录，标记该组有模块无响应
                 context.putPackWarn(ItemCode.TXZT.getCode(), "1");
-                return;
+                return true;
             }
         }
+        return hasSignal ? Boolean.FALSE : null;
     }
 
     /** 追加模块活跃状态告警（MODULE_ACTIVE=inactive）。 */
-    private void appendModuleActive(BatteryModuleAlarmContext context, Integer packNum, String channelName) {
+    private Boolean appendModuleActive(BatteryModuleAlarmContext context, Integer packNum, String channelName) {
         if (channelName == null) {
-            return;
+            return null;
         }
-        List<BatteryDeviceState> inactiveStates = batteryDeviceStateService.selectByChannelAndCode(
+        List<BatteryDeviceState> activeStates = batteryDeviceStateService.selectByChannelAndCode(
                 channelName, BatteryDeviceStateConstants.StateCode.MODULE_ACTIVE);
-        if (inactiveStates != null) {
-            for (BatteryDeviceState state : inactiveStates) {
-                if (state != null && belongsToPack(state, packNum) && "inactive".equals(state.getStateValue())) {
-                    context.putPackWarn(ItemCode.TXZT.getCode(), "1");
-                    return;
-                }
+        if (activeStates == null || activeStates.isEmpty()) {
+            return null;
+        }
+        boolean hasSignal = false;
+        for (BatteryDeviceState state : activeStates) {
+            if (state == null || !belongsToPack(state, packNum)) {
+                continue;
+            }
+            hasSignal = true;
+            if ("inactive".equals(state.getStateValue())) {
+                context.putPackWarn(ItemCode.TXZT.getCode(), "1");
+                return true;
             }
         }
+        return hasSignal ? Boolean.FALSE : null;
     }
 
     /** 判断通道级模块状态是否属于当前电池组。 */
@@ -301,16 +337,43 @@ public class BatteryModuleAlarmAdaptService {
     }
 
     /** 追加 246 组模块新鲜度告警。 */
-    private void appendGroup246Freshness(BatteryModuleAlarmContext context, Integer packNum) {
+    private Boolean appendGroup246Freshness(BatteryModuleAlarmContext context, Integer packNum) {
         if (packNum == null) {
-            return;
+            return null;
         }
         BatteryDeviceState freshnessState = batteryDeviceStateService.selectByScope(
                 BatteryDeviceStateConstants.ScopeType.PACK, String.valueOf(packNum),
                 BatteryDeviceStateConstants.StateCode.GROUP_246_FRESHNESS);
-        if (freshnessState != null && "stale".equals(freshnessState.getStateValue())) {
-            // 246 缺失：TXZT = 1 表示通信异常
-            context.putPackWarn(ItemCode.TXZT.getCode(), "1");
+        if (freshnessState == null) {
+            return null;
         }
+        if ("stale".equals(freshnessState.getStateValue())) {
+            context.putPackWarn(ItemCode.TXZT.getCode(), "1");
+            return true;
+        }
+        return false;
+    }
+
+    /** 追加电池组在线状态告警（ONLINE=offline）。 */
+    private Boolean appendOnlineStatus(BatteryModuleAlarmContext context, Integer packNum) {
+        if (packNum == null) {
+            return null;
+        }
+        BatteryDeviceState onlineState = batteryDeviceStateService.selectByScope(
+                BatteryDeviceStateConstants.ScopeType.PACK, String.valueOf(packNum),
+                BatteryDeviceStateConstants.StateCode.ONLINE);
+        if (onlineState == null) {
+            return null;
+        }
+        if (BatteryDeviceStateConstants.StateLevel.WARN.equals(onlineState.getStateLevel())
+                && "offline".equals(onlineState.getStateValue())) {
+            context.putPackWarn(ItemCode.TXZT.getCode(), "1");
+            return true;
+        }
+        if (BatteryDeviceStateConstants.StateLevel.NORMAL.equals(onlineState.getStateLevel())
+                && "online".equals(onlineState.getStateValue())) {
+            return false;
+        }
+        return null;
     }
 }
