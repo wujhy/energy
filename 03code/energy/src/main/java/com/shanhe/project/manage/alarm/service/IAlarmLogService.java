@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.shanhe.project.manage.alarm.domain.AlarmLog;
-import com.shanhe.project.manage.config.domain.Config;
 import com.shanhe.project.manage.config.domain.ConfigAttribute;
 
 /**
@@ -94,12 +93,11 @@ public interface IAlarmLogService
     /**
      * 蓄电池故障告警（值）
      *
-     * @param config 设备配置
      * @param packNum 组编码
      * @param modelNum 模块编号
      * @param warnParam 告警参数
      */
-    void alarmBatteryValue(Config config, Integer packNum, Integer modelNum, Map<String, String> warnParam);
+    void alarmBatteryValue(Integer packNum, Integer modelNum, Map<String, String> warnParam);
 
     /**
      * 关闭告警
@@ -115,19 +113,10 @@ public interface IAlarmLogService
      * 告警验证
      *
      * @param configAttribute 属性字段
-     * @param value 最新值
-     */
-    void alarmValid(ConfigAttribute configAttribute, String value);
-
-    /**
-     * 告警验证
-     *
-     * @param configAttribute 属性字段
      * @param modelNum 模块编号
      * @param value 最新值
-     * @param type 设备类型
      */
-    void alarmValid(ConfigAttribute configAttribute, Integer modelNum, String value, Integer type);
+    void alarmValid(ConfigAttribute configAttribute, Integer modelNum, String value);
 
     /**
      * 基于缓存判断是否告警
@@ -144,40 +133,26 @@ public interface IAlarmLogService
      */
     void closeAlarmLog(ConfigAttribute configAttribute);
 
-    /** 基于设备关闭告警 */
-    void closeDefaultDeviceAlarmLog();
-
     /**
      * 新增设备历史记录
      *
      * @param alarmLog 设备历史记录
-     * @return 结果
      */
-    int insertAlarmLog(AlarmLog alarmLog);
+    void insertAlarmLog(AlarmLog alarmLog);
 
     /**
      * 修改设备历史记录
      *
      * @param alarmLog 设备历史记录
-     * @return 结果
      */
-    int updateAlarmLog(AlarmLog alarmLog);
-
-    /**
-     * 修改设备历史记录
-     *
-     * @param alarmLog 设备历史记录
-     * @return 结果
-     */
-    int shiedAlarmLog(AlarmLog alarmLog);
+    void shiedAlarmLog(AlarmLog alarmLog);
 
     /**
      * 批量删除设备历史记录
      *
      * @param alarmIds 需要删除的设备历史记录主键集合
-     * @return 结果
      */
-    int deleteAlarmLogByAlarmIds(String alarmIds);
+    void deleteAlarmLogByAlarmIds(String alarmIds);
 
     /** 删除默认设备告警记录 */
     void deleteDefaultDeviceAlarmLogs();

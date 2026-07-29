@@ -20,7 +20,6 @@ import com.shanhe.common.utils.uuid.IdUtils;
 import com.shanhe.framework.enums.*;
 import com.shanhe.project.manage.alarm.domain.AlarmLogDTO;
 import com.shanhe.project.manage.alarm.service.AlarmLevelService;
-import com.shanhe.project.manage.config.domain.Config;
 import com.shanhe.project.manage.config.domain.ConfigAttribute;
 import com.shanhe.project.manage.config.service.IConfigAttributeService;
 import com.shanhe.project.manage.host.service.IHostService;
@@ -120,8 +119,8 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
             if (!StrUtil.startWith(key, prefix)) {
                 continue;
             }
-            AlarmLog alarmLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
-            if (Objects.equals(alarmLog.getStatus(), YesNoEnum.NO.getDictValue())) {
+            Object alarmLog = CacheUtils.get(alarmCache.getCache(), key);
+            if (alarmLog != null && YesNoEnum.NO.getDictValue().equals(((AlarmLog)alarmLog).getStatus())) {
                 isAlarm = YesNoEnum.YES.getDictValue();
                 break;
             }
@@ -153,8 +152,8 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         long num = 0L;
         // 前缀
         for (String key : keys) {
-            AlarmLog alarmLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
-            if (Objects.equals(alarmLog.getStatus(), YesNoEnum.NO.getDictValue())) {
+            Object alarmLog = CacheUtils.get(alarmCache.getCache(), key);
+            if (alarmLog != null && YesNoEnum.NO.getDictValue().equals(((AlarmLog)alarmLog).getStatus())) {
                 num++;
             }
         }
@@ -229,14 +228,12 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     /**
      * 蓄电池告警值校验
      *
-     * @param config 设备配置
      * @param packNum 电池组编号
      * @param modelNum 模块编号
      * @param warnParam 告警参数
      */
     @Override
-    public void alarmBatteryValue(Config config, Integer packNum, Integer modelNum, Map<String, String> warnParam) {
-        Integer type = config == null ? null : config.getType();
+    public void alarmBatteryValue(Integer packNum, Integer modelNum, Map<String, String> warnParam) {
         for (String keyParam : warnParam.keySet()) {
             // 属性配置
             ConfigAttribute configAttribute = configAttributeService.getCacheBy(packNum, keyParam);
@@ -244,7 +241,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
                 continue;
             }
 
-            this.alarmValid(configAttribute, modelNum, warnParam.get(keyParam), type);
+            this.alarmValid(configAttribute, modelNum, warnParam.get(keyParam));
         }
     }
 
@@ -289,23 +286,11 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
      * 校验属性告警
      *
      * @param configAttribute 设备属性
-     * @param value 属性值
-     */
-    @Override
-    public void alarmValid(ConfigAttribute configAttribute, String value) {
-        this.alarmValid(configAttribute, null, value, null);
-    }
-
-    /**
-     * 校验属性告警
-     *
-     * @param configAttribute 设备属性
      * @param modelNum 模块编号
      * @param value 属性值
-     * @param type 设备类型
      */
     @Override
-    public void alarmValid(ConfigAttribute configAttribute, Integer modelNum, String value, Integer type) {
+    public void alarmValid(ConfigAttribute configAttribute, Integer modelNum, String value) {
         // 取缓存告警记录
         String key = String.format(alarmCache.getKey(), configAttribute.getPackNum(), modelNum, configAttribute.getCode());
         AlarmLog cacheLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
@@ -345,7 +330,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         // 告警等级
         AlarmItemLevelVo alarmItemLevelVo = this.getLevel(configAttribute, value);
         // 告警内容
-        String alarmInfo = this.getAlarmInfo(configAttribute, alarmItemLevelVo, modelNum, value, type);
+        String alarmInfo = this.getBatteryAlarmInfo(configAttribute, alarmItemLevelVo, modelNum, value);
         // 存在记录
         if (cacheLog != null) {
             // 无告警，将已有记录更新为已完成，退出
@@ -472,7 +457,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
                 alarmInfo.append("，当前值：").append(value).append(getUnit(configAttribute));
                 break;
             case _3:
-                if(alarmItemLevelVo!=null && StrUtil.isBlank(alarmItemLevelVo.getAlarmDesc())) {
+                if(StrUtil.isBlank(alarmItemLevelVo.getAlarmDesc())) {
                     // 枚举量
                     alarmInfo.append("，当前值：");
                     alarmInfo.append(StrUtil.isNotBlank(alarmItemLevelVo.getDictName()) ? alarmItemLevelVo.getDictName() : value);
@@ -586,33 +571,13 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         }
     }
 
-    /** 关闭默认设备所有告警日志 */
-    @Override
-    public void closeDefaultDeviceAlarmLog() {
-        Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
-        // 前缀
-        String prefix = "alarm:";
-        for (String key : keys) {
-            if (!StrUtil.startWith(key, prefix)) {
-                continue;
-            }
-            Object object = CacheUtils.get(alarmCache.getCache(), key);
-            if (object != null) {
-                AlarmLog cacheLog = (AlarmLog) object;
-                cacheLog.setStatus(YesNoEnum.YES.getDictValue());
-                this.updateStatus(cacheLog, key);
-            }
-        }
-    }
-
     /**
      * 新增设备历史记录
      *
      * @param alarmLog 设备历史记录
-     * @return 结果
      */
     @Override
-    public int insertAlarmLog(AlarmLog alarmLog) {
+    public void insertAlarmLog(AlarmLog alarmLog) {
         String key = String.format(alarmCache.getKey(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode());
         AlarmLog cacheLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
 
@@ -621,7 +586,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
             // 告警屏蔽时间内，不处理
             if (null != cacheLog.getShiedTime()
                     && cacheLog.getShiedTime().getTime() > System.currentTimeMillis()) {
-                return 1;
+                return;
             }
             // 告警记录是已处理的（屏蔽时间已过），删除缓存
             if (Objects.equals(cacheLog.getStatus(), YesNoEnum.YES.getDictValue())) {
@@ -641,30 +606,15 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
             }
         }
 
-        return 1;
-    }
-
-    /**
-     * 修改设备历史记录
-     *
-     * @param alarmLog 设备历史记录
-     * @return 结果
-     */
-    @Override
-    public int updateAlarmLog(AlarmLog alarmLog) {
-        alarmLog.setUpdateTime(new Date());
-        alarmLog.setDuration((alarmLog.getUpdateTime().getTime() - alarmLog.getCreateTime().getTime()) / 1000);
-        return alarmLogMapper.updateAlarmLog(alarmLog);
     }
 
     /**
      * 屏蔽告警日志
      *
      * @param shiedAlarm 屏蔽告警参数
-     * @return 结果
      */
     @Override
-    public int shiedAlarmLog(AlarmLog shiedAlarm) {
+    public void shiedAlarmLog(AlarmLog shiedAlarm) {
         AlarmLog alarmLog = alarmLogMapper.selectAlarmLogByAlarmId(shiedAlarm.getAlarmId());
         if (alarmLog == null) {
             throw new ServiceException("告警信息不存在");
@@ -693,22 +643,20 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         } else {
             CacheUtils.put(alarmCache.getCache(), key, alarmLog);
         }
-        return alarmLogMapper.updateAlarmLog(alarmLog);
+        alarmLogMapper.updateAlarmLog(alarmLog);
     }
 
     /**
      * 批量删除设备历史记录
      *
      * @param alarmIds 需要删除的设备历史记录主键
-     * @return 结果
      */
     @Override
-    public int deleteAlarmLogByAlarmIds(String alarmIds) {
+    public void deleteAlarmLogByAlarmIds(String alarmIds) {
         String[] alarmIdArr = Convert.toStrArray(alarmIds);
         for (String alarmId : alarmIdArr) {
             this.deleteAlarmLogByAlarmId(Long.valueOf(alarmId));
         }
-        return 1;
     }
 
     /** 删除默认设备所有告警日志 */

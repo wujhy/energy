@@ -83,7 +83,7 @@ class AlarmLogServiceImplTest {
         Mockito.when(configAttributeService.getCacheBy(2, ItemCode.TXZT.getCode())).thenReturn(null);
 
         Assertions.assertDoesNotThrow(() -> service.alarmBatteryValue(
-                null, 2, null, Collections.singletonMap(ItemCode.TXZT.getCode(), "1")));
+                2, null, Collections.singletonMap(ItemCode.TXZT.getCode(), "1")));
     }
 
     @Test

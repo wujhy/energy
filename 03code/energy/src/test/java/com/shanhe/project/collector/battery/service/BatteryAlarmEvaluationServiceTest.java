@@ -25,8 +25,8 @@ class BatteryAlarmEvaluationServiceTest {
 
         service.evaluate(1, context);
 
-        Mockito.verify(alarmLogService).alarmBatteryValue(null, 2, null, context.getPackWarnParam());
-        Mockito.verify(alarmLogService).alarmBatteryValue(null, 2, 3, context.getCellWarnParam().get(3));
+        Mockito.verify(alarmLogService).alarmBatteryValue(2, null, context.getPackWarnParam());
+        Mockito.verify(alarmLogService).alarmBatteryValue(2, 3, context.getCellWarnParam().get(3));
         Mockito.verify(alarmLogService).alarmFix(Mockito.eq(2), Mockito.eq(true),
                 Mockito.eq(Collections.singletonList(3)), Mockito.argThat(codes ->
                         codes.contains(ItemCode.DTDYGC.getCode())
@@ -42,7 +42,7 @@ class BatteryAlarmEvaluationServiceTest {
 
         service.evaluate(5, context);
 
-        Mockito.verify(alarmLogService).alarmBatteryValue(null, 5, null, context.getPackWarnParam());
+        Mockito.verify(alarmLogService).alarmBatteryValue(5, null, context.getPackWarnParam());
         Mockito.verify(alarmLogService, Mockito.never()).alarmFix(Mockito.anyInt(), Mockito.eq(true),
                 Mockito.anyList(), Mockito.anyList());
     }
@@ -58,7 +58,7 @@ class BatteryAlarmEvaluationServiceTest {
 
         service.evaluate(null, context);
 
-        Mockito.verify(alarmLogService).alarmBatteryValue(null, 1, null, context.getPackWarnParam());
+        Mockito.verify(alarmLogService).alarmBatteryValue(1, null, context.getPackWarnParam());
         Mockito.verify(alarmLogService, Mockito.never()).alarmFix(Mockito.eq(1), Mockito.eq(true),
                 Mockito.anyList(), Mockito.anyList());
     }
@@ -78,7 +78,7 @@ class BatteryAlarmEvaluationServiceTest {
         service.evaluate(null, context);
 
         Mockito.verify(alarmLogService, Mockito.never()).alarmBatteryValue(
-                Mockito.isNull(), Mockito.eq(1), Mockito.anyInt(), Mockito.anyMap());
+                Mockito.eq(1), Mockito.anyInt(), Mockito.anyMap());
         Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true),
                 Mockito.eq(Collections.singletonList(1)), Mockito.anyList());
     }
@@ -98,9 +98,9 @@ class BatteryAlarmEvaluationServiceTest {
 
         service.evaluate(null, context);
 
-        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1), Mockito.isNull(),
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.eq(1), Mockito.isNull(),
                 Mockito.argThat(params -> params.size() == 1 && "1".equals(params.get(ItemCode.TXZT.getCode()))));
-        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1), Mockito.eq(2),
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.eq(1), Mockito.eq(2),
                 Mockito.argThat(params -> params.size() == 1 && "1".equals(params.get(ItemCode.DTLYGJ.getCode()))));
         Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true),
                 Mockito.eq(Collections.singletonList(2)), Mockito.anyList());

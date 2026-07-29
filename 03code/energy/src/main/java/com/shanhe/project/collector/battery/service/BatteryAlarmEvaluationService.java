@@ -87,7 +87,7 @@ public class BatteryAlarmEvaluationService {
         if (alarmLogService == null || packNum == null || warnParam == null || warnParam.isEmpty()) {
             return;
         }
-        alarmLogService.alarmBatteryValue(null, packNum, null, warnParam);
+        alarmLogService.alarmBatteryValue(packNum, null, warnParam);
     }
 
     /**
@@ -112,7 +112,7 @@ public class BatteryAlarmEvaluationService {
             if (alarmLogService == null || packNum == null || warnParam == null || warnParam.isEmpty()) {
                 continue;
             }
-            alarmLogService.alarmBatteryValue(null, packNum, entry.getKey(), warnParam);
+            alarmLogService.alarmBatteryValue(packNum, entry.getKey(), warnParam);
         }
     }
 

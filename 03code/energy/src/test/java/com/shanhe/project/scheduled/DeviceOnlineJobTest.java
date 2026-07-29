@@ -91,7 +91,7 @@ class DeviceOnlineJobTest {
         job.cmdDevice();
 
         Mockito.verify(snapshotService).getCachedSnapshot(1);
-        Mockito.verify(alarmLogService, Mockito.never()).alarmBatteryValue(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyMap());
+        Mockito.verify(alarmLogService, Mockito.never()).alarmBatteryValue(Mockito.any(), Mockito.any(), Mockito.anyMap());
         Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(false), Mockito.isNull(),
                 Mockito.eq(Collections.singletonList(ItemCode.TXZT.getCode())));
         Mockito.verify(deviceStateService).upsert(Mockito.argThat(state ->
@@ -115,7 +115,7 @@ class DeviceOnlineJobTest {
         job.cmdDevice();
 
         Mockito.verify(snapshotService).getCachedSnapshot(1);
-        Mockito.verify(alarmLogService, Mockito.never()).alarmBatteryValue(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyMap());
+        Mockito.verify(alarmLogService, Mockito.never()).alarmBatteryValue(Mockito.any(), Mockito.any(), Mockito.anyMap());
         Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(false), Mockito.isNull(),
                 Mockito.eq(Collections.singletonList(ItemCode.TXZT.getCode())));
         Mockito.verify(deviceStateService).upsert(Mockito.argThat(state ->
@@ -160,7 +160,7 @@ class DeviceOnlineJobTest {
 
         job.cmdDevice();
 
-        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1), Mockito.isNull(),
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.eq(1), Mockito.isNull(),
                 Mockito.argThat(params -> "1".equals(params.get(ItemCode.TXZT.getCode()))));
         Mockito.verify(deviceStateService).upsert(Mockito.argThat(state ->
                 state != null

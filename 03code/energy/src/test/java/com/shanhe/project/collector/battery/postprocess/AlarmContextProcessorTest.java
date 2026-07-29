@@ -59,7 +59,7 @@ class AlarmContextProcessorTest {
         processor.process(context);
 
         Mockito.verifyNoInteractions(alarmAdaptService);
-        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.eq(1),
                 Mockito.isNull(), Mockito.same(alarmContext.getPackWarnParam()));
         Mockito.verify(alarmLogService, Mockito.never()).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.anyList(), Mockito.anyList());
     }
@@ -77,7 +77,7 @@ class AlarmContextProcessorTest {
         processor.process(context);
 
         ArgumentCaptor<Map<String, String>> warnParamCaptor = ArgumentCaptor.forClass(Map.class);
-        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.eq(1),
                 Mockito.eq(2), warnParamCaptor.capture());
         Assertions.assertEquals("1", warnParamCaptor.getValue().get("DTDYGC"));
         Mockito.verify(alarmLogService, Mockito.never()).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.anyList(), Mockito.anyList());
@@ -106,7 +106,7 @@ class AlarmContextProcessorTest {
         processor.process(context);
 
         ArgumentCaptor<Map<String, String>> warnParamCaptor = ArgumentCaptor.forClass(Map.class);
-        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.eq(1),
                 Mockito.isNull(), warnParamCaptor.capture());
         Assertions.assertEquals("1", warnParamCaptor.getValue().get(ItemCode.ZDYGC.getCode()));
         Assertions.assertEquals("1", warnParamCaptor.getValue().get(ItemCode.TXZT.getCode()));
@@ -135,7 +135,7 @@ class AlarmContextProcessorTest {
 
         processor.process(context);
 
-        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.eq(1),
                 Mockito.isNull(), Mockito.argThat(params -> "1".equals(params.get(ItemCode.TXZT.getCode()))));
     }
     @Test
@@ -160,11 +160,11 @@ class AlarmContextProcessorTest {
 
         processor.process(context);
 
-        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.eq(1),
                 Mockito.isNull(), Mockito.argThat(params ->
                         "230.5".equals(params.get(ItemCode.ZDYGC.getCode()))
                                 && "1".equals(params.get(ItemCode.TXZT.getCode()))));
-        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.eq(1),
                 Mockito.eq(2), Mockito.argThat(params ->
                         "2.1".equals(params.get(ItemCode.DTDYGC.getCode()))));
         Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.eq(Arrays.asList(1, 2)), Mockito.anyList());
@@ -192,7 +192,7 @@ class AlarmContextProcessorTest {
 
         processor.process(context);
 
-        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.eq(1),
                 Mockito.isNull(), Mockito.argThat(params -> "1".equals(params.get(ItemCode.TXZT.getCode()))));
         Mockito.verify(alarmLogService, Mockito.never()).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.anyList(), Mockito.anyList());
         Assertions.assertNotNull(context.getAlarmContext());
@@ -220,7 +220,7 @@ class AlarmContextProcessorTest {
         BatteryRealtimePostProcessContext context = contextWithAlarmContext(alarmContext);
         Mockito.doThrow(new RuntimeException("alarm failed"))
                 .when(alarmLogService)
-                .alarmBatteryValue(Mockito.isNull(), Mockito.eq(1), Mockito.isNull(), Mockito.anyMap());
+                .alarmBatteryValue(Mockito.eq(1), Mockito.isNull(), Mockito.anyMap());
         setEvaluationService(processor, alarmLogService);
 
         Assertions.assertDoesNotThrow(() -> processor.process(context));
@@ -307,7 +307,7 @@ class AlarmContextProcessorTest {
         processor.process(context);
 
         Mockito.verify(alarmAdaptService, Mockito.never()).buildContext(Mockito.any(), Mockito.anyList());
-        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.eq(1),
                 Mockito.isNull(), Mockito.argThat(params -> "1".equals(params.get(ItemCode.TXZT.getCode()))));
         Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true),
                 Mockito.eq(Collections.singletonList(1)), Mockito.anyList());
@@ -336,12 +336,12 @@ class AlarmContextProcessorTest {
         processor.process(context);
 
         ArgumentCaptor<Map<String, String>> warnParamCaptor = ArgumentCaptor.forClass(Map.class);
-        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.eq(1),
                 Mockito.eq(1), warnParamCaptor.capture());
         Assertions.assertEquals("2.1", warnParamCaptor.getValue().get(ItemCode.DTDYGC.getCode()));
 
         ArgumentCaptor<Map<String, String>> warnParamCaptor2 = ArgumentCaptor.forClass(Map.class);
-        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.eq(1),
                 Mockito.eq(2), warnParamCaptor2.capture());
         Assertions.assertEquals("2.2", warnParamCaptor2.getValue().get(ItemCode.DTDYGC.getCode()));
     }
