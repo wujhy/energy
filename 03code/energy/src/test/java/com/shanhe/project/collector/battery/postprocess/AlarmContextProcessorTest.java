@@ -5,6 +5,7 @@ import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryAlarmEvaluationContext;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
+import com.shanhe.project.collector.battery.service.BatteryAlarmEvaluationService;
 import com.shanhe.project.collector.battery.service.BatteryModuleAlarmAdaptService;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import org.junit.jupiter.api.Assertions;
@@ -31,7 +32,7 @@ class AlarmContextProcessorTest {
         Mockito.when(alarmAdaptService.buildContext(context.getGroup(), context.getCells()))
                 .thenReturn(emptyAlarmContext);
         ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
-        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+        setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
 
@@ -49,14 +50,14 @@ class AlarmContextProcessorTest {
         alarmContext.putPackWarn("ZDYGC", "1");
         BatteryRealtimePostProcessContext context = contextWithAlarmContext(alarmContext);
         ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
-        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+        setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
 
         Mockito.verifyNoInteractions(alarmAdaptService);
         Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
                 Mockito.isNull(), Mockito.same(alarmContext.getPackWarnParam()));
-        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.eq(Collections.emptyList()), Mockito.anyList());
+        Mockito.verify(alarmLogService, Mockito.never()).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.anyList(), Mockito.anyList());
     }
 
     @Test
@@ -67,7 +68,7 @@ class AlarmContextProcessorTest {
         alarmContext.putCellWarn(2, "DTDYGC", "1");
         alarmContext.getCellWarnParam().put(3, Collections.emptyMap());
         BatteryRealtimePostProcessContext context = contextWithAlarmContext(alarmContext);
-        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+        setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
 
@@ -75,7 +76,7 @@ class AlarmContextProcessorTest {
         Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
                 Mockito.eq(2), warnParamCaptor.capture());
         Assertions.assertEquals("1", warnParamCaptor.getValue().get("DTDYGC"));
-        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.eq(Collections.emptyList()), Mockito.anyList());
+        Mockito.verify(alarmLogService, Mockito.never()).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.anyList(), Mockito.anyList());
         Mockito.verifyNoMoreInteractions(alarmLogService);
     }
 
@@ -94,7 +95,7 @@ class AlarmContextProcessorTest {
         Mockito.when(alarmAdaptService.buildCommunicationAlarmContext(1, "COM1"))
                 .thenReturn(communicationContext);
         ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
-        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+        setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
 
@@ -122,7 +123,7 @@ class AlarmContextProcessorTest {
         Mockito.when(alarmAdaptService.buildCommunicationAlarmContext(1, "COM1"))
                 .thenReturn(communicationContext);
         ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
-        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+        setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
 
@@ -145,7 +146,7 @@ class AlarmContextProcessorTest {
         Mockito.when(alarmAdaptService.buildCommunicationAlarmContext(1, "COM1"))
                 .thenReturn(communicationContext);
         ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
-        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+        setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
 
@@ -175,13 +176,13 @@ class AlarmContextProcessorTest {
         Mockito.when(alarmAdaptService.buildCommunicationAlarmContext(1, "COM1"))
                 .thenReturn(communicationContext);
         ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
-        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+        setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
 
         Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1),
                 Mockito.isNull(), Mockito.argThat(params -> "1".equals(params.get(ItemCode.TXZT.getCode()))));
-        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.eq(Collections.emptyList()), Mockito.anyList());
+        Mockito.verify(alarmLogService, Mockito.never()).alarmFix(Mockito.eq(1), Mockito.eq(true), Mockito.anyList(), Mockito.anyList());
         Assertions.assertNotNull(context.getAlarmContext());
     }
 
@@ -190,7 +191,7 @@ class AlarmContextProcessorTest {
         AlarmContextProcessor processor = newProcessor();
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
         BatteryRealtimePostProcessContext context = contextWithoutAlarmContext();
-        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+        setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
 
@@ -208,7 +209,7 @@ class AlarmContextProcessorTest {
         Mockito.doThrow(new RuntimeException("alarm failed"))
                 .when(alarmLogService)
                 .alarmBatteryValue(Mockito.isNull(), Mockito.eq(1), Mockito.isNull(), Mockito.anyMap());
-        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+        setEvaluationService(processor, alarmLogService);
 
         Assertions.assertDoesNotThrow(() -> processor.process(context));
         Assertions.assertSame(alarmContext, context.getAlarmContext());
@@ -217,7 +218,7 @@ class AlarmContextProcessorTest {
     @Test
     void shouldProcessShouldAcceptExistingAlarmContextWithoutCellsWhenAlarmServiceExists() {
         AlarmContextProcessor processor = newProcessor();
-        ReflectionTestUtils.setField(processor, "alarmLogService", Mockito.mock(IAlarmLogService.class));
+        setEvaluationService(processor, Mockito.mock(IAlarmLogService.class));
 
         Assertions.assertTrue(processor.shouldProcess(BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
@@ -287,7 +288,7 @@ class AlarmContextProcessorTest {
         Mockito.when(alarmAdaptService.buildCommunicationAlarmContext(1, "COM1"))
                 .thenReturn(communicationContext);
         ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
-        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+        setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
 
@@ -316,7 +317,7 @@ class AlarmContextProcessorTest {
         alarmContext.putCellWarn(1, ItemCode.DTDYGC.getCode(), "2.1");
         alarmContext.putCellWarn(2, ItemCode.DTDYGC.getCode(), "2.2");
         BatteryRealtimePostProcessContext context = contextWithAlarmContext(alarmContext);
-        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+        setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
 
@@ -343,7 +344,7 @@ class AlarmContextProcessorTest {
                 .alarmContext(alarmContext)
                 .cells(Arrays.asList(cell(1), cell(2)))
                 .build();
-        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+        setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
 
@@ -356,13 +357,13 @@ class AlarmContextProcessorTest {
     }
 
     @Test
-    void processShouldCallAlarmFixWithEmptyCellNumsWhenNoCellsInContext() {
+    void processShouldNotCallAlarmFixWithoutCurrentBatchCells() {
         AlarmContextProcessor processor = newProcessor();
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
         BatteryAlarmEvaluationContext alarmContext = alarmContext(1);
         alarmContext.putCellWarn(1, ItemCode.DTDYGC.getCode(), "2.1");
         BatteryRealtimePostProcessContext context = contextWithAlarmContext(alarmContext);
-        ReflectionTestUtils.setField(processor, "alarmLogService", alarmLogService);
+        setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
 
@@ -372,6 +373,12 @@ class AlarmContextProcessorTest {
 
     private AlarmContextProcessor newProcessor() {
         return new AlarmContextProcessor();
+    }
+
+    private void setEvaluationService(AlarmContextProcessor processor, IAlarmLogService alarmLogService) {
+        BatteryAlarmEvaluationService evaluationService = new BatteryAlarmEvaluationService();
+        ReflectionTestUtils.setField(evaluationService, "alarmLogService", alarmLogService);
+        ReflectionTestUtils.setField(processor, "alarmEvaluationService", evaluationService);
     }
 
     private BatteryRealtimePostProcessContext contextWithoutAlarmContext() {

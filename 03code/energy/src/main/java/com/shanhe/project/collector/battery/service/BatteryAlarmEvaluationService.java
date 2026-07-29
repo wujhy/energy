@@ -1,0 +1,101 @@
+package com.shanhe.project.collector.battery.service;
+
+import com.shanhe.framework.enums.ItemCode;
+import com.shanhe.project.collector.battery.model.BatteryAlarmEvaluationContext;
+import com.shanhe.project.manage.alarm.service.IAlarmLogService;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 蓄电池告警评估提交服务。
+ *
+ * <p>消费标准告警评估上下文，统一提交组级、单体告警并执行本轮恢复。</p>
+ *
+ * @author wjh
+ * @since 2026-07-29
+ */
+@Service
+public class BatteryAlarmEvaluationService {
+
+    /** 所有单体电池告警编码列表，用于恢复本轮未上报数据的单体告警。 */
+    private static final List<String> ALL_CELL_ALARM_CODES = Arrays.asList(
+            ItemCode.DTDCWDD.getCode(),
+            ItemCode.DTDCWDG.getCode(),
+            ItemCode.DTNZGX.getCode(),
+            ItemCode.DTNZGD.getCode(),
+            ItemCode.DTDYGF.getCode(),
+            ItemCode.DTDYGC.getCode(),
+            ItemCode.DTLJTGJ.getCode(),
+            ItemCode.DTDCKL.getCode(),
+            ItemCode.DTFCDYD.getCode(),
+            ItemCode.DTFCDYG.getCode(),
+            ItemCode.DTNZBJ.getCode(),
+            ItemCode.DTDCWDBJ.getCode(),
+            ItemCode.DTDYBJ.getCode(),
+            ItemCode.DTGB.getCode(),
+            ItemCode.DTLYGJ.getCode(),
+            ItemCode.DTWDCGQGZ.getCode(),
+            ItemCode.DTTXZT.getCode()
+    );
+
+    @Resource
+    private IAlarmLogService alarmLogService;
+
+    /**
+     * 提交告警评估上下文，并恢复本轮未上报单体的告警。
+     *
+     * @param fallbackPackNum 上下文缺少电池组编号时使用的兜底编号
+     * @param context 告警评估上下文
+     */
+    public void evaluate(Integer fallbackPackNum, BatteryAlarmEvaluationContext context) {
+        if (alarmLogService == null || context == null) {
+            return;
+        }
+        Integer packNum = context.getPackNum() == null ? fallbackPackNum : context.getPackNum();
+        if (packNum == null) {
+            return;
+        }
+        submitPackWarnings(packNum, context.getPackWarnParam());
+        submitCellWarnings(packNum, context.getCellWarnParam());
+        recoverCurrentBatchCells(packNum, context);
+    }
+
+    private void submitPackWarnings(Integer packNum, Map<String, String> warnParam) {
+        if (warnParam == null || warnParam.isEmpty()) {
+            return;
+        }
+        alarmLogService.alarmBatteryValue(null, packNum, null, warnParam);
+    }
+
+    private void submitCellWarnings(Integer packNum, Map<Integer, Map<String, String>> cellWarnParam) {
+        if (cellWarnParam == null || cellWarnParam.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<Integer, Map<String, String>> entry : cellWarnParam.entrySet()) {
+            Map<String, String> warnParam = entry.getValue();
+            if (warnParam == null || warnParam.isEmpty()) {
+                continue;
+            }
+            alarmLogService.alarmBatteryValue(null, packNum, entry.getKey(), warnParam);
+        }
+    }
+
+    private void recoverCurrentBatchCells(Integer packNum, BatteryAlarmEvaluationContext context) {
+        List<Integer> currentBatchCellNums = currentBatchCellNums(context);
+        if (currentBatchCellNums.isEmpty()) {
+            return;
+        }
+        alarmLogService.alarmFix(packNum, true, currentBatchCellNums, ALL_CELL_ALARM_CODES);
+    }
+
+    private List<Integer> currentBatchCellNums(BatteryAlarmEvaluationContext context) {
+        return context.getCurrentBatchCellNums() == null
+                ? Collections.emptyList()
+                : context.getCurrentBatchCellNums();
+    }
+}
