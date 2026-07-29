@@ -84,6 +84,29 @@ class BatteryAlarmEvaluationServiceTest {
     }
 
     @Test
+    void evaluateShouldSkipThresholdWarningsWhenSnapshotIsStale() {
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryAlarmEvaluationService service = service(alarmLogService);
+        BatteryAlarmEvaluationContext context = new BatteryAlarmEvaluationContext();
+        context.setPackNum(1);
+        context.setSnapshotFresh(false);
+        context.putPackStatusWarn(ItemCode.TXZT.getCode(), "1");
+        context.putPackThresholdWarn(ItemCode.ZDYGC.getCode(), "230.5");
+        context.putCellStatusWarn(2, ItemCode.DTLYGJ.getCode(), "1");
+        context.putCellThresholdWarn(2, ItemCode.DTDYGC.getCode(), "2.35");
+        context.setCurrentBatchCellNums(Collections.singletonList(2));
+
+        service.evaluate(null, context);
+
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1), Mockito.isNull(),
+                Mockito.argThat(params -> params.size() == 1 && "1".equals(params.get(ItemCode.TXZT.getCode()))));
+        Mockito.verify(alarmLogService).alarmBatteryValue(Mockito.isNull(), Mockito.eq(1), Mockito.eq(2),
+                Mockito.argThat(params -> params.size() == 1 && "1".equals(params.get(ItemCode.DTLYGJ.getCode()))));
+        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(true),
+                Mockito.eq(Collections.singletonList(2)), Mockito.anyList());
+    }
+
+    @Test
     void recoverPackWarningsShouldRecoverOnlyPackLevelItems() {
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
         BatteryAlarmEvaluationService service = service(alarmLogService);

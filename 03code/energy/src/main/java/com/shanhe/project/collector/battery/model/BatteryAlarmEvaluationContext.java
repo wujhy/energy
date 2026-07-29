@@ -25,6 +25,18 @@ public class BatteryAlarmEvaluationContext {
     /** 单体告警候选，第一层 key 为单体编号，第二层 key 为旧告警 itemCode。 */
     private Map<Integer, Map<String, String>> cellWarnParam = new LinkedHashMap<>();
 
+    /** 组级状态告警候选。 */
+    private Map<String, String> packStatusWarnParam = new LinkedHashMap<>();
+
+    /** 组级阈值告警候选。 */
+    private Map<String, String> packThresholdWarnParam = new LinkedHashMap<>();
+
+    /** 单体状态告警候选。 */
+    private Map<Integer, Map<String, String>> cellStatusWarnParam = new LinkedHashMap<>();
+
+    /** 单体阈值告警候选。 */
+    private Map<Integer, Map<String, String>> cellThresholdWarnParam = new LinkedHashMap<>();
+
     /** 用于阈值评估的实时快照是否新鲜。 */
     private Boolean snapshotFresh;
 
@@ -45,6 +57,28 @@ public class BatteryAlarmEvaluationContext {
     }
 
     /**
+     * 增加组级状态告警候选。
+     *
+     * @param itemCode 旧告警编码
+     * @param value 告警值
+     */
+    public void putPackStatusWarn(String itemCode, String value) {
+        packStatusWarnParam.put(itemCode, value);
+        putPackWarn(itemCode, value);
+    }
+
+    /**
+     * 增加组级阈值告警候选。
+     *
+     * @param itemCode 旧告警编码
+     * @param value 告警值
+     */
+    public void putPackThresholdWarn(String itemCode, String value) {
+        packThresholdWarnParam.put(itemCode, value);
+        putPackWarn(itemCode, value);
+    }
+
+    /**
      * 增加单体告警候选。
      *
      * @param batNum 单体编号
@@ -52,10 +86,38 @@ public class BatteryAlarmEvaluationContext {
      * @param value 告警值
      */
     public void putCellWarn(Integer batNum, String itemCode, String value) {
+        putCellWarn(cellWarnParam, batNum, itemCode, value);
+    }
+
+    /**
+     * 增加单体状态告警候选。
+     *
+     * @param batNum 单体编号
+     * @param itemCode 旧告警编码
+     * @param value 告警值
+     */
+    public void putCellStatusWarn(Integer batNum, String itemCode, String value) {
+        putCellWarn(cellStatusWarnParam, batNum, itemCode, value);
+        putCellWarn(batNum, itemCode, value);
+    }
+
+    /**
+     * 增加单体阈值告警候选。
+     *
+     * @param batNum 单体编号
+     * @param itemCode 旧告警编码
+     * @param value 告警值
+     */
+    public void putCellThresholdWarn(Integer batNum, String itemCode, String value) {
+        putCellWarn(cellThresholdWarnParam, batNum, itemCode, value);
+        putCellWarn(batNum, itemCode, value);
+    }
+
+    private void putCellWarn(Map<Integer, Map<String, String>> target, Integer batNum, String itemCode, String value) {
         if (batNum == null) {
             return;
         }
-        cellWarnParam.computeIfAbsent(batNum, key -> new LinkedHashMap<>()).put(itemCode, value);
+        target.computeIfAbsent(batNum, key -> new LinkedHashMap<>()).put(itemCode, value);
     }
 
     /**

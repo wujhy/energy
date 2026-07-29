@@ -39,7 +39,7 @@ public class BatteryAlarmStateContextService {
         try {
             Boolean channelAlarm = appendChannelStatus(context, channelName);
             if (Boolean.FALSE.equals(channelAlarm)) {
-                context.putPackWarn(ItemCode.DTTXZT.getCode(), "0");
+                context.putPackStatusWarn(ItemCode.DTTXZT.getCode(), "0");
             }
             Boolean onlineAlarm = appendOnlineStatus(context, packNum);
             Boolean moduleTimeoutAlarm = appendModuleTimeout(context, packNum, channelName);
@@ -52,7 +52,7 @@ public class BatteryAlarmStateContextService {
                     || Boolean.TRUE.equals(moduleActiveAlarm)
                     || Boolean.TRUE.equals(groupFreshnessAlarm);
             if (hasPackSignal && !packCommunicationAlarm) {
-                context.putPackWarn(ItemCode.TXZT.getCode(), "0");
+                context.putPackStatusWarn(ItemCode.TXZT.getCode(), "0");
             }
         } catch (Exception e) {
             log.warn("构建通信告警上下文失败, 电池组={}, 原因={}", packNum, e.getMessage());
@@ -72,7 +72,7 @@ public class BatteryAlarmStateContextService {
         if (channelOpen != null) {
             hasSignal = true;
             if (BatteryDeviceStateConstants.StateLevel.ERROR.equals(channelOpen.getStateLevel())) {
-                context.putPackWarn(ItemCode.DTTXZT.getCode(), "1");
+                context.putPackStatusWarn(ItemCode.DTTXZT.getCode(), "1");
                 return true;
             }
         }
@@ -82,7 +82,7 @@ public class BatteryAlarmStateContextService {
         if (channelError != null) {
             hasSignal = true;
             if (BatteryDeviceStateConstants.StateLevel.ERROR.equals(channelError.getStateLevel())) {
-                context.putPackWarn(ItemCode.DTTXZT.getCode(), "1");
+                context.putPackStatusWarn(ItemCode.DTTXZT.getCode(), "1");
                 return true;
             }
         }
@@ -107,7 +107,7 @@ public class BatteryAlarmStateContextService {
             hasSignal = true;
             if (!BatteryDeviceStateConstants.StateLevel.NORMAL.equals(state.getStateLevel())
                     && !"recovered".equals(state.getStateValue())) {
-                context.putPackWarn(ItemCode.TXZT.getCode(), "1");
+                context.putPackStatusWarn(ItemCode.TXZT.getCode(), "1");
                 return true;
             }
         }
@@ -131,7 +131,7 @@ public class BatteryAlarmStateContextService {
             }
             hasSignal = true;
             if ("inactive".equals(state.getStateValue())) {
-                context.putPackWarn(ItemCode.TXZT.getCode(), "1");
+                context.putPackStatusWarn(ItemCode.TXZT.getCode(), "1");
                 return true;
             }
         }
@@ -155,7 +155,7 @@ public class BatteryAlarmStateContextService {
             return null;
         }
         if ("stale".equals(freshnessState.getStateValue())) {
-            context.putPackWarn(ItemCode.TXZT.getCode(), "1");
+            context.putPackStatusWarn(ItemCode.TXZT.getCode(), "1");
             return true;
         }
         return false;
@@ -174,7 +174,7 @@ public class BatteryAlarmStateContextService {
         }
         if (BatteryDeviceStateConstants.StateLevel.WARN.equals(onlineState.getStateLevel())
                 && "offline".equals(onlineState.getStateValue())) {
-            context.putPackWarn(ItemCode.TXZT.getCode(), "1");
+            context.putPackStatusWarn(ItemCode.TXZT.getCode(), "1");
             return true;
         }
         if (BatteryDeviceStateConstants.StateLevel.NORMAL.equals(onlineState.getStateLevel())

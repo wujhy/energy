@@ -102,28 +102,41 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
             return;
         }
         if (source.getPackWarnParam() != null) {
-            mergePackWarnParam(target, source.getPackWarnParam());
+            mergePackWarnParam(target.getPackWarnParam(), source.getPackWarnParam());
         }
-        if (source.getCellWarnParam() == null || source.getCellWarnParam().isEmpty()) {
+        if (source.getPackStatusWarnParam() != null) {
+            mergePackWarnParam(target.getPackStatusWarnParam(), source.getPackStatusWarnParam());
+        }
+        if (source.getPackThresholdWarnParam() != null) {
+            mergePackWarnParam(target.getPackThresholdWarnParam(), source.getPackThresholdWarnParam());
+        }
+        mergeCellWarnParam(target.getCellStatusWarnParam(), source.getCellStatusWarnParam());
+        mergeCellWarnParam(target.getCellThresholdWarnParam(), source.getCellThresholdWarnParam());
+        mergeCellWarnParam(target.getCellWarnParam(), source.getCellWarnParam());
+    }
+
+    private void mergeCellWarnParam(Map<Integer, Map<String, String>> targetWarnParam,
+                                    Map<Integer, Map<String, String>> sourceWarnParam) {
+        if (sourceWarnParam == null || sourceWarnParam.isEmpty()) {
             return;
         }
-        for (Map.Entry<Integer, Map<String, String>> entry : source.getCellWarnParam().entrySet()) {
+        for (Map.Entry<Integer, Map<String, String>> entry : sourceWarnParam.entrySet()) {
             if (entry.getKey() == null || entry.getValue() == null || entry.getValue().isEmpty()) {
                 continue;
             }
-            target.getCellWarnParam()
+            targetWarnParam
                     .computeIfAbsent(entry.getKey(), key -> new java.util.LinkedHashMap<>())
                     .putAll(entry.getValue());
         }
     }
 
-    private void mergePackWarnParam(BatteryAlarmEvaluationContext target, Map<String, String> sourceWarnParam) {
+    private void mergePackWarnParam(Map<String, String> targetWarnParam, Map<String, String> sourceWarnParam) {
         for (Map.Entry<String, String> entry : sourceWarnParam.entrySet()) {
-            String currentValue = target.getPackWarnParam().get(entry.getKey());
+            String currentValue = targetWarnParam.get(entry.getKey());
             if ("1".equals(currentValue) && "0".equals(entry.getValue())) {
                 continue;
             }
-            target.getPackWarnParam().put(entry.getKey(), entry.getValue());
+            targetWarnParam.put(entry.getKey(), entry.getValue());
         }
     }
 

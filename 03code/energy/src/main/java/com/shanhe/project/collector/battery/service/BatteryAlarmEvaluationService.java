@@ -60,9 +60,21 @@ public class BatteryAlarmEvaluationService {
         if (packNum == null) {
             return;
         }
-        submitPackWarnings(packNum, context.getPackWarnParam());
-        submitCellWarnings(packNum, context.getCellWarnParam());
+        submitPackWarnings(packNum, packWarnParam(context));
+        submitCellWarnings(packNum, cellWarnParam(context));
         recoverCurrentBatchCells(packNum, context);
+    }
+
+    private Map<String, String> packWarnParam(BatteryAlarmEvaluationContext context) {
+        return Boolean.FALSE.equals(context.getSnapshotFresh())
+                ? context.getPackStatusWarnParam()
+                : context.getPackWarnParam();
+    }
+
+    private Map<Integer, Map<String, String>> cellWarnParam(BatteryAlarmEvaluationContext context) {
+        return Boolean.FALSE.equals(context.getSnapshotFresh())
+                ? context.getCellStatusWarnParam()
+                : context.getCellWarnParam();
     }
 
     /**

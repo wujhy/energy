@@ -41,21 +41,21 @@ public class BatteryModuleAlarmAdaptService {
         Integer batNum = cell.getBatNum();
         if (cell.getVoltage() != null) {
             String value = String.valueOf(cell.getVoltage());
-            context.putCellWarn(batNum, ItemCode.DTDYGC.getCode(), value);
-            context.putCellWarn(batNum, ItemCode.DTDYGF.getCode(), value);
+            context.putCellThresholdWarn(batNum, ItemCode.DTDYGC.getCode(), value);
+            context.putCellThresholdWarn(batNum, ItemCode.DTDYGF.getCode(), value);
         }
         if (cell.getResistance() != null) {
             String value = String.valueOf(cell.getResistance());
-            context.putCellWarn(batNum, ItemCode.DTNZGD.getCode(), value);
-            context.putCellWarn(batNum, ItemCode.DTNZGX.getCode(), value);
+            context.putCellThresholdWarn(batNum, ItemCode.DTNZGD.getCode(), value);
+            context.putCellThresholdWarn(batNum, ItemCode.DTNZGX.getCode(), value);
         }
         if (cell.getTemperature() != null) {
             String value = String.valueOf(cell.getTemperature());
-            context.putCellWarn(batNum, ItemCode.DTDCWDG.getCode(), value);
-            context.putCellWarn(batNum, ItemCode.DTDCWDD.getCode(), value);
+            context.putCellThresholdWarn(batNum, ItemCode.DTDCWDG.getCode(), value);
+            context.putCellThresholdWarn(batNum, ItemCode.DTDCWDD.getCode(), value);
         }
         if (cell.getSwollenVoltage() != null) {
-            context.putCellWarn(batNum, ItemCode.DTGB.getCode(), String.valueOf(cell.getSwollenVoltage()));
+            context.putCellThresholdWarn(batNum, ItemCode.DTGB.getCode(), String.valueOf(cell.getSwollenVoltage()));
         }
     }
 
@@ -64,23 +64,23 @@ public class BatteryModuleAlarmAdaptService {
         Double groupVoltage = groupVoltage(group);
         if (groupVoltage != null) {
             String value = String.valueOf(groupVoltage);
-            context.putPackWarn(ItemCode.ZDYGC.getCode(), value);
-            context.putPackWarn(ItemCode.ZDYGF.getCode(), value);
+            context.putPackThresholdWarn(ItemCode.ZDYGC.getCode(), value);
+            context.putPackThresholdWarn(ItemCode.ZDYGF.getCode(), value);
         }
         Double current = group.getChargeDischargeCurrent();
         if (current != null) {
-            context.putPackWarn(ItemCode.ZCGDLGJ.getCode(), String.valueOf(current));
+            context.putPackThresholdWarn(ItemCode.ZCGDLGJ.getCode(), String.valueOf(current));
         }
         if (group.getEnvironmentTemperature1() != null) {
             String value = String.valueOf(group.getEnvironmentTemperature1());
-            context.putPackWarn(ItemCode.ZWDG.getCode(), value);
-            context.putPackWarn(ItemCode.ZWDD.getCode(), value);
+            context.putPackThresholdWarn(ItemCode.ZWDG.getCode(), value);
+            context.putPackThresholdWarn(ItemCode.ZWDD.getCode(), value);
         }
         if (group.getBatteryPackSoc() != null) {
-            context.putPackWarn(ItemCode.ZSOCDGJ.getCode(), String.valueOf(group.getBatteryPackSoc()));
+            context.putPackThresholdWarn(ItemCode.ZSOCDGJ.getCode(), String.valueOf(group.getBatteryPackSoc()));
         }
         if (group.getBatteryPackSoh() != null) {
-            context.putPackWarn(ItemCode.ZSOHDGJ.getCode(), String.valueOf(group.getBatteryPackSoh()));
+            context.putPackThresholdWarn(ItemCode.ZSOHDGJ.getCode(), String.valueOf(group.getBatteryPackSoh()));
         }
     }
 
@@ -97,7 +97,7 @@ public class BatteryModuleAlarmAdaptService {
     /** 追加电池组通信状态告警。 */
     private void appendGroupDirectStatus(BatteryAlarmEvaluationContext context, BatteryModuleGroupRealtime group) {
         if (group.getGroupModuleFresh() != null) {
-            context.putPackWarn(ItemCode.TXZT.getCode(), Boolean.TRUE.equals(group.getGroupModuleFresh()) ? "0" : "1");
+            context.putPackStatusWarn(ItemCode.TXZT.getCode(), Boolean.TRUE.equals(group.getGroupModuleFresh()) ? "0" : "1");
         }
     }
 
@@ -111,7 +111,7 @@ public class BatteryModuleAlarmAdaptService {
                 continue;
             }
             if (cell.getLeakageStatus() != null) {
-                context.putCellWarn(cell.getBatNum(), ItemCode.DTLYGJ.getCode(), toAlarmValue(cell.getLeakageStatus()));
+                context.putCellStatusWarn(cell.getBatNum(), ItemCode.DTLYGJ.getCode(), toAlarmValue(cell.getLeakageStatus()));
             }
             appendCellThreshold(context, cell);
         }
