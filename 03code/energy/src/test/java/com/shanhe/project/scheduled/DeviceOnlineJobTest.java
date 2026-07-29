@@ -10,6 +10,7 @@ import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
+import com.shanhe.project.collector.battery.service.BatteryAlarmEvaluationService;
 import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
@@ -79,7 +80,7 @@ class DeviceOnlineJobTest {
     @Test
     void shouldUseRealtimeSnapshotForOnlineAlarmContext() {
         DeviceOnlineJob job = newJob(pack(1, YesNoEnum.YES.getDictValue()));
-        IAlarmLogService alarmLogService = (IAlarmLogService) ReflectionTestUtils.getField(job, "alarmLogService");
+        IAlarmLogService alarmLogService = alarmLogService(job);
         BatteryModuleRealtimeSnapshotService snapshotService = snapshotService(job);
         BatteryDeviceStateService deviceStateService = deviceStateService(job);
         Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(snapshot(1));
@@ -103,7 +104,7 @@ class DeviceOnlineJobTest {
     @Test
     void shouldUseMinimalAlarmContextWhenRealtimeSnapshotUnavailable() {
         DeviceOnlineJob job = newJob(pack(1, YesNoEnum.YES.getDictValue()));
-        IAlarmLogService alarmLogService = (IAlarmLogService) ReflectionTestUtils.getField(job, "alarmLogService");
+        IAlarmLogService alarmLogService = alarmLogService(job);
         BatteryModuleRealtimeSnapshotService snapshotService = snapshotService(job);
         BatteryDeviceStateService deviceStateService = deviceStateService(job);
         Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(null);
@@ -129,7 +130,7 @@ class DeviceOnlineJobTest {
         DeviceOnlineJob job = newJob(
                 pack(1, YesNoEnum.YES.getDictValue()),
                 pack(2, YesNoEnum.NO.getDictValue()));
-        IAlarmLogService alarmLogService = (IAlarmLogService) ReflectionTestUtils.getField(job, "alarmLogService");
+        IAlarmLogService alarmLogService = alarmLogService(job);
         BatteryModuleRealtimeSnapshotService snapshotService = snapshotService(job);
         BatteryDeviceStateService deviceStateService = deviceStateService(job);
         Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(snapshot(1));
@@ -150,7 +151,7 @@ class DeviceOnlineJobTest {
     @Test
     void shouldCreateOfflineAlarmWhenOnlineCacheMissingTooLong() {
         DeviceOnlineJob job = newJob(pack(1, YesNoEnum.YES.getDictValue()));
-        IAlarmLogService alarmLogService = (IAlarmLogService) ReflectionTestUtils.getField(job, "alarmLogService");
+        IAlarmLogService alarmLogService = alarmLogService(job);
         BatteryDeviceStateService deviceStateService = deviceStateService(job);
         @SuppressWarnings("unchecked")
         java.util.Map<Integer, Integer> offlineCounts =
@@ -178,12 +179,20 @@ class DeviceOnlineJobTest {
         Mockito.when(batteryPackService.selectBatteryPackListCache(null))
                 .thenReturn(packs == null ? Collections.emptyList() : Arrays.asList(packs));
         ReflectionTestUtils.setField(job, "batteryPackService", batteryPackService);
-        ReflectionTestUtils.setField(job, "alarmLogService", alarmLogService);
+        BatteryAlarmEvaluationService alarmEvaluationService = new BatteryAlarmEvaluationService();
+        ReflectionTestUtils.setField(alarmEvaluationService, "alarmLogService", alarmLogService);
+        ReflectionTestUtils.setField(job, "alarmEvaluationService", alarmEvaluationService);
         ReflectionTestUtils.setField(job, "realtimeSnapshotService", snapshotService);
         ReflectionTestUtils.setField(job, "batteryDeviceStateService", deviceStateService);
         ReflectionTestUtils.setField(job, "isStart", false);
         ReflectionTestUtils.setField(job, "maxOffline", 5);
         return job;
+    }
+
+    private IAlarmLogService alarmLogService(DeviceOnlineJob job) {
+        BatteryAlarmEvaluationService alarmEvaluationService =
+                (BatteryAlarmEvaluationService) ReflectionTestUtils.getField(job, "alarmEvaluationService");
+        return (IAlarmLogService) ReflectionTestUtils.getField(alarmEvaluationService, "alarmLogService");
     }
 
     private BatteryModuleRealtimeSnapshotService snapshotService(DeviceOnlineJob job) {

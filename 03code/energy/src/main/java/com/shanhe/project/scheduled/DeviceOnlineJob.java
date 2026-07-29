@@ -7,10 +7,10 @@ import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
+import com.shanhe.project.collector.battery.service.BatteryAlarmEvaluationService;
 import com.shanhe.project.collector.battery.service.BatteryDeviceStateService;
 import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
 import com.shanhe.project.collector.battery.service.BatteryModuleRealtimeSnapshotService;
-import com.shanhe.project.manage.alarm.service.IAlarmLogService;
 import com.shanhe.project.manage.config.domain.BatteryPack;
 import com.shanhe.project.manage.config.service.IBatteryPackService;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +44,7 @@ public class DeviceOnlineJob {
     @Resource
     private IBatteryPackService batteryPackService;
     @Resource
-    private IAlarmLogService alarmLogService;
+    private BatteryAlarmEvaluationService alarmEvaluationService;
     @Resource
     private BatteryModuleRealtimeSnapshotService realtimeSnapshotService;
     @Resource
@@ -133,7 +133,7 @@ public class DeviceOnlineJob {
 
     private void handleDisabledBatteryPack(Integer packNum) {
         offlineBatteryPackNumMap.remove(packNum);
-        alarmLogService.alarmFix(packNum, false, null, Collections.singletonList(ItemCode.TXZT.getCode()));
+        alarmEvaluationService.recoverPackWarnings(packNum, Collections.singletonList(ItemCode.TXZT.getCode()));
     }
 
     private void syncBatteryOfflineAlarm(Integer packNum, boolean offline) {
@@ -141,7 +141,7 @@ public class DeviceOnlineJob {
                 ? null : realtimeSnapshotService.getCachedSnapshot(packNum);
         persistOnlineState(packNum, offline);
         if (offline) {
-            alarmLogService.alarmBatteryValue(null, packNum, null,
+            alarmEvaluationService.submitPackWarnings(packNum,
                     Collections.singletonMap(ItemCode.TXZT.getCode(), "1"));
             if (snapshot == null || !snapshot.isDataReady() || !snapshot.isFresh()) {
                 log.debug("电池组离线状态已按 energy 告警上下文处理, packNum={}, snapshotReady={}",
@@ -149,7 +149,7 @@ public class DeviceOnlineJob {
             }
             return;
         }
-        alarmLogService.alarmFix(packNum, false, null, Collections.singletonList(ItemCode.TXZT.getCode()));
+        alarmEvaluationService.recoverPackWarnings(packNum, Collections.singletonList(ItemCode.TXZT.getCode()));
     }
 
     /** 持久化电池组在线/离线状态到 battery_device_state。 */

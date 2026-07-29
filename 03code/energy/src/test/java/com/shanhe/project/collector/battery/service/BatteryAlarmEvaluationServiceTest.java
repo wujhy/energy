@@ -84,6 +84,28 @@ class BatteryAlarmEvaluationServiceTest {
     }
 
     @Test
+    void recoverPackWarningsShouldRecoverOnlyPackLevelItems() {
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryAlarmEvaluationService service = service(alarmLogService);
+
+        service.recoverPackWarnings(1, Collections.singletonList(ItemCode.TXZT.getCode()));
+
+        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(false), Mockito.isNull(),
+                Mockito.eq(Collections.singletonList(ItemCode.TXZT.getCode())));
+    }
+
+    @Test
+    void recoverPackWarningsShouldIgnoreMissingArguments() {
+        IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
+        BatteryAlarmEvaluationService service = service(alarmLogService);
+
+        service.recoverPackWarnings(null, Collections.singletonList(ItemCode.TXZT.getCode()));
+        service.recoverPackWarnings(1, Collections.emptyList());
+
+        Mockito.verifyNoInteractions(alarmLogService);
+    }
+
+    @Test
     void evaluateShouldReturnWhenServiceContextOrPackNumMissing() {
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
         BatteryAlarmEvaluationService service = service(alarmLogService);

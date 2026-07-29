@@ -65,11 +65,30 @@ public class BatteryAlarmEvaluationService {
         recoverCurrentBatchCells(packNum, context);
     }
 
-    private void submitPackWarnings(Integer packNum, Map<String, String> warnParam) {
-        if (warnParam == null || warnParam.isEmpty()) {
+    /**
+     * 提交电池组级告警候选。
+     *
+     * @param packNum 电池组编号
+     * @param warnParam 告警候选
+     */
+    public void submitPackWarnings(Integer packNum, Map<String, String> warnParam) {
+        if (alarmLogService == null || packNum == null || warnParam == null || warnParam.isEmpty()) {
             return;
         }
         alarmLogService.alarmBatteryValue(null, packNum, null, warnParam);
+    }
+
+    /**
+     * 恢复电池组级告警。
+     *
+     * @param packNum 电池组编号
+     * @param itemCodes 需要恢复的告警编码
+     */
+    public void recoverPackWarnings(Integer packNum, List<String> itemCodes) {
+        if (alarmLogService == null || packNum == null || itemCodes == null || itemCodes.isEmpty()) {
+            return;
+        }
+        alarmLogService.alarmFix(packNum, false, null, itemCodes);
     }
 
     private void submitCellWarnings(Integer packNum, Map<Integer, Map<String, String>> cellWarnParam) {
@@ -78,7 +97,7 @@ public class BatteryAlarmEvaluationService {
         }
         for (Map.Entry<Integer, Map<String, String>> entry : cellWarnParam.entrySet()) {
             Map<String, String> warnParam = entry.getValue();
-            if (warnParam == null || warnParam.isEmpty()) {
+            if (alarmLogService == null || packNum == null || warnParam == null || warnParam.isEmpty()) {
                 continue;
             }
             alarmLogService.alarmBatteryValue(null, packNum, entry.getKey(), warnParam);
