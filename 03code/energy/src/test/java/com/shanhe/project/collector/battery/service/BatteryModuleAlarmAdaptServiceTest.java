@@ -3,7 +3,7 @@ package com.shanhe.project.collector.battery.service;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
-import com.shanhe.project.collector.battery.model.BatteryModuleAlarmContext;
+import com.shanhe.project.collector.battery.model.BatteryAlarmEvaluationContext;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import org.junit.jupiter.api.Assertions;
@@ -25,7 +25,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         group.setPackNum(1);
         group.setGroupModuleFresh(false);
 
-        BatteryModuleAlarmContext context = service.buildContext(group,
+        BatteryAlarmEvaluationContext context = service.buildContext(group,
                 Arrays.asList(cell(1, 1), cell(2, 0), cell(3, null)));
 
         Assertions.assertEquals(1, context.getPackNum());
@@ -41,7 +41,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         group.setPackNum(1);
         group.setGroupModuleFresh(true);
 
-        BatteryModuleAlarmContext context = service.buildContext(group, null);
+        BatteryAlarmEvaluationContext context = service.buildContext(group, null);
 
         Assertions.assertEquals("0", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
         Assertions.assertTrue(context.getCellWarnParam().isEmpty());
@@ -57,7 +57,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         cell2.setVoltage(2.2d);
         cell2.setResistance(102);
 
-        BatteryModuleAlarmContext context = service.buildContext(null, Arrays.asList(cell1, cell2));
+        BatteryAlarmEvaluationContext context = service.buildContext(null, Arrays.asList(cell1, cell2));
 
         Assertions.assertEquals("2.1", context.getCellWarnParam().get(1).get(ItemCode.DTDYGC.getCode()));
         Assertions.assertEquals("2.1", context.getCellWarnParam().get(1).get(ItemCode.DTDYGF.getCode()));
@@ -80,7 +80,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         BatteryModuleCellRealtime cell3 = cell(3, null);
         cell3.setVoltage(2.3d);
 
-        BatteryModuleAlarmContext context = service.buildContext(null, Arrays.asList(cell1, cell2, cell3));
+        BatteryAlarmEvaluationContext context = service.buildContext(null, Arrays.asList(cell1, cell2, cell3));
 
         Assertions.assertEquals(3, context.getCellWarnParam().size());
         Assertions.assertEquals("2.1", context.getCellWarnParam().get(1).get(ItemCode.DTDYGC.getCode()));
@@ -101,7 +101,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         group.setBatteryPackSoc(86.5d);
         group.setBatteryPackSoh(97.5d);
 
-        BatteryModuleAlarmContext context = service.buildContext(group, null);
+        BatteryAlarmEvaluationContext context = service.buildContext(group, null);
 
         Assertions.assertEquals("230.5", context.getPackWarnParam().get(ItemCode.ZDYGC.getCode()));
         Assertions.assertEquals("230.5", context.getPackWarnParam().get(ItemCode.ZDYGF.getCode()));
@@ -118,7 +118,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         group.setPackNum(1);
         group.setHydrogenConcentration(12.3d);
 
-        BatteryModuleAlarmContext context = service.buildContext(group, Collections.emptyList());
+        BatteryAlarmEvaluationContext context = service.buildContext(group, Collections.emptyList());
 
         Assertions.assertTrue(context.getPackWarnParam().isEmpty());
         Assertions.assertTrue(context.getCellWarnParam().isEmpty());
@@ -128,7 +128,7 @@ class BatteryModuleAlarmAdaptServiceTest {
     void shouldMapStaleGroup246FreshnessToCommunicationAlarm() throws Exception {
         BatteryModuleAlarmAdaptService service = communicationServiceWithGroup246Freshness("stale");
 
-        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+        BatteryAlarmEvaluationContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
         Assertions.assertEquals(1, context.getPackNum());
         Assertions.assertEquals("1", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
@@ -138,7 +138,7 @@ class BatteryModuleAlarmAdaptServiceTest {
     void shouldNotMapFreshGroup246FreshnessToCommunicationAlarm() throws Exception {
         BatteryModuleAlarmAdaptService service = communicationServiceWithGroup246Freshness("fresh");
 
-        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+        BatteryAlarmEvaluationContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
         Assertions.assertEquals(1, context.getPackNum());
         Assertions.assertEquals("0", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
@@ -148,7 +148,7 @@ class BatteryModuleAlarmAdaptServiceTest {
     void shouldNotMapMissingGroup246FreshnessToCommunicationAlarm() throws Exception {
         BatteryModuleAlarmAdaptService service = communicationServiceWithGroup246Freshness(null);
 
-        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+        BatteryAlarmEvaluationContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
         Assertions.assertEquals(1, context.getPackNum());
         Assertions.assertFalse(context.getPackWarnParam().containsKey(ItemCode.TXZT.getCode()));
@@ -160,7 +160,7 @@ class BatteryModuleAlarmAdaptServiceTest {
                 Collections.singletonList(channelState(BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN,
                         "closed", BatteryDeviceStateConstants.StateLevel.ERROR)));
 
-        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+        BatteryAlarmEvaluationContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
         Assertions.assertEquals("1", context.getPackWarnParam().get(ItemCode.DTTXZT.getCode()));
     }
@@ -171,7 +171,7 @@ class BatteryModuleAlarmAdaptServiceTest {
                 Collections.singletonList(channelState(BatteryDeviceStateConstants.StateCode.CHANNEL_ERROR,
                         "read failed", BatteryDeviceStateConstants.StateLevel.ERROR)));
 
-        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+        BatteryAlarmEvaluationContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
         Assertions.assertEquals("1", context.getPackWarnParam().get(ItemCode.DTTXZT.getCode()));
     }
@@ -182,7 +182,7 @@ class BatteryModuleAlarmAdaptServiceTest {
                 Collections.singletonList(channelState(BatteryDeviceStateConstants.StateCode.CHANNEL_OPEN,
                         "open", BatteryDeviceStateConstants.StateLevel.NORMAL)));
 
-        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+        BatteryAlarmEvaluationContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
         Assertions.assertEquals("0", context.getPackWarnParam().get(ItemCode.DTTXZT.getCode()));
     }
@@ -192,7 +192,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
                 Collections.singletonList(packOnlineState("offline", BatteryDeviceStateConstants.StateLevel.WARN)));
 
-        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+        BatteryAlarmEvaluationContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
         Assertions.assertEquals("1", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
     }
@@ -202,7 +202,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
                 Collections.singletonList(packOnlineState("online", BatteryDeviceStateConstants.StateLevel.NORMAL)));
 
-        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+        BatteryAlarmEvaluationContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
         Assertions.assertEquals("0", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
     }
@@ -212,7 +212,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
                 Collections.singletonList(moduleTimeout(1, "01/81", BatteryDeviceStateConstants.StateLevel.WARN)));
 
-        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+        BatteryAlarmEvaluationContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
         Assertions.assertEquals("1", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
     }
@@ -222,7 +222,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
                 Collections.singletonList(moduleTimeout(1, "recovered", BatteryDeviceStateConstants.StateLevel.NORMAL)));
 
-        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+        BatteryAlarmEvaluationContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
         Assertions.assertEquals("0", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
     }
@@ -232,7 +232,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
                 Collections.singletonList(moduleActive(1, "inactive")));
 
-        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+        BatteryAlarmEvaluationContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
         Assertions.assertEquals("1", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
     }
@@ -242,7 +242,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         BatteryModuleAlarmAdaptService service = communicationServiceWithStates(null,
                 Collections.singletonList(moduleActive(1, "active")));
 
-        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+        BatteryAlarmEvaluationContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
         Assertions.assertEquals("0", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
     }
@@ -254,7 +254,7 @@ class BatteryModuleAlarmAdaptServiceTest {
                         moduleTimeout(2, "01/81", BatteryDeviceStateConstants.StateLevel.WARN),
                         moduleActive(2, "inactive")));
 
-        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+        BatteryAlarmEvaluationContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
         Assertions.assertFalse(context.getPackWarnParam().containsKey(ItemCode.TXZT.getCode()));
     }
@@ -264,7 +264,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         BatteryModuleAlarmAdaptService service = communicationServiceWithStates("stale",
                 Collections.singletonList(null));
 
-        BatteryModuleAlarmContext context = service.buildCommunicationAlarmContext(1, "COM1");
+        BatteryAlarmEvaluationContext context = service.buildCommunicationAlarmContext(1, "COM1");
 
         Assertions.assertEquals("1", context.getPackWarnParam().get(ItemCode.TXZT.getCode()));
     }
@@ -279,7 +279,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         cell2.setResistance(200);
         cell2.setTemperature(40.0d);
 
-        BatteryModuleAlarmContext context = service.buildContext(null, Arrays.asList(cell1, cell2));
+        BatteryAlarmEvaluationContext context = service.buildContext(null, Arrays.asList(cell1, cell2));
 
         // batNum=1 entries
         Map<String, String> warns1 = context.getCellWarnParam().get(1);
@@ -306,7 +306,7 @@ class BatteryModuleAlarmAdaptServiceTest {
         BatteryModuleCellRealtime cell2 = cell(2, null);
         cell2.setVoltage(2.5d);
 
-        BatteryModuleAlarmContext context = service.buildContext(null, Arrays.asList(cell1, cell2));
+        BatteryAlarmEvaluationContext context = service.buildContext(null, Arrays.asList(cell1, cell2));
 
         // Both cells must have independent DTDYGC entries
         Assertions.assertEquals(2, context.getCellWarnParam().size());

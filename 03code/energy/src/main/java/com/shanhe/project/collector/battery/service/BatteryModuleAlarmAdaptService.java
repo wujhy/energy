@@ -3,7 +3,7 @@ package com.shanhe.project.collector.battery.service;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.project.collector.battery.model.BatteryDeviceState;
 import com.shanhe.project.collector.battery.model.BatteryDeviceStateConstants;
-import com.shanhe.project.collector.battery.model.BatteryModuleAlarmContext;
+import com.shanhe.project.collector.battery.model.BatteryAlarmEvaluationContext;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import lombok.extern.slf4j.Slf4j;
@@ -33,9 +33,9 @@ public class BatteryModuleAlarmAdaptService {
      * @param cells 单体实时数据
      * @return 告警适配上下文
      */
-    public BatteryModuleAlarmContext buildContext(BatteryModuleGroupRealtime group,
+    public BatteryAlarmEvaluationContext buildContext(BatteryModuleGroupRealtime group,
                                                   List<BatteryModuleCellRealtime> cells) {
-        BatteryModuleAlarmContext context = new BatteryModuleAlarmContext();
+        BatteryAlarmEvaluationContext context = new BatteryAlarmEvaluationContext();
         if (group != null) {
             context.setPackNum(group.getPackNum());
             appendGroupDirectStatus(context, group);
@@ -52,8 +52,8 @@ public class BatteryModuleAlarmAdaptService {
      * @param channelName 通道名称
      * @return 告警适配上下文
      */
-    public BatteryModuleAlarmContext buildCommunicationAlarmContext(Integer packNum, String channelName) {
-        BatteryModuleAlarmContext context = new BatteryModuleAlarmContext();
+    public BatteryAlarmEvaluationContext buildCommunicationAlarmContext(Integer packNum, String channelName) {
+        BatteryAlarmEvaluationContext context = new BatteryAlarmEvaluationContext();
         context.setPackNum(packNum);
         try {
             Boolean channelAlarm = appendChannelStatus(context, channelName);
@@ -80,7 +80,7 @@ public class BatteryModuleAlarmAdaptService {
     }
 
     /** 追加单体阈值告警候选，按单体编号隔离 itemCode，避免多个单体互相覆盖。 */
-    private void appendCellThreshold(BatteryModuleAlarmContext context, BatteryModuleCellRealtime cell) {
+    private void appendCellThreshold(BatteryAlarmEvaluationContext context, BatteryModuleCellRealtime cell) {
         Integer batNum = cell.getBatNum();
         if (cell.getVoltage() != null) {
             String value = String.valueOf(cell.getVoltage());
@@ -103,7 +103,7 @@ public class BatteryModuleAlarmAdaptService {
     }
 
     /** 追加组阈值告警候选。 */
-    private void appendGroupThreshold(BatteryModuleAlarmContext context, BatteryModuleGroupRealtime group) {
+    private void appendGroupThreshold(BatteryAlarmEvaluationContext context, BatteryModuleGroupRealtime group) {
         Double groupVoltage = groupVoltage(group);
         if (groupVoltage != null) {
             String value = String.valueOf(groupVoltage);
@@ -138,14 +138,14 @@ public class BatteryModuleAlarmAdaptService {
     }
 
     /** 追加电池组通信状态告警。 */
-    private void appendGroupDirectStatus(BatteryModuleAlarmContext context, BatteryModuleGroupRealtime group) {
+    private void appendGroupDirectStatus(BatteryAlarmEvaluationContext context, BatteryModuleGroupRealtime group) {
         if (group.getGroupModuleFresh() != null) {
             context.putPackWarn(ItemCode.TXZT.getCode(), Boolean.TRUE.equals(group.getGroupModuleFresh()) ? "0" : "1");
         }
     }
 
     /** 追加单体直接状态和阈值告警。 */
-    private void appendCellStatus(BatteryModuleAlarmContext context, List<BatteryModuleCellRealtime> cells) {
+    private void appendCellStatus(BatteryAlarmEvaluationContext context, List<BatteryModuleCellRealtime> cells) {
         if (cells == null || cells.isEmpty()) {
             return;
         }
@@ -166,7 +166,7 @@ public class BatteryModuleAlarmAdaptService {
     }
 
     /** 追加通道串口状态告警（CHANNEL_OPEN + CHANNEL_ERROR）。 */
-    private Boolean appendChannelStatus(BatteryModuleAlarmContext context, String channelName) {
+    private Boolean appendChannelStatus(BatteryAlarmEvaluationContext context, String channelName) {
         if (channelName == null) {
             return null;
         }
@@ -195,7 +195,7 @@ public class BatteryModuleAlarmAdaptService {
     }
 
     /** 追加模块超时告警（MODULE_TIMEOUT）。 */
-    private Boolean appendModuleTimeout(BatteryModuleAlarmContext context, Integer packNum, String channelName) {
+    private Boolean appendModuleTimeout(BatteryAlarmEvaluationContext context, Integer packNum, String channelName) {
         if (channelName == null) {
             return null;
         }
@@ -220,7 +220,7 @@ public class BatteryModuleAlarmAdaptService {
     }
 
     /** 追加模块活跃状态告警（MODULE_ACTIVE=inactive）。 */
-    private Boolean appendModuleActive(BatteryModuleAlarmContext context, Integer packNum, String channelName) {
+    private Boolean appendModuleActive(BatteryAlarmEvaluationContext context, Integer packNum, String channelName) {
         if (channelName == null) {
             return null;
         }
@@ -249,7 +249,7 @@ public class BatteryModuleAlarmAdaptService {
     }
 
     /** 追加 246 组模块新鲜度告警。 */
-    private Boolean appendGroup246Freshness(BatteryModuleAlarmContext context, Integer packNum) {
+    private Boolean appendGroup246Freshness(BatteryAlarmEvaluationContext context, Integer packNum) {
         if (packNum == null) {
             return null;
         }
@@ -267,7 +267,7 @@ public class BatteryModuleAlarmAdaptService {
     }
 
     /** 追加电池组在线状态告警（ONLINE=offline）。 */
-    private Boolean appendOnlineStatus(BatteryModuleAlarmContext context, Integer packNum) {
+    private Boolean appendOnlineStatus(BatteryAlarmEvaluationContext context, Integer packNum) {
         if (packNum == null) {
             return null;
         }

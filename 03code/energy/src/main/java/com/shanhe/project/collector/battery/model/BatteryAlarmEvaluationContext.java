@@ -2,7 +2,9 @@ package com.shanhe.project.collector.battery.model;
 
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -12,7 +14,7 @@ import java.util.Map;
  * @since 2026-04-30
  */
 @Data
-public class BatteryModuleAlarmContext {
+public class BatteryAlarmEvaluationContext {
 
     /** 电池组编号。 */
     private Integer packNum;
@@ -22,6 +24,15 @@ public class BatteryModuleAlarmContext {
 
     /** 单体告警候选，第一层 key 为单体编号，第二层 key 为旧告警 itemCode。 */
     private Map<Integer, Map<String, String>> cellWarnParam = new LinkedHashMap<>();
+
+    /** 用于阈值评估的实时快照是否新鲜。 */
+    private Boolean snapshotFresh;
+
+    /** 当前轮询批次上报的单体编号。 */
+    private List<Integer> currentBatchCellNums = new ArrayList<>();
+
+    /** 从旧数据保留、且本轮阈值评估跳过的单体编号。 */
+    private List<Integer> staleCellNums = new ArrayList<>();
 
     /**
      * 增加组级告警候选。

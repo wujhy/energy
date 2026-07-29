@@ -1,7 +1,7 @@
 package com.shanhe.project.collector.battery.postprocess;
 
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
-import com.shanhe.project.collector.battery.model.BatteryModuleAlarmContext;
+import com.shanhe.project.collector.battery.model.BatteryAlarmEvaluationContext;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleRealtimeSnapshot;
@@ -42,5 +42,5 @@ public class BatteryRealtimePostProcessContext {
     private BatteryModuleRealtimeSnapshot realtimeSnapshot;
 
     /** 告警候选上下文。 */
-    private BatteryModuleAlarmContext alarmContext;
+    private BatteryAlarmEvaluationContext alarmContext;
 }

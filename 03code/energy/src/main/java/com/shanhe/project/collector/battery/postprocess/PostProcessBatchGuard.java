@@ -51,6 +51,10 @@ public final class PostProcessBatchGuard {
      * @param cells 单体列表
      * @return 所有单体批次号一致且非空
      */
+    public static boolean sameBatch(String expectedBatchNo, String actualBatchNo) {
+        return hasText(expectedBatchNo) && expectedBatchNo.equals(actualBatchNo);
+    }
+
     public static boolean sameCellBatch(String pollBatchNo, List<BatteryModuleCellRealtime> cells) {
         if (!hasText(pollBatchNo) || cells == null || cells.isEmpty()) {
             return false;
