@@ -3,6 +3,7 @@ package com.shanhe.project.collector.battery.postprocess;
 import com.shanhe.project.collector.battery.model.BatteryAlarmEvaluationContext;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.service.BatteryAlarmEvaluationService;
+import com.shanhe.project.collector.battery.service.BatteryAlarmStateContextService;
 import com.shanhe.project.collector.battery.service.BatteryModuleAlarmAdaptService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -30,6 +31,9 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
     @Resource
     private BatteryAlarmEvaluationService alarmEvaluationService;
 
+    @Resource
+    private BatteryAlarmStateContextService alarmStateContextService;
+
     @Override
     public String getName() {
         return "alarmContext";
@@ -51,8 +55,9 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
         if (context.getAlarmContext() != null && alarmEvaluationService != null) {
             return true;
         }
-        return alarmAdaptService != null && context.getPackNum() != null
-                && (PostProcessBatchGuard.sameRealtimeBatch(context) || context.getChannelConfig() != null);
+        return context.getPackNum() != null
+                && ((alarmAdaptService != null && PostProcessBatchGuard.sameRealtimeBatch(context))
+                || (alarmStateContextService != null && context.getChannelConfig() != null));
     }
 
     @Override
@@ -80,12 +85,12 @@ public class AlarmContextProcessor implements BatteryRealtimePostProcessor {
         if (alarmContext == null && alarmAdaptService != null && PostProcessBatchGuard.sameRealtimeBatch(context)) {
             alarmContext = alarmAdaptService.buildContext(context.getGroup(), context.getCells());
         }
-        if (alarmContext == null && alarmAdaptService != null) {
+        if (alarmContext == null && (alarmAdaptService != null || alarmStateContextService != null)) {
             alarmContext = new BatteryAlarmEvaluationContext();
             alarmContext.setPackNum(context.getPackNum());
         }
-        if (alarmAdaptService != null && context.getChannelConfig() != null) {
-            mergeAlarmContext(alarmContext, alarmAdaptService.buildCommunicationAlarmContext(
+        if (alarmStateContextService != null && context.getChannelConfig() != null) {
+            mergeAlarmContext(alarmContext, alarmStateContextService.buildCommunicationAlarmContext(
                     context.getPackNum(), context.getChannelConfig().getName()));
         }
         return alarmContext;
