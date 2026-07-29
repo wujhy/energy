@@ -190,8 +190,31 @@ public class ScreenServiceImpl implements ScreenService {
         index.setConfigId(pack.getConfigId() == null ? Constants.DEFAULT_CONFIG_ID : pack.getConfigId());
         index.setAlarm(alarmLogService.isAlarmByCache(pack.getPackNum()));
         index.setCreateTime(group.getCreateTime());
+        fillRealtimeFields(index, group);
         index.setPackParam(packParam);
         return index;
+    }
+
+    private void fillRealtimeFields(BatteryReportLogIndex index, BatteryModuleGroupRealtime group) {
+        index.setPackVoltage(groupVoltage(group));
+        index.setExternalVoltage(group.getExternalVoltage());
+        index.setChargeDischargeCurrent(group.getChargeDischargeCurrent());
+        index.setFloatCurrent(group.getFloatCurrent());
+        index.setEnvironmentTemperature1(group.getEnvironmentTemperature1());
+        index.setEnvironmentTemperature2(group.getEnvironmentTemperature2());
+        index.setBatteryAvgTemperature(group.getAvgCellTemperature());
+        index.setBatteryPackSoc(group.getBatteryPackSoc());
+        index.setBatteryPackSoh(group.getBatteryPackSoh());
+        index.setBatteryPackStatus(group.getBatteryPackStatus());
+        index.setResistanceTestStatus(group.getResistanceTestStatus());
+        index.setDeviceWorkStatus(group.getDeviceWorkStatus());
+        index.setDeviceWorkIoStatus(group.getDeviceWorkIoStatus());
+        index.setDisChargeCapacity(group.getDisChargeCapacity());
+        index.setDisChargeDuration(group.getDisChargeDuration());
+        index.setResidualDischargeDuration(group.getResidualDischargeDuration());
+        index.setBackupDuration(group.getBackupDuration());
+        index.setBcapacity(group.getBcapacity());
+        index.setCapacity(group.getCapacity());
     }
 
     private Map<String, Object> buildPackParam(BatteryModuleGroupRealtime group) {
@@ -205,6 +228,7 @@ public class ScreenServiceImpl implements ScreenService {
         putIfNotNull(packParam, "batteryPackFloatCurrent", group.getFloatCurrent());
         putIfNotNull(packParam, "environmentTemperature1", group.getEnvironmentTemperature1());
         putIfNotNull(packParam, "environmentTemperature2", group.getEnvironmentTemperature2());
+        putIfNotNull(packParam, "batteryAvgTemperature", group.getAvgCellTemperature());
         putIfNotNull(packParam, "batteryPackSoc", group.getBatteryPackSoc());
         putIfNotNull(packParam, "batteryPackSoh", group.getBatteryPackSoh());
         putIfNotNull(packParam, "batteryPackStatus", group.getBatteryPackStatus());
@@ -215,6 +239,8 @@ public class ScreenServiceImpl implements ScreenService {
         putIfNotNull(packParam, "disChargeDuration", group.getDisChargeDuration());
         putIfNotNull(packParam, "residualDischargeDuration", group.getResidualDischargeDuration());
         putIfNotNull(packParam, "backupDuration", group.getBackupDuration());
+        putIfNotNull(packParam, "bcapacity", group.getBcapacity());
+        putIfNotNull(packParam, "capacity", group.getCapacity());
         return packParam;
     }
 

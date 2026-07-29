@@ -300,7 +300,7 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
 
         groupVo.setStaticTime(new Date());
 
-        groupVo.setBackUpDuration(0);
+        groupVo.setBackUpDuration(null);
         groupVo.setMapBattery(batteryVoMap);
         groupVo.setMapBatteryData(JSON.toJSONString(batteryVoMap));
 

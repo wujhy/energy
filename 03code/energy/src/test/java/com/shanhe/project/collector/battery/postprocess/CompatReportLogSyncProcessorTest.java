@@ -1,6 +1,5 @@
 package com.shanhe.project.collector.battery.postprocess;
 
-import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
@@ -35,26 +34,28 @@ class CompatReportLogSyncProcessorTest {
         Assertions.assertFalse(processor.shouldProcess(context("batch-1", "batch-1", null)));
     }
 
+
     @Test
-    void shouldRejectWhenCompatReportLogDisabled() {
-        BatteryCollectorProperties properties = new BatteryCollectorProperties();
-        properties.setCompatReportLogEnabled(Boolean.FALSE);
-        CompatReportLogSyncProcessor processor = new CompatReportLogSyncProcessor();
-        ReflectionTestUtils.setField(processor, "properties", properties);
+    void shouldInsertHistoryReportWhenStorageIntervalAllows() {
+        BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
+        BatteryStorageIntervalService storageIntervalService = Mockito.mock(BatteryStorageIntervalService.class);
+        Mockito.when(storageIntervalService.shouldInsert(1)).thenReturn(true);
+        CompatReportLogSyncProcessor processor = processor(reportLogService, storageIntervalService);
 
-        Assertions.assertFalse(processor.shouldProcess(context("batch-1", "batch-1", "batch-1")));
+        processor.process(context("batch-1", "batch-1", "batch-1"));
+
+        ArgumentCaptor<Map<String, Object>> packParamCaptor = ArgumentCaptor.forClass(Map.class);
+        Mockito.verify(reportLogService).insert(Mockito.eq(1), packParamCaptor.capture(), Mockito.argThat(list ->
+                list != null && list.size() == 1 && Integer.valueOf(1).equals(list.get(0).getBatNum())));
+        Assertions.assertEquals(220.1d, packParamCaptor.getValue().get("packVoltage"));
     }
-
     private CompatReportLogSyncProcessor processor() {
         return processor(Mockito.mock(BatteryReportLogService.class), Mockito.mock(BatteryStorageIntervalService.class));
     }
 
     private CompatReportLogSyncProcessor processor(BatteryReportLogService reportLogService,
                                                    BatteryStorageIntervalService storageIntervalService) {
-        BatteryCollectorProperties properties = new BatteryCollectorProperties();
-        properties.setCompatReportLogEnabled(Boolean.TRUE);
         CompatReportLogSyncProcessor processor = new CompatReportLogSyncProcessor();
-        ReflectionTestUtils.setField(processor, "properties", properties);
         ReflectionTestUtils.setField(processor, "batteryReportLogService", reportLogService);
         ReflectionTestUtils.setField(processor, "storageIntervalService", storageIntervalService);
         return processor;

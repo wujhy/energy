@@ -10,9 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 600节模块端实时数据告警适配服务。
@@ -81,64 +79,6 @@ public class BatteryModuleAlarmAdaptService {
         return context;
     }
 
-    /**
-     * 从标准实时模型构建阈值告警参数。
-     * <p>
-     * 返回 itemCode → 当前值 的映射，供 AlarmLogServiceImpl.alarmBatteryValue 使用。
-     * 缺失的实时值不会生成告警参数。
-     *
-     * @param packNum 电池组编号
-     * @param cells 单体实时数据
-     * @param group 组实时数据
-     * @return 告警参数映射
-     * @deprecated 仅保留给扁平单体或组级兼容输入；多单体告警必须使用 {@link #buildContext(BatteryModuleGroupRealtime, List)}
-     * 按单体编号隔离，避免相同 itemCode 互相覆盖。
-     */
-    @Deprecated
-    public Map<String, String> buildThresholdAlarmParam(Integer packNum,
-                                                         List<BatteryModuleCellRealtime> cells,
-                                                         BatteryModuleGroupRealtime group) {
-        Map<String, String> warnParam = new HashMap<>(32);
-        if (cells != null) {
-            for (BatteryModuleCellRealtime cell : cells) {
-                if (cell == null || cell.getBatNum() == null) {
-                    continue;
-                }
-                appendCellThreshold(warnParam, cell);
-            }
-        }
-        if (group != null) {
-            appendGroupThreshold(warnParam, group);
-        }
-        return warnParam;
-    }
-
-    /** 追加单体阈值告警参数。 */
-    private void appendCellThreshold(Map<String, String> warnParam, BatteryModuleCellRealtime cell) {
-        // 单体电压
-        if (cell.getVoltage() != null) {
-            String value = String.valueOf(cell.getVoltage());
-            warnParam.put(ItemCode.DTDYGC.getCode(), value);
-            warnParam.put(ItemCode.DTDYGF.getCode(), value);
-        }
-        // 单体内阻
-        if (cell.getResistance() != null) {
-            String value = String.valueOf(cell.getResistance());
-            warnParam.put(ItemCode.DTNZGD.getCode(), value);
-            warnParam.put(ItemCode.DTNZGX.getCode(), value);
-        }
-        // 单体温度
-        if (cell.getTemperature() != null) {
-            String value = String.valueOf(cell.getTemperature());
-            warnParam.put(ItemCode.DTDCWDG.getCode(), value);
-            warnParam.put(ItemCode.DTDCWDD.getCode(), value);
-        }
-        // 单体鼓包
-        if (cell.getSwollenVoltage() != null) {
-            warnParam.put(ItemCode.DTGB.getCode(), String.valueOf(cell.getSwollenVoltage()));
-        }
-    }
-
     /** 追加单体阈值告警候选，按单体编号隔离 itemCode，避免多个单体互相覆盖。 */
     private void appendCellThreshold(BatteryModuleAlarmContext context, BatteryModuleCellRealtime cell) {
         Integer batNum = cell.getBatNum();
@@ -159,34 +99,6 @@ public class BatteryModuleAlarmAdaptService {
         }
         if (cell.getSwollenVoltage() != null) {
             context.putCellWarn(batNum, ItemCode.DTGB.getCode(), String.valueOf(cell.getSwollenVoltage()));
-        }
-    }
-
-    /** 追加组阈值告警参数。 */
-    private void appendGroupThreshold(Map<String, String> warnParam, BatteryModuleGroupRealtime group) {
-        // 组电压
-        Double groupVoltage = groupVoltage(group);
-        if (groupVoltage != null) {
-            String value = String.valueOf(groupVoltage);
-            warnParam.put(ItemCode.ZDYGC.getCode(), value);
-            warnParam.put(ItemCode.ZDYGF.getCode(), value);
-        }
-        // 充放电电流
-        Double current = group.getChargeDischargeCurrent();
-        if (current != null) {
-            warnParam.put(ItemCode.ZCGDLGJ.getCode(), String.valueOf(current));
-        }
-        // 环境温度
-        if (group.getEnvironmentTemperature1() != null) {
-            String value = String.valueOf(group.getEnvironmentTemperature1());
-            warnParam.put(ItemCode.ZWDG.getCode(), value);
-            warnParam.put(ItemCode.ZWDD.getCode(), value);
-        }
-        if (group.getBatteryPackSoc() != null) {
-            warnParam.put(ItemCode.ZSOCDGJ.getCode(), String.valueOf(group.getBatteryPackSoc()));
-        }
-        if (group.getBatteryPackSoh() != null) {
-            warnParam.put(ItemCode.ZSOHDGJ.getCode(), String.valueOf(group.getBatteryPackSoh()));
         }
     }
 

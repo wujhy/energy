@@ -69,31 +69,32 @@ public class BatteryReportLogServiceImpl implements BatteryReportLogService {
             return null;
         }
 
-        // 包数据
         if (StrUtil.isNotBlank(log.getPackData())) {
             log.setPackParam(JSON.parseObject(log.getPackData()));
             log.setPackData(null);
         }
 
-        // 单体数据
         if (StrUtil.isNotBlank(log.getMonitorData())) {
             log.setBatteryList(JSON.parseArray(log.getMonitorData(), BatteryMonitor.class));
             log.setMonitorData(null);
         }
 
-        // 告警记录
-        if (!log.getBatteryList().isEmpty()) {
-            List<AlarmLog> alarmLogs = alarmLogService.selectBatteryAlarmLogListCache(packNum);
-            Map<Integer, List<AlarmLog>> batAlarmMap = alarmLogs.stream()
-                    .filter(item -> item.getModelNum() != null)
-                    .collect(Collectors.groupingBy(AlarmLog::getModelNum));
-
-            // 单体电池告警记录
-            log.getBatteryList().forEach(entity -> entity.setAlarmList(batAlarmMap.getOrDefault(entity.getBatNum(), new ArrayList<>())));
-
-            log.setAlarmList(alarmLogs);
-            log.setAlarm(alarmLogs.isEmpty() ? 1 : 0);
+        List<BatteryMonitor> batteryList = log.getBatteryList();
+        if (batteryList == null) {
+            batteryList = new ArrayList<>();
+            log.setBatteryList(batteryList);
         }
+        List<AlarmLog> alarmLogs = alarmLogService.selectBatteryAlarmLogListCache(packNum);
+        if (alarmLogs == null) {
+            alarmLogs = Collections.emptyList();
+        }
+        Map<Integer, List<AlarmLog>> batAlarmMap = alarmLogs.stream()
+                .filter(item -> item != null && item.getModelNum() != null)
+                .collect(Collectors.groupingBy(AlarmLog::getModelNum));
+        batteryList.forEach(entity -> entity.setAlarmList(
+                batAlarmMap.getOrDefault(entity.getBatNum(), Collections.emptyList())));
+        log.setAlarmList(alarmLogs);
+        log.setAlarm(alarmLogs.isEmpty() ? 1 : 0);
         return log;
     }
 

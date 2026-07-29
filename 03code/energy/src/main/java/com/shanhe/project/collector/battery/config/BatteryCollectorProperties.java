@@ -40,9 +40,6 @@ public class BatteryCollectorProperties {
     /** 是否在实时数据入库后计算电池组指标。 */
     private Boolean groupCalculationEnabled = Boolean.FALSE;
 
-    /** 是否把独立模块采集结果同步为旧 dev_battery_report_log 历史记录。 */
-    private Boolean compatReportLogEnabled = Boolean.FALSE;
-
 
     /**
      * JSON/TCP/页面/计划控制是否优先尝试独立模块命令服务。

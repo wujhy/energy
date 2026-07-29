@@ -9,7 +9,6 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 实时数据后处理上下文。
@@ -44,12 +43,4 @@ public class BatteryRealtimePostProcessContext {
 
     /** 告警候选上下文。 */
     private BatteryModuleAlarmContext alarmContext;
-    /** 组参数映射（兼容模式下由 980 解析提供）。 */
-    private Map<String, Object> packMap;
-
-    /** 单体列表（兼容模式下由 980 解析提供）。 */
-    private List<?> batteryList;
-
-    /** 是否为兼容历史写入模式。 */
-    private boolean compatInsert;
 }

@@ -36,7 +36,8 @@
         </foreach>
     </insert>
 
-    <!-- 查询最新上报日志 -->
+
+    <!-- 查询最后一条上报日志，用于监控详情展示最后一次采集数据 -->
     <select id="selectLast" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>

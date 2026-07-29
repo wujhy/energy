@@ -91,6 +91,8 @@ class DeviceOnlineJobTest {
 
         Mockito.verify(snapshotService).getCachedSnapshot(1);
         Mockito.verify(alarmLogService, Mockito.never()).alarmBatteryValue(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyMap());
+        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(false), Mockito.isNull(),
+                Mockito.eq(Collections.singletonList(ItemCode.TXZT.getCode())));
         Mockito.verify(deviceStateService).upsert(Mockito.argThat(state ->
                 state != null
                         && "1".equals(state.getScopeKey())
@@ -113,6 +115,8 @@ class DeviceOnlineJobTest {
 
         Mockito.verify(snapshotService).getCachedSnapshot(1);
         Mockito.verify(alarmLogService, Mockito.never()).alarmBatteryValue(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyMap());
+        Mockito.verify(alarmLogService).alarmFix(Mockito.eq(1), Mockito.eq(false), Mockito.isNull(),
+                Mockito.eq(Collections.singletonList(ItemCode.TXZT.getCode())));
         Mockito.verify(deviceStateService).upsert(Mockito.argThat(state ->
                 state != null
                         && "1".equals(state.getScopeKey())

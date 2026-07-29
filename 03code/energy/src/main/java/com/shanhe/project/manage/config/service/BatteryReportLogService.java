@@ -24,10 +24,10 @@ public interface BatteryReportLogService {
     void insert(Integer packNum, Map<String, Object> packParam, List<BatteryMonitor> batteryList);
 
     /**
-     * 查电池历史（告警处理）
+     * 查电池最后一条历史记录（监控详情展示最后一次采集数据）。
      *
-     * @param packNum 电池编号
-     * @return 结果
+     * @param packNum 电池组编号
+     * @return 最后一条历史记录
      */
     BatteryReportLog selectLastHasAlarm(Integer packNum);
 

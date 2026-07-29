@@ -147,7 +147,9 @@ public class DeviceOnlineJob {
                 log.debug("电池组离线状态已按 energy 告警上下文处理, packNum={}, snapshotReady={}",
                         packNum, snapshot != null && snapshot.isDataReady());
             }
+            return;
         }
+        alarmLogService.alarmFix(packNum, false, null, Collections.singletonList(ItemCode.TXZT.getCode()));
     }
 
     /** 持久化电池组在线/离线状态到 battery_device_state。 */

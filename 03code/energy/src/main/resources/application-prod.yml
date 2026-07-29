@@ -110,7 +110,6 @@ battery-collector:
         rawFrameLogEnabled: false
         realtimeDataEnabled: false
         groupCalculationEnabled: false
-        compatReportLogEnabled: false
         # 模块命令开关：开启后 _2/_6 命令走 600 模块命令适配器，
         # 适配失败直接返回业务错误，不回退旧 980/CommServer 链路；
         # 关闭时保留旧兼容链路，适配器返回 null 允许旧路径兜底。

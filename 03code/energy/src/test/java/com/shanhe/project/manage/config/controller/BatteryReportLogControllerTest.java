@@ -11,11 +11,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 class BatteryReportLogControllerTest {
 
     @Test
-    void shouldUseHistoricalLastReportForDetail() {
+    void shouldUseLastHistoryReportForDetail() {
         BatteryReportLogService reportLogService = Mockito.mock(BatteryReportLogService.class);
         BatteryReportLog historicalLog = new BatteryReportLog();
-        historicalLog.setPackData("{}");
-        historicalLog.setMonitorData("[]");
+        historicalLog.setPackNum(1);
         Mockito.when(reportLogService.selectLastHasAlarm(1)).thenReturn(historicalLog);
         BatteryReportLogController controller = new BatteryReportLogController();
         ReflectionTestUtils.setField(controller, "batteryReportLogService", reportLogService);
@@ -24,8 +23,6 @@ class BatteryReportLogControllerTest {
 
         BatteryReportLog data = (BatteryReportLog) result.get(AjaxResult.DATA_TAG);
         Assertions.assertSame(historicalLog, data);
-        Assertions.assertNull(data.getPackData());
-        Assertions.assertNull(data.getMonitorData());
         Mockito.verify(reportLogService).selectLastHasAlarm(1);
     }
 }

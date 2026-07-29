@@ -1,7 +1,5 @@
 package com.shanhe.project.collector.battery.postprocess;
 
-
-import com.shanhe.project.collector.battery.config.BatteryCollectorProperties;
 import com.shanhe.project.collector.battery.model.BatteryCollectorChannelConfig;
 import com.shanhe.project.collector.battery.model.BatteryModuleCellRealtime;
 import com.shanhe.project.collector.battery.model.BatteryModuleGroupRealtime;
@@ -16,9 +14,9 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * 兼容历史报告同步处理器。
+ * 历史报告同步处理器。
  *
- * <p>将标准实时模型同步到旧 dev_battery_report_log 过渡表，统一纳入后处理流水线。</p>
+ * <p>将标准实时模型同步到 dev_battery_report_log 历史表，供历史查询和导出回查。</p>
  *
  * @author wjh
  * @since 2026-06-18
@@ -26,9 +24,6 @@ import java.util.List;
 @Slf4j
 @Component
 public class CompatReportLogSyncProcessor implements BatteryRealtimePostProcessor {
-
-    @Resource
-    private BatteryCollectorProperties properties;
 
     @Resource
     private BatteryReportLogService batteryReportLogService;
@@ -49,8 +44,6 @@ public class CompatReportLogSyncProcessor implements BatteryRealtimePostProcesso
     @Override
     public boolean shouldProcess(BatteryRealtimePostProcessContext context) {
         return context != null
-                && properties != null
-                && Boolean.TRUE.equals(properties.getCompatReportLogEnabled())
                 && context.getChannelConfig() != null
                 && context.getGroup() != null
                 && context.getCells() != null
@@ -63,14 +56,14 @@ public class CompatReportLogSyncProcessor implements BatteryRealtimePostProcesso
         try {
             sync(context.getChannelConfig(), context.getGroup(), context.getCells());
         } catch (Exception e) {
-            log.warn("同步蓄电池模块兼容报告日志失败, 通道={}, 电池组={}",
+            log.warn("同步蓄电池模块历史报告日志失败, 通道={}, 电池组={}",
                     context.getChannelConfig() == null ? null : context.getChannelConfig().getName(),
                     context.getPackNum(),
                     e);
         }
     }
 
-    /** 同步本轮采集结果到旧 dev_battery_report_log 历史链路。 */
+    /** 同步本轮采集结果到 dev_battery_report_log 历史链路。 */
     private void sync(BatteryCollectorChannelConfig channelConfig,
                       BatteryModuleGroupRealtime group,
                       List<BatteryModuleCellRealtime> cells) {

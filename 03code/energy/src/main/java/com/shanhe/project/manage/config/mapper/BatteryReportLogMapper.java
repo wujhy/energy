@@ -27,10 +27,10 @@ public interface BatteryReportLogMapper {
     void insertList(List<BatteryReportLog> list);
 
     /**
-     * 获取设备最新电池记录
+     * 获取设备最新电池历史记录。
      *
      * @param packNum 电池组编号
-     * @return 电池列表
+     * @return 最后一条历史记录
      */
     BatteryReportLog selectLast(@Param("packNum") Integer packNum);
 
