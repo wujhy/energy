@@ -72,8 +72,6 @@ CREATE TABLE IF NOT EXISTS battery_module_group_realtime
     pack_num                        INTEGER NOT NULL,
     pack_voltage                    REAL,
     pack_current                    REAL,
-    battery_pack_float_current      REAL,
-    battery_pack_outer_voltage      REAL,
     environment_temperature1        REAL,
     environment_temperature2        REAL,
     charge_discharge_current        REAL,

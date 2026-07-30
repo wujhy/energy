@@ -92,7 +92,6 @@ class BatteryModuleAlarmAdaptServiceTest {
     void shouldBuildGroupThresholdAlarmCandidates() {
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
         group.setPackNum(1);
-        group.setBatteryPackOuterVoltage(230.5d);
         group.setChargeDischargeCurrent(-12.3d);
         group.setEnvironmentTemperature1(28.8d);
         group.setBatteryPackSoc(86.5d);

@@ -22,17 +22,11 @@ public class BatteryModuleGroupRealtime {
     /** 电池组编号。 */
     private Integer packNum;
 
-    /** 兼容旧 pack_data 的组总电压。 */
+    /** 组总电压。 */
     private Double packVoltage;
 
     /** 兼容旧 pack_data 的组充放电电流。 */
     private Double packCurrent;
-
-    /** 兼容旧 pack_data 的电池组浮充电流。 */
-    private Double batteryPackFloatCurrent;
-
-    /** 兼容旧 pack_data 的电池组外组压。 */
-    private Double batteryPackOuterVoltage;
 
     /** 充放电电流。 */
     private Double chargeDischargeCurrent;

@@ -85,8 +85,6 @@ class BatteryModuleRealtimeConsumerTest {
         Assertions.assertEquals(0.123d, realtime.getFloatCurrent(), 0.0001d);
         Assertions.assertEquals(123.45d, realtime.getExternalVoltage(), 0.0001d);
         Assertions.assertNull(realtime.getPackCurrent());
-        Assertions.assertNull(realtime.getBatteryPackFloatCurrent());
-        Assertions.assertNull(realtime.getBatteryPackOuterVoltage());
         Assertions.assertTrue(realtime.getGroupModuleFresh());
     }
 
@@ -109,8 +107,6 @@ class BatteryModuleRealtimeConsumerTest {
         Assertions.assertEquals(1, realtime.getPackNum());
         Assertions.assertFalse(realtime.getGroupModuleFresh());
         Assertions.assertNull(realtime.getPackCurrent());
-        Assertions.assertNull(realtime.getBatteryPackFloatCurrent());
-        Assertions.assertNull(realtime.getBatteryPackOuterVoltage());
         Assertions.assertNull(realtime.getChargeDischargeCurrent());
         Assertions.assertNull(realtime.getFloatCurrent());
         Assertions.assertNull(realtime.getExternalVoltage());

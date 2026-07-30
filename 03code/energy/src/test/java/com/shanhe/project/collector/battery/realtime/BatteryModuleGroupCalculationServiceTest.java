@@ -87,8 +87,6 @@ class BatteryModuleGroupCalculationServiceTest {
         group.setPackVoltage(240.0d);
         group.setExternalVoltage(123.4d);
         group.setPackCurrent(-10.0d);
-        group.setBatteryPackFloatCurrent(0.123d);
-        group.setBatteryPackOuterVoltage(123.4d);
         group.setChargeDischargeCurrent(-10.0d);
         group.setFloatCurrent(0.123d);
         group.setEnvironmentTemperature1(25.1d);
@@ -110,8 +108,6 @@ class BatteryModuleGroupCalculationServiceTest {
         Assertions.assertNull(calculation.getPackVoltage());
         Assertions.assertNull(calculation.getExternalVoltage());
         Assertions.assertNull(calculation.getPackCurrent());
-        Assertions.assertNull(calculation.getBatteryPackFloatCurrent());
-        Assertions.assertNull(calculation.getBatteryPackOuterVoltage());
         Assertions.assertNull(calculation.getChargeDischargeCurrent());
         Assertions.assertNull(calculation.getFloatCurrent());
         Assertions.assertNull(calculation.getEnvironmentTemperature1());

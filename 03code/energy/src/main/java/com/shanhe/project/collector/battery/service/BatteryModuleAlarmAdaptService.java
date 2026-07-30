@@ -85,13 +85,10 @@ public class BatteryModuleAlarmAdaptService {
     }
 
     private Double groupVoltage(BatteryModuleGroupRealtime group) {
-        if (group.getPackVoltage() != null) {
-            return group.getPackVoltage();
+        if (group.getExternalVoltage() != null) {
+            return group.getExternalVoltage();
         }
-        if (group.getBatteryPackOuterVoltage() != null) {
-            return group.getBatteryPackOuterVoltage();
-        }
-        return group.getExternalVoltage();
+        return group.getPackVoltage();
     }
 
     /** 追加电池组通信状态告警。 */

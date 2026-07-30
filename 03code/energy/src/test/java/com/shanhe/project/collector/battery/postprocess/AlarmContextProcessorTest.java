@@ -26,14 +26,12 @@ class AlarmContextProcessorTest {
     void processShouldBuildContextAndCallAlarmFixWhenAlarmContextIsEmpty() {
         AlarmContextProcessor processor = newProcessor();
         BatteryModuleAlarmAdaptService alarmAdaptService = Mockito.mock(BatteryModuleAlarmAdaptService.class);
-        BatteryAlarmStateContextService alarmStateContextService = Mockito.mock(BatteryAlarmStateContextService.class);
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
         BatteryAlarmEvaluationContext emptyAlarmContext = alarmContext(1);
         BatteryRealtimePostProcessContext context = contextWithoutAlarmContext();
         Mockito.when(alarmAdaptService.buildContext(context.getGroup(), context.getCells()))
                 .thenReturn(emptyAlarmContext);
         ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
-        ReflectionTestUtils.setField(processor, "alarmStateContextService", alarmStateContextService);
         setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
@@ -47,13 +45,11 @@ class AlarmContextProcessorTest {
     void processShouldUseExistingAlarmContextAndCallPackAlarmWhenPackWarnIsNotEmpty() {
         AlarmContextProcessor processor = newProcessor();
         BatteryModuleAlarmAdaptService alarmAdaptService = Mockito.mock(BatteryModuleAlarmAdaptService.class);
-        BatteryAlarmStateContextService alarmStateContextService = Mockito.mock(BatteryAlarmStateContextService.class);
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
         BatteryAlarmEvaluationContext alarmContext = alarmContext(1);
         alarmContext.putPackWarn("ZDYGC", "1");
         BatteryRealtimePostProcessContext context = contextWithAlarmContext(alarmContext);
         ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
-        ReflectionTestUtils.setField(processor, "alarmStateContextService", alarmStateContextService);
         setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
@@ -88,7 +84,6 @@ class AlarmContextProcessorTest {
     void processShouldMergeCommunicationAlarmContext() {
         AlarmContextProcessor processor = newProcessor();
         BatteryModuleAlarmAdaptService alarmAdaptService = Mockito.mock(BatteryModuleAlarmAdaptService.class);
-        BatteryAlarmStateContextService alarmStateContextService = Mockito.mock(BatteryAlarmStateContextService.class);
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
         BatteryAlarmEvaluationContext realtimeContext = alarmContext(1);
         realtimeContext.putPackThresholdWarn(ItemCode.ZDYGC.getCode(), "1");
@@ -97,10 +92,7 @@ class AlarmContextProcessorTest {
         BatteryRealtimePostProcessContext context = contextWithChannelConfig();
         Mockito.when(alarmAdaptService.buildContext(context.getGroup(), context.getCells()))
                 .thenReturn(realtimeContext);
-        Mockito.when(alarmStateContextService.buildCommunicationAlarmContext(1, "COM1"))
-                .thenReturn(communicationContext);
         ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
-        ReflectionTestUtils.setField(processor, "alarmStateContextService", alarmStateContextService);
         setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
@@ -118,7 +110,6 @@ class AlarmContextProcessorTest {
     void processShouldKeepRealtimeCommunicationAlarmWhenRecoveredStateIsMerged() {
         AlarmContextProcessor processor = newProcessor();
         BatteryModuleAlarmAdaptService alarmAdaptService = Mockito.mock(BatteryModuleAlarmAdaptService.class);
-        BatteryAlarmStateContextService alarmStateContextService = Mockito.mock(BatteryAlarmStateContextService.class);
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
         BatteryAlarmEvaluationContext realtimeContext = alarmContext(1);
         realtimeContext.putPackStatusWarn(ItemCode.TXZT.getCode(), "1");
@@ -127,10 +118,7 @@ class AlarmContextProcessorTest {
         BatteryRealtimePostProcessContext context = contextWithChannelConfig();
         Mockito.when(alarmAdaptService.buildContext(context.getGroup(), context.getCells()))
                 .thenReturn(realtimeContext);
-        Mockito.when(alarmStateContextService.buildCommunicationAlarmContext(1, "COM1"))
-                .thenReturn(communicationContext);
         ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
-        ReflectionTestUtils.setField(processor, "alarmStateContextService", alarmStateContextService);
         setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
@@ -142,7 +130,6 @@ class AlarmContextProcessorTest {
     void processShouldSendMergedPackAndCellAlarmContext() {
         AlarmContextProcessor processor = newProcessor();
         BatteryModuleAlarmAdaptService alarmAdaptService = Mockito.mock(BatteryModuleAlarmAdaptService.class);
-        BatteryAlarmStateContextService alarmStateContextService = Mockito.mock(BatteryAlarmStateContextService.class);
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
         BatteryAlarmEvaluationContext realtimeContext = alarmContext(1);
         realtimeContext.putPackThresholdWarn(ItemCode.ZDYGC.getCode(), "230.5");
@@ -152,10 +139,7 @@ class AlarmContextProcessorTest {
         BatteryRealtimePostProcessContext context = contextWithChannelConfig();
         Mockito.when(alarmAdaptService.buildContext(context.getGroup(), context.getCells()))
                 .thenReturn(realtimeContext);
-        Mockito.when(alarmStateContextService.buildCommunicationAlarmContext(1, "COM1"))
-                .thenReturn(communicationContext);
         ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
-        ReflectionTestUtils.setField(processor, "alarmStateContextService", alarmStateContextService);
         setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
@@ -176,7 +160,6 @@ class AlarmContextProcessorTest {
     void processShouldBuildCommunicationOnlyAlarmContextWhenCellsAreMissing() {
         AlarmContextProcessor processor = newProcessor();
         BatteryModuleAlarmAdaptService alarmAdaptService = Mockito.mock(BatteryModuleAlarmAdaptService.class);
-        BatteryAlarmStateContextService alarmStateContextService = Mockito.mock(BatteryAlarmStateContextService.class);
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
         BatteryAlarmEvaluationContext communicationContext = alarmContext(1);
         communicationContext.putPackStatusWarn(ItemCode.TXZT.getCode(), "1");
@@ -184,10 +167,7 @@ class AlarmContextProcessorTest {
                 .packNum(1)
                 .channelConfig(channelConfig())
                 .build();
-        Mockito.when(alarmStateContextService.buildCommunicationAlarmContext(1, "COM1"))
-                .thenReturn(communicationContext);
         ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
-        ReflectionTestUtils.setField(processor, "alarmStateContextService", alarmStateContextService);
         setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
@@ -285,7 +265,6 @@ class AlarmContextProcessorTest {
     void processShouldNotBuildRealtimeAlarmContextFromDifferentBatchWhenCommunicationAlarmExists() {
         AlarmContextProcessor processor = newProcessor();
         BatteryModuleAlarmAdaptService alarmAdaptService = Mockito.mock(BatteryModuleAlarmAdaptService.class);
-        BatteryAlarmStateContextService alarmStateContextService = Mockito.mock(BatteryAlarmStateContextService.class);
         IAlarmLogService alarmLogService = Mockito.mock(IAlarmLogService.class);
         BatteryModuleCellRealtime staleCell = cell(2);
         staleCell.setPollBatchNo("other-batch");
@@ -298,10 +277,7 @@ class AlarmContextProcessorTest {
                 .cells(Arrays.asList(cell(1), staleCell))
                 .channelConfig(channelConfig())
                 .build();
-        Mockito.when(alarmStateContextService.buildCommunicationAlarmContext(1, "COM1"))
-                .thenReturn(communicationContext);
         ReflectionTestUtils.setField(processor, "alarmAdaptService", alarmAdaptService);
-        ReflectionTestUtils.setField(processor, "alarmStateContextService", alarmStateContextService);
         setEvaluationService(processor, alarmLogService);
 
         processor.process(context);
