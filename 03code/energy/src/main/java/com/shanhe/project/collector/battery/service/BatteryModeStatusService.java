@@ -22,9 +22,6 @@ import java.util.Date;
 @Service
 public class BatteryModeStatusService {
 
-    /** 工作模式对应的设备状态编码。 */
-    private static final String STATE_CODE_WORK_MODE = BatteryDeviceStateConstants.StateCode.WORK_MODE;
-
     /** 电池设备状态服务。 */
     @Resource
     private BatteryDeviceStateService batteryDeviceStateService;
@@ -151,7 +148,7 @@ public class BatteryModeStatusService {
             state.setScopeType(BatteryDeviceStateConstants.ScopeType.PACK);
             state.setScopeKey(String.valueOf(packNum));
             state.setPackNum(packNum);
-            state.setStateCode(STATE_CODE_WORK_MODE);
+            state.setStateCode(BatteryDeviceStateConstants.StateCode.WORK_MODE);
             state.setStateValue(stateValue);
             state.setStateLevel(stateLevel);
             state.setSource(BatteryDeviceStateConstants.Source.MODE_STATUS);
