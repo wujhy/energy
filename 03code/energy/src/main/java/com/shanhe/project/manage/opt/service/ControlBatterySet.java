@@ -439,18 +439,20 @@ public class ControlBatterySet {
         return null;
     }
 
-    /** 按实时快照单体计算平均内阻，空内阻按 0 参与平均。 */
+    /** 按实时快照单体计算平均内阻，缺失内阻不参与平均。 */
     private Long averageResistance(List<BatteryModuleCellRealtime> cells) {
         if (cells == null || cells.isEmpty()) {
             return null;
         }
         double resistanceValue = 0;
+        int validCount = 0;
         for (BatteryModuleCellRealtime battery : cells) {
             if (battery != null && battery.getResistance() != null) {
                 resistanceValue += battery.getResistance();
+                validCount++;
             }
         }
-        return Math.round(resistanceValue / cells.size());
+        return validCount == 0 ? null : Math.round(resistanceValue / validCount);
     }
 
     /** 清除指定电池组的编号状态缓存。 */
