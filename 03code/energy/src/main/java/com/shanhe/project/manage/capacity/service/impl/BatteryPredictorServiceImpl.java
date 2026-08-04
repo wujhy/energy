@@ -301,33 +301,29 @@ public class BatteryPredictorServiceImpl implements BatteryPredictorService {
         groupVo.setStaticTime(new Date());
 
         groupVo.setBackUpDuration(null);
-        groupVo.setMapBattery(batteryVoMap);
-        groupVo.setMapBatteryData(JSON.toJSONString(batteryVoMap));
+        Map<String, PreBatteryVo> previousBatteryMap = groupVo.getMapBattery() == null
+                ? Collections.emptyMap() : groupVo.getMapBattery();
 
         //循环检查单体并设置单体的容量，有可能本轮测试时，电压未达到指定电压，没有预测值，需要拿上一次的预测值
-        Map<String, PreBatteryVo> map2 = groupVo.getMapBattery() == null ? Collections.emptyMap() : groupVo.getMapBattery();
-        //寻找最低容量，作为电池组的参考值
         Integer minBat = null;
         Double groupCapacity = null;
         for (int i = 1; i <= batteryInfo.getBatSinSize(); i++) {
             PreBatteryVo vo = batteryVoMap.get(Constants.CAP_BAT + i);
             if (vo == null) {
-                vo = map2.get(Constants.CAP_BAT + i);
+                vo = previousBatteryMap.get(Constants.CAP_BAT + i);
             }
             if (vo == null) {
                 continue;
             }
 
             batteryVoMap.put(Constants.CAP_BAT + i, vo);
-
-            if (groupCapacity == null) {
+            Double batteryCapacity = vo.getBcapacity();
+            if (batteryCapacity == null) {
+                continue;
+            }
+            if (groupCapacity == null || groupCapacity > batteryCapacity) {
                 minBat = vo.getBatNum();
-                groupCapacity = vo.getBcapacity();
-            } else {
-                if (groupCapacity > vo.getBcapacity()) {
-                    groupCapacity = vo.getBcapacity();
-                    minBat = vo.getBatNum();
-                }
+                groupCapacity = batteryCapacity;
             }
         }
         groupVo.setMapBattery(batteryVoMap);
