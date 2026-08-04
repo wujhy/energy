@@ -133,7 +133,9 @@ public class DataReportJob {
 
     boolean isUsableRealtimeSnapshot(BatteryModuleRealtimeSnapshot snapshot) {
         return snapshot != null
+                && snapshot.isFresh()
                 && snapshot.getGroup() != null
+                && !Boolean.FALSE.equals(snapshot.getGroup().getDataFresh())
                 && snapshot.getCells() != null
                 && !snapshot.getCells().isEmpty();
     }

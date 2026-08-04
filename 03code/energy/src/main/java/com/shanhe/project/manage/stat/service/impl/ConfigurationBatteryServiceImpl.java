@@ -217,11 +217,7 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
 
     /** 填充SOH信息。 */
     private void populateSohInfo(BatteryHealthReport batteryHealthReport, PreBatteryGroup preBatteryGroup) {
-        Double soh = 100.0;
-        if (preBatteryGroup != null) {
-            soh = preBatteryGroup.getSoh();
-        }
-        batteryHealthReport.setSoh(soh);
+        batteryHealthReport.setSoh(preBatteryGroup == null ? null : preBatteryGroup.getSoh());
     }
 
     /** 填充告警信息并返回按告警项分组的日志。 */
@@ -248,6 +244,9 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
     private String getAssessAdvice(BatteryHealthReport batteryHealthReport) {
         // SOH 不告警
         if (!Objects.equals(0, batteryHealthReport.getSohAlarm())) {
+            if (batteryHealthReport.getSoh() == null) {
+                return "暂无容量预测结果，无法评估备用时长，建议完成一次有效放电测试后复核。";
+            }
             Double sohThreshold = getSohThreshold(batteryHealthReport.getPackNum());
             if (batteryHealthReport.getSoh() >= sohThreshold) {
                 batteryHealthReport.setSohAlarm(2);
@@ -426,8 +425,9 @@ public class ConfigurationBatteryServiceImpl implements IConfigurationBatterySer
 
     /** 计算电池容量百分比。 */
     private String getCapacity(BatteryPack batteryPack, PreBatteryGroup preBatteryGroup) {
-        if (preBatteryGroup == null || preBatteryGroup.getBcapacity() == null || preBatteryGroup.getBcapacity() == 0) {
-            return "100%";
+        if (preBatteryGroup == null || preBatteryGroup.getBcapacity() == null
+                || batteryPack.getBatCapacity() == null || batteryPack.getBatCapacity() == 0) {
+            return "--";
         }
         // 使用double类型进行计算以避免整数除法导致的精度丢失
         double percentage = preBatteryGroup.getBcapacity() / batteryPack.getBatCapacity() * 100;
