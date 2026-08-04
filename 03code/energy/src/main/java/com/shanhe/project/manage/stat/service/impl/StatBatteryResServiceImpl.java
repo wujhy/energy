@@ -203,11 +203,18 @@ public class StatBatteryResServiceImpl implements IStatBatteryResService {
             return false;
         }
         Integer expectedCellCount = resolveExpectedCellCount(packNum);
-        if (expectedCellCount != null && expectedCellCount > 0 && cells.size() < expectedCellCount) {
-            return false;
-        }
+        Set<Integer> validBatNums = new HashSet<>();
         for (BatteryModuleCellRealtime cell : cells) {
             if (cell == null || cell.getBatNum() == null || cell.getResistance() == null) {
+                return false;
+            }
+            validBatNums.add(cell.getBatNum());
+        }
+        if (expectedCellCount == null || expectedCellCount <= 0) {
+            return true;
+        }
+        for (int batNum = 1; batNum <= expectedCellCount; batNum++) {
+            if (!validBatNums.contains(batNum)) {
                 return false;
             }
         }
