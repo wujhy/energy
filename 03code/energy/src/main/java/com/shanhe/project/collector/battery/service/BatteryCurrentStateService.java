@@ -187,6 +187,7 @@ public class BatteryCurrentStateService {
         target.setBatteryPackStatus(source.getBatteryPackStatus());
         target.setResistanceTestStatus(source.getResistanceTestStatus());
         target.setDeviceWorkStatus(source.getDeviceWorkStatus());
+        target.setDeviceWorkIoStatus(source.getDeviceWorkIoStatus());
         return target;
     }
 

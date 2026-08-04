@@ -121,4 +121,6 @@ public class BatteryCurrentGroupState {
     private Integer resistanceTestStatus;
     /** 设备工作状态码。 */
     private Integer deviceWorkStatus;
+    /** 设备工作 IO 状态码。 */
+    private Integer deviceWorkIoStatus;
 }
