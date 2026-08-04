@@ -7,6 +7,7 @@ import com.shanhe.project.manage.config.domain.BatteryMonitor;
 import com.shanhe.project.manage.config.domain.BatteryReportLog;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,11 +42,24 @@ public class RealtimeToReportLogAdapter {
         report.setConfigId(Constants.DEFAULT_CONFIG_ID);
         report.setPackNum(packNum);
         if (group != null) {
-            report.setCreateTime(group.getCreateTime());
+            report.setCreateTime(resolveRealtimeCreateTime(group));
         }
         report.setPackParam(buildPackParam(group));
         report.setBatteryList(buildBatteryList(packNum, cells));
         return report;
+    }
+
+    private static Date resolveRealtimeCreateTime(BatteryModuleGroupRealtime group) {
+        if (group.getCreateTime() != null) {
+            return group.getCreateTime();
+        }
+        if (group.getLatestGroupUpdateTime() != null) {
+            return group.getLatestGroupUpdateTime();
+        }
+        if (group.getLatestCellUpdateTime() != null) {
+            return group.getLatestCellUpdateTime();
+        }
+        return group.getPollStartedAt();
     }
 
     /** 将组实时数据转换为 packParam Map。 */
