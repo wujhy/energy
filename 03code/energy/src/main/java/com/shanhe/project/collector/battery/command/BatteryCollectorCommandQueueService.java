@@ -526,6 +526,10 @@ public class BatteryCollectorCommandQueueService {
             return false;
         }
         if (!success) {
+            log.warn("自动编号失败, 通道={}, 地址={}, 响应={}",
+                    state.getConfig() == null ? null : state.getConfig().getName(),
+                    String.format("%02X", pendingRequest.getRequestAddress()),
+                    String.format("%02X", frame.getCommand()));
             markModeStopped(pendingRequest, false);
             return true;
         }
