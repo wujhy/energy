@@ -457,43 +457,70 @@ public class BatteryCollectorService implements ApplicationRunner, DisposableBea
         if (state == null || frame == null || pendingRequest == null || pendingRequest.isAutoPoll()) {
             return;
         }
-        // 连接条测试 91 响应不在中间步骤更新日志状态，只在最终完成时更新
-        boolean connectResistanceVoltageResponse =
-                BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.name().equals(pendingRequest.getName());
+        BatteryDeviceProtocolCode protocolCode = resolvePendingProtocolCode(pendingRequest);
         boolean success = commandQueueService.completeExplicitCommandResponse(
                 state,
                 frame,
                 pendingRequest,
-                !connectResistanceVoltageResponse,
+                shouldUpdateCommandLogOnResponse(protocolCode),
                 bytesToHex(frame.getPayloadSafe()));
-        boolean autoSetAddressResponse =
-                BatteryDeviceProtocolCode.AUTO_SET_MODULE_ADDRESS.name().equals(pendingRequest.getName());
-        if (autoSetAddressResponse && !success) {
-            log.warn("自动编号失败, 通道={}, 地址={}, 响应={}",
-                    state.getConfig() == null ? null : state.getConfig().getName(),
-                    String.format("%02X", pendingRequest.getRequestAddress()),
-                    String.format("%02X", frame.getCommand()));
-        }
-        if (commandQueueService.handleAutoSetAddressResponse(
-                state,
-                frame,
-                pendingRequest,
-                success,
-                this::markModeRunning,
-                () -> batteryCollectorCacheService.resetModuleAddressCache(state, realtimeSnapshotService))) {
+
+        if (protocolCode == null) {
+            completeRegularPendingResponse(state, pendingRequest, success);
             return;
         }
-        if (BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE.name().equals(pendingRequest.getName())) {
-            connectResistanceCommandProcessor.handleVoltageResponse(state, frame, pendingRequest, success);
-            return;
+
+        switch (protocolCode) {
+            case AUTO_SET_MODULE_ADDRESS:
+                commandQueueService.handleAutoSetAddressResponse(
+                        state,
+                        frame,
+                        pendingRequest,
+                        success,
+                        this::markModeRunning,
+                        () -> batteryCollectorCacheService.resetModuleAddressCache(state, realtimeSnapshotService));
+                break;
+            case GET_CONNECT_STRIP_RESISTANCE_VOLTAGE:
+                connectResistanceCommandProcessor.handleVoltageResponse(state, frame, pendingRequest, success);
+                break;
+            case SINGLE_BATTERY_IR_TEST:
+                if (commandQueueService.queueNextGroupInternalResistanceStep(state, pendingRequest, success)) {
+                    return;
+                }
+                if (commandQueueService.isGroupInternalResistanceRequest(pendingRequest)) {
+                    success = commandQueueService.resolveGroupInternalResistanceFinalSuccess(pendingRequest, success);
+                    commandQueueService.closeGroupInternalResistanceBusinessLog(pendingRequest, success);
+                }
+                completeRegularPendingResponse(state, pendingRequest, success);
+                break;
+            default:
+                completeRegularPendingResponse(state, pendingRequest, success);
+                break;
         }
-        if (commandQueueService.isGroupInternalResistanceRequest(pendingRequest)) {
-            if (commandQueueService.queueNextGroupInternalResistanceStep(state, pendingRequest, success)) {
-                return;
-            }
-            success = commandQueueService.resolveGroupInternalResistanceFinalSuccess(pendingRequest, success);
-            commandQueueService.closeGroupInternalResistanceBusinessLog(pendingRequest, success);
+    }
+
+    private BatteryDeviceProtocolCode resolvePendingProtocolCode(BatteryPendingRequest pendingRequest) {
+        BatteryDeviceProtocolCode protocolCode = BatteryDeviceProtocolCode.find(pendingRequest.getRequestCode());
+        if (protocolCode != null && protocolCode.isRequest(pendingRequest.getRequestCode())) {
+            return protocolCode;
         }
+        if (pendingRequest.getName() == null) {
+            return null;
+        }
+        try {
+            return BatteryDeviceProtocolCode.valueOf(pendingRequest.getName());
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    private boolean shouldUpdateCommandLogOnResponse(BatteryDeviceProtocolCode protocolCode) {
+        return protocolCode != BatteryDeviceProtocolCode.GET_CONNECT_STRIP_RESISTANCE_VOLTAGE;
+    }
+
+    private void completeRegularPendingResponse(BatteryCollectorChannelState state,
+                                                BatteryPendingRequest pendingRequest,
+                                                boolean success) {
         commandQueueService.markModeStopped(pendingRequest, success);
         if (success && shouldResetModuleAddressCacheAfterCommand(pendingRequest)) {
             batteryCollectorCacheService.resetModuleAddressCache(state, realtimeSnapshotService);
