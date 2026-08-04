@@ -38,6 +38,8 @@ public class BatteryCurrentCellState {
     private Double swollenVoltage;
     /** 漏液状态。 */
     private Integer leakageStatus;
+    /** 创建时间。 */
+    private Date createTime;
     /** 轮询批次号。 */
     private String pollBatchNo;
     /** 轮询开始时间。 */

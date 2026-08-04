@@ -210,6 +210,7 @@ public class BatteryCurrentStateService {
             target.setResistanceRateChange(source.getResistanceRateChange());
             target.setSwollenVoltage(source.getSwollenVoltage());
             target.setLeakageStatus(source.getLeakageStatus());
+            target.setCreateTime(source.getCreateTime());
             target.setPollBatchNo(source.getPollBatchNo());
             target.setPollStartedAt(source.getPollStartedAt());
             targets.add(target);
