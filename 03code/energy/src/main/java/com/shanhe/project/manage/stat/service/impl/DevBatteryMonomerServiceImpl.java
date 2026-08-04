@@ -84,17 +84,18 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
     public Double getMaxResistance(Integer packNum) {
         List<BatteryModuleCellRealtime> batteryList = resolveBatteryCells(packNum);
         if (CollectionUtils.isEmpty(batteryList)) {
-            return 0.0;
+            return null;
         }
 
         List<DevBatteryMonomer> devBatteryMonomers = selectList(packNum);
         if (devBatteryMonomers == null || devBatteryMonomers.isEmpty()) {
-            return 0.0;
+            return null;
         }
         Map<Integer, Integer> monomerMap = devBatteryMonomers.stream()
                 .collect(Collectors.toMap(DevBatteryMonomer::getBatNum, DevBatteryMonomer::getResistance, (v1, v2) -> v2));
 
         Double max = null;
+        boolean hasComparableResistance = false;
         for (BatteryModuleCellRealtime batteryMonitor : batteryList) {
             Integer monomerResistance = monomerMap.get(batteryMonitor.getBatNum());
             if (monomerResistance == null || monomerResistance <= 0) {
@@ -103,6 +104,7 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
             if (batteryMonitor.getResistance() == null || batteryMonitor.getResistance() <= 0) {
                 continue;
             }
+            hasComparableResistance = true;
             if (batteryMonitor.getResistance() <= monomerResistance) {
                 continue;
             }
@@ -116,6 +118,9 @@ public class DevBatteryMonomerServiceImpl implements IDevBatteryMonomerService {
             }
         }
 
+        if (!hasComparableResistance) {
+            return null;
+        }
         return max == null ? 0.0 : max;
     }
 
