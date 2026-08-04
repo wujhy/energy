@@ -1,5 +1,6 @@
 package com.shanhe.project.collector.battery.service.postprocess;
 
+import com.shanhe.framework.enums.BatteryPackStatusEnum;
 import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessor;
 import com.shanhe.project.collector.battery.postprocess.BatteryRealtimePostProcessContext;
 import com.shanhe.project.collector.battery.postprocess.CapacityPredictionProcessor;
@@ -35,7 +36,7 @@ class BatteryRealtimePostProcessorsTest {
         IStatBatteryPackService statBatteryPackService = Mockito.mock(IStatBatteryPackService.class);
         ReflectionTestUtils.setField(processor, "statBatteryPackService", statBatteryPackService);
 
-        BatteryRealtimePostProcessContext context = context(group(6, null), cells());
+        BatteryRealtimePostProcessContext context = context(group(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()), null), cells());
         assertTrue(processor.shouldProcess(context));
 
         processor.process(context);
@@ -44,7 +45,7 @@ class BatteryRealtimePostProcessorsTest {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<BatteryModuleCellRealtime>> cellsCaptor = ArgumentCaptor.forClass(List.class);
         Mockito.verify(statBatteryPackService).insertRealtime(Mockito.eq(1), groupCaptor.capture(), cellsCaptor.capture());
-        assertEquals(Integer.valueOf(6), groupCaptor.getValue().getBatteryPackStatus());
+        assertEquals(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()), groupCaptor.getValue().getBatteryPackStatus());
         assertEquals(Integer.valueOf(3), groupCaptor.getValue().getDeviceWorkStatus());
         assertEquals(Integer.valueOf(1), groupCaptor.getValue().getDeviceWorkIoStatus());
         assertEquals(53.2, groupCaptor.getValue().getPackVoltage());
@@ -58,7 +59,7 @@ class BatteryRealtimePostProcessorsTest {
 
         BatteryRealtimePostProcessContext missingBatch = BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
-                .group(group(6, null))
+                .group(group(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()), null))
                 .cells(cells)
                 .build();
         assertFalse(processor.shouldProcess(missingBatch));
@@ -67,7 +68,7 @@ class BatteryRealtimePostProcessorsTest {
         BatteryRealtimePostProcessContext mismatchedBatch = BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
                 .pollBatchNo(POLL_BATCH_NO)
-                .group(group(6, null))
+                .group(group(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()), null))
                 .cells(cells)
                 .build();
         assertFalse(processor.shouldProcess(mismatchedBatch));
@@ -82,18 +83,18 @@ class BatteryRealtimePostProcessorsTest {
         ReflectionTestUtils.setField(processor, "batteryPredictorService", predictorService);
 
         BatteryRealtimePostProcessContext backupContext = context(group(5, null), cells());
-        BatteryRealtimePostProcessContext idleContext = context(group(6, null), cells());
+        BatteryRealtimePostProcessContext monitorContext = context(group(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()), null), cells());
         assertTrue(processor.shouldProcess(backupContext));
-        assertTrue(processor.shouldProcess(idleContext));
+        assertTrue(processor.shouldProcess(monitorContext));
 
         processor.process(backupContext);
-        processor.process(idleContext);
+        processor.process(monitorContext);
 
         ArgumentCaptor<BatteryModuleGroupRealtime> groupCaptor = ArgumentCaptor.forClass(BatteryModuleGroupRealtime.class);
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<BatteryModuleCellRealtime>> cellsCaptor = ArgumentCaptor.forClass(List.class);
         Mockito.verify(predictorService).doTotalBatteryStep(groupCaptor.capture(), cellsCaptor.capture());
-        assertEquals(Integer.valueOf(6), groupCaptor.getValue().getBatteryPackStatus());
+        assertEquals(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()), groupCaptor.getValue().getBatteryPackStatus());
         assertEquals(2, cellsCaptor.getValue().size());
     }
 
@@ -145,7 +146,7 @@ class BatteryRealtimePostProcessorsTest {
         Mockito.when(batteryPackService.selectBatteryInfoByPackNum(1)).thenReturn(pack);
         ReflectionTestUtils.setField(processor, "batteryPackService", batteryPackService);
 
-        processor.process(context(group(6, null), cells()));
+        processor.process(context(group(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()), null), cells()));
 
         Mockito.verify(batteryPackService).update(pack);
         assertEquals(600, pack.getVoltageRange());

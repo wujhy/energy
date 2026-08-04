@@ -39,7 +39,7 @@ class BatteryOptRuntimeRecoveryServiceTest {
     void shouldCloseBackupRunningLogWhenRealtimeStatusIsNotBackup() {
         Fixture fixture = new Fixture();
         Mockito.when(fixture.snapshotService.getCachedSnapshot(1))
-                .thenReturn(snapshot(BatteryPackStatusEnum.IDLE.getCode()));
+                .thenReturn(snapshot(BatteryPackStatusEnum.MONITOR.getCode()));
         Mockito.when(fixture.optLogService.selectRunningList(1))
                 .thenReturn(Collections.singletonList(backupLog()));
 
@@ -56,7 +56,7 @@ class BatteryOptRuntimeRecoveryServiceTest {
         Fixture fixture = new Fixture();
         fixture.properties.setBackupRuntimeRecoveryConfirmMs(14L * 60L * 60L * 1000L);
         Mockito.when(fixture.snapshotService.getCachedSnapshot(1))
-                .thenReturn(snapshot(BatteryPackStatusEnum.IDLE.getCode()));
+                .thenReturn(snapshot(BatteryPackStatusEnum.MONITOR.getCode()));
         Mockito.when(fixture.optLogService.selectRunningList(1))
                 .thenReturn(Collections.singletonList(backupLog()));
 
@@ -93,7 +93,7 @@ class BatteryOptRuntimeRecoveryServiceTest {
         BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
                 .pollBatchNo("batch-1")
-                .group(group(6, null, "batch-1"))
+                .group(group(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()), null, "batch-1"))
                 .build();
 
         fixture.service.process(context);
@@ -110,7 +110,7 @@ class BatteryOptRuntimeRecoveryServiceTest {
         BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
                 .pollBatchNo("batch-1")
-                .group(group(6, null, "batch-1"))
+                .group(group(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()), null, "batch-1"))
                 .build();
 
         fixture.service.process(context);
@@ -128,7 +128,7 @@ class BatteryOptRuntimeRecoveryServiceTest {
         BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
                 .pollBatchNo("batch-1")
-                .group(group(6, null, "batch-1"))
+                .group(group(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()), null, "batch-1"))
                 .build();
 
         fixture.service.process(context);
@@ -165,7 +165,7 @@ class BatteryOptRuntimeRecoveryServiceTest {
         BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
                 .pollBatchNo("batch-1")
-                .group(group(6, null, "batch-1"))
+                .group(group(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()), null, "batch-1"))
                 .build();
 
         fixture.service.process(context);
@@ -183,7 +183,7 @@ class BatteryOptRuntimeRecoveryServiceTest {
         BatteryRealtimePostProcessContext ended = BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
                 .pollBatchNo("batch-1")
-                .group(group(6, null, "batch-1"))
+                .group(group(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()), null, "batch-1"))
                 .build();
         BatteryRealtimePostProcessContext backup = BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
@@ -334,7 +334,7 @@ class BatteryOptRuntimeRecoveryServiceTest {
         BatteryRealtimePostProcessContext context = BatteryRealtimePostProcessContext.builder()
                 .packNum(1)
                 .pollBatchNo("batch-1")
-                .group(group(6, null, "other-batch"))
+                .group(group(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()), null, "other-batch"))
                 .build();
 
         org.junit.jupiter.api.Assertions.assertFalse(fixture.service.shouldProcess(context));

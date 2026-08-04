@@ -66,6 +66,19 @@ class ControlBatteryTest {
     }
 
     @Test
+    void shouldRejectOldIdleProjectionForNonType2Command() {
+        ControlBattery service = service();
+        BatteryModuleRealtimeSnapshotService snapshotService = field(service, "realtimeSnapshotService");
+        BatteryOptCollectorCommandAdapter commandAdapter = field(service, "batteryOptCollectorCommandAdapter");
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(snapshot(BatteryPackStatusEnum.IDLE.getCode(), 10D));
+
+        AjaxResult result = service.toSendBatteryCmdToOat(request(BatteryTestEnum._1.getDictValue()));
+
+        Assertions.assertEquals(AjaxResult.Type.ERROR.value(), result.get(AjaxResult.CODE_TAG));
+        Mockito.verifyNoInteractions(commandAdapter);
+    }
+
+    @Test
     void shouldRejectWhenActiveAlarmExists() {
         ControlBattery service = service();
         BatteryModuleRealtimeSnapshotService snapshotService = field(service, "realtimeSnapshotService");

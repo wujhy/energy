@@ -194,8 +194,7 @@ public class ControlBattery {
 
     private boolean isProjectedNonActiveStatus(Integer batteryPackStatusValue) {
         String batteryPackStatus = Objects.toString(batteryPackStatusValue, null);
-        return BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.MONITOR)
-                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE);
+        return BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.MONITOR);
     }
 
     private BatteryModuleGroupRealtime getRealtimeGroup(Integer packNum) {

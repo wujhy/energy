@@ -156,15 +156,15 @@ class CapacityPredictionProcessorTest {
         BatteryPredictorService predictorService =
                 (BatteryPredictorService) ReflectionTestUtils.getField(processor, "batteryPredictorService");
 
-        // First call: set status to IDLE
+        // First call: set status to MONITOR
         BatteryModuleGroupRealtime group1 = group();
-        group1.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.IDLE.getCode()));
+        group1.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()));
         processor.process(contextWith(group1));
         Mockito.verifyNoInteractions(predictorService);
 
-        // Second call: same status IDLE
+        // Second call: same status MONITOR
         BatteryModuleGroupRealtime group2 = group();
-        group2.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.IDLE.getCode()));
+        group2.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()));
         processor.process(contextWith(group2));
         Mockito.verifyNoInteractions(predictorService);
     }
@@ -183,9 +183,9 @@ class CapacityPredictionProcessorTest {
         processor.process(contextWith(group1));
         Mockito.verifyNoInteractions(predictorService);
 
-        // Second call: status changes to IDLE (from BACKUP → non-BACKUP)
+        // Second call: status changes to MONITOR (from BACKUP → non-BACKUP)
         BatteryModuleGroupRealtime group2 = group();
-        group2.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.IDLE.getCode()));
+        group2.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()));
         processor.process(contextWith(group2));
         Mockito.verify(predictorService).doTotalBatteryStep(Mockito.any(), Mockito.any());
     }
@@ -196,12 +196,12 @@ class CapacityPredictionProcessorTest {
         BatteryPredictorService predictorService =
                 (BatteryPredictorService) ReflectionTestUtils.getField(processor, "batteryPredictorService");
 
-        // First call: IDLE
+        // First call: MONITOR
         BatteryModuleGroupRealtime group1 = group();
-        group1.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.IDLE.getCode()));
+        group1.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()));
         processor.process(contextWith(group1));
 
-        // Second call: CHARGE (from IDLE, not BACKUP)
+        // Second call: CHARGE (from MONITOR, not BACKUP)
         BatteryModuleGroupRealtime group2 = group();
         group2.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.CHARGE.getCode()));
         processor.process(contextWith(group2));
@@ -215,12 +215,12 @@ class CapacityPredictionProcessorTest {
         BatteryPredictorService predictorService =
                 (BatteryPredictorService) ReflectionTestUtils.getField(processor, "batteryPredictorService");
 
-        // First call: IDLE
+        // First call: MONITOR
         BatteryModuleGroupRealtime group1 = group();
-        group1.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.IDLE.getCode()));
+        group1.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()));
         processor.process(contextWith(group1));
 
-        // Second call: BACKUP (from IDLE → BACKUP, not a BACKUP-to-non-BACKUP transition)
+        // Second call: BACKUP (from MONITOR → BACKUP, not a BACKUP-to-non-BACKUP transition)
         BatteryModuleGroupRealtime group2 = group();
         group2.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.BACKUP.getCode()));
         processor.process(contextWith(group2));
@@ -241,9 +241,9 @@ class CapacityPredictionProcessorTest {
         group1.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.BACKUP.getCode()));
         processor.process(contextWith(group1));
 
-        // Second call: transition to IDLE → should swallow exception
+        // Second call: transition to MONITOR → should swallow exception
         BatteryModuleGroupRealtime group2 = group();
-        group2.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.IDLE.getCode()));
+        group2.setBatteryPackStatus(Integer.valueOf(BatteryPackStatusEnum.MONITOR.getCode()));
 
         Assertions.assertDoesNotThrow(() -> processor.process(contextWith(group2)));
     }

@@ -116,8 +116,7 @@ public class StatBatteryPackServiceImpl implements IStatBatteryPackService {
         return BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.MONITOR)
                 || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.CHARGE)
                 || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.CAPACITY_TEST)
-                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.BACKUP)
-                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.IDLE);
+                || BatteryPackStatusEnum.isCode(batteryPackStatus, BatteryPackStatusEnum.BACKUP);
     }
 
     @Override
