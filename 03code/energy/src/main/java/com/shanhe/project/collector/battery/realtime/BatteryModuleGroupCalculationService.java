@@ -118,7 +118,7 @@ public class BatteryModuleGroupCalculationService {
 
         if (group != null) {
             boolean currentGroupModule = isCurrentGroupModule(group, pollBatchNo);
-            calculation.setLatestGroupUpdateTime(group.getCreateTime());
+            calculation.setLatestGroupUpdateTime(resolveGroupUpdateTime(group));
             calculation.setGroupModuleFresh(currentGroupModule);
             if (!currentGroupModule) {
                 return calculation;
@@ -133,6 +133,16 @@ public class BatteryModuleGroupCalculationService {
             calculation.setGroupModuleFresh(Boolean.FALSE);
         }
         return calculation;
+    }
+
+    private Date resolveGroupUpdateTime(BatteryModuleGroupRealtime group) {
+        if (group.getCreateTime() != null) {
+            return group.getCreateTime();
+        }
+        if (group.getLatestGroupUpdateTime() != null) {
+            return group.getLatestGroupUpdateTime();
+        }
+        return group.getPollStartedAt();
     }
 
     /** 判断组模块数据是否属于当前轮询批次。 */

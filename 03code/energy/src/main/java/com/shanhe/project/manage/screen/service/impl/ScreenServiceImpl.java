@@ -189,7 +189,7 @@ public class ScreenServiceImpl implements ScreenService {
         index.setPackNum(pack.getPackNum());
         index.setConfigId(pack.getConfigId() == null ? Constants.DEFAULT_CONFIG_ID : pack.getConfigId());
         index.setAlarm(alarmLogService.isAlarmByCache(pack.getPackNum()));
-        index.setCreateTime(group.getCreateTime());
+        index.setCreateTime(resolveRealtimeCreateTime(group));
         fillRealtimeFields(index, group);
         index.setPackParam(packParam);
         return index;
@@ -242,6 +242,19 @@ public class ScreenServiceImpl implements ScreenService {
         putIfNotNull(packParam, "bcapacity", group.getBcapacity());
         putIfNotNull(packParam, "capacity", group.getCapacity());
         return packParam;
+    }
+
+    private Date resolveRealtimeCreateTime(BatteryModuleGroupRealtime group) {
+        if (group.getCreateTime() != null) {
+            return group.getCreateTime();
+        }
+        if (group.getLatestGroupUpdateTime() != null) {
+            return group.getLatestGroupUpdateTime();
+        }
+        if (group.getLatestCellUpdateTime() != null) {
+            return group.getLatestCellUpdateTime();
+        }
+        return group.getPollStartedAt();
     }
 
     private Double groupVoltage(BatteryModuleGroupRealtime group) {
