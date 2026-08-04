@@ -5,7 +5,9 @@ import com.shanhe.project.manage.opt.domain.OptLog;
 import com.shanhe.project.collector.battery.model.BatteryModeInfo;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 统一的电池当前状态，供页面展示和外部协议使用
@@ -37,6 +39,20 @@ public class BatteryCurrentState {
     private String freshness;
     /** 最近一次轮询批次号。 */
     private String lastPollBatchNo;
+    /** 快照刷新时间。 */
+    private Date snapshotRefreshedAt;
+    /** 快照是否包含组或单体数据。 */
+    private Boolean snapshotDataReady;
+    /** 快照是否仍在默认新鲜度窗口内。 */
+    private Boolean snapshotFresh;
+    /** 本轮采集到的单体编号。 */
+    private List<Integer> currentBatchCellNums = new ArrayList<>();
+    /** 连续缺采进入 stale 的单体编号。 */
+    private List<Integer> staleCellNums = new ArrayList<>();
+    /** 当前快照未补齐的单体编号。 */
+    private List<Integer> missingCellNums = new ArrayList<>();
+    /** 单体连续未采集轮数。 */
+    private Map<Integer, Integer> cellMissCounts;
     /** 组级实时状态。 */
     private BatteryCurrentGroupState group;
     /** 单体状态列表。 */

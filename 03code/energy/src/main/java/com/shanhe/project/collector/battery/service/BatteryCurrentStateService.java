@@ -21,7 +21,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 统一的电池当前状态查询服务
@@ -72,6 +74,7 @@ public class BatteryCurrentStateService {
         state.setExpectedCellCount(pack.getBatSinSize());
 
         BatteryModuleRealtimeSnapshot snapshot = snapshotService == null ? null : snapshotService.getCachedSnapshot(packNum);
+        fillSnapshotDiagnosticFields(state, snapshot);
         BatteryModuleGroupRealtime group = snapshot == null ? null : snapshot.getGroup();
         List<BatteryModuleCellRealtime> cells = snapshot == null ? Collections.emptyList() : snapshot.getCells();
         state.setGroup(toGroupState(group));
@@ -92,6 +95,43 @@ public class BatteryCurrentStateService {
         state.setLastPollBatchNo(resolveLastPollBatchNo(group, cells));
         state.setFreshness(resolveFreshness(pack.getBatSinSize(), group, cells));
         return state;
+    }
+
+    private void fillSnapshotDiagnosticFields(BatteryCurrentState state, BatteryModuleRealtimeSnapshot snapshot) {
+        if (snapshot == null) {
+            return;
+        }
+        state.setSnapshotRefreshedAt(snapshot.getRefreshedAt());
+        state.setSnapshotDataReady(snapshot.isDataReady());
+        state.setSnapshotFresh(snapshot.isFresh());
+        state.setCurrentBatchCellNums(sortedIntegers(snapshot.getCurrentBatchCellNums()));
+        state.setStaleCellNums(sortedIntegers(snapshot.getStaleCellNums()));
+        state.setMissingCellNums(sortedIntegers(snapshot.getMissingCellNums()));
+        state.setCellMissCounts(sortedMissCounts(snapshot.getCellMissCounts()));
+    }
+
+    private List<Integer> sortedIntegers(Iterable<Integer> values) {
+        List<Integer> result = new ArrayList<>();
+        if (values != null) {
+            for (Integer value : values) {
+                if (value != null) {
+                    result.add(value);
+                }
+            }
+        }
+        result.sort(Integer::compareTo);
+        return result;
+    }
+
+    private Map<Integer, Integer> sortedMissCounts(Map<Integer, Integer> source) {
+        if (source == null || source.isEmpty()) {
+            return null;
+        }
+        Map<Integer, Integer> result = new LinkedHashMap<>();
+        for (Integer key : sortedIntegers(source.keySet())) {
+            result.put(key, source.get(key));
+        }
+        return result;
     }
 
     private String resolveFreshness(Integer expectedCellCount,
