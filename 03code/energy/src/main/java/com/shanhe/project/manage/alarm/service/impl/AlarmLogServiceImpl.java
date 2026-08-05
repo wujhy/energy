@@ -903,6 +903,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
 
         // 上报
         this.alarmReport(alarmLog);
+        postfilterBattery(alarmLog);
     }
 
     private void postfilterBattery(AlarmLog alarmLog) {

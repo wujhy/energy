@@ -196,7 +196,7 @@ public class ScreenServiceImpl implements ScreenService {
     }
 
     private void fillRealtimeFields(BatteryReportLogIndex index, BatteryModuleGroupRealtime group) {
-        index.setPackVoltage(groupVoltage(group));
+        index.setPackVoltage(group.getPackVoltage());
         index.setExternalVoltage(group.getExternalVoltage());
         index.setChargeDischargeCurrent(group.getChargeDischargeCurrent());
         index.setFloatCurrent(group.getFloatCurrent());
@@ -222,7 +222,7 @@ public class ScreenServiceImpl implements ScreenService {
         if (group == null) {
             return packParam;
         }
-        putIfNotNull(packParam, "packVoltage", groupVoltage(group));
+        putIfNotNull(packParam, "packVoltage", group.getPackVoltage());
         putIfNotNull(packParam, "batteryPackOuterVoltage", group.getExternalVoltage());
         putIfNotNull(packParam, "packCurrent", group.getChargeDischargeCurrent());
         putIfNotNull(packParam, "batteryPackFloatCurrent", group.getFloatCurrent());
@@ -255,10 +255,6 @@ public class ScreenServiceImpl implements ScreenService {
             return group.getLatestCellUpdateTime();
         }
         return group.getPollStartedAt();
-    }
-
-    private Double groupVoltage(BatteryModuleGroupRealtime group) {
-        return group.getPackVoltage() != null ? group.getPackVoltage() : group.getExternalVoltage();
     }
 
     private void putIfNotNull(Map<String, Object> target, String key, Object value) {

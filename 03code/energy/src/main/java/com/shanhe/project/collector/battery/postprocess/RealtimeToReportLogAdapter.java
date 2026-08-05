@@ -68,7 +68,7 @@ public class RealtimeToReportLogAdapter {
         if (group == null) {
             return packParam;
         }
-        putIfNotNull(packParam, "packVoltage", groupVoltage(group));
+        putIfNotNull(packParam, "packVoltage", group.getPackVoltage());
         putIfNotNull(packParam, "batteryPackOuterVoltage", group.getExternalVoltage());
         putIfNotNull(packParam, "packCurrent", group.getChargeDischargeCurrent());
         putIfNotNull(packParam, "batteryPackFloatCurrent", group.getFloatCurrent());
@@ -139,10 +139,6 @@ public class RealtimeToReportLogAdapter {
             list.add(monitor);
         }
         return list;
-    }
-
-    private static Double groupVoltage(BatteryModuleGroupRealtime group) {
-        return group.getPackVoltage() != null ? group.getPackVoltage() : group.getExternalVoltage();
     }
 
     private static void putIfNotNull(Map<String, Object> map, String key, Object value) {

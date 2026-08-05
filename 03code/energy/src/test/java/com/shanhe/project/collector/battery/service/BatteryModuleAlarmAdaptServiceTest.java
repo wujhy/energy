@@ -92,6 +92,8 @@ class BatteryModuleAlarmAdaptServiceTest {
     void shouldBuildGroupThresholdAlarmCandidates() {
         BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
         group.setPackNum(1);
+        group.setPackVoltage(230.5d);
+        group.setExternalVoltage(48.0d);
         group.setChargeDischargeCurrent(-12.3d);
         group.setEnvironmentTemperature1(28.8d);
         group.setBatteryPackSoc(86.5d);
@@ -99,8 +101,8 @@ class BatteryModuleAlarmAdaptServiceTest {
 
         BatteryAlarmEvaluationContext context = service.buildContext(group, null);
 
-        Assertions.assertEquals("230.5", context.getPackWarnParam().get(ItemCode.ZDYGC.getCode()));
-        Assertions.assertEquals("230.5", context.getPackWarnParam().get(ItemCode.ZDYGF.getCode()));
+        Assertions.assertEquals("48.0", context.getPackWarnParam().get(ItemCode.ZDYGC.getCode()));
+        Assertions.assertEquals("48.0", context.getPackWarnParam().get(ItemCode.ZDYGF.getCode()));
         Assertions.assertEquals("-12.3", context.getPackWarnParam().get(ItemCode.ZCGDLGJ.getCode()));
         Assertions.assertEquals("28.8", context.getPackWarnParam().get(ItemCode.ZWDG.getCode()));
         Assertions.assertEquals("28.8", context.getPackWarnParam().get(ItemCode.ZWDD.getCode()));

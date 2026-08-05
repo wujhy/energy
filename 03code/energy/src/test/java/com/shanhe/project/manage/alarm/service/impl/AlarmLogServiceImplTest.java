@@ -6,6 +6,10 @@ import com.shanhe.framework.enums.CacheKeyEnum;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.framework.enums.YesNoEnum;
 import com.shanhe.project.manage.alarm.domain.AlarmLog;
+import com.shanhe.project.manage.alarm.mapper.AlarmLogMapper;
+import com.shanhe.project.manage.opt.service.ControlBatterySet;
+import com.shanhe.project.manage.opt.service.OptLogService;
+import com.shanhe.project.sync.service.ClientReportService;
 import com.shanhe.project.manage.config.service.IConfigAttributeService;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.config.CacheConfiguration;
@@ -74,6 +78,28 @@ class AlarmLogServiceImplTest {
         Assertions.assertEquals(2, service.selectBatteryAlarmLogListCache(2).size());
         Assertions.assertEquals(1L, service.batteryAlarmNum());
         Assertions.assertEquals(2, service.cacheAlarmList().size());
+    }
+
+    @Test
+    void shouldCloseBatteryRuntimeAfterTxztAlarmIsPersisted() {
+        AlarmLogMapper alarmLogMapper = Mockito.mock(AlarmLogMapper.class);
+        OptLogService optLogService = Mockito.mock(OptLogService.class);
+        ControlBatterySet controlBatterySet = Mockito.mock(ControlBatterySet.class);
+        ClientReportService clientReportService = Mockito.mock(ClientReportService.class);
+        ReflectionTestUtils.setField(service, "alarmLogMapper", alarmLogMapper);
+        ReflectionTestUtils.setField(service, "optLogService", optLogService);
+        ReflectionTestUtils.setField(service, "controlBatterySet", controlBatterySet);
+        ReflectionTestUtils.setField(service, "clientReportService", clientReportService);
+
+        AlarmLog alarmLog = alarm(2, null, ItemCode.TXZT.getCode(), YesNoEnum.NO.getDictValue());
+        String key = String.format(CacheKeyEnum.ALARM.getKey(), 2, null, ItemCode.TXZT.getCode());
+
+        ReflectionTestUtils.invokeMethod(service, "insertAlarm", alarmLog, key);
+
+        Mockito.verify(alarmLogMapper).insertAlarmLog(alarmLog);
+        Mockito.verify(clientReportService).uploadAlarm(alarmLog, null);
+        Mockito.verify(optLogService).closeOptLog(2);
+        Mockito.verify(controlBatterySet).clearModelNum(2);
     }
 
     @Test

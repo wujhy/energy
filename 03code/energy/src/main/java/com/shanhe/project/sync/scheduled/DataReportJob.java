@@ -142,7 +142,7 @@ public class DataReportJob {
 
     List<ConfigHistoryItemVo> buildGroupItems(BatteryModuleGroupRealtime group) {
         List<ConfigHistoryItemVo> items = new ArrayList<>();
-        addItem(items, "packVoltage", groupVoltage(group));
+        addItem(items, "packVoltage", group.getPackVoltage());
         addItem(items, "packCurrent", group.getChargeDischargeCurrent());
         addItem(items, "batteryPackFloatCurrent", group.getFloatCurrent());
         addItem(items, "batteryPackOuterVoltage", group.getExternalVoltage());
@@ -186,10 +186,6 @@ public class DataReportJob {
         addItem(items, "deviceWorkStatus", group.getDeviceWorkStatus());
         addItem(items, "deviceWorkIOStatus", group.getDeviceWorkIoStatus());
         return items;
-    }
-
-    private Double groupVoltage(BatteryModuleGroupRealtime group) {
-        return group.getPackVoltage() != null ? group.getPackVoltage() : group.getExternalVoltage();
     }
 
     private void addItem(List<ConfigHistoryItemVo> items, String itemCode, Object value) {

@@ -88,7 +88,7 @@ public class BatteryModuleModbusReadMappingService {
         }
 
         ModbusReadSnapshot snapshot = loadSnapshot(packNum);
-        if (!snapshot.isDataReady()) {
+        if (!snapshot.isDataReady() || !snapshot.isFresh()) {
             throw new IllegalStateException("电池组 " + packNum + " 实时数据未就绪");
         }
         int[] values = new int[quantity];
@@ -110,7 +110,10 @@ public class BatteryModuleModbusReadMappingService {
         if (realtimeSnapshot == null) {
             return new ModbusReadSnapshot(null, null, packNum, channelName);
         }
-        return new ModbusReadSnapshot(realtimeSnapshot.getCells(), realtimeSnapshot.getGroup(), packNum, channelName);
+        return new ModbusReadSnapshot(realtimeSnapshot.getCells(), realtimeSnapshot.getGroup(),
+                realtimeSnapshot.isFresh() && !Boolean.FALSE.equals(
+                        realtimeSnapshot.getGroup() == null ? null : realtimeSnapshot.getGroup().getDataFresh()),
+                packNum, channelName);
     }
 
     /** 按 packNum 解析通道名称。 */
@@ -459,6 +462,9 @@ public class BatteryModuleModbusReadMappingService {
         /** 是否有数据（首次采集完成后为 true）。 */
         private final boolean dataReady;
 
+        /** 快照是否处于统一实时新鲜度窗口内。 */
+        private final boolean fresh;
+
         /** 电池组编号。 */
         private final Integer packNum;
 
@@ -472,6 +478,11 @@ public class BatteryModuleModbusReadMappingService {
 
         ModbusReadSnapshot(List<BatteryModuleCellRealtime> cells, BatteryModuleGroupRealtime group,
                            Integer packNum, String channelName) {
+            this(cells, group, false, packNum, channelName);
+        }
+
+        ModbusReadSnapshot(List<BatteryModuleCellRealtime> cells, BatteryModuleGroupRealtime group,
+                           boolean fresh, Integer packNum, String channelName) {
             if (cells != null) {
                 for (BatteryModuleCellRealtime cell : cells) {
                     if (cell != null && cell.getBatNum() != null) {
@@ -481,6 +492,7 @@ public class BatteryModuleModbusReadMappingService {
             }
             this.group = group;
             this.dataReady = !cellMap.isEmpty() || group != null;
+            this.fresh = fresh;
             this.packNum = packNum;
             this.channelName = channelName;
         }
@@ -511,6 +523,10 @@ public class BatteryModuleModbusReadMappingService {
          */
         boolean isDataReady() {
             return dataReady;
+        }
+
+        boolean isFresh() {
+            return fresh;
         }
 
         Integer getPackNum() {

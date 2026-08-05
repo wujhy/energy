@@ -14,6 +14,7 @@ import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 
 /**
  * BatteryDeviceStateService 在单测中传 null，状态寄存器测试需要单独 mock。
@@ -496,6 +497,7 @@ class BatteryModuleModbusReadMappingServiceTest {
                 .packNum(1)
                 .cells(Collections.singletonList(cell(1, 2.0d, 100, 25.0d, null)))
                 .group(group)
+                .refreshedAt(new Date())
                 .build());
         BatteryModuleModbusReadMappingService service =
                 new BatteryModuleModbusReadMappingService(null, null, snapshotService);
@@ -522,6 +524,40 @@ class BatteryModuleModbusReadMappingServiceTest {
         Mockito.verifyNoInteractions(mapper);
     }
 
+    @Test
+    void shouldRejectExpiredRealtimeSnapshot() {
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
+                .packNum(1)
+                .group(group)
+                .refreshedAt(new Date(System.currentTimeMillis()
+                        - BatteryModuleRealtimeSnapshot.DEFAULT_FRESH_MILLIS - 1))
+                .build());
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(null, null, snapshotService);
+
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> service.readHoldingRegisters(1, 411729, 1));
+    }
+
+    @Test
+    void shouldRejectRealtimeSnapshotMarkedStaleByGroupData() {
+        BatteryModuleRealtimeSnapshotService snapshotService = Mockito.mock(BatteryModuleRealtimeSnapshotService.class);
+        BatteryModuleGroupRealtime group = new BatteryModuleGroupRealtime();
+        group.setDataFresh(false);
+        Mockito.when(snapshotService.getCachedSnapshot(1)).thenReturn(BatteryModuleRealtimeSnapshot.builder()
+                .packNum(1)
+                .group(group)
+                .refreshedAt(new Date())
+                .build());
+        BatteryModuleModbusReadMappingService service =
+                new BatteryModuleModbusReadMappingService(null, null, snapshotService);
+
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> service.readHoldingRegisters(1, 411729, 1));
+    }
+
     private BatteryModuleModbusReadMappingService service(BatteryModuleRealtimeMapper mapper,
                                                           BatteryDeviceStateService stateService,
                                                           BatteryCollectorProperties properties) {
@@ -541,6 +577,7 @@ class BatteryModuleModbusReadMappingServiceTest {
                     .packNum(packNum)
                     .cells(cells)
                     .group(group)
+                    .refreshedAt(new Date())
                     .build();
         });
         return snapshotService;

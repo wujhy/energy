@@ -20,7 +20,7 @@ import java.util.Set;
 public class BatteryModuleRealtimeSnapshot {
 
     /** 标准实时快照缓存 TTL，需与 ehcache/battery-realtime-snapshot 保持一致。 */
-    public static final long DEFAULT_FRESH_MILLIS = 180_000L;
+    public static final long DEFAULT_FRESH_MILLIS = 300_000L;
 
     /** 电池组编号。 */
     private Integer packNum;
