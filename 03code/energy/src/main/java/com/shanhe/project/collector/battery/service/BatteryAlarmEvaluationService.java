@@ -10,8 +10,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.List;
 import java.util.Map;
 
@@ -133,9 +131,9 @@ public class BatteryAlarmEvaluationService {
                 || batteryPack.getBatSinSize() <= 0) {
             return;
         }
-        Set<Integer> currentCellSet = new HashSet<>(currentBatchCellNums);
+
         for (int cellNum = 1; cellNum <= batteryPack.getBatSinSize(); cellNum++) {
-            if (!currentCellSet.contains(cellNum)) {
+            if (!currentBatchCellNums.contains(cellNum)) {
                 return;
             }
         }

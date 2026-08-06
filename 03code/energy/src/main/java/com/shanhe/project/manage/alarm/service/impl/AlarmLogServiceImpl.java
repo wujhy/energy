@@ -614,16 +614,27 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         if (attribute == null || attribute.getPackNum() == null || StrUtil.isBlank(attribute.getCode())) {
             return;
         }
-        // 配置关闭按数据库查询覆盖组级和单体未处理告警，避免只关闭组级缓存。
-        this.alarmFix(attribute.getPackNum(), false, null, Collections.singletonList(attribute.getCode()));
-        for (AlarmLog alarmLog : this.selectBatteryAlarmLogListCache(attribute.getPackNum())) {
-            if (alarmLog != null && StrUtil.equals(attribute.getCode(), alarmLog.getItemCode())) {
-                CacheUtils.remove(alarmCache.getCache(),
-                        String.format(alarmCache.getKey(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode()));
+        AlarmLog query = new AlarmLog();
+        query.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        query.setPackNum(attribute.getPackNum());
+        query.setItemCode(attribute.getCode());
+        query.setStatus(YesNoEnum.NO.getDictValue());
+        List<AlarmLog> alarmLogs = alarmLogMapper.selectAlarmLogList(query);
+        if (alarmLogs == null) {
+            return;
+        }
+        for (AlarmLog alarmLog : alarmLogs) {
+            alarmLog.setStatus(YesNoEnum.YES.getDictValue());
+            this.updateStatus(alarmLog,
+                    String.format(alarmCache.getKey(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode()));
+        }
+        String prefix = String.format("alarm:%s:", attribute.getPackNum());
+        for (String alarmKey : CacheUtils.getCacheKeys(alarmCache.getCache())) {
+            if (alarmKey.startsWith(prefix) && alarmKey.endsWith(":" + attribute.getCode())) {
+                CacheUtils.remove(alarmCache.getCache(), alarmKey);
             }
         }
     }
-
     /**
      * 新增设备历史记录
      *
@@ -824,6 +835,35 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
     }
 
     /**
+     * 关闭指定电池组的全部未处理告警
+     *
+     * @param packNum 电池组编号
+     */
+    @Override
+    public void closeBatteryAlarmLogByPackNum(Integer packNum) {
+        if (packNum == null) {
+            return;
+        }
+        AlarmLog query = new AlarmLog();
+        query.setConfigId(Constants.DEFAULT_CONFIG_ID);
+        query.setPackNum(packNum);
+        query.setStatus(YesNoEnum.NO.getDictValue());
+        List<AlarmLog> alarmLogs = alarmLogMapper.selectAlarmLogList(query);
+        if (alarmLogs != null) {
+            for (AlarmLog alarmLog : alarmLogs) {
+                alarmLog.setStatus(YesNoEnum.YES.getDictValue());
+                this.updateStatus(alarmLog,
+                        String.format(alarmCache.getKey(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode()));
+            }
+        }
+        String prefix = String.format("alarm:%s:", packNum);
+        for (String alarmKey : CacheUtils.getCacheKeys(alarmCache.getCache())) {
+            if (alarmKey.startsWith(prefix)) {
+                CacheUtils.remove(alarmCache.getCache(), alarmKey);
+            }
+        }
+    }
+    /**
      * 删除指定电池组的告警日志
      *
      * @param packNum 电池组编号
@@ -834,15 +874,13 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
             return;
         }
         alarmLogMapper.deleteBatteryAlarmLogByPackNum(packNum);
-        for (AlarmLog alarmLog : this.selectBatteryAlarmLogListCache(packNum)) {
-            if (alarmLog != null) {
-                CacheUtils.remove(alarmCache.getCache(),
-                        String.format(alarmCache.getKey(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode()));
+        String prefix = String.format("alarm:%s:", packNum);
+        for (String alarmKey : CacheUtils.getCacheKeys(alarmCache.getCache())) {
+            if (alarmKey.startsWith(prefix)) {
+                CacheUtils.remove(alarmCache.getCache(), alarmKey);
             }
         }
     }
-
-
     /**
      * 导出告警数据到Excel
      *

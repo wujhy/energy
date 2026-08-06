@@ -194,6 +194,12 @@ public interface IAlarmLogService
     void deleteAll();
 
     /**
+     * 关闭指定电池组的全部未处理告警
+     *
+     * @param packNum 电池组编号
+     */
+    void closeBatteryAlarmLogByPackNum(Integer packNum);
+    /**
      * 删除默认设备指定组告警记录
      *
      * @param packNum 包序号

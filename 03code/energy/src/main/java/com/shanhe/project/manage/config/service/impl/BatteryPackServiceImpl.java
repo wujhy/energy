@@ -181,13 +181,7 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         String key = String.format(packInfoCache.getKey(), batteryPack.getPackNum());
         CacheUtils.put(packInfoCache.getCache(), key, batteryPack);
         if (Objects.equals(batteryPack.getIsEnabled(), YesNoEnum.NO.getDictValue())) {
-            alarmLogService.alarmFix(batteryPack.getPackNum(), false, null, null);
-            String prefix = String.format("alarm:%s:", batteryPack.getPackNum());
-            for (String alarmKey : CacheUtils.getCacheKeys(CacheKeyEnum.ALARM.getCache())) {
-                if (alarmKey.startsWith(prefix)) {
-                    CacheUtils.remove(CacheKeyEnum.ALARM.getCache(), alarmKey);
-                }
-            }
+            alarmLogService.closeBatteryAlarmLogByPackNum(batteryPack.getPackNum());
         }
     }
     /** 删除默认设备所有电池组 */
@@ -204,8 +198,9 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
                 packIds.add(batteryPack.getPackId());
             }
         }
-        deleteBatteryPackByBatPackIds(packIds);
+        deleteBatteryPacks(packIds, batteryPacks);
     }
+
     /**
      * 根据电池组ID批量删除
      *
@@ -217,20 +212,24 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         if (packIds == null || packIds.isEmpty()) {
             return;
         }
+        deleteBatteryPacks(packIds, batteryPackMapper.selectBatteryPackByPackIds(packIds));
+    }
+
+    private void deleteBatteryPacks(List<Long> packIds, List<BatteryPack> batteryPacks) {
+        if (batteryPacks == null || batteryPacks.isEmpty()) {
+            return;
+        }
         List<Integer> packNums = new ArrayList<>();
-        List<BatteryPack> batteryPacks = batteryPackMapper.selectBatteryPackByPackIds(packIds);
-        if (batteryPacks != null) {
-            for (BatteryPack batteryPack : batteryPacks) {
-                if (batteryPack != null && batteryPack.getPackNum() != null) {
-                    packNums.add(batteryPack.getPackNum());
-                }
+        for (BatteryPack batteryPack : batteryPacks) {
+            if (batteryPack != null && batteryPack.getPackNum() != null) {
+                packNums.add(batteryPack.getPackNum());
             }
         }
         for (Integer packNum : packNums) {
             alarmLogService.deleteBatteryAlarmLogByPackNum(packNum);
-            configAttributeService.deleteConfigAttributeByPackNums(Lists.newArrayList(packNum));
             realtimeSnapshotService.evict(packNum);
         }
+        configAttributeService.deleteConfigAttributeByPackNums(packNums);
         batteryPackMapper.deleteBatteryPackByBatPackIds(packIds);
         updateCache();
         configAttributeService.updateCache(YesNoEnum.YES.getDictValue());
