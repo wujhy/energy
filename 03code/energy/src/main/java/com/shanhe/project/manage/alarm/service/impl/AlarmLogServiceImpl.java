@@ -328,7 +328,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         }
 
         // 告警等级
-        AlarmItemLevelVo alarmItemLevelVo = this.getLevel(configAttribute, value);
+        AlarmItemLevelVo alarmItemLevelVo = this.getLevel(configAttribute, value, cacheLog);
         // 告警内容
         String alarmInfo = this.getBatteryAlarmInfo(configAttribute, alarmItemLevelVo, modelNum, value);
         // 存在记录
@@ -381,36 +381,85 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         return null;
     }
 
-    /** 匹配告警等级 */
-    private AlarmItemLevelVo getLevel(ConfigAttribute configAttribute, String value) {
+    /** 匹配告警等级。模拟量按最高命中等级处理，历史等级存在恢复值时执行短时恢复过滤。 */
+    private AlarmItemLevelVo getLevel(ConfigAttribute configAttribute, String value, AlarmLog cacheLog) {
         if (StrUtil.isBlank(value)) {
             return null;
         }
-        // 数据处理类型
         DataTypeEnum dataTypeEnum = DataTypeEnum.find(configAttribute.getType());
         switch (dataTypeEnum) {
             case _2:
-                // 模拟量
-                Double valueDouble = Double.parseDouble(value);
+                Double valueDouble;
+                try {
+                    valueDouble = Double.parseDouble(value);
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+
+                AlarmItemLevelVo currentLevel = null;
+                AlarmItemLevelVo historyLevel = null;
                 Double standValue = null;
                 for (AlarmItemLevelVo levelVo : configAttribute.getListLevel()) {
-                    // 不需告警
-                    if (StrUtil.isBlank(levelVo.getLevelCode()) || StrUtil.equals(levelVo.getLevelCode(), AlarmLevelEnum._0.getDictValue())) {
+                    if (StrUtil.isBlank(levelVo.getLevelCode())
+                            || StrUtil.equals(levelVo.getLevelCode(), AlarmLevelEnum._0.getDictValue())) {
                         continue;
                     }
-
-                    standValue = levelVo.getStandValue() != null ? levelVo.getStandValue() : standValue;
-                    if (DataUtils.isInRange(levelVo.getHightValue(), levelVo.getLowValue(), standValue, valueDouble)) {
-                        return levelVo;
+                    if (cacheLog != null && StrUtil.equals(cacheLog.getAlarmLevel(), levelVo.getLevelCode())) {
+                        historyLevel = levelVo;
+                    }
+                    if (currentLevel == null || Integer.parseInt(levelVo.getLevelCode()) > Integer.parseInt(currentLevel.getLevelCode())) {
+                        standValue = levelVo.getStandValue() != null ? levelVo.getStandValue() : standValue;
+                        if (DataUtils.isInRange(levelVo.getHightValue(), levelVo.getLowValue(), standValue, valueDouble)) {
+                            currentLevel = levelVo;
+                        }
                     }
                 }
-                break;
+
+                if (cacheLog == null || historyLevel == null || historyLevel.getRecValue() == null || historyLevel.getRecFlag() == null) {
+                    return currentLevel;
+                }
+
+                if (currentLevel != null
+                        && Integer.parseInt(currentLevel.getLevelCode()) >= Integer.parseInt(historyLevel.getLevelCode())) {
+                    cacheLog.getParams().remove("alarmRecoveryHitCount");
+                    return currentLevel;
+                }
+
+                double recoveryValue = historyLevel.getRecValue();
+                if (historyLevel.getStandValue() != null && Math.abs(valueDouble) >= 1e-10) {
+                    recoveryValue *= historyLevel.getStandValue();
+                }
+                boolean recoveryHit;
+                if (historyLevel.getRecFlag() == 1) {
+                    recoveryHit = valueDouble >= recoveryValue;
+                } else if (historyLevel.getRecFlag() == 2) {
+                    recoveryHit = valueDouble <= recoveryValue;
+                } else if (historyLevel.getRecFlag() == 3) {
+                    recoveryHit = Double.compare(valueDouble, recoveryValue) == 0;
+                } else {
+                    return currentLevel;
+                }
+
+                if (recoveryHit) {
+                    cacheLog.getParams().remove("alarmRecoveryHitCount");
+                    return currentLevel;
+                }
+
+                Object countValue = cacheLog.getParams().get("alarmRecoveryHitCount");
+                int recoveryHitCount = countValue instanceof Number
+                        ? ((Number) countValue).intValue() : 0;
+                recoveryHitCount++;
+                if (recoveryHitCount < 3) {
+                    cacheLog.getParams().put("alarmRecoveryHitCount", recoveryHitCount);
+                    return historyLevel;
+                }
+                cacheLog.getParams().remove("alarmRecoveryHitCount");
+                return currentLevel;
             case _1:
             case _3:
-                // 开关量、枚举量
                 for (AlarmItemLevelVo levelVo : configAttribute.getListLevel()) {
-                    // 不需告警
-                    if (StrUtil.isBlank(levelVo.getLevelCode()) || StrUtil.equals(levelVo.getLevelCode(), AlarmLevelEnum._0.getDictValue())) {
+                    if (StrUtil.isBlank(levelVo.getLevelCode())
+                            || StrUtil.equals(levelVo.getLevelCode(), AlarmLevelEnum._0.getDictValue())) {
                         continue;
                     }
                     if (StrUtil.equals(value, levelVo.getDictId())) {
