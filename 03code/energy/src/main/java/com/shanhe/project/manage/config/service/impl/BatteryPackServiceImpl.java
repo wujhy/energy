@@ -180,21 +180,39 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
 
         String key = String.format(packInfoCache.getKey(), batteryPack.getPackNum());
         CacheUtils.put(packInfoCache.getCache(), key, batteryPack);
+        if (Objects.equals(batteryPack.getIsEnabled(), YesNoEnum.NO.getDictValue())) {
+            alarmLogService.alarmFix(batteryPack.getPackNum(), false, null, null);
+            String prefix = String.format("alarm:%s:", batteryPack.getPackNum());
+            for (String alarmKey : CacheUtils.getCacheKeys(CacheKeyEnum.ALARM.getCache())) {
+                if (alarmKey.startsWith(prefix)) {
+                    CacheUtils.remove(CacheKeyEnum.ALARM.getCache(), alarmKey);
+                }
+            }
+        }
     }
-
     /** 删除默认设备所有电池组 */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteDefaultDevicePacks() {
-        batteryPackMapper.deleteDefaultDevicePacks();
-        realtimeSnapshotService.evictAll();
+        List<BatteryPack> batteryPacks = batteryPackMapper.selectDefaultDeviceBatteryPackList(null);
+        if (batteryPacks == null || batteryPacks.isEmpty()) {
+            return;
+        }
+        List<Long> packIds = new ArrayList<>();
+        for (BatteryPack batteryPack : batteryPacks) {
+            if (batteryPack != null && batteryPack.getPackId() != null) {
+                packIds.add(batteryPack.getPackId());
+            }
+        }
+        deleteBatteryPackByBatPackIds(packIds);
     }
-
     /**
      * 根据电池组ID批量删除
      *
      * @param packIds 电池组ID列表
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteBatteryPackByBatPackIds(List<Long> packIds) {
         if (packIds == null || packIds.isEmpty()) {
             return;
@@ -208,12 +226,15 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
                 }
             }
         }
-        batteryPackMapper.deleteBatteryPackByBatPackIds(packIds);
         for (Integer packNum : packNums) {
+            alarmLogService.deleteBatteryAlarmLogByPackNum(packNum);
+            configAttributeService.deleteConfigAttributeByPackNums(Lists.newArrayList(packNum));
             realtimeSnapshotService.evict(packNum);
         }
+        batteryPackMapper.deleteBatteryPackByBatPackIds(packIds);
+        updateCache();
+        configAttributeService.updateCache(YesNoEnum.YES.getDictValue());
     }
-
     /** 更新电池组缓存 */
     @Override
     public void updateCache() {
@@ -260,26 +281,11 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteBatteryPackByBatPackId(Long id) {
-        BatteryPack batteryPack = batteryPackMapper.selectBatteryPackByPackId(id);
-        if (batteryPack == null) {
+        if (id == null) {
             return;
         }
-        // 报警修复
-        alarmLogService.alarmFix(batteryPack.getPackNum(), false, null, null);
-
-        // 删除属性
-        configAttributeService.deleteConfigAttributeByPackNums(Lists.newArrayList(batteryPack.getPackNum()));
-
-        // 删除包
-        batteryPackMapper.deleteBatteryPackByBatPackIds(Lists.newArrayList(id));
-        realtimeSnapshotService.evict(batteryPack.getPackNum());
-        // 更新缓存
-        updateCache();
-
-        configAttributeService.updateCache(YesNoEnum.YES.getDictValue());
-
+        this.deleteBatteryPackByBatPackIds(Lists.newArrayList(id));
     }
-
     /**
      * 更新电池组（含校验）
      *

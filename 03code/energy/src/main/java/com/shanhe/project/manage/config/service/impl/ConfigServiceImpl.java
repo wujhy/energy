@@ -155,10 +155,6 @@ public class ConfigServiceImpl implements IConfigService {
         if (!deletePackIds.isEmpty()) {
             batteryPackService.deleteBatteryPackByBatPackIds(deletePackIds);
         }
-        if (!deletePackNums.isEmpty()) {
-            configAttributeService.deleteConfigAttributeByPackNums(deletePackNums);
-            deletePackNums.forEach(packNum -> alarmLogService.alarmFix(packNum, false, null, null));
-        }
     }
 
     private List<Config> wrapConfig(Config config) {

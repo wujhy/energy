@@ -3,11 +3,15 @@ package com.shanhe.project.collector.battery.service;
 import com.shanhe.framework.enums.ItemCode;
 import com.shanhe.project.collector.battery.model.BatteryAlarmEvaluationContext;
 import com.shanhe.project.manage.alarm.service.IAlarmLogService;
+import com.shanhe.project.manage.config.domain.BatteryPack;
+import com.shanhe.project.manage.config.service.IBatteryPackService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.Map;
 
@@ -45,6 +49,9 @@ public class BatteryAlarmEvaluationService {
 
     @Resource
     private IAlarmLogService alarmLogService;
+
+    @Resource
+    private IBatteryPackService batteryPackService;
 
     /**
      * 提交告警评估上下文，并恢复本轮未上报单体的告警。
@@ -117,9 +124,20 @@ public class BatteryAlarmEvaluationService {
     }
 
     private void recoverCurrentBatchCells(Integer packNum, BatteryAlarmEvaluationContext context) {
-        List<Integer> currentBatchCellNums = currentBatchCellNums(context);
-        if (currentBatchCellNums.isEmpty()) {
+        if (!Boolean.TRUE.equals(context.getSnapshotFresh())) {
             return;
+        }
+        List<Integer> currentBatchCellNums = currentBatchCellNums(context);
+        BatteryPack batteryPack = batteryPackService == null ? null : batteryPackService.selectBatteryInfoByPackNum(packNum);
+        if (currentBatchCellNums.isEmpty() || batteryPack == null || batteryPack.getBatSinSize() == null
+                || batteryPack.getBatSinSize() <= 0) {
+            return;
+        }
+        Set<Integer> currentCellSet = new HashSet<>(currentBatchCellNums);
+        for (int cellNum = 1; cellNum <= batteryPack.getBatSinSize(); cellNum++) {
+            if (!currentCellSet.contains(cellNum)) {
+                return;
+            }
         }
         alarmLogService.alarmFix(packNum, true, currentBatchCellNums, ALL_CELL_ALARM_CODES);
     }

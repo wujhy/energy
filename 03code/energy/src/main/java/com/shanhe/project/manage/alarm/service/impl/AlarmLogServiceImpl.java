@@ -611,12 +611,16 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
      */
     @Override
     public void closeAlarmLog(ConfigAttribute attribute) {
-        String key = String.format(alarmCache.getKey(), attribute.getPackNum(), null, attribute.getCode());
-        Object object = CacheUtils.get(alarmCache.getCache(), key);
-        if (object != null) {
-            AlarmLog cacheLog = (AlarmLog) object;
-            cacheLog.setStatus(YesNoEnum.YES.getDictValue());
-            this.updateStatus(cacheLog, key);
+        if (attribute == null || attribute.getPackNum() == null || StrUtil.isBlank(attribute.getCode())) {
+            return;
+        }
+        // 配置关闭按数据库查询覆盖组级和单体未处理告警，避免只关闭组级缓存。
+        this.alarmFix(attribute.getPackNum(), false, null, Collections.singletonList(attribute.getCode()));
+        for (AlarmLog alarmLog : this.selectBatteryAlarmLogListCache(attribute.getPackNum())) {
+            if (alarmLog != null && StrUtil.equals(attribute.getCode(), alarmLog.getItemCode())) {
+                CacheUtils.remove(alarmCache.getCache(),
+                        String.format(alarmCache.getKey(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode()));
+            }
         }
     }
 
@@ -826,7 +830,16 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
      */
     @Override
     public void deleteBatteryAlarmLogByPackNum(Integer packNum) {
+        if (packNum == null) {
+            return;
+        }
         alarmLogMapper.deleteBatteryAlarmLogByPackNum(packNum);
+        for (AlarmLog alarmLog : this.selectBatteryAlarmLogListCache(packNum)) {
+            if (alarmLog != null) {
+                CacheUtils.remove(alarmCache.getCache(),
+                        String.format(alarmCache.getKey(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode()));
+            }
+        }
     }
 
 
