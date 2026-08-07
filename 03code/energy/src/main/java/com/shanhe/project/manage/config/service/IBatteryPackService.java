@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * 设备Service接口
- * 
+ *
  * @author wjh
  * @since 2024-12-23
  */
@@ -22,7 +22,7 @@ public interface IBatteryPackService
 
     /**
      * 查询设备列表
-     * 
+     *
      * @param isEnabled 是否启用
      * @return 设备集合
      */
@@ -68,6 +68,13 @@ public interface IBatteryPackService
     void deleteDefaultDevicePacks();
 
     /**
+     * 删除电池组
+     *
+     * @param id 蓄电池组id
+     */
+    void deleteBatteryPackByBatPackId(Long id);
+
+    /**
      * 批量删除电池组
      *
      * @param packIds 需要删除的电池组id
@@ -84,13 +91,6 @@ public interface IBatteryPackService
      * @return 电压均衡
      */
     Integer getVoltageBalance(Integer packNum);
-
-    /**
-     * 删除电池组
-     *
-     * @param id 蓄电池组id
-     */
-    void deleteBatteryPackByBatPackId(Long id);
 
     /**
      * 修改

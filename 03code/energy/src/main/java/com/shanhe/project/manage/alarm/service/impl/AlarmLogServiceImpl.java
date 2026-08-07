@@ -555,7 +555,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
                 if (!desc.contains("告警") && !desc.contains("异常")) {
                     alarmInfo.append("异常");
                 }
-                if(alarmItemLevelVo!=null && StrUtil.isBlank(alarmItemLevelVo.getAlarmDesc())) {
+                if(StrUtil.isBlank(alarmItemLevelVo.getAlarmDesc())) {
                     // 枚举量
                     alarmInfo.append("，当前值：");
                     alarmInfo.append(StrUtil.isNotBlank(alarmItemLevelVo.getDictName()) ? alarmItemLevelVo.getDictName() : value);
@@ -567,7 +567,7 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
                 break;
             case _3:
                 // 枚举量
-                if(alarmItemLevelVo!=null && StrUtil.isBlank(alarmItemLevelVo.getAlarmDesc())) {
+                if(StrUtil.isBlank(alarmItemLevelVo.getAlarmDesc())) {
                     // 枚举量
                     alarmInfo.append("，当前值：");
                     alarmInfo.append(StrUtil.isNotBlank(alarmItemLevelVo.getDictName()) ? alarmItemLevelVo.getDictName() : value);
@@ -627,12 +627,6 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
             alarmLog.setStatus(YesNoEnum.YES.getDictValue());
             this.updateStatus(alarmLog,
                     String.format(alarmCache.getKey(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode()));
-        }
-        String prefix = String.format("alarm:%s:", attribute.getPackNum());
-        for (String alarmKey : CacheUtils.getCacheKeys(alarmCache.getCache())) {
-            if (alarmKey.startsWith(prefix) && alarmKey.endsWith(":" + attribute.getCode())) {
-                CacheUtils.remove(alarmCache.getCache(), alarmKey);
-            }
         }
     }
     /**
@@ -796,18 +790,12 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
         List<AlarmLog> alarmLogs = new ArrayList<>();
         for (String key : keys) {
             if (StrUtil.startWith(key, prefix)) {
-                AlarmLog alarmLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
-                alarmLogs.add(alarmLog);
+                alarmLogs.add((AlarmLog) CacheUtils.get(alarmCache.getCache(), key));
             }
         }
         return alarmLogs;
     }
-    /**
-     * 获取当前属性编码是否存在未处理告警
-     *
-     * @param itemCode 属性编码
-     * @return 是否存在告警，1-存在，0-不存在
-     */
+
     @Override
     public Long getCurrentIsAlarm(String itemCode) {
         Set<String> keys = CacheUtils.getCacheKeys(alarmCache.getCache());
@@ -819,8 +807,8 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
             if (!StrUtil.endWith(key, itemCode)) {
                 continue;
             }
-            AlarmLog alarmLog = (AlarmLog) CacheUtils.get(alarmCache.getCache(), key);
-            if (Objects.equals(alarmLog.getStatus(), YesNoEnum.NO.getDictValue())) {
+            Object alarmLog = CacheUtils.get(alarmCache.getCache(), key);
+            if (alarmLog != null && Objects.equals(((AlarmLog)alarmLog).getStatus(), YesNoEnum.NO.getDictValue())) {
                 return 1L;
             }
         }
@@ -854,12 +842,6 @@ public class AlarmLogServiceImpl implements IAlarmLogService {
                 alarmLog.setStatus(YesNoEnum.YES.getDictValue());
                 this.updateStatus(alarmLog,
                         String.format(alarmCache.getKey(), alarmLog.getPackNum(), alarmLog.getModelNum(), alarmLog.getItemCode()));
-            }
-        }
-        String prefix = String.format("alarm:%s:", packNum);
-        for (String alarmKey : CacheUtils.getCacheKeys(alarmCache.getCache())) {
-            if (alarmKey.startsWith(prefix)) {
-                CacheUtils.remove(alarmCache.getCache(), alarmKey);
             }
         }
     }

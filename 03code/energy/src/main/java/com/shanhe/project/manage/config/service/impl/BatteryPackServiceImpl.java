@@ -1,6 +1,5 @@
 package com.shanhe.project.manage.config.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.google.common.collect.Lists;
 import com.shanhe.common.constant.Constants;
 import com.shanhe.common.exception.ServiceException;
@@ -51,34 +50,16 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
 
     CacheKeyEnum packInfoCache = CacheKeyEnum.BATTERY_PACK_INFO;
 
-    /**
-     * 根据电池组ID查询电池组
-     *
-     * @param packId 电池组主键
-     * @return 电池组
-     */
     @Override
     public BatteryPack selectBatteryPackByPackId(Long packId) {
         return batteryPackMapper.selectBatteryPackByPackId(packId);
     }
 
-    /**
-     * 查询电池组列表
-     *
-     * @param isEnabled 是否启用
-     * @return 电池组列表
-     */
     @Override
     public List<BatteryPack> selectBatteryPackList(Integer isEnabled) {
         return batteryPackMapper.selectDefaultDeviceBatteryPackList(isEnabled);
     }
 
-    /**
-     * 从缓存查询电池组列表
-     *
-     * @param isEnabled 是否启用
-     * @return 电池组列表
-     */
     @Override
     public List<BatteryPack> selectBatteryPackListCache(Integer isEnabled) {
         List<BatteryPack> list = collectFromCache(isEnabled);
@@ -100,22 +81,12 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
             if (isEnabled != null && !Objects.equals(batteryPack.getIsEnabled(), isEnabled)) {
                 continue;
             }
-            list.add(copyPack(batteryPack));
+            list.add(batteryPack);
         }
         list.sort(Comparator.comparing(BatteryPack::getPackNum, Comparator.nullsLast(Integer::compareTo)));
         return list;
     }
 
-    private BatteryPack copyPack(BatteryPack batteryPack) {
-        return BeanUtil.copyProperties(batteryPack, BatteryPack.class);
-    }
-
-    /**
-     * 根据电池组编号查询电池组信息
-     *
-     * @param packNum 电池组编号
-     * @return 电池组
-     */
     @Override
     public BatteryPack selectBatteryInfoByPackNum(Integer packNum) {
         String key = String.format(packInfoCache.getKey(), packNum);
@@ -130,11 +101,6 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         return batteryPack;
     }
 
-    /**
-     * 新增电池组
-     *
-     * @param batteryPack 电池组
-     */
     @Override
     public void insertBatteryPack(BatteryPack batteryPack) {
         batteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID);
@@ -153,11 +119,6 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         CacheUtils.put(packInfoCache.getCache(), key, batteryPack);
     }
 
-    /**
-     * 批量导入电池组
-     *
-     * @param list 电池组列表
-     */
     @Override
     public void importBatteryPack(List<BatteryPack> list) {
         list.forEach(batteryPack -> batteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID));
@@ -168,11 +129,6 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         }
     }
 
-    /**
-     * 更新电池组
-     *
-     * @param batteryPack 电池组
-     */
     @Override
     public void update(BatteryPack batteryPack) {
         batteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID);
@@ -184,7 +140,7 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
             alarmLogService.closeBatteryAlarmLogByPackNum(batteryPack.getPackNum());
         }
     }
-    /** 删除默认设备所有电池组 */
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteDefaultDevicePacks() {
@@ -201,11 +157,15 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         deleteBatteryPacks(packIds, batteryPacks);
     }
 
-    /**
-     * 根据电池组ID批量删除
-     *
-     * @param packIds 电池组ID列表
-     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteBatteryPackByBatPackId(Long id) {
+        if (id == null) {
+            return;
+        }
+        this.deleteBatteryPackByBatPackIds(Lists.newArrayList(id));
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteBatteryPackByBatPackIds(List<Long> packIds) {
@@ -221,19 +181,18 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         }
         List<Integer> packNums = new ArrayList<>();
         for (BatteryPack batteryPack : batteryPacks) {
-            if (batteryPack != null && batteryPack.getPackNum() != null) {
-                packNums.add(batteryPack.getPackNum());
-            }
+            alarmLogService.deleteBatteryAlarmLogByPackNum(batteryPack.getPackNum());
+            realtimeSnapshotService.evict(batteryPack.getPackNum());
+            packNums.add(batteryPack.getPackNum());
         }
-        for (Integer packNum : packNums) {
-            alarmLogService.deleteBatteryAlarmLogByPackNum(packNum);
-            realtimeSnapshotService.evict(packNum);
-        }
+
         configAttributeService.deleteConfigAttributeByPackNums(packNums);
+        configAttributeService.updateCache(YesNoEnum.YES.getDictValue());
+
         batteryPackMapper.deleteBatteryPackByBatPackIds(packIds);
         updateCache();
-        configAttributeService.updateCache(YesNoEnum.YES.getDictValue());
     }
+
     /** 更新电池组缓存 */
     @Override
     public void updateCache() {
@@ -272,24 +231,6 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         return batteryPack.getBatSinSize() <= 24 ? batteryModelEnum.getFloatingVoltage24Below() : batteryModelEnum.getFloatingVoltage24Above();
     }
 
-    /**
-     * 根据电池组ID删除电池组（含关联数据清理）
-     *
-     * @param id 电池组主键
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void deleteBatteryPackByBatPackId(Long id) {
-        if (id == null) {
-            return;
-        }
-        this.deleteBatteryPackByBatPackIds(Lists.newArrayList(id));
-    }
-    /**
-     * 更新电池组（含校验）
-     *
-     * @param batteryPack 电池组
-     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateNew(BatteryPack batteryPack) {
@@ -303,26 +244,20 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         update(batteryPack);
 
         configAttributeService.updateCache(YesNoEnum.YES.getDictValue());
-
     }
 
-    /**
-     * 新增电池组（含校验）
-     *
-     * @param batteryPack 电池组
-     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void insertBatteryPackNew(BatteryPack batteryPack) {
         batteryPack.setConfigId(Constants.DEFAULT_CONFIG_ID);
-        if (batteryPack.getPackNum() > 4) {
+        if (batteryPack.getPackNum() > 6) {
             throw new ServiceException("请选择正确的蓄电池组！");
         }
 
         batteryPack.setPackId(IdUtils.getSnowflakeId());
         List<BatteryPack> batteryPacks = selectBatteryPackList(null);
-        if (batteryPacks.size() >= 4) {
-            throw new ServiceException("最多支持4个蓄电池组！");
+        if (batteryPacks.size() >= 6) {
+            throw new ServiceException("最多支持6个蓄电池组！");
         }
         if (batteryPacks.stream().anyMatch(pack -> Objects.equals(pack.getPackNum(), batteryPack.getPackNum()))) {
             throw new ServiceException("蓄电池组编号已存在！");
@@ -335,12 +270,6 @@ public class BatteryPackServiceImpl implements IBatteryPackService {
         configAttributeService.insertByTemplateAttribute(batteryPack.getPackNum(), batteryPack.getBatSinModel());
     }
 
-    /**
-     * 获取电池组最大单体数量
-     *
-     * @param packNum 电池组编号
-     * @return 最大单体数量
-     */
     @Override
     public Integer getBatteryMaxNumber(Integer packNum) {
         return batteryPackMapper.getBatteryMaxNumber(packNum);
